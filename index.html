@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trackmania Cup Manager</title>
+    <style>
+        :root {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-elevated: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-accent: #38bdf8;
+            --color-accent-hover: #0ea5e9;
+            --color-success: #22c55e;
+            --color-warning: #eab308;
+            --color-danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--color-bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--color-accent);
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--color-bg-secondary);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: transparent;
+            border: none;
+            color: var(--color-text-secondary);
+            padding: 15px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: var(--color-accent);
+            background: var(--color-bg-secondary);
+        }
+
+        .tab.active {
+            color: var(--color-accent);
+            border-bottom-color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--color-bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: var(--color-accent);
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: var(--color-bg-elevated);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: var(--color-bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg-elevated);
+        }
+
+        th {
+            background: var(--color-bg-elevated);
+            color: var(--color-accent);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: var(--color-bg-elevated);
+        }
+
+        .position-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .position-1 { background: #ffd700; color: #000; }
+        .position-2 { background: #c0c0c0; color: #000; }
+        .position-3 { background: #cd7f32; color: #fff; }
+        .position-other { background: var(--color-bg-elevated); color: var(--color-text-secondary); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-elevated);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .edition-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .edition-badge {
+            padding: 8px 16px;
+            background: var(--color-bg-elevated);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .edition-badge:hover {
+            background: var(--color-accent);
+            color: var(--color-bg-primary);
+        }
+
+        .edition-badge.active {
+            background: var(--color-accent);
+            color: var(--color-bg-primary);
+            border-color: var(--color-accent);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏆 Trackmania Cup Manager</h1>
+            <p class="subtitle">Gestion complète de vos compétitions Trackmania avec historique et statistiques</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="participants">👥 Participants</button>
+            <button class="tab" data-tab="editions">📅 Éditions</button>
+            <button class="tab" data-tab="results">🏁 Résultats</button>
+            <button class="tab" data-tab="rankings">📊 Classements</button>
+            <button class="tab" data-tab="stats">📈 Statistiques</button>
+        </div>
+
+        <!-- PARTICIPANTS TAB -->
+        <div class="tab-content active" id="participants">
+            <div class="card">
+                <h2>Ajouter un participant</h2>
+                <form id="addParticipantForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="playerName">Nom du joueur *</label>
+                            <input type="text" id="playerName" required placeholder="Ex: Player123">
+                        </div>
+                        <div class="form-group">
+                            <label for="playerTeam">Équipe (optionnel)</label>
+                            <input type="text" id="playerTeam" placeholder="Ex: Team Rocket">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter le participant</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Liste des participants</h2>
+                <div id="participantsList"></div>
+            </div>
+        </div>
+
+        <!-- EDITIONS TAB -->
+        <div class="tab-content" id="editions">
+            <div class="card">
+                <h2>Créer une édition</h2>
+                <form id="addEditionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editionName">Nom de l'édition *</label>
+                            <input type="text" id="editionName" required placeholder="Ex: Winter Cup 2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="editionDate">Date *</label>
+                            <input type="date" id="editionDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Créer l'édition</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Éditions existantes</h2>
+                <div id="editionsList"></div>
+            </div>
+        </div>
+
+        <!-- RESULTS TAB -->
+        <div class="tab-content" id="results">
+            <div class="card">
+                <h2>Enregistrer un résultat</h2>
+                <form id="addResultForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="resultEdition">Édition *</label>
+                            <select id="resultEdition" required>
+                                <option value="">Sélectionner une édition</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultPlayer">Joueur *</label>
+                            <select id="resultPlayer" required>
+                                <option value="">Sélectionner un joueur</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultPosition">Position *</label>
+                            <input type="number" id="resultPosition" required min="1" placeholder="Ex: 1">
+                        </div>
+                        <div class="form-group">
+                            <label for="resultPoints">Points</label>
+                            <input type="number" id="resultPoints" min="0" placeholder="Ex: 100">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer le résultat</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Résultats par édition</h2>
+                <div class="edition-selector" id="resultsEditionSelector"></div>
+                <div id="resultsDisplay"></div>
+            </div>
+        </div>
+
+        <!-- RANKINGS TAB -->
+        <div class="tab-content" id="rankings">
+            <div class="card">
+                <h2>Classement général</h2>
+                <div id="generalRanking"></div>
+            </div>
+        </div>
+
+        <!-- STATS TAB -->
+        <div class="tab-content" id="stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Participants</div>
+                    <div class="stat-value" id="totalParticipants">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Éditions</div>
+                    <div class="stat-value" id="totalEditions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Résultats Enregistrés</div>
+                    <div class="stat-value" id="totalResults">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Statistiques par joueur</h2>
+                <div id="playerStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let data = {
+            participants: [],
+            editions: [],
+            results: []
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('tmCupData');
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('tmCupData', JSON.stringify(data));
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.dataset.tab;
+                document.getElementById(tabId).classList.add('active');
+                
+                // Refresh displays
+                if (tabId === 'results') {
+                    displayResultsEditionSelector();
+                    displayResults();
+                } else if (tabId === 'rankings') {
+                    displayGeneralRanking();
+                } else if (tabId === 'stats') {
+                    displayStats();
+                }
+            });
+        });
+
+        // Add participant
+        document.getElementById('addParticipantForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('playerName').value.trim();
+            const team = document.getElementById('playerTeam').value.trim();
+            
+            if (data.participants.some(p => p.name === name)) {
+                alert('Ce joueur existe déjà !');
+                return;
+            }
+            
+            data.participants.push({
+                id: Date.now(),
+                name: name,
+                team: team || 'Sans équipe'
+            });
+            
+            saveData();
+            displayParticipants();
+            updateSelectors();
+            displayStats();
+            e.target.reset();
+        });
+
+        // Display participants
+        function displayParticipants() {
+            const container = document.getElementById('participantsList');
+            
+            if (data.participants.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👤</div><p>Aucun participant enregistré</p></div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>Nom</th><th>Équipe</th><th>Participations</th><th>Actions</th></tr></thead><tbody>';
+            
+            data.participants.forEach(participant => {
+                const participations = data.results.filter(r => r.playerId === participant.id).length;
+                html += `
+                    <tr>
+                        <td><strong>${participant.name}</strong></td>
+                        <td>${participant.team}</td>
+                        <td>${participations} édition(s)</td>
+                        <td>
+                            <button class="btn btn-danger btn-small" onclick="deleteParticipant(${participant.id})">Supprimer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Delete participant
+        function deleteParticipant(id) {
+            if (!confirm('Supprimer ce participant et tous ses résultats ?')) return;
+            
+            data.participants = data.participants.filter(p => p.id !== id);
+            data.results = data.results.filter(r => r.playerId !== id);
+            saveData();
+            displayParticipants();
+            updateSelectors();
+            displayStats();
+        }
+
+        // Add edition
+        document.getElementById('addEditionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('editionName').value.trim();
+            const date = document.getElementById('editionDate').value;
+            
+            data.editions.push({
+                id: Date.now(),
+                name: name,
+                date: date
+            });
+            
+            saveData();
+            displayEditions();
+            updateSelectors();
+            displayStats();
+            displayResultsEditionSelector();
+            e.target.reset();
+        });
+
+        // Display editions
+        function displayEditions() {
+            const container = document.getElementById('editionsList');
+            
+            if (data.editions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><p>Aucune édition créée</p></div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>Nom</th><th>Date</th><th>Participants</th><th>Actions</th></tr></thead><tbody>';
+            
+            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(edition => {
+                const resultsCount = data.results.filter(r => r.editionId === edition.id).length;
+                const dateFormatted = new Date(edition.date).toLocaleDateString('fr-FR');
+                
+                html += `
+                    <tr>
+                        <td><strong>${edition.name}</strong></td>
+                        <td>${dateFormatted}</td>
+                        <td>${resultsCount} résultat(s)</td>
+                        <td>
+                            <button class="btn btn-danger btn-small" onclick="deleteEdition(${edition.id})">Supprimer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Delete edition
+        function deleteEdition(id) {
+            if (!confirm('Supprimer cette édition et tous ses résultats ?')) return;
+            
+            data.editions = data.editions.filter(e => e.id !== id);
+            data.results = data.results.filter(r => r.editionId !== id);
+            saveData();
+            displayEditions();
+            updateSelectors();
+            displayStats();
+            displayResultsEditionSelector();
+        }
+
+        // Update selectors
+        function updateSelectors() {
+            // Edition selector
+            const editionSelect = document.getElementById('resultEdition');
+            editionSelect.innerHTML = '<option value="">Sélectionner une édition</option>';
+            data.editions.forEach(edition => {
+                editionSelect.innerHTML += `<option value="${edition.id}">${edition.name}</option>`;
+            });
+            
+            // Player selector
+            const playerSelect = document.getElementById('resultPlayer');
+            playerSelect.innerHTML = '<option value="">Sélectionner un joueur</option>';
+            data.participants.forEach(participant => {
+                playerSelect.innerHTML += `<option value="${participant.id}">${participant.name}</option>`;
+            });
+        }
+
+        // Add result
+        document.getElementById('addResultForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const editionId = parseInt(document.getElementById('resultEdition').value);
+            const playerId = parseInt(document.getElementById('resultPlayer').value);
+            const position = parseInt(document.getElementById('resultPosition').value);
+            const points = parseInt(document.getElementById('resultPoints').value) || 0;
+            
+            // Check if result already exists
+            if (data.results.some(r => r.editionId === editionId && r.playerId === playerId)) {
+                alert('Un résultat existe déjà pour ce joueur dans cette édition !');
+                return;
+            }
+            
+            data.results.push({
+                id: Date.now(),
+                editionId: editionId,
+                playerId: playerId,
+                position: position,
+                points: points
+            });
+            
+            saveData();
+            displayResults();
+            displayStats();
+            e.target.reset();
+        });
+
+        // Display results edition selector
+        function displayResultsEditionSelector() {
+            const container = document.getElementById('resultsEditionSelector');
+            
+            if (data.editions.length === 0) {
+                container.innerHTML = '<p style="color: var(--color-text-secondary);">Aucune édition disponible</p>';
+                return;
+            }
+            
+            let html = '<span style="color: var(--color-text-secondary); margin-right: 10px;">Filtrer par édition:</span>';
+            html += '<div class="edition-badge active" data-edition="all">Toutes</div>';
+            
+            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(edition => {
+                html += `<div class="edition-badge" data-edition="${edition.id}">${edition.name}</div>`;
+            });
+            
+            container.innerHTML = html;
+            
+            container.querySelectorAll('.edition-badge').forEach(badge => {
+                badge.addEventListener('click', () => {
+                    container.querySelectorAll('.edition-badge').forEach(b => b.classList.remove('active'));
+                    badge.classList.add('active');
+                    displayResults(badge.dataset.edition === 'all' ? null : parseInt(badge.dataset.edition));
+                });
+            });
+        }
+
+        // Display results
+        function displayResults(filterEditionId = null) {
+            const container = document.getElementById('resultsDisplay');
+            
+            let filteredResults = data.results;
+            if (filterEditionId) {
+                filteredResults = data.results.filter(r => r.editionId === filterEditionId);
+            }
+            
+            if (filteredResults.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏁</div><p>Aucun résultat enregistré</p></div>';
+                return;
+            }
+            
+            // Group by edition
+            const byEdition = {};
+            filteredResults.forEach(result => {
+                if (!byEdition[result.editionId]) {
+                    byEdition[result.editionId] = [];
+                }
+                byEdition[result.editionId].push(result);
+            });
+            
+            let html = '';
+            Object.keys(byEdition).forEach(editionId => {
+                const edition = data.editions.find(e => e.id === parseInt(editionId));
+                const results = byEdition[editionId].sort((a, b) => a.position - b.position);
+                
+                html += `<h3 style="margin-top: 30px; margin-bottom: 15px; color: var(--color-accent);">${edition.name} - ${new Date(edition.date).toLocaleDateString('fr-FR')}</h3>`;
+                html += '<table><thead><tr><th>Position</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Actions</th></tr></thead><tbody>';
+                
+                results.forEach(result => {
+                    const player = data.participants.find(p => p.id === result.playerId);
+                    const positionClass = result.position <= 3 ? `position-${result.position}` : 'position-other';
+                    
+                    html += `
+                        <tr>
+                            <td><span class="position-badge ${positionClass}">${result.position}</span></td>
+                            <td><strong>${player.name}</strong></td>
+                            <td>${player.team}</td>
+                            <td>${result.points}</td>
+                            <td>
+                                <button class="btn btn-danger btn-small" onclick="deleteResult(${result.id})">Supprimer</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Delete result
+        function deleteResult(id) {
+            if (!confirm('Supprimer ce résultat ?')) return;
+            
+            data.results = data.results.filter(r => r.id !== id);
+            saveData();
+            displayResults();
+            displayStats();
+        }
+
+        // Display general ranking
+        function displayGeneralRanking() {
+            const container = document.getElementById('generalRanking');
+            
+            if (data.results.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>Aucun résultat pour calculer le classement</p></div>';
+                return;
+            }
+            
+            // Calculate total points per player
+            const playerPoints = {};
+            data.participants.forEach(p => {
+                playerPoints[p.id] = {
+                    player: p,
+                    totalPoints: 0,
+                    participations: 0,
+                    bestPosition: Infinity,
+                    wins: 0
+                };
+            });
+            
+            data.results.forEach(result => {
+                if (playerPoints[result.playerId]) {
+                    playerPoints[result.playerId].totalPoints += result.points;
+                    playerPoints[result.playerId].participations++;
+                    if (result.position < playerPoints[result.playerId].bestPosition) {
+                        playerPoints[result.playerId].bestPosition = result.position;
+                    }
+                    if (result.position === 1) {
+                        playerPoints[result.playerId].wins++;
+                    }
+                }
+            });
+            
+            // Sort by total points
+            const ranking = Object.values(playerPoints)
+                .filter(p => p.participations > 0)
+                .sort((a, b) => b.totalPoints - a.totalPoints);
+            
+            let html = '<table><thead><tr><th>Position</th><th>Joueur</th><th>Équipe</th><th>Points totaux</th><th>Participations</th><th>Victoires</th><th>Meilleur résultat</th></tr></thead><tbody>';
+            
+            ranking.forEach((player, index) => {
+                const positionClass = (index + 1) <= 3 ? `position-${index + 1}` : 'position-other';
+                
+                html += `
+                    <tr>
+                        <td><span class="position-badge ${positionClass}">${index + 1}</span></td>
+                        <td><strong>${player.player.name}</strong></td>
+                        <td>${player.player.team}</td>
+                        <td><strong>${player.totalPoints}</strong></td>
+                        <td>${player.participations}</td>
+                        <td>${player.wins} 🏆</td>
+                        <td>${player.bestPosition === Infinity ? '-' : player.bestPosition}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Display stats
+        function displayStats() {
+            document.getElementById('totalParticipants').textContent = data.participants.length;
+            document.getElementById('totalEditions').textContent = data.editions.length;
+            document.getElementById('totalResults').textContent = data.results.length;
+            
+            const container = document.getElementById('playerStats');
+            
+            if (data.participants.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><p>Aucune statistique disponible</p></div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>Joueur</th><th>Participations</th><th>Podiums</th><th>Victoires</th><th>Moy. Position</th></tr></thead><tbody>';
+            
+            data.participants.forEach(participant => {
+                const results = data.results.filter(r => r.playerId === participant.id);
+                const participations = results.length;
+                const podiums = results.filter(r => r.position <= 3).length;
+                const wins = results.filter(r => r.position === 1).length;
+                const avgPosition = participations > 0 
+                    ? (results.reduce((sum, r) => sum + r.position, 0) / participations).toFixed(1)
+                    : '-';
+                
+                if (participations > 0) {
+                    html += `
+                        <tr>
+                            <td><strong>${participant.name}</strong></td>
+                            <td>${participations}</td>
+                            <td>${podiums}</td>
+                            <td>${wins}</td>
+                            <td>${avgPosition}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Initialize
+        loadData();
+        displayParticipants();
+        displayEditions();
+        updateSelectors();
+        displayStats();
+        displayResultsEditionSelector();
+        
+        // Test localStorage
+        console.log('LocalStorage disponible:', typeof(Storage) !== "undefined");
+        console.log('Données chargées:', data);
+    </script>
+</body>
+</html>
+
