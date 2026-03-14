@@ -292,6 +292,55 @@
             gap: 15px;
         }
 
+        .admin-only {
+            display: none;
+        }
+
+        body.admin-mode .admin-only {
+            display: block;
+        }
+
+        body.admin-mode .admin-only-inline {
+            display: inline-block;
+        }
+
+        .admin-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--color-bg-elevated);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-btn:hover {
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        .admin-btn.active {
+            background: var(--color-warning);
+            border-color: var(--color-warning);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .admin-indicator {
+            display: none;
+            background: var(--color-warning);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        body.admin-mode .admin-indicator {
+            display: inline-block;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
@@ -313,9 +362,15 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🏆 Trackmania Cup Manager</h1>
-            <p class="subtitle">Gestion complète de vos compétitions Trackmania avec historique et statistiques</p>
+        <header style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1>🏆 Trackmania Cup Manager</h1>
+                <p class="subtitle">Gestion complète de vos compétitions Trackmania avec historique et statistiques</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="admin-indicator">⚙️ Mode Admin</span>
+                <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
+            </div>
         </header>
 
         <div class="tabs">
@@ -328,7 +383,7 @@
 
         <!-- PARTICIPANTS TAB -->
         <div class="tab-content active" id="participants">
-            <div class="card">
+            <div class="card admin-only">
                 <h2>Ajouter un participant</h2>
                 <form id="addParticipantForm">
                     <div class="form-row">
@@ -353,7 +408,7 @@
 
         <!-- EDITIONS TAB -->
         <div class="tab-content" id="editions">
-            <div class="card">
+            <div class="card admin-only">
                 <h2>Créer une édition</h2>
                 <form id="addEditionForm">
                     <div class="form-row">
@@ -378,7 +433,7 @@
 
         <!-- RESULTS TAB -->
         <div class="tab-content" id="results">
-            <div class="card">
+            <div class="card admin-only">
                 <h2>Enregistrer un résultat</h2>
                 <form id="addResultForm">
                     <div class="form-row">
@@ -462,6 +517,28 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const ADMIN_PASSWORD = 'cup2026';
+        let isAdmin = false;
+
+        window.toggleAdmin = () => {
+            if (isAdmin) {
+                isAdmin = false;
+                document.body.classList.remove('admin-mode');
+                document.getElementById('adminToggleBtn').classList.remove('active');
+                document.getElementById('adminToggleBtn').textContent = '⚙️ Admin';
+            } else {
+                const pwd = prompt('Mot de passe admin :');
+                if (pwd === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.body.classList.add('admin-mode');
+                    document.getElementById('adminToggleBtn').classList.add('active');
+                    document.getElementById('adminToggleBtn').textContent = '🔓 Admin actif';
+                } else if (pwd !== null) {
+                    alert('Mot de passe incorrect.');
+                }
+            }
+        };
+
         let data = {
             participants: [],
             editions: [],
@@ -532,14 +609,13 @@
             let html = '<table><thead><tr><th>Nom</th><th>Équipe</th><th>Participations</th><th>Actions</th></tr></thead><tbody>';
             data.participants.forEach(participant => {
                 const participations = data.results.filter(r => r.playerId === participant.id).length;
+                const deleteBtn = isAdmin ? `<button class="btn btn-danger btn-small" onclick="deleteParticipant('${participant.id}')">Supprimer</button>` : '';
                 html += `
                     <tr>
                         <td><strong>${participant.name}</strong></td>
                         <td>${participant.team}</td>
                         <td>${participations} édition(s)</td>
-                        <td>
-                            <button class="btn btn-danger btn-small" onclick="deleteParticipant('${participant.id}')">Supprimer</button>
-                        </td>
+                        <td>${deleteBtn}</td>
                     </tr>
                 `;
             });
@@ -567,14 +643,13 @@
             data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(edition => {
                 const resultsCount = data.results.filter(r => r.editionId === edition.id).length;
                 const dateFormatted = new Date(edition.date).toLocaleDateString('fr-FR');
+                const deleteBtn = isAdmin ? `<button class="btn btn-danger btn-small" onclick="deleteEdition('${edition.id}')">Supprimer</button>` : '';
                 html += `
                     <tr>
                         <td><strong>${edition.name}</strong></td>
                         <td>${dateFormatted}</td>
                         <td>${resultsCount} résultat(s)</td>
-                        <td>
-                            <button class="btn btn-danger btn-small" onclick="deleteEdition('${edition.id}')">Supprimer</button>
-                        </td>
+                        <td>${deleteBtn}</td>
                     </tr>
                 `;
             });
@@ -659,15 +734,14 @@
                     const player = data.participants.find(p => p.id === result.playerId);
                     if (!player) return;
                     const positionClass = result.position <= 3 ? `position-${result.position}` : 'position-other';
+                    const deleteBtn = isAdmin ? `<button class="btn btn-danger btn-small" onclick="deleteResult('${result.id}')">Supprimer</button>` : '';
                     html += `
                         <tr>
                             <td><span class="position-badge ${positionClass}">${result.position}</span></td>
                             <td><strong>${player.name}</strong></td>
                             <td>${player.team}</td>
                             <td>${result.points}</td>
-                            <td>
-                                <button class="btn btn-danger btn-small" onclick="deleteResult('${result.id}')">Supprimer</button>
-                            </td>
+                            <td>${deleteBtn}</td>
                         </tr>
                     `;
                 });
