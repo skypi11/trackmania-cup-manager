@@ -506,6 +506,50 @@
         </div>
     </div>
 
+    <!-- EDIT PARTICIPANT MODAL -->
+    <div class="modal-overlay" id="editParticipantModal">
+        <div class="modal">
+            <h2>✏️ Modifier le joueur</h2>
+            <form id="editParticipantForm">
+                <input type="hidden" id="editParticipantId">
+                <div class="form-group">
+                    <label for="editPlayerName">Pseudo *</label>
+                    <input type="text" id="editPlayerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPlayerTeam">Équipe</label>
+                    <input type="text" id="editPlayerTeam" placeholder="Sans équipe">
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditParticipant()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT EDITION MODAL -->
+    <div class="modal-overlay" id="editEditionModal">
+        <div class="modal">
+            <h2>✏️ Modifier l'édition</h2>
+            <form id="editEditionForm">
+                <input type="hidden" id="editEditionId">
+                <div class="form-group">
+                    <label for="editEditionName">Nom *</label>
+                    <input type="text" id="editEditionName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEditionDate">Date *</label>
+                    <input type="date" id="editEditionDate" required>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditEdition()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal">
@@ -530,7 +574,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -604,6 +648,50 @@
             } catch {
                 document.getElementById('loginError').style.display = 'block';
             }
+        });
+
+        // Edit participant
+        window.openEditParticipant = (id) => {
+            const p = data.participants.find(p => p.id === id);
+            if (!p) return;
+            document.getElementById('editParticipantId').value = id;
+            document.getElementById('editPlayerName').value = p.name;
+            document.getElementById('editPlayerTeam').value = p.team === 'Sans équipe' ? '' : p.team;
+            document.getElementById('editParticipantModal').classList.add('open');
+        };
+        window.closeEditParticipant = () => {
+            document.getElementById('editParticipantModal').classList.remove('open');
+        };
+        document.getElementById('editParticipantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editParticipantId').value;
+            const name = document.getElementById('editPlayerName').value.trim();
+            const team = document.getElementById('editPlayerTeam').value.trim();
+            const duplicate = data.participants.find(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== id);
+            if (duplicate) { alert('Ce pseudo est déjà utilisé !'); return; }
+            await updateDoc(doc(db, 'participants', id), { name, team: team || 'Sans équipe' });
+            closeEditParticipant();
+        });
+
+        // Edit edition
+        window.openEditEdition = (id) => {
+            const e = data.editions.find(e => e.id === id);
+            if (!e) return;
+            document.getElementById('editEditionId').value = id;
+            document.getElementById('editEditionName').value = e.name;
+            document.getElementById('editEditionDate').value = e.date;
+            document.getElementById('editEditionModal').classList.add('open');
+        };
+        window.closeEditEdition = () => {
+            document.getElementById('editEditionModal').classList.remove('open');
+        };
+        document.getElementById('editEditionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editEditionId').value;
+            const name = document.getElementById('editEditionName').value.trim();
+            const date = document.getElementById('editEditionDate').value;
+            await updateDoc(doc(db, 'editions', id), { name, date });
+            closeEditEdition();
         });
 
         // Delete functions (global for onclick)
@@ -685,7 +773,7 @@
             filtered.forEach(p => {
                 const quals = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').length;
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
-                const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">Supprimer</button></td>` : '';
+                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
                 html += `<tr>
                     <td><strong>${p.name}</strong></td>
                     <td style="color:var(--color-text-secondary)">${p.team}</td>
@@ -720,7 +808,7 @@
             data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
                 const quals = data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
                 const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
-                const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">Supprimer</button></td>` : '';
+                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button></td>` : '';
                 html += `<tr>
                     <td><strong>${e.name}</strong></td>
                     <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
@@ -763,6 +851,15 @@
             const entry = { editionId, playerId, phase };
             if (position) entry.position = position;
             await addDoc(collection(db, 'results'), entry);
+
+            // Auto-add qualification if adding a finale result and not already in quals
+            if (phase === 'finale') {
+                const alreadyInQuals = data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === 'qualification');
+                if (!alreadyInQuals) {
+                    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'qualification' });
+                }
+            }
+
             e.target.reset();
             document.getElementById('positionField').style.display = 'none';
         });
