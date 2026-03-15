@@ -44,6 +44,62 @@
             transition: opacity 0.4s;
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        /* Auth overlay */
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--color-bg-primary);
+            z-index: 1500;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .auth-overlay.open { display: flex; }
+        .auth-box {
+            background: var(--color-bg-secondary);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+        .auth-box .lock-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+        .auth-box h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; }
+        .auth-box p { color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 28px; line-height: 1.6; }
+        .btn-google {
+            width: 100%;
+            padding: 12px 20px;
+            background: #fff;
+            color: #1a1a1a;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .btn-google:hover { background: #f0f0f0; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        .btn-google:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .auth-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.3);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+        .auth-back-link:hover { color: rgba(255,255,255,0.7); }
         .spinner {
             width: 48px; height: 48px;
             border: 4px solid var(--color-bg-elevated);
@@ -454,6 +510,20 @@
         <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Chargement...</p>
     </div>
 
+    <!-- Auth guard overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-box">
+            <div class="lock-icon">🔒</div>
+            <h2>Connexion requise</h2>
+            <p>Vous devez être connecté pour accéder aux résultats et classements de la <span id="authCupName">Springs Monthly Cup</span>.</p>
+            <button class="btn-google" id="authGoogleBtn" onclick="authGoogleSignIn()">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
+                Se connecter avec Google
+            </button>
+            <a href="trackmania.html" class="auth-back-link">← Retour à l'accueil</a>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <div style="display: flex; align-items: center; gap: 20px;">
@@ -496,6 +566,10 @@
                         <div class="form-group">
                             <label for="editionDate">Date *</label>
                             <input type="date" id="editionDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editionTime">Heure</label>
+                            <input type="time" id="editionTime">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Créer</button>
@@ -659,6 +733,7 @@
         document.title = `${CUP.name} — Trackmania`;
         document.getElementById('cupTitle').textContent = CUP.name;
         document.getElementById('cupSubtitle').textContent = `Springs E-Sport — ${CUP.label} — Résultats & Classements`;
+        document.getElementById('authCupName').textContent = CUP.name;
 
         // Helper: get player display name (handles both 'pseudo' and 'name' fields)
         const pName = p => p.pseudo || p.name || 'Inconnu';
@@ -682,25 +757,48 @@
                 document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
+        // Auth guard sign-in
+        window.authGoogleSignIn = async () => {
+            const btn = document.getElementById('authGoogleBtn');
+            btn.disabled = true; btn.textContent = 'Connexion...';
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch(err) {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg> Se connecter avec Google`;
+                if (err.code !== 'auth/popup-closed-by-user') alert('Erreur de connexion Google.');
+            }
+        };
+
         // Auth
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
-            if (user) {
-                try {
-                    const [adminSnap, profileSnap] = await Promise.all([
-                        getDoc(doc(db, 'admins', user.uid)),
-                        getDoc(doc(db, 'users', user.uid))
-                    ]);
-                    isAdmin = adminSnap.exists();
-                    currentUserProfile = profileSnap.exists() ? profileSnap.data() : null;
-                } catch {
-                    isAdmin = false;
-                    currentUserProfile = null;
-                }
-            } else {
+            const authOverlay = document.getElementById('authOverlay');
+
+            if (!user) {
+                isAdmin = false;
+                currentUserProfile = null;
+                // Show auth guard, hide loading
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                authOverlay.classList.add('open');
+                return;
+            }
+
+            // User is logged in — hide auth overlay
+            authOverlay.classList.remove('open');
+
+            try {
+                const [adminSnap, profileSnap] = await Promise.all([
+                    getDoc(doc(db, 'admins', user.uid)),
+                    getDoc(doc(db, 'users', user.uid))
+                ]);
+                isAdmin = adminSnap.exists();
+                currentUserProfile = profileSnap.exists() ? profileSnap.data() : null;
+            } catch {
                 isAdmin = false;
                 currentUserProfile = null;
             }
+
             const btn = document.getElementById('adminToggleBtn');
             if (isAdmin) {
                 document.body.classList.add('admin-mode');
@@ -854,9 +952,11 @@
         // Add edition
         document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const time = document.getElementById('editionTime').value;
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: document.getElementById('editionDate').value,
+                ...(time ? { time } : {}),
                 cupId
             });
             e.target.reset();
@@ -887,6 +987,7 @@
                 const cardClass = isPast ? '' : 'upcoming';
                 const statusLabel = isPast ? 'Passée' : 'À venir';
                 const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const cardTime = e.time ? ` · ${e.time}` : '';
                 const quals = data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
                 const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
                 const actionLabel = isPast ? 'Voir les résultats →' : 'S\'inscrire →';
@@ -900,9 +1001,9 @@
                 html += `<div class="edition-card-item ${cardClass}" onclick="openEditionDetail('${e.id}')">
                     <div class="edition-card-status">${statusLabel}</div>
                     <div class="edition-card-name">${e.name}</div>
-                    <div class="edition-card-date">📅 ${dateStr}</div>
+                    <div class="edition-card-date">📅 ${dateStr}${cardTime}</div>
                     <div class="edition-card-meta">
-                        <span>🎯 ${quals} qualifié${quals !== 1 ? 's' : ''}</span>
+                        <span>👥 ${quals} participant${quals !== 1 ? 's' : ''}</span>
                         ${isPast ? `<span>🏆 ${finals} finaliste${finals !== 1 ? 's' : ''}</span>` : ''}
                     </div>
                     <div class="edition-card-action">${actionLabel}</div>
@@ -974,8 +1075,9 @@
                 const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
                 const qualResults = edResults.filter(r => r.phase === 'qualification');
 
+                const timeStr = e.time ? ` à ${e.time}` : '';
                 html += `<div class="card">
-                    <h2>${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}</span></h2>`;
+                    <h2>${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span></h2>`;
 
                 if (finaleResults.length > 0) {
                     const adminCol = isAdmin ? '<th></th>' : '';
@@ -1016,24 +1118,47 @@
                 html += '</div>';
 
             } else {
-                // Upcoming edition — registration
+                // Upcoming edition — info + participants + registration
                 const isRegistered = currentUser && data.participants.some(p => p.userId === currentUser.uid);
+                const timeStr = e.time ? ` à ${e.time}` : '';
+
+                // Registration button / status
+                let registrationHtml = '';
+                if (!currentUser) {
+                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">Connectez-vous pour vous inscrire.</p>`;
+                } else if (isRegistered) {
+                    registrationHtml = `<div class="registered-badge">✓ Vous êtes inscrit dans la compétition</div>`;
+                } else if (!currentUserProfile) {
+                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">Complétez votre profil depuis la page d'accueil pour vous inscrire.</p>`;
+                } else {
+                    registrationHtml = `<button class="btn btn-primary" onclick="registerForCup()">S'inscrire dans la compétition</button>`;
+                }
+
+                // Participants list
+                const participantsSorted = [...data.participants].sort((a, b) => pName(a).localeCompare(pName(b)));
+                let participantsHtml = '';
+                if (participantsSorted.length === 0) {
+                    participantsHtml = `<p style="color:var(--color-text-secondary);font-size:0.88rem">Aucun participant pour l'instant.</p>`;
+                } else {
+                    participantsHtml = '<div class="chips" style="margin-top:8px">';
+                    participantsSorted.forEach(p => {
+                        const isMe = currentUser && p.userId === currentUser.uid;
+                        participantsHtml += `<span class="chip" style="${isMe ? 'background:rgba(0,217,54,0.15);color:var(--color-accent);' : ''}">${pName(p)}${isMe ? ' ✓' : ''}</span>`;
+                    });
+                    participantsHtml += '</div>';
+                }
 
                 html = `<div class="card">
                     <h2>📅 ${e.name}</h2>
-                    <p style="color:var(--color-text-secondary);margin-bottom:20px">Date : <strong style="color:var(--color-text-primary)">${dateStr}</strong></p>`;
-
-                if (!currentUser) {
-                    html += `<p style="color:var(--color-text-secondary);font-size:0.9rem">Connectez-vous pour vous inscrire à cette édition.</p>`;
-                } else if (isRegistered) {
-                    html += `<div class="registered-badge">✓ Vous êtes inscrit dans la compétition</div>`;
-                } else if (!currentUserProfile) {
-                    html += `<p style="color:var(--color-text-secondary);font-size:0.9rem">Complétez votre profil depuis la page d'accueil pour vous inscrire.</p>`;
-                } else {
-                    html += `<button class="btn btn-primary" onclick="registerForCup()">S'inscrire dans la compétition</button>`;
-                }
-
-                html += '</div>';
+                    <p style="color:var(--color-text-secondary);margin-bottom:24px">
+                        Date : <strong style="color:var(--color-text-primary)">${dateStr}${timeStr}</strong>
+                    </p>
+                    ${registrationHtml}
+                    <div style="margin-top:28px">
+                        <div class="phase-title" style="margin-top:0">👥 Participants inscrits (${participantsSorted.length})</div>
+                        ${participantsHtml}
+                    </div>
+                </div>`;
             }
 
             content.innerHTML = html;
