@@ -7,16 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --color-bg-primary: #0f172a;
-            --color-bg-secondary: #1e293b;
-            --color-bg-elevated: #334155;
-            --color-text-primary: #f1f5f9;
-            --color-text-secondary: #94a3b8;
-            --color-accent: #38bdf8;
-            --color-accent-hover: #0ea5e9;
+            --color-bg-primary: #1a1a1a;
+            --color-bg-secondary: #222222;
+            --color-bg-elevated: #2e2e2e;
+            --color-text-primary: #f0f0f0;
+            --color-text-secondary: #888888;
+            --color-accent: #00D936;
+            --color-accent-hover: #00ff3f;
             --color-success: #22c55e;
             --color-warning: #f59e0b;
             --color-danger: #ef4444;
+            --springs-orange: #FFB800;
+            --springs-purple: #7B2FBE;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,12 +57,12 @@
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
         header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            padding: 28px 32px;
+            background: #222222;
+            padding: 20px 32px;
             border-radius: 16px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-            border: 1px solid rgba(56, 189, 248, 0.1);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 217, 54, 0.12);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -68,13 +70,36 @@
             gap: 15px;
         }
 
+        .logo-wrap { line-height: 1; }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+        .logo .p  { color: var(--springs-orange); }
+        .logo .i1 { color: var(--springs-purple); }
+        .logo .s2 { color: var(--springs-orange); }
+        .logo-sub {
+            font-size: 0.55rem;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        .header-center { text-align: center; }
+
         h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            font-size: 1.9rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00D936, #00ff3f);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-top: 4px; }
@@ -153,7 +178,7 @@
         input:focus, select:focus {
             outline: none;
             border-color: var(--color-accent);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+            box-shadow: 0 0 0 3px rgba(0, 217, 54, 0.12);
         }
 
         .btn {
@@ -169,7 +194,7 @@
             gap: 5px;
         }
         .btn-primary { background: var(--color-accent); color: var(--color-bg-primary); }
-        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,189,248,0.3); }
+        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,217,54,0.3); }
         .btn-danger { background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
         .btn-danger:hover { background: var(--color-danger); color: white; }
         .btn-secondary { background: var(--color-bg-elevated); color: var(--color-text-primary); }
@@ -197,7 +222,7 @@
         .badge-other { background: var(--color-bg-elevated); color: var(--color-text-secondary); }
 
         .pts-badge {
-            background: rgba(56,189,248,0.12);
+            background: rgba(0,217,54,0.12);
             color: var(--color-accent);
             padding: 2px 8px;
             border-radius: 12px;
@@ -224,7 +249,7 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--color-accent), #818cf8);
+            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange));
         }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); line-height: 1; margin: 8px 0 4px; }
         .stat-label { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
@@ -351,14 +376,21 @@
 
     <div class="container">
         <header>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,0.4);text-decoration:none;font-size:0.85rem;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='rgba(255,255,255,0.1)'">← Accueil</a>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="logo-wrap">
+                    <div class="logo">
+                        <span>S</span><span class="p">P</span><span>R</span><span class="i1">I</span><span>NG</span><span class="s2">S</span>
+                    </div>
+                    <div class="logo-sub">Esport</div>
+                </div>
+                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);"></div>
                 <div>
-                    <h1>🏆 Trackmania Cup</h1>
-                    <p class="subtitle">Résultats et classements de la Monthly Cup</p>
+                    <h1>Trackmania Cup</h1>
+                    <p class="subtitle">Springs Monthly Cup — Résultats & Classements</p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
+                <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
                 <span class="admin-indicator">⚙️ Mode Admin</span>
                 <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
             </div>
