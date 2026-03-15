@@ -699,6 +699,7 @@
     const provider = new GoogleAuthProvider();
     let currentUser = null;
     let isAdminUser = false;
+    let hasProfile  = false; // true once user has saved their first-time profile
     let authReady = false; // true once Firebase has determined the auth state
 
     const FIELDS = ['tm-description', 'tm-event', 'rl-description', 'rl-event'];
@@ -741,6 +742,7 @@
         }
 
         if (isAdminUser) {
+            hasProfile = true;
             activateAdminUI();
             closeAccount();
             return;
@@ -750,16 +752,19 @@
         try {
             const userSnap = await getDoc(doc(db, 'users', user.uid));
             if (userSnap.exists()) {
+                hasProfile = true;
                 activatePlayerUI(userSnap.data().pseudo);
                 closeAccount();
             } else {
                 // Première connexion Google : demander le pseudo
+                hasProfile = false;
                 activatePlayerUI(user.displayName || 'Joueur');
                 document.getElementById('accountModal').classList.add('open');
                 document.getElementById('setupPseudo').value = user.displayName || '';
                 showView('view-setup');
             }
         } catch {
+            hasProfile = true;
             activatePlayerUI(user.displayName || 'Joueur');
             closeAccount();
         }
@@ -803,6 +808,10 @@
             showView('view-auth');
         } else if (isAdminUser) {
             showView('view-admin');
+        } else if (!hasProfile) {
+            // User logged in but never completed setup
+            document.getElementById('setupPseudo').value = currentUser.displayName || '';
+            showView('view-setup');
         } else {
             loadProfileView();
             showView('view-profile');
@@ -810,6 +819,8 @@
     };
 
     window.closeAccount = () => {
+        // Block accidental close during first-time profile setup
+        if (currentUser && !hasProfile) return;
         document.getElementById('accountModal').classList.remove('open');
         document.getElementById('profileError').style.display = 'none';
         document.getElementById('profileSuccess').style.display = 'none';
@@ -866,6 +877,7 @@
                 uid, createdAt
             });
             await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
+            hasProfile = true;
             activatePlayerUI(pseudo);
             closeAccount();
         } catch {
@@ -906,10 +918,14 @@
             // Update user profile
             await setDoc(doc(db, 'users', currentUser.uid), { pseudo, team, games }, { merge: true });
 
-            // Sync participant entry (auto-created on registration)
+            // Sync participant entry — create if missing (e.g. setup was skipped)
             const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
             const snap = await getDocs(q);
-            await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+            if (snap.empty) {
+                await addDoc(collection(db, 'participants'), { pseudo, team, userId: currentUser.uid, createdAt: new Date().toISOString() });
+            } else {
+                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+            }
 
             // Update header
             activatePlayerUI(pseudo);

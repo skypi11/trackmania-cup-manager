@@ -542,7 +542,10 @@
             <div style="display: flex; align-items: center; gap: 10px;">
                 <a href="trackmania.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
                 <span class="admin-indicator">⚙️ Mode Admin</span>
-                <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
+                <!-- Player button: visible only for non-admin logged-in users -->
+                <button class="admin-btn" id="playerBtn" onclick="playerSignOut()" style="display:none">👤 ...</button>
+                <!-- Admin button: visible for admins (sign in/out) -->
+                <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
             </div>
         </header>
 
@@ -825,15 +828,21 @@
                 currentUserProfile = null;
             }
 
-            const btn = document.getElementById('adminToggleBtn');
+            const adminBtn  = document.getElementById('adminToggleBtn');
+            const playerBtn = document.getElementById('playerBtn');
             if (isAdmin) {
                 document.body.classList.add('admin-mode');
-                btn.classList.add('active');
-                btn.textContent = '🔓 Déconnexion';
+                adminBtn.style.display  = '';
+                playerBtn.style.display = 'none';
+                adminBtn.classList.add('active');
+                adminBtn.textContent = '🔓 Déconnexion';
             } else {
                 document.body.classList.remove('admin-mode');
-                btn.classList.remove('active');
-                btn.textContent = '⚙️ Admin';
+                adminBtn.style.display  = 'none';
+                playerBtn.style.display = '';
+                adminBtn.classList.remove('active');
+                const pseudo = currentUserProfile?.pseudo || user.displayName || 'Mon compte';
+                playerBtn.textContent = `👤 ${pseudo}`;
             }
             // Mark auth as resolved so loading overlay can hide
             loaded.auth = true;
@@ -846,7 +855,7 @@
 
         window.toggleAdmin = async () => {
             if (isAdmin) {
-                signOut(auth);
+                await signOut(auth);
             } else {
                 try {
                     await signInWithPopup(auth, googleProvider);
@@ -856,6 +865,10 @@
                     }
                 }
             }
+        };
+
+        window.playerSignOut = async () => {
+            if (confirm('Se déconnecter ?')) await signOut(auth);
         };
 
         // Edit participant
@@ -1197,19 +1210,32 @@
                 if (inscriptions.length === 0) {
                     registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>Aucune inscription pour l'instant</p></div>`;
                 } else {
-                    const isAdminCol = isAdmin ? '<th></th>' : '';
-                    registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${isAdminCol}</tr></thead><tbody>`;
+                    const showActionsCol = isAdmin || inscriptions.some(r => {
+                        const p = data.participants.find(p => p.id === r.playerId);
+                        return p && currentUser && p.userId === currentUser.uid;
+                    });
+                    const actionsHeader = showActionsCol ? '<th></th>' : '';
+                    registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${actionsHeader}</tr></thead><tbody>`;
                     inscriptions.forEach((r, i) => {
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
                         const isMe = currentUser && player.userId === currentUser.uid;
                         const meStyle = isMe ? 'background:rgba(0,217,54,0.06)' : '';
-                        const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
+                        let actionCell = '';
+                        if (showActionsCol) {
+                            if (isAdmin) {
+                                actionCell = `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>`;
+                            } else if (isMe) {
+                                actionCell = `<td><button class="btn btn-danger btn-small" onclick="cancelInscription('${r.id}', '${id}')">Annuler</button></td>`;
+                            } else {
+                                actionCell = '<td></td>';
+                            }
+                        }
                         registrantsHtml += `<tr style="${meStyle}">
                             <td style="color:var(--color-text-secondary)">${i + 1}</td>
                             <td><strong>${pName(player)}</strong>${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
-                            ${del}
+                            ${actionCell}
                         </tr>`;
                     });
                     registrantsHtml += '</tbody></table>';
@@ -1279,6 +1305,12 @@
             document.getElementById('editionDetail').classList.remove('open');
             const createCard = document.getElementById('createEditionCard');
             if (createCard) createCard.style.display = '';
+        };
+
+        window.cancelInscription = async (resultId, editionId) => {
+            if (!confirm('Annuler votre inscription à cette édition ?')) return;
+            await deleteDoc(doc(db, 'results', resultId));
+            openEditionDetail(editionId);
         };
 
         window.registerForEdition = async (editionId) => {
