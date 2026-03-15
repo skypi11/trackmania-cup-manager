@@ -567,6 +567,10 @@
                         <input type="text" id="regTeam" placeholder="Votre équipe">
                     </div>
                     <div class="form-group">
+                        <label>Code d'invitation</label>
+                        <input type="text" id="regCode" required placeholder="Code fourni par l'admin">
+                    </div>
+                    <div class="form-group">
                         <label>Je joue à</label>
                         <div class="games-check">
                             <label class="game-check-label">
@@ -664,7 +668,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import {
         getFirestore, doc, getDoc, setDoc, addDoc,
-        collection, query, where, getDocs, updateDoc
+        collection, query, where, getDocs, updateDoc, deleteField
     } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
     import {
         getAuth, createUserWithEmailAndPassword,
@@ -828,8 +832,9 @@
 
     window.handleRegister = async (e) => {
         e.preventDefault();
-        const pseudo = document.getElementById('regPseudo').value.trim();
-        const team   = document.getElementById('regTeam').value.trim();
+        const pseudo    = document.getElementById('regPseudo').value.trim();
+        const team      = document.getElementById('regTeam').value.trim();
+        const enteredCode = document.getElementById('regCode').value.trim();
         const games  = [];
         if (document.getElementById('regGameTM').checked) games.push('trackmania');
         if (document.getElementById('regGameRL').checked) games.push('rocket-league');
@@ -840,7 +845,22 @@
         }
 
         const btn = document.getElementById('registerSubmitBtn');
-        btn.disabled = true; btn.textContent = 'Création...';
+        btn.disabled = true; btn.textContent = 'Vérification...';
+
+        // Vérifier le code d'invitation
+        try {
+            const settingsSnap = await getDoc(doc(db, 'siteContent', 'settings'));
+            const inviteCode = settingsSnap.exists() ? settingsSnap.data().inviteCode : null;
+            if (inviteCode && enteredCode.toLowerCase() !== inviteCode.toLowerCase()) {
+                showRegError('Code d\'invitation incorrect.');
+                btn.disabled = false; btn.textContent = 'Créer mon compte';
+                return;
+            }
+        } catch {
+            // Si la règle Firestore bloque la lecture des settings, on autorise
+        }
+
+        btn.textContent = 'Création...';
 
         try {
             const cred = await createUserWithEmailAndPassword(auth,
@@ -931,13 +951,11 @@
         closeAccount();
     };
 
-    // ── Block card navigation in admin mode ───────────────────────────────────
-
+    // ── En admin : stopper la propagation sur les éléments éditables seulement ──
+    // Les cartes restent cliquables (navigation normale), mais cliquer sur un
+    // texte éditable ne déclenche pas la navigation.
     document.querySelectorAll('.editable').forEach(el => {
-        el.addEventListener('click', e => { if (isAdminUser) e.preventDefault(); });
-    });
-    document.querySelectorAll('.game-card').forEach(card => {
-        card.addEventListener('click', e => { if (isAdminUser) e.preventDefault(); });
+        el.addEventListener('click', e => { if (isAdminUser) e.stopPropagation(); });
     });
 </script>
 

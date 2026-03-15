@@ -609,7 +609,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -639,9 +639,18 @@
                 document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-        // Auth
-        onAuthStateChanged(auth, (user) => {
-            isAdmin = !!user;
+        // Auth — vérifie si l'utilisateur est dans la collection 'admins'
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+                    isAdmin = adminSnap.exists();
+                } catch {
+                    isAdmin = false;
+                }
+            } else {
+                isAdmin = false;
+            }
             const btn = document.getElementById('adminToggleBtn');
             if (isAdmin) {
                 document.body.classList.add('admin-mode');
@@ -1141,26 +1150,32 @@
         };
 
         // Real-time listeners
+        const onErr = (name) => (err) => {
+            console.error('Firestore error (' + name + '):', err);
+            loaded[name] = true;
+            checkLoaded();
+        };
+
         onSnapshot(collection(db, 'participants'), snap => {
             data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             loaded.participants = true;
-            displayParticipants(); updateSelectors(); displayStats(); displayGeneralRanking();
             checkLoaded();
-        });
+            displayParticipants(); updateSelectors(); displayStats(); displayGeneralRanking();
+        }, onErr('participants'));
 
         onSnapshot(collection(db, 'editions'), snap => {
             data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             loaded.editions = true;
-            displayEditions(); updateSelectors(); displayResultsEditionSelector(); displayResults(); displayStats();
             checkLoaded();
-        });
+            displayEditions(); updateSelectors(); displayResultsEditionSelector(); displayResults(); displayStats();
+        }, onErr('editions'));
 
         onSnapshot(collection(db, 'results'), snap => {
             data.results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             loaded.results = true;
-            displayParticipants(); displayEditions(); displayResults(); displayStats(); displayGeneralRanking();
             checkLoaded();
-        });
+            displayParticipants(); displayEditions(); displayResults(); displayStats(); displayGeneralRanking();
+        }, onErr('results'));
     </script>
 </body>
 </html>
