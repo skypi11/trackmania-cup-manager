@@ -699,6 +699,7 @@
     const provider = new GoogleAuthProvider();
     let currentUser = null;
     let isAdminUser = false;
+    let authReady = false; // true once Firebase has determined the auth state
 
     const FIELDS = ['tm-description', 'tm-event', 'rl-description', 'rl-event'];
 
@@ -728,6 +729,7 @@
 
     onAuthStateChanged(auth, async user => {
         currentUser = user;
+        authReady = true;
         if (!user) { deactivateUI(); return; }
 
         // Check if admin
@@ -933,14 +935,14 @@
     // ── Gestion des clics sur les cards ──────────────────────────────────────
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', e => {
+            // Firebase pas encore prêt → laisser naviguer (la page cible gère l'auth)
+            if (!authReady) return;
             // Non connecté → ouvrir le modal de connexion
             if (!currentUser) {
                 e.preventDefault();
                 openAccount();
-                return;
             }
-            // Admin : stopper la navigation si clic sur texte éditable
-            if (isAdminUser) e.preventDefault();
+            // Admin connecté → navigation libre (les éditables gèrent stopPropagation)
         });
     });
 
