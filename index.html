@@ -964,7 +964,12 @@
 
     // Clic sur un élément éditable en admin : ne pas propager vers la carte
     document.querySelectorAll('.editable').forEach(el => {
-        el.addEventListener('click', e => { if (isAdminUser) e.stopPropagation(); });
+        el.addEventListener('click', e => {
+            if (isAdminUser) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
     });
 </script>
 

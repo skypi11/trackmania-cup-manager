@@ -526,18 +526,18 @@
 
     <div class="container">
         <header>
-            <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <a href="trackmania.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
                 <div class="logo-wrap">
                     <img src="Springs Esport.png" alt="Springs Esport" style="height:48px;width:auto;display:block;">
                 </div>
-                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);"></div>
+                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);flex-shrink:0;"></div>
                 <div>
                     <h1 id="cupTitle">Springs Monthly Cup</h1>
                     <p class="subtitle" id="cupSubtitle">Springs E-Sport — En ligne — Résultats & Classements</p>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="trackmania.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
                 <span class="admin-indicator">⚙️ Mode Admin</span>
                 <!-- Player button: visible only for non-admin logged-in users -->
                 <button class="admin-btn" id="playerBtn" onclick="playerSignOut()" style="display:none">👤 ...</button>
@@ -1141,7 +1141,7 @@
 
                 const timeStr = e.time ? ` à ${e.time}` : '';
                 html += `<div class="card">
-                    <h2>${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span></h2>`;
+                    <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span></h2>`;
 
                 if (finaleResults.length > 0) {
                     const adminCol = isAdmin ? '<th></th>' : '';
@@ -1228,7 +1228,7 @@
                     });
                     const showPasswordCol = isMeRegistered && !!e.password;
                     const actionsHeader = showActionsCol ? '<th></th>' : '';
-                    const passwordHeader = showPasswordCol ? '<th>Mot de passe</th>' : '';
+                    const passwordHeader = showPasswordCol ? '<th>Mot de passe du salon</th>' : '';
                     registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${passwordHeader}${actionsHeader}</tr></thead><tbody>`;
                     inscriptions.forEach((r, i) => {
                         const player = data.participants.find(p => p.id === r.playerId);
@@ -1263,7 +1263,7 @@
                 }
 
                 html = `<div class="card">
-                    <h2>📅 ${e.name}</h2>
+                    <h2>🏆 ${e.name}</h2>
                     ${infoHtml}
                     ${registrationHtml}
                     <div style="margin-top:28px">
