@@ -429,6 +429,26 @@
 
         .form-note { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-bottom: 14px; }
 
+        /* Google button */
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 20px;
+            background: #fff;
+            color: #1f1f1f;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .btn-google:hover { background: #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+
         /* Admin view in modal */
         .admin-info-box {
             background: rgba(255,184,0,0.07);
@@ -521,81 +541,59 @@
 <div class="modal-overlay" id="accountModal">
     <div class="modal">
 
-        <!-- VIEW: Auth (login / register) — shown when not logged in -->
+        <!-- VIEW: Auth — shown when not logged in -->
         <div id="view-auth">
-            <div class="modal-tabs">
-                <button class="modal-tab active" id="tabLoginBtn" onclick="switchTab('login')">Se connecter</button>
-                <button class="modal-tab" id="tabRegisterBtn" onclick="switchTab('register')">Créer un compte</button>
-            </div>
+            <h2 style="margin-bottom:10px">Connexion</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:24px;line-height:1.6">
+                Connecte-toi avec Google pour apparaître dans les classements et suivre tes résultats.
+            </p>
+            <button class="btn-google" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+                Se connecter avec Google
+            </button>
+            <p class="modal-error" id="googleError" style="margin-top:12px"></p>
+            <button type="button" class="btn-secondary" onclick="closeAccount()" style="width:100%;margin-top:10px">Annuler</button>
+        </div>
 
-            <!-- Login form -->
-            <div id="form-login">
-                <form id="loginForm" onsubmit="handleLogin(event)">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="loginEmail" required placeholder="votre@email.com">
+        <!-- VIEW: First-time profile setup -->
+        <div id="view-setup" style="display:none">
+            <h2>Complète ton profil</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:20px;line-height:1.6">
+                Bienvenue ! Renseigne ton pseudo de jeu pour apparaître dans les classements.
+            </p>
+            <form id="setupForm" onsubmit="handleSetupSave(event)">
+                <div class="form-group">
+                    <label>Pseudo in-game</label>
+                    <input type="text" id="setupPseudo" required placeholder="Ton pseudo de jeu">
+                </div>
+                <div class="form-group">
+                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                    <input type="text" id="setupTeam" placeholder="Ton équipe">
+                </div>
+                <div class="form-group">
+                    <label>Je joue à</label>
+                    <div class="games-check">
+                        <label class="game-check-label">
+                            <input type="checkbox" id="setupGameTM" value="trackmania">
+                            <div>
+                                <div class="game-label-text">Trackmania</div>
+                                <div class="game-label-sub">Racing</div>
+                            </div>
+                        </label>
+                        <label class="game-check-label">
+                            <input type="checkbox" id="setupGameRL" value="rocket-league">
+                            <div>
+                                <div class="game-label-text">Rocket League</div>
+                                <div class="game-label-sub">Football</div>
+                            </div>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label>Mot de passe</label>
-                        <input type="password" id="loginPassword" required placeholder="••••••••">
-                    </div>
-                    <div class="modal-btns">
-                        <button type="submit" class="btn-primary" id="loginSubmitBtn">Se connecter</button>
-                        <button type="button" class="btn-secondary" onclick="closeAccount()">Annuler</button>
-                    </div>
-                    <p class="modal-error" id="loginError">Email ou mot de passe incorrect.</p>
-                </form>
-            </div>
-
-            <!-- Register form -->
-            <div id="form-register" style="display:none">
-                <form id="registerForm" onsubmit="handleRegister(event)">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="regEmail" required placeholder="votre@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Mot de passe</label>
-                        <input type="password" id="regPassword" required placeholder="Minimum 6 caractères" minlength="6">
-                    </div>
-                    <div class="form-group">
-                        <label>Pseudo in-game</label>
-                        <input type="text" id="regPseudo" required placeholder="Votre pseudo de jeu">
-                    </div>
-                    <div class="form-group">
-                        <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
-                        <input type="text" id="regTeam" placeholder="Votre équipe">
-                    </div>
-                    <div class="form-group">
-                        <label>Code d'invitation</label>
-                        <input type="text" id="regCode" required placeholder="Code fourni par l'admin">
-                    </div>
-                    <div class="form-group">
-                        <label>Je joue à</label>
-                        <div class="games-check">
-                            <label class="game-check-label">
-                                <input type="checkbox" id="regGameTM" value="trackmania">
-                                <div>
-                                    <div class="game-label-text">Trackmania</div>
-                                    <div class="game-label-sub">Racing</div>
-                                </div>
-                            </label>
-                            <label class="game-check-label">
-                                <input type="checkbox" id="regGameRL" value="rocket-league">
-                                <div>
-                                    <div class="game-label-text">Rocket League</div>
-                                    <div class="game-label-sub">Football</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="modal-btns">
-                        <button type="submit" class="btn-primary" id="registerSubmitBtn">Créer mon compte</button>
-                        <button type="button" class="btn-secondary" onclick="closeAccount()">Annuler</button>
-                    </div>
-                    <p class="modal-error" id="registerError"></p>
-                </form>
-            </div>
+                </div>
+                <div class="modal-btns">
+                    <button type="submit" class="btn-primary" id="setupSubmitBtn">Enregistrer</button>
+                </div>
+                <p class="modal-error" id="setupError"></p>
+            </form>
         </div>
 
         <!-- VIEW: Player profile — shown when logged in as player -->
@@ -668,11 +666,11 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import {
         getFirestore, doc, getDoc, setDoc, addDoc,
-        collection, query, where, getDocs, updateDoc, deleteField
+        collection, query, where, getDocs, updateDoc
     } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
     import {
-        getAuth, createUserWithEmailAndPassword,
-        signInWithEmailAndPassword, signOut, onAuthStateChanged
+        getAuth, GoogleAuthProvider, signInWithPopup,
+        signOut, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -688,6 +686,7 @@
     const db   = getFirestore(app);
     const auth = getAuth(app);
 
+    const provider = new GoogleAuthProvider();
     let currentUser = null;
     let isAdminUser = false;
 
@@ -721,7 +720,7 @@
         currentUser = user;
         if (!user) { deactivateUI(); return; }
 
-        // Check if admin (doc exists in 'admins' collection)
+        // Check if admin
         try {
             const adminSnap = await getDoc(doc(db, 'admins', user.uid));
             isAdminUser = adminSnap.exists();
@@ -731,15 +730,23 @@
 
         if (isAdminUser) {
             activateAdminUI();
-        } else {
-            // Load player profile for header display
-            try {
-                const userSnap = await getDoc(doc(db, 'users', user.uid));
-                const pseudo = userSnap.exists() ? userSnap.data().pseudo : user.email;
-                activatePlayerUI(pseudo);
-            } catch {
-                activatePlayerUI(user.email);
+            return;
+        }
+
+        // Check if player has a profile
+        try {
+            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            if (userSnap.exists()) {
+                activatePlayerUI(userSnap.data().pseudo);
+            } else {
+                // Première connexion Google : demander le pseudo
+                activatePlayerUI(user.displayName || 'Joueur');
+                document.getElementById('accountModal').classList.add('open');
+                document.getElementById('setupPseudo').value = user.displayName || '';
+                showView('view-setup');
             }
+        } catch {
+            activatePlayerUI(user.displayName || 'Joueur');
         }
     });
 
@@ -772,7 +779,6 @@
         document.getElementById('accountModal').classList.add('open');
         if (!currentUser) {
             showView('view-auth');
-            switchTab('login');
         } else if (isAdminUser) {
             showView('view-admin');
         } else {
@@ -783,117 +789,70 @@
 
     window.closeAccount = () => {
         document.getElementById('accountModal').classList.remove('open');
-        document.getElementById('loginForm').reset();
-        document.getElementById('registerForm').reset();
-        document.getElementById('loginError').style.display = 'none';
-        document.getElementById('registerError').style.display = 'none';
         document.getElementById('profileError').style.display = 'none';
         document.getElementById('profileSuccess').style.display = 'none';
     };
 
     function showView(id) {
-        ['view-auth', 'view-profile', 'view-admin'].forEach(v => {
+        ['view-auth', 'view-setup', 'view-profile', 'view-admin'].forEach(v => {
             document.getElementById(v).style.display = v === id ? 'block' : 'none';
         });
     }
-
-    window.switchTab = (tab) => {
-        document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
-        document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
-        document.getElementById('tabLoginBtn').classList.toggle('active', tab === 'login');
-        document.getElementById('tabRegisterBtn').classList.toggle('active', tab === 'register');
-    };
 
     // Click outside to close
     document.getElementById('accountModal').addEventListener('click', e => {
         if (e.target === document.getElementById('accountModal')) closeAccount();
     });
 
-    // ── Login ─────────────────────────────────────────────────────────────────
+    // ── Google Sign-In ────────────────────────────────────────────────────────
 
-    window.handleLogin = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('loginSubmitBtn');
+    window.handleGoogleSignIn = async () => {
+        const btn = document.getElementById('googleSignInBtn');
         btn.disabled = true; btn.textContent = 'Connexion...';
         try {
-            await signInWithEmailAndPassword(auth,
-                document.getElementById('loginEmail').value,
-                document.getElementById('loginPassword').value
-            );
-            closeAccount();
-        } catch {
-            document.getElementById('loginError').style.display = 'block';
-        } finally {
-            btn.disabled = false; btn.textContent = 'Se connecter';
-        }
-    };
-
-    // ── Register ──────────────────────────────────────────────────────────────
-
-    window.handleRegister = async (e) => {
-        e.preventDefault();
-        const pseudo    = document.getElementById('regPseudo').value.trim();
-        const team      = document.getElementById('regTeam').value.trim();
-        const enteredCode = document.getElementById('regCode').value.trim();
-        const games  = [];
-        if (document.getElementById('regGameTM').checked) games.push('trackmania');
-        if (document.getElementById('regGameRL').checked) games.push('rocket-league');
-
-        if (games.length === 0) {
-            showRegError('Sélectionnez au moins un jeu.');
-            return;
-        }
-
-        const btn = document.getElementById('registerSubmitBtn');
-        btn.disabled = true; btn.textContent = 'Vérification...';
-
-        // Vérifier le code d'invitation
-        try {
-            const settingsSnap = await getDoc(doc(db, 'siteContent', 'settings'));
-            const inviteCode = settingsSnap.exists() ? settingsSnap.data().inviteCode : null;
-            if (inviteCode && enteredCode.toLowerCase() !== inviteCode.toLowerCase()) {
-                showRegError('Code d\'invitation incorrect.');
-                btn.disabled = false; btn.textContent = 'Créer mon compte';
-                return;
-            }
-        } catch {
-            // Si la règle Firestore bloque la lecture des settings, on autorise
-        }
-
-        btn.textContent = 'Création...';
-
-        try {
-            const cred = await createUserWithEmailAndPassword(auth,
-                document.getElementById('regEmail').value.trim(),
-                document.getElementById('regPassword').value
-            );
-            const uid       = cred.user.uid;
-            const email     = cred.user.email;
-            const createdAt = new Date().toISOString();
-
-            // Save player profile
-            await setDoc(doc(db, 'users', uid), { pseudo, team, games, email, uid, createdAt });
-
-            // Auto-create participant entry for cup managers
-            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
-
-            closeAccount();
+            await signInWithPopup(auth, provider);
+            // onAuthStateChanged prend le relais
         } catch(err) {
-            let msg = 'Une erreur est survenue. Réessayez.';
-            if (err.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
-            else if (err.code === 'auth/weak-password')   msg = 'Mot de passe trop faible (min. 6 caractères).';
-            else if (err.code === 'auth/invalid-email')   msg = 'Adresse email invalide.';
-            showRegError(msg);
-        } finally {
-            btn.disabled = false; btn.textContent = 'Créer mon compte';
+            if (err.code !== 'auth/popup-closed-by-user') {
+                const el = document.getElementById('googleError');
+                el.textContent = 'Erreur de connexion. Réessaye.';
+                el.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Se connecter avec Google`;
         }
     };
 
-    function showRegError(msg) {
-        const el = document.getElementById('registerError');
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
+    // ── First-time profile setup ───────────────────────────────────────────────
+
+    window.handleSetupSave = async (e) => {
+        e.preventDefault();
+        const pseudo = document.getElementById('setupPseudo').value.trim();
+        const team   = document.getElementById('setupTeam').value.trim();
+        const games  = [];
+        if (document.getElementById('setupGameTM').checked) games.push('trackmania');
+        if (document.getElementById('setupGameRL').checked) games.push('rocket-league');
+
+        const btn = document.getElementById('setupSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Enregistrement...';
+        try {
+            const uid = currentUser.uid;
+            const createdAt = new Date().toISOString();
+            await setDoc(doc(db, 'users', uid), {
+                pseudo, team, games,
+                email: currentUser.email,
+                uid, createdAt
+            });
+            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
+            activatePlayerUI(pseudo);
+            closeAccount();
+        } catch {
+            document.getElementById('setupError').textContent = 'Erreur. Réessaye.';
+            document.getElementById('setupError').style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Enregistrer';
+        }
+    };
 
     // ── Profile ───────────────────────────────────────────────────────────────
 
