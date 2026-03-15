@@ -254,11 +254,6 @@
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); line-height: 1; margin: 8px 0 4px; }
         .stat-label { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        .edition-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .edition-badge { padding: 5px 14px; background: var(--color-bg-elevated); border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; border: 1.5px solid transparent; }
-        .edition-badge:hover { border-color: var(--color-accent); color: var(--color-accent); }
-        .edition-badge.active { background: var(--color-accent); color: var(--color-bg-primary); font-weight: 600; }
-
         .empty-state { text-align: center; padding: 50px 20px; color: var(--color-text-secondary); }
         .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; display: block; }
 
@@ -357,7 +352,92 @@
             border-radius: 6px;
         }
 
-        #positionField { display: none; }
+        /* Edition cards */
+        .editions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .edition-card-item {
+            background: var(--color-bg-secondary);
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.06);
+            padding: 20px 22px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .edition-card-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent), transparent);
+        }
+        .edition-card-item.upcoming::before {
+            background: linear-gradient(90deg, var(--color-warning), transparent);
+        }
+        .edition-card-item:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .edition-card-item.upcoming:hover { border-color: var(--color-warning); }
+        .edition-card-status {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--color-accent);
+        }
+        .edition-card-item.upcoming .edition-card-status { color: var(--color-warning); }
+        .edition-card-name { font-size: 1.05rem; font-weight: 700; }
+        .edition-card-date { font-size: 0.83rem; color: var(--color-text-secondary); }
+        .edition-card-meta { display: flex; gap: 14px; font-size: 0.8rem; color: var(--color-text-secondary); }
+        .edition-card-action {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+        .edition-card-item.upcoming .edition-card-action { color: var(--color-warning); }
+        .edition-card-admin { display: flex; gap: 6px; margin-top: 4px; }
+
+        /* Edition detail */
+        .edition-detail { display: none; }
+        .edition-detail.open { display: block; }
+        .edition-detail-back {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--color-text-secondary);
+            border-radius: 8px;
+            padding: 7px 14px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .edition-detail-back:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+        /* Registered badge */
+        .registered-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,217,54,0.1);
+            color: var(--color-accent);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
 
         @media (max-width: 768px) {
             h1 { font-size: 1.5rem; }
@@ -397,15 +477,43 @@
         </header>
 
         <div class="tabs">
-            <button class="tab active" data-tab="participants">👥 Joueurs</button>
-            <button class="tab" data-tab="editions">📅 Éditions</button>
-            <button class="tab" data-tab="results">🏁 Résultats</button>
+            <button class="tab active" data-tab="editions">📅 Éditions</button>
+            <button class="tab" data-tab="participants">👥 Joueurs</button>
             <button class="tab" data-tab="rankings">📊 Classement</button>
             <button class="tab" data-tab="stats">📈 Stats</button>
         </div>
 
+        <!-- EDITIONS -->
+        <div class="tab-content active" id="editions">
+            <div class="card admin-only" id="createEditionCard">
+                <h2>➕ Créer une édition</h2>
+                <form id="addEditionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editionName">Nom *</label>
+                            <input type="text" id="editionName" required placeholder="Ex: Monthly Cup #3">
+                        </div>
+                        <div class="form-group">
+                            <label for="editionDate">Date *</label>
+                            <input type="date" id="editionDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </form>
+            </div>
+
+            <!-- Grid of edition cards -->
+            <div id="editionsList"></div>
+
+            <!-- Edition detail panel -->
+            <div class="edition-detail" id="editionDetail">
+                <button class="edition-detail-back" onclick="closeEditionDetail()">← Retour aux éditions</button>
+                <div id="editionDetailContent"></div>
+            </div>
+        </div>
+
         <!-- JOUEURS -->
-        <div class="tab-content active" id="participants">
+        <div class="tab-content" id="participants">
             <div class="card admin-only">
                 <h2>➕ Ajouter un joueur</h2>
                 <form id="addParticipantForm">
@@ -429,71 +537,6 @@
                     <input type="text" id="searchPlayers" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
                 </div>
                 <div id="participantsList"></div>
-            </div>
-        </div>
-
-        <!-- EDITIONS -->
-        <div class="tab-content" id="editions">
-            <div class="card admin-only">
-                <h2>➕ Créer une édition</h2>
-                <form id="addEditionForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editionName">Nom *</label>
-                            <input type="text" id="editionName" required placeholder="Ex: Monthly Cup #3">
-                        </div>
-                        <div class="form-group">
-                            <label for="editionDate">Date *</label>
-                            <input type="date" id="editionDate" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Créer</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>📅 Éditions</h2>
-                <div id="editionsList"></div>
-            </div>
-        </div>
-
-        <!-- RESULTATS -->
-        <div class="tab-content" id="results">
-            <div class="card admin-only">
-                <h2>➕ Enregistrer un résultat</h2>
-                <form id="addResultForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="resultEdition">Édition *</label>
-                            <select id="resultEdition" required>
-                                <option value="">Sélectionner une édition</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="resultPhase">Phase *</label>
-                            <select id="resultPhase" required onchange="onPhaseChange()">
-                                <option value="">Sélectionner une phase</option>
-                                <option value="qualification">Qualifications</option>
-                                <option value="finale">Finale</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="resultPlayer">Joueur *</label>
-                            <select id="resultPlayer" required>
-                                <option value="">Sélectionner un joueur</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="positionField">
-                            <label for="resultPosition">Position en finale *</label>
-                            <input type="number" id="resultPosition" min="1" placeholder="Ex: 1">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>🏁 Résultats par édition</h2>
-                <div class="edition-selector" id="resultsEditionSelector"></div>
-                <div id="resultsDisplay"></div>
             </div>
         </div>
 
@@ -627,6 +670,9 @@
         const getPoints = (pos) => pos > 0 ? (POINTS_SYSTEM[pos - 1] ?? 1) : 0;
 
         let isAdmin = false;
+        let currentUser = null;
+        let currentUserProfile = null;
+        let currentDetailEditionId = null;
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
         let loaded = { participants: false, editions: false, results: false };
@@ -636,17 +682,24 @@
                 document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
-        // Auth — vérifie si l'utilisateur est dans la collection 'admins'
+        // Auth
         onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
             if (user) {
                 try {
-                    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+                    const [adminSnap, profileSnap] = await Promise.all([
+                        getDoc(doc(db, 'admins', user.uid)),
+                        getDoc(doc(db, 'users', user.uid))
+                    ]);
                     isAdmin = adminSnap.exists();
+                    currentUserProfile = profileSnap.exists() ? profileSnap.data() : null;
                 } catch {
                     isAdmin = false;
+                    currentUserProfile = null;
                 }
             } else {
                 isAdmin = false;
+                currentUserProfile = null;
             }
             const btn = document.getElementById('adminToggleBtn');
             if (isAdmin) {
@@ -660,7 +713,6 @@
             }
             displayParticipants();
             displayEditions();
-            displayResults();
         });
 
         const googleProvider = new GoogleAuthProvider();
@@ -723,7 +775,7 @@
             closeEditEdition();
         });
 
-        // Delete functions (global for onclick)
+        // Delete functions
         window.deleteParticipant = async (id) => {
             if (!confirm('Supprimer ce joueur et tous ses résultats ?')) return;
             for (const r of data.results.filter(r => r.playerId === id))
@@ -743,21 +795,6 @@
             await deleteDoc(doc(db, 'results', id));
         };
 
-        // Phase change: show/hide position field
-        window.onPhaseChange = () => {
-            const phase = document.getElementById('resultPhase').value;
-            const field = document.getElementById('positionField');
-            const input = document.getElementById('resultPosition');
-            if (phase === 'finale') {
-                field.style.display = 'block';
-                input.required = true;
-            } else {
-                field.style.display = 'none';
-                input.required = false;
-                input.value = '';
-            }
-        };
-
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -766,8 +803,7 @@
                 tab.classList.add('active');
                 const id = tab.dataset.tab;
                 document.getElementById(id).classList.add('active');
-                if (id === 'results') { displayResultsEditionSelector(); displayResults(); }
-                else if (id === 'rankings') displayGeneralRanking();
+                if (id === 'rankings') displayGeneralRanking();
                 else if (id === 'stats') displayStats();
             });
         });
@@ -826,121 +862,124 @@
             e.target.reset();
         });
 
-        // Display editions
+        // Display editions as cards
         function displayEditions() {
-            const container = document.getElementById('editionsList');
+            const grid = document.getElementById('editionsList');
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            // If detail is open, refresh it
+            if (currentDetailEditionId) {
+                openEditionDetail(currentDetailEditionId);
+            }
+
             if (data.editions.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📅</span><p>Aucune édition créée</p></div>';
+                grid.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📅</span><p>Aucune édition créée</p></div>';
                 return;
             }
-            const adminCol = isAdmin ? '<th></th>' : '';
-            let html = `<table><thead><tr><th>Nom</th><th>Date</th><th>Qualifiés</th><th>Finalistes</th>${adminCol}</tr></thead><tbody>`;
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
+
+            const sorted = [...data.editions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const upcoming = sorted.filter(e => new Date(e.date) >= today);
+            const past = sorted.filter(e => new Date(e.date) < today);
+
+            let html = '<div class="editions-grid">';
+            [...upcoming, ...past].forEach(e => {
+                const isPast = new Date(e.date) < today;
+                const cardClass = isPast ? '' : 'upcoming';
+                const statusLabel = isPast ? 'Passée' : 'À venir';
+                const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 const quals = data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
                 const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
-                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button></td>` : '';
-                html += `<tr>
-                    <td><strong>${e.name}</strong></td>
-                    <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
-                    <td>${quals}</td>
-                    <td>${finals}</td>
-                    ${del}
-                </tr>`;
+                const actionLabel = isPast ? 'Voir les résultats →' : 'S\'inscrire →';
+
+                const adminBtns = isAdmin ? `
+                    <div class="edition-card-admin" onclick="event.stopPropagation()">
+                        <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️ Modifier</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
+                    </div>` : '';
+
+                html += `<div class="edition-card-item ${cardClass}" onclick="openEditionDetail('${e.id}')">
+                    <div class="edition-card-status">${statusLabel}</div>
+                    <div class="edition-card-name">${e.name}</div>
+                    <div class="edition-card-date">📅 ${dateStr}</div>
+                    <div class="edition-card-meta">
+                        <span>🎯 ${quals} qualifié${quals !== 1 ? 's' : ''}</span>
+                        ${isPast ? `<span>🏆 ${finals} finaliste${finals !== 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                    <div class="edition-card-action">${actionLabel}</div>
+                    ${adminBtns}
+                </div>`;
             });
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            html += '</div>';
+            grid.innerHTML = html;
         }
 
-        // Update form selectors
-        function updateSelectors() {
-            const edSel = document.getElementById('resultEdition');
-            edSel.innerHTML = '<option value="">Sélectionner une édition</option>';
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
-                edSel.innerHTML += `<option value="${e.id}">${e.name}</option>`;
-            });
-            const plSel = document.getElementById('resultPlayer');
-            plSel.innerHTML = '<option value="">Sélectionner un joueur</option>';
-            data.participants.sort((a, b) => pName(a).localeCompare(pName(b))).forEach(p => {
-                plSel.innerHTML += `<option value="${p.id}">${pName(p)}</option>`;
-            });
-        }
+        // Open edition detail
+        window.openEditionDetail = (id) => {
+            currentDetailEditionId = id;
+            const e = data.editions.find(e => e.id === id);
+            if (!e) return;
 
-        // Add result
-        document.getElementById('addResultForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const editionId = document.getElementById('resultEdition').value;
-            const phase = document.getElementById('resultPhase').value;
-            const playerId = document.getElementById('resultPlayer').value;
-            const posVal = document.getElementById('resultPosition').value;
-            const position = phase === 'finale' ? parseInt(posVal) : null;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const isPast = new Date(e.date) < today;
+            const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            if (data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === phase)) {
-                alert('Un résultat existe déjà pour ce joueur dans cette phase !'); return;
-            }
+            const grid = document.getElementById('editionsList');
+            const detail = document.getElementById('editionDetail');
+            const content = document.getElementById('editionDetailContent');
+            const createCard = document.getElementById('createEditionCard');
 
-            const entry = { editionId, playerId, phase };
-            if (position) entry.position = position;
-            await addDoc(collection(db, 'results'), { ...entry, cupId });
-
-            // Auto-add qualification if adding a finale result and not already in quals
-            if (phase === 'finale') {
-                const alreadyInQuals = data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === 'qualification');
-                if (!alreadyInQuals) {
-                    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'qualification', cupId });
-                }
-            }
-
-            e.target.reset();
-            document.getElementById('positionField').style.display = 'none';
-        });
-
-        // Display results edition selector
-        function displayResultsEditionSelector() {
-            const container = document.getElementById('resultsEditionSelector');
-            if (data.editions.length === 0) {
-                container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.9rem">Aucune édition disponible</p>';
-                return;
-            }
-            let html = '<div class="edition-badge active" data-edition="all">Toutes</div>';
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
-                html += `<div class="edition-badge" data-edition="${e.id}">${e.name}</div>`;
-            });
-            container.innerHTML = html;
-            container.querySelectorAll('.edition-badge').forEach(badge => {
-                badge.addEventListener('click', () => {
-                    container.querySelectorAll('.edition-badge').forEach(b => b.classList.remove('active'));
-                    badge.classList.add('active');
-                    displayResults(badge.dataset.edition === 'all' ? null : badge.dataset.edition);
-                });
-            });
-        }
-
-        // Display results
-        window.displayResults = function(filterEditionId = null) {
-            const container = document.getElementById('resultsDisplay');
-            const editions = (filterEditionId
-                ? data.editions.filter(e => e.id === filterEditionId)
-                : data.editions.sort((a, b) => new Date(b.date) - new Date(a.date))
-            );
+            grid.style.display = 'none';
+            if (createCard) createCard.style.display = 'none';
+            detail.classList.add('open');
 
             let html = '';
-            editions.forEach(edition => {
-                const edResults = data.results.filter(r => r.editionId === edition.id);
-                if (edResults.length === 0) return;
 
+            if (isPast) {
+                // Admin result entry form
+                if (isAdmin) {
+                    const playerOptions = data.participants
+                        .sort((a, b) => pName(a).localeCompare(pName(b)))
+                        .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+                    html += `<div class="card">
+                        <h2>➕ Enregistrer un résultat</h2>
+                        <form id="detailAddResultForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phase *</label>
+                                    <select id="detailResultPhase" required onchange="detailOnPhaseChange()">
+                                        <option value="">Sélectionner une phase</option>
+                                        <option value="qualification">Qualifications</option>
+                                        <option value="finale">Finale</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Joueur *</label>
+                                    <select id="detailResultPlayer" required>
+                                        <option value="">Sélectionner un joueur</option>
+                                        ${playerOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group" id="detailPositionField" style="display:none">
+                                    <label>Position en finale *</label>
+                                    <input type="number" id="detailResultPosition" min="1" placeholder="Ex: 1">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </form>
+                    </div>`;
+                }
+
+                // Results display
+                const edResults = data.results.filter(r => r.editionId === e.id);
                 const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
                 const qualResults = edResults.filter(r => r.phase === 'qualification');
 
-                html += `<h3 style="margin: 24px 0 14px; font-size: 1.05rem; color: var(--color-accent);">
-                    ${edition.name}
-                    <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">
-                        — ${new Date(edition.date).toLocaleDateString('fr-FR')}
-                    </span>
-                </h3>`;
+                html += `<div class="card">
+                    <h2>${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}</span></h2>`;
 
                 if (finaleResults.length > 0) {
-                    html += '<div class="phase-title">🏆 Résultats Finale</div>';
                     const adminCol = isAdmin ? '<th></th>' : '';
+                    html += '<div class="phase-title">🏆 Résultats Finale</div>';
                     html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
                     finaleResults.forEach(r => {
                         const player = data.participants.find(p => p.id === r.playerId);
@@ -969,9 +1008,103 @@
                     });
                     html += '</div>';
                 }
-            });
 
-            container.innerHTML = html || '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
+                if (finaleResults.length === 0 && qualResults.length === 0) {
+                    html += '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
+                }
+
+                html += '</div>';
+
+            } else {
+                // Upcoming edition — registration
+                const isRegistered = currentUser && data.participants.some(p => p.userId === currentUser.uid);
+
+                html = `<div class="card">
+                    <h2>📅 ${e.name}</h2>
+                    <p style="color:var(--color-text-secondary);margin-bottom:20px">Date : <strong style="color:var(--color-text-primary)">${dateStr}</strong></p>`;
+
+                if (!currentUser) {
+                    html += `<p style="color:var(--color-text-secondary);font-size:0.9rem">Connectez-vous pour vous inscrire à cette édition.</p>`;
+                } else if (isRegistered) {
+                    html += `<div class="registered-badge">✓ Vous êtes inscrit dans la compétition</div>`;
+                } else if (!currentUserProfile) {
+                    html += `<p style="color:var(--color-text-secondary);font-size:0.9rem">Complétez votre profil depuis la page d'accueil pour vous inscrire.</p>`;
+                } else {
+                    html += `<button class="btn btn-primary" onclick="registerForCup()">S'inscrire dans la compétition</button>`;
+                }
+
+                html += '</div>';
+            }
+
+            content.innerHTML = html;
+
+            // Bind admin form if present
+            const detailForm = document.getElementById('detailAddResultForm');
+            if (detailForm) {
+                detailForm.addEventListener('submit', async (ev) => {
+                    ev.preventDefault();
+                    const phase = document.getElementById('detailResultPhase').value;
+                    const playerId = document.getElementById('detailResultPlayer').value;
+                    const posVal = document.getElementById('detailResultPosition').value;
+                    const position = phase === 'finale' ? parseInt(posVal) : null;
+
+                    if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === phase)) {
+                        alert('Un résultat existe déjà pour ce joueur dans cette phase !'); return;
+                    }
+
+                    const entry = { editionId: id, playerId, phase };
+                    if (position) entry.position = position;
+                    await addDoc(collection(db, 'results'), { ...entry, cupId });
+
+                    if (phase === 'finale') {
+                        const alreadyInQuals = data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification');
+                        if (!alreadyInQuals) {
+                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', cupId });
+                        }
+                    }
+
+                    detailForm.reset();
+                    document.getElementById('detailPositionField').style.display = 'none';
+                });
+            }
+        };
+
+        window.detailOnPhaseChange = () => {
+            const phase = document.getElementById('detailResultPhase').value;
+            const field = document.getElementById('detailPositionField');
+            const input = document.getElementById('detailResultPosition');
+            if (phase === 'finale') {
+                field.style.display = 'block';
+                input.required = true;
+            } else {
+                field.style.display = 'none';
+                input.required = false;
+                input.value = '';
+            }
+        };
+
+        window.closeEditionDetail = () => {
+            currentDetailEditionId = null;
+            document.getElementById('editionsList').style.display = '';
+            document.getElementById('editionDetail').classList.remove('open');
+            const createCard = document.getElementById('createEditionCard');
+            if (createCard) createCard.style.display = '';
+        };
+
+        window.registerForCup = async () => {
+            if (!currentUser || !currentUserProfile) return;
+            if (data.participants.some(p => p.userId === currentUser.uid)) {
+                openEditionDetail(currentDetailEditionId); return;
+            }
+            const { pseudo, team } = currentUserProfile;
+            await addDoc(collection(db, 'participants'), {
+                pseudo,
+                team: team || 'Sans équipe',
+                userId: currentUser.uid,
+                createdAt: new Date().toISOString(),
+                cupId
+            });
+            openEditionDetail(currentDetailEditionId);
         };
 
         // General ranking
@@ -1146,21 +1279,28 @@
             data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
             loaded.participants = true;
             checkLoaded();
-            displayParticipants(); updateSelectors(); displayStats(); displayGeneralRanking();
+            displayParticipants();
+            displayEditions();
+            displayStats();
+            displayGeneralRanking();
         }, onErr('participants'));
 
         onSnapshot(collection(db, 'editions'), snap => {
             data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
             loaded.editions = true;
             checkLoaded();
-            displayEditions(); updateSelectors(); displayResultsEditionSelector(); displayResults(); displayStats();
+            displayEditions();
+            displayStats();
         }, onErr('editions'));
 
         onSnapshot(collection(db, 'results'), snap => {
             data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
             loaded.results = true;
             checkLoaded();
-            displayParticipants(); displayEditions(); displayResults(); displayStats(); displayGeneralRanking();
+            displayParticipants();
+            displayEditions();
+            displayStats();
+            displayGeneralRanking();
         }, onErr('results'));
     </script>
 </body>
