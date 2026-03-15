@@ -528,10 +528,7 @@
         <header>
             <div style="display: flex; align-items: center; gap: 20px;">
                 <div class="logo-wrap">
-                    <div class="logo">
-                        <span>S</span><span class="p">P</span><span>R</span><span class="i1">I</span><span>NG</span><span class="s2">S</span>
-                    </div>
-                    <div class="logo-sub">Esport</div>
+                    <img src="Springs Esport.png" alt="Springs Esport" style="height:48px;width:auto;display:block;">
                 </div>
                 <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);"></div>
                 <div>
@@ -581,6 +578,10 @@
                         <div class="form-group">
                             <label for="editionSalon">Salon</label>
                             <input type="text" id="editionSalon" placeholder="Ex: Monthly Cup #3">
+                        </div>
+                        <div class="form-group">
+                            <label for="editionPassword">Mot de passe du salon</label>
+                            <input type="text" id="editionPassword" placeholder="Ex: 1234">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Créer</button>
@@ -719,6 +720,10 @@
                     <div class="form-group">
                         <label for="editEditionSalon">Salon</label>
                         <input type="text" id="editEditionSalon" placeholder="Ex: Monthly Cup #3">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEditionPassword">Mot de passe du salon</label>
+                        <input type="text" id="editEditionPassword" placeholder="Ex: 1234">
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
@@ -904,6 +909,7 @@
             document.getElementById('editEditionTime').value = e.time || '';
             document.getElementById('editEditionClub').value = e.club || '';
             document.getElementById('editEditionSalon').value = e.salon || '';
+            document.getElementById('editEditionPassword').value = e.password || '';
             document.getElementById('editEditionModal').classList.add('open');
         };
         window.closeEditEdition = () => {
@@ -912,12 +918,13 @@
         document.getElementById('editEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id    = document.getElementById('editEditionId').value;
-            const name  = document.getElementById('editEditionName').value.trim();
-            const date  = document.getElementById('editEditionDate').value;
-            const time  = document.getElementById('editEditionTime').value;
-            const club  = document.getElementById('editEditionClub').value.trim();
-            const salon = document.getElementById('editEditionSalon').value.trim();
-            await updateDoc(doc(db, 'editions', id), { name, date, time, club, salon });
+            const name     = document.getElementById('editEditionName').value.trim();
+            const date     = document.getElementById('editEditionDate').value;
+            const time     = document.getElementById('editEditionTime').value;
+            const club     = document.getElementById('editEditionClub').value.trim();
+            const salon    = document.getElementById('editEditionSalon').value.trim();
+            const password = document.getElementById('editEditionPassword').value.trim();
+            await updateDoc(doc(db, 'editions', id), { name, date, time, club, salon, password });
             closeEditEdition();
         });
 
@@ -1000,15 +1007,17 @@
         // Add edition
         document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const time  = document.getElementById('editionTime').value;
-            const club  = document.getElementById('editionClub').value.trim();
-            const salon = document.getElementById('editionSalon').value.trim();
+            const time     = document.getElementById('editionTime').value;
+            const club     = document.getElementById('editionClub').value.trim();
+            const salon    = document.getElementById('editionSalon').value.trim();
+            const password = document.getElementById('editionPassword').value.trim();
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: document.getElementById('editionDate').value,
-                ...(time  ? { time }  : {}),
-                ...(club  ? { club }  : {}),
-                ...(salon ? { salon } : {}),
+                ...(time     ? { time }     : {}),
+                ...(club     ? { club }     : {}),
+                ...(salon    ? { salon }    : {}),
+                ...(password ? { password } : {}),
                 cupId
             });
             e.target.reset();
@@ -1196,12 +1205,11 @@
 
                 // Edition info block
                 const infoItems = [];
+                infoItems.push(`<span style="color:var(--color-text-primary);font-size:1rem;font-weight:600">📅 ${dateStr}</span>`);
                 if (e.time)  infoItems.push(`<span>🕐 ${e.time}</span>`);
                 if (e.club)  infoItems.push(`<span>🏛️ Club : <strong>${e.club}</strong></span>`);
                 if (e.salon) infoItems.push(`<span>🎮 Salon : <strong>${e.salon}</strong></span>`);
-                const infoHtml = infoItems.length
-                    ? `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;font-size:0.9rem;color:var(--color-text-secondary)">${infoItems.join('')}</div>`
-                    : '';
+                const infoHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;font-size:0.9rem;color:var(--color-text-secondary)">${infoItems.join('')}</div>`;
 
                 // List of players registered for THIS edition (phase: 'inscription')
                 const inscriptions = data.results.filter(r => r.editionId === id && r.phase === 'inscription');
@@ -1214,13 +1222,25 @@
                         const p = data.participants.find(p => p.id === r.playerId);
                         return p && currentUser && p.userId === currentUser.uid;
                     });
+                    const isMeRegistered = inscriptions.some(r => {
+                        const p = data.participants.find(p => p.id === r.playerId);
+                        return p && currentUser && p.userId === currentUser.uid;
+                    });
+                    const showPasswordCol = isMeRegistered && !!e.password;
                     const actionsHeader = showActionsCol ? '<th></th>' : '';
-                    registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${actionsHeader}</tr></thead><tbody>`;
+                    const passwordHeader = showPasswordCol ? '<th>Mot de passe</th>' : '';
+                    registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${passwordHeader}${actionsHeader}</tr></thead><tbody>`;
                     inscriptions.forEach((r, i) => {
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
                         const isMe = currentUser && player.userId === currentUser.uid;
                         const meStyle = isMe ? 'background:rgba(0,217,54,0.06)' : '';
+                        let passwordCell = '';
+                        if (showPasswordCol) {
+                            passwordCell = isMe
+                                ? `<td style="color:var(--color-accent);font-weight:600">${e.password}</td>`
+                                : `<td></td>`;
+                        }
                         let actionCell = '';
                         if (showActionsCol) {
                             if (isAdmin) {
@@ -1235,6 +1255,7 @@
                             <td style="color:var(--color-text-secondary)">${i + 1}</td>
                             <td><strong>${pName(player)}</strong>${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
+                            ${passwordCell}
                             ${actionCell}
                         </tr>`;
                     });
@@ -1242,7 +1263,7 @@
                 }
 
                 html = `<div class="card">
-                    <h2>📅 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}</span></h2>
+                    <h2>📅 ${e.name}</h2>
                     ${infoHtml}
                     ${registrationHtml}
                     <div style="margin-top:28px">
