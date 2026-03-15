@@ -774,10 +774,11 @@
         let currentDetailEditionId = null;
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
-        let loaded = { participants: false, editions: false, results: false };
+        // 'auth' included so loading overlay stays until Firebase resolves the session
+        let loaded = { participants: false, editions: false, results: false, auth: false };
 
         function checkLoaded() {
-            if (loaded.participants && loaded.editions && loaded.results)
+            if (Object.values(loaded).every(Boolean))
                 document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
@@ -802,9 +803,10 @@
             if (!user) {
                 isAdmin = false;
                 currentUserProfile = null;
-                // Show auth guard, hide loading
-                document.getElementById('loadingOverlay').classList.add('hidden');
                 authOverlay.classList.add('open');
+                // Mark auth as resolved so loading overlay can hide
+                loaded.auth = true;
+                checkLoaded();
                 return;
             }
 
@@ -833,6 +835,9 @@
                 btn.classList.remove('active');
                 btn.textContent = '⚙️ Admin';
             }
+            // Mark auth as resolved so loading overlay can hide
+            loaded.auth = true;
+            checkLoaded();
             displayParticipants();
             displayEditions();
         });
