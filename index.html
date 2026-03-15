@@ -219,7 +219,7 @@
         .rl .card-btn { background: var(--rl-blue); color: #fff; }
         .rl .card-btn:hover { background: #0070e0; }
 
-        /* Editable */
+        /* Editable (admin mode) */
         .editable {
             border-radius: 4px;
             outline: none;
@@ -235,22 +235,8 @@
             outline: 2px solid rgba(255,184,0,0.7);
         }
 
-        /* Admin */
+        /* Header actions */
         .header-actions { display: flex; align-items: center; gap: 8px; }
-
-        .admin-btn {
-            padding: 8px 16px;
-            border: 1.5px solid rgba(255,255,255,0.12);
-            border-radius: 8px;
-            background: transparent;
-            color: rgba(255,255,255,0.45);
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .admin-btn:hover { border-color: var(--springs-orange); color: var(--springs-orange); }
-        .admin-btn.active { background: var(--springs-orange); border-color: var(--springs-orange); color: #000; font-weight: 700; }
 
         .save-btn {
             display: none;
@@ -266,6 +252,25 @@
         }
         .save-btn:hover { background: #16a34a; }
         body.admin-mode .save-btn { display: inline-block; }
+
+        .account-btn {
+            padding: 8px 16px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            white-space: nowrap;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .account-btn:hover { border-color: var(--springs-orange); color: var(--springs-orange); }
+        .account-btn.admin-active { background: var(--springs-orange); border-color: var(--springs-orange); color: #000; font-weight: 700; }
+        .account-btn.player-active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.18); color: #fff; }
 
         .admin-hint {
             display: none;
@@ -294,21 +299,47 @@
             backdrop-filter: blur(6px);
         }
         .modal-overlay.open { display: flex; }
+
         .modal {
             background: #1e293b;
-            padding: 36px;
+            padding: 32px;
             border-radius: 16px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             box-shadow: 0 24px 64px rgba(0,0,0,0.7);
             border: 1px solid rgba(255,255,255,0.08);
             animation: fadeUp 0.2s ease;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-        .modal h2 { margin-bottom: 22px; font-size: 1.25rem; }
+
+        .modal h2 { margin-bottom: 20px; font-size: 1.2rem; }
+
+        /* Modal tabs */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 22px;
+        }
+        .modal-tab {
+            padding: 8px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .modal-tab.active { color: var(--springs-orange); border-bottom-color: var(--springs-orange); }
+
+        /* Form */
         .form-group { margin-bottom: 14px; }
         .form-group label { display: block; margin-bottom: 5px; color: rgba(255,255,255,0.45); font-size: 0.82rem; }
         .form-group input {
@@ -320,10 +351,93 @@
             font-size: 0.92rem;
         }
         .form-group input:focus { outline: none; border-color: var(--springs-orange); }
-        .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
-        .btn-primary { padding: 10px 20px; border: none; border-radius: 8px; background: var(--springs-orange); color: #000; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
-        .btn-secondary { padding: 10px 20px; border: none; border-radius: 8px; background: #334155; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-        .modal-error { color: #ef4444; font-size: 0.82rem; margin-top: 10px; display: none; background: rgba(239,68,68,0.1); padding: 7px 12px; border-radius: 6px; }
+
+        /* Game checkboxes */
+        .games-check {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .game-check-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #334155;
+            border: 1.5px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .game-check-label:has(input:checked) {
+            border-color: var(--springs-orange);
+            background: rgba(255,184,0,0.08);
+        }
+        .game-check-label input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--springs-orange);
+            flex-shrink: 0;
+        }
+        .game-label-text { font-size: 0.84rem; font-weight: 600; line-height: 1.2; }
+        .game-label-sub { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+
+        /* Buttons */
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-primary {
+            flex: 1;
+            padding: 10px 20px; border: none; border-radius: 8px;
+            background: var(--springs-orange); color: #000;
+            font-weight: 700; cursor: pointer; font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #ffc733; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary {
+            padding: 10px 16px; border: none; border-radius: 8px;
+            background: #334155; color: #fff;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover { background: #3e526b; }
+        .btn-logout {
+            padding: 8px 16px;
+            border: 1.5px solid rgba(239,68,68,0.35);
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(239,68,68,0.7);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-logout:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.07); }
+
+        .modal-error {
+            color: #ef4444; font-size: 0.82rem; margin-top: 10px;
+            display: none; background: rgba(239,68,68,0.1);
+            padding: 7px 12px; border-radius: 6px;
+        }
+        .modal-success {
+            color: #22c55e; font-size: 0.82rem; margin-top: 10px;
+            display: none; background: rgba(34,197,94,0.1);
+            padding: 7px 12px; border-radius: 6px;
+        }
+        .modal-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+        .modal-footer-row { display: flex; justify-content: space-between; align-items: center; }
+
+        .form-note { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-bottom: 14px; }
+
+        /* Admin view in modal */
+        .admin-info-box {
+            background: rgba(255,184,0,0.07);
+            border: 1px solid rgba(255,184,0,0.2);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+        }
+        .admin-info-box p { font-size: 0.88rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -335,6 +449,7 @@
             .game-card { aspect-ratio: 4/3; }
             .card-title { font-size: 1.6rem; }
             .card-content { padding: 20px; }
+            .modal { padding: 24px 20px; }
         }
     </style>
 </head>
@@ -349,7 +464,7 @@
     </div>
     <div class="header-actions">
         <button class="save-btn" id="saveBtn" onclick="saveContent()">💾 Sauvegarder</button>
-        <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
+        <button class="account-btn" id="accountBtn" onclick="openAccount()">Mon compte</button>
     </div>
 </header>
 
@@ -358,7 +473,7 @@
 <main class="hero">
     <div class="hero-title">
         <h1>Choisissez votre <span class="highlight">discipline</span></h1>
-        <p class="hero-subtitle">Springs Monthly Cup — Résultats & Classements</p>
+        <p class="hero-subtitle">Springs Monthly Cup — Résultats &amp; Classements</p>
     </div>
 
     <div class="games-grid">
@@ -402,32 +517,159 @@
     </div>
 </main>
 
-<!-- Modal Login -->
-<div class="modal-overlay" id="loginModal">
+<!-- ===== Account Modal ===== -->
+<div class="modal-overlay" id="accountModal">
     <div class="modal">
-        <h2>🔐 Connexion Admin</h2>
-        <form id="loginForm">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="adminEmail" required placeholder="votre@email.com">
+
+        <!-- VIEW: Auth (login / register) — shown when not logged in -->
+        <div id="view-auth">
+            <div class="modal-tabs">
+                <button class="modal-tab active" id="tabLoginBtn" onclick="switchTab('login')">Se connecter</button>
+                <button class="modal-tab" id="tabRegisterBtn" onclick="switchTab('register')">Créer un compte</button>
             </div>
-            <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" id="adminPassword" required placeholder="••••••••">
+
+            <!-- Login form -->
+            <div id="form-login">
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" required placeholder="votre@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Mot de passe</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <div class="modal-btns">
+                        <button type="submit" class="btn-primary" id="loginSubmitBtn">Se connecter</button>
+                        <button type="button" class="btn-secondary" onclick="closeAccount()">Annuler</button>
+                    </div>
+                    <p class="modal-error" id="loginError">Email ou mot de passe incorrect.</p>
+                </form>
             </div>
-            <div class="modal-btns">
-                <button type="submit" class="btn-primary">Se connecter</button>
-                <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+
+            <!-- Register form -->
+            <div id="form-register" style="display:none">
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required placeholder="votre@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Mot de passe</label>
+                        <input type="password" id="regPassword" required placeholder="Minimum 6 caractères" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Pseudo in-game</label>
+                        <input type="text" id="regPseudo" required placeholder="Votre pseudo de jeu">
+                    </div>
+                    <div class="form-group">
+                        <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                        <input type="text" id="regTeam" placeholder="Votre équipe">
+                    </div>
+                    <div class="form-group">
+                        <label>Je joue à</label>
+                        <div class="games-check">
+                            <label class="game-check-label">
+                                <input type="checkbox" id="regGameTM" value="trackmania">
+                                <div>
+                                    <div class="game-label-text">Trackmania</div>
+                                    <div class="game-label-sub">Racing</div>
+                                </div>
+                            </label>
+                            <label class="game-check-label">
+                                <input type="checkbox" id="regGameRL" value="rocket-league">
+                                <div>
+                                    <div class="game-label-text">Rocket League</div>
+                                    <div class="game-label-sub">Football</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-btns">
+                        <button type="submit" class="btn-primary" id="registerSubmitBtn">Créer mon compte</button>
+                        <button type="button" class="btn-secondary" onclick="closeAccount()">Annuler</button>
+                    </div>
+                    <p class="modal-error" id="registerError"></p>
+                </form>
             </div>
-            <p class="modal-error" id="loginError">Email ou mot de passe incorrect.</p>
-        </form>
+        </div>
+
+        <!-- VIEW: Player profile — shown when logged in as player -->
+        <div id="view-profile" style="display:none">
+            <h2>Mon profil</h2>
+            <form id="profileForm" onsubmit="handleProfileSave(event)">
+                <div class="form-group">
+                    <label>Pseudo in-game</label>
+                    <input type="text" id="profPseudo" required>
+                </div>
+                <div class="form-group">
+                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                    <input type="text" id="profTeam">
+                </div>
+                <div class="form-group">
+                    <label>Je joue à</label>
+                    <div class="games-check">
+                        <label class="game-check-label">
+                            <input type="checkbox" id="profGameTM">
+                            <div>
+                                <div class="game-label-text">Trackmania</div>
+                                <div class="game-label-sub">Racing</div>
+                            </div>
+                        </label>
+                        <label class="game-check-label">
+                            <input type="checkbox" id="profGameRL">
+                            <div>
+                                <div class="game-label-text">Rocket League</div>
+                                <div class="game-label-sub">Football</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <p class="form-note" id="profEmail"></p>
+                <div class="modal-btns">
+                    <button type="submit" class="btn-primary" id="profileSubmitBtn">Enregistrer</button>
+                    <button type="button" class="btn-secondary" onclick="closeAccount()">Fermer</button>
+                </div>
+                <p class="modal-error" id="profileError"></p>
+                <p class="modal-success" id="profileSuccess">✅ Profil mis à jour !</p>
+            </form>
+            <hr class="modal-divider">
+            <div class="modal-footer-row">
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)">Compte joueur</span>
+                <button class="btn-logout" onclick="handleLogout()">Se déconnecter</button>
+            </div>
+        </div>
+
+        <!-- VIEW: Admin — shown when logged in as admin -->
+        <div id="view-admin" style="display:none">
+            <h2>🛡️ Mode Admin</h2>
+            <div class="admin-info-box">
+                <p>Mode administrateur activé.<br>
+                Cliquez sur les textes des cartes pour les modifier, puis sauvegardez.</p>
+            </div>
+            <div class="modal-btns" style="margin-top:0">
+                <button type="button" class="btn-secondary" onclick="closeAccount()">Fermer</button>
+            </div>
+            <hr class="modal-divider">
+            <div class="modal-footer-row">
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)">Compte administrateur</span>
+                <button class="btn-logout" onclick="handleLogout()">Se déconnecter</button>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import {
+        getFirestore, doc, getDoc, setDoc, addDoc,
+        collection, query, where, getDocs, updateDoc
+    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import {
+        getAuth, createUserWithEmailAndPassword,
+        signInWithEmailAndPassword, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
@@ -438,14 +680,17 @@
         appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
     const auth = getAuth(app);
-    let isAdmin = false;
+
+    let currentUser = null;
+    let isAdminUser = false;
 
     const FIELDS = ['tm-description', 'tm-event', 'rl-description', 'rl-event'];
 
-    // Load content
+    // ── Site content ──────────────────────────────────────────────────────────
+
     async function loadContent() {
         try {
             const snap = await getDoc(doc(db, 'siteContent', 'hub'));
@@ -453,11 +698,10 @@
                 const d = snap.data();
                 FIELDS.forEach(id => { if (d[id]) document.getElementById(id).textContent = d[id]; });
             }
-        } catch(e) { console.log('Contenu par défaut affiché'); }
+        } catch(e) { /* default content shown */ }
     }
     loadContent();
 
-    // Save content
     window.saveContent = async () => {
         const data = {};
         FIELDS.forEach(id => { data[id] = document.getElementById(id).textContent.trim(); });
@@ -467,59 +711,233 @@
         setTimeout(() => btn.textContent = '💾 Sauvegarder', 2000);
     };
 
-    // Auth
-    onAuthStateChanged(auth, user => {
-        isAdmin = !!user;
-        const btn = document.getElementById('adminToggleBtn');
-        const editables = document.querySelectorAll('.editable');
-        if (isAdmin) {
-            document.body.classList.add('admin-mode');
-            btn.classList.add('active');
-            btn.textContent = '🔓 Déconnexion';
-            editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+    // ── Auth state ────────────────────────────────────────────────────────────
+
+    onAuthStateChanged(auth, async user => {
+        currentUser = user;
+        if (!user) { deactivateUI(); return; }
+
+        // Check if admin (doc exists in 'admins' collection)
+        try {
+            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+            isAdminUser = adminSnap.exists();
+        } catch {
+            isAdminUser = false;
+        }
+
+        if (isAdminUser) {
+            activateAdminUI();
         } else {
-            document.body.classList.remove('admin-mode');
-            btn.classList.remove('active');
-            btn.textContent = '⚙️ Admin';
-            editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+            // Load player profile for header display
+            try {
+                const userSnap = await getDoc(doc(db, 'users', user.uid));
+                const pseudo = userSnap.exists() ? userSnap.data().pseudo : user.email;
+                activatePlayerUI(pseudo);
+            } catch {
+                activatePlayerUI(user.email);
+            }
         }
     });
 
-    window.toggleAdmin = () => {
-        if (isAdmin) signOut(auth);
-        else {
-            document.getElementById('loginModal').classList.add('open');
-            setTimeout(() => document.getElementById('adminEmail').focus(), 100);
+    function activateAdminUI() {
+        document.body.classList.add('admin-mode');
+        const btn = document.getElementById('accountBtn');
+        btn.textContent = '🛡️ Admin';
+        btn.className = 'account-btn admin-active';
+        document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+    }
+
+    function activatePlayerUI(pseudo) {
+        const btn = document.getElementById('accountBtn');
+        btn.textContent = `👤 ${pseudo}`;
+        btn.className = 'account-btn player-active';
+    }
+
+    function deactivateUI() {
+        isAdminUser = false;
+        document.body.classList.remove('admin-mode');
+        const btn = document.getElementById('accountBtn');
+        btn.textContent = 'Mon compte';
+        btn.className = 'account-btn';
+        document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────────────
+
+    window.openAccount = () => {
+        document.getElementById('accountModal').classList.add('open');
+        if (!currentUser) {
+            showView('view-auth');
+            switchTab('login');
+        } else if (isAdminUser) {
+            showView('view-admin');
+        } else {
+            loadProfileView();
+            showView('view-profile');
         }
     };
 
-    window.closeModal = () => {
-        document.getElementById('loginModal').classList.remove('open');
+    window.closeAccount = () => {
+        document.getElementById('accountModal').classList.remove('open');
         document.getElementById('loginForm').reset();
+        document.getElementById('registerForm').reset();
         document.getElementById('loginError').style.display = 'none';
+        document.getElementById('registerError').style.display = 'none';
+        document.getElementById('profileError').style.display = 'none';
+        document.getElementById('profileSuccess').style.display = 'none';
     };
 
-    document.getElementById('loginForm').addEventListener('submit', async e => {
+    function showView(id) {
+        ['view-auth', 'view-profile', 'view-admin'].forEach(v => {
+            document.getElementById(v).style.display = v === id ? 'block' : 'none';
+        });
+    }
+
+    window.switchTab = (tab) => {
+        document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+        document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('tabLoginBtn').classList.toggle('active', tab === 'login');
+        document.getElementById('tabRegisterBtn').classList.toggle('active', tab === 'register');
+    };
+
+    // Click outside to close
+    document.getElementById('accountModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('accountModal')) closeAccount();
+    });
+
+    // ── Login ─────────────────────────────────────────────────────────────────
+
+    window.handleLogin = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('loginSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Connexion...';
         try {
             await signInWithEmailAndPassword(auth,
-                document.getElementById('adminEmail').value,
-                document.getElementById('adminPassword').value
+                document.getElementById('loginEmail').value,
+                document.getElementById('loginPassword').value
             );
-            closeModal();
+            closeAccount();
         } catch {
             document.getElementById('loginError').style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Se connecter';
         }
-    });
+    };
 
-    // Bloquer la navigation quand on clique sur un champ éditable en mode admin
+    // ── Register ──────────────────────────────────────────────────────────────
+
+    window.handleRegister = async (e) => {
+        e.preventDefault();
+        const pseudo = document.getElementById('regPseudo').value.trim();
+        const team   = document.getElementById('regTeam').value.trim();
+        const games  = [];
+        if (document.getElementById('regGameTM').checked) games.push('trackmania');
+        if (document.getElementById('regGameRL').checked) games.push('rocket-league');
+
+        if (games.length === 0) {
+            showRegError('Sélectionnez au moins un jeu.');
+            return;
+        }
+
+        const btn = document.getElementById('registerSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Création...';
+
+        try {
+            const cred = await createUserWithEmailAndPassword(auth,
+                document.getElementById('regEmail').value.trim(),
+                document.getElementById('regPassword').value
+            );
+            const uid       = cred.user.uid;
+            const email     = cred.user.email;
+            const createdAt = new Date().toISOString();
+
+            // Save player profile
+            await setDoc(doc(db, 'users', uid), { pseudo, team, games, email, uid, createdAt });
+
+            // Auto-create participant entry for cup managers
+            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
+
+            closeAccount();
+        } catch(err) {
+            let msg = 'Une erreur est survenue. Réessayez.';
+            if (err.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
+            else if (err.code === 'auth/weak-password')   msg = 'Mot de passe trop faible (min. 6 caractères).';
+            else if (err.code === 'auth/invalid-email')   msg = 'Adresse email invalide.';
+            showRegError(msg);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Créer mon compte';
+        }
+    };
+
+    function showRegError(msg) {
+        const el = document.getElementById('registerError');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    // ── Profile ───────────────────────────────────────────────────────────────
+
+    function loadProfileView() {
+        if (!currentUser) return;
+        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
+            document.getElementById('profPseudo').value  = d.pseudo || '';
+            document.getElementById('profTeam').value    = d.team   || '';
+            document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
+            document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
+            document.getElementById('profEmail').textContent = `Email : ${currentUser.email}`;
+        }).catch(() => {});
+    }
+
+    window.handleProfileSave = async (e) => {
+        e.preventDefault();
+        const pseudo = document.getElementById('profPseudo').value.trim();
+        const team   = document.getElementById('profTeam').value.trim();
+        const games  = [];
+        if (document.getElementById('profGameTM').checked) games.push('trackmania');
+        if (document.getElementById('profGameRL').checked) games.push('rocket-league');
+
+        const btn = document.getElementById('profileSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Enregistrement...';
+
+        try {
+            // Update user profile
+            await setDoc(doc(db, 'users', currentUser.uid), { pseudo, team, games }, { merge: true });
+
+            // Sync participant entry (auto-created on registration)
+            const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
+            const snap = await getDocs(q);
+            await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+
+            // Update header
+            activatePlayerUI(pseudo);
+
+            document.getElementById('profileSuccess').style.display = 'block';
+            document.getElementById('profileError').style.display = 'none';
+            setTimeout(() => { document.getElementById('profileSuccess').style.display = 'none'; }, 3000);
+        } catch {
+            document.getElementById('profileError').textContent = 'Erreur lors de la sauvegarde.';
+            document.getElementById('profileError').style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Enregistrer';
+        }
+    };
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    window.handleLogout = async () => {
+        await signOut(auth);
+        closeAccount();
+    };
+
+    // ── Block card navigation in admin mode ───────────────────────────────────
+
     document.querySelectorAll('.editable').forEach(el => {
-        el.addEventListener('click', e => { if (isAdmin) e.preventDefault(); });
+        el.addEventListener('click', e => { if (isAdminUser) e.preventDefault(); });
     });
-
-    // Bloquer le lien de la carte entière quand on est en mode admin
     document.querySelectorAll('.game-card').forEach(card => {
-        card.addEventListener('click', e => { if (isAdmin) e.preventDefault(); });
+        card.addEventListener('click', e => { if (isAdminUser) e.preventDefault(); });
     });
 </script>
 
