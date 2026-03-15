@@ -3,1146 +3,611 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Springs Monthly Cup — Trackmania</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Springs E-Sport — Trackmania</title>
     <style>
         :root {
-            --color-bg-primary: #1a1a1a;
-            --color-bg-secondary: #222222;
-            --color-bg-elevated: #2e2e2e;
-            --color-text-primary: #f0f0f0;
-            --color-text-secondary: #888888;
-            --color-accent: #00D936;
-            --color-accent-hover: #00ff3f;
-            --color-success: #22c55e;
-            --color-warning: #f59e0b;
-            --color-danger: #ef4444;
+            --springs-bg: #1a1a1a;
             --springs-orange: #FFB800;
             --springs-purple: #7B2FBE;
+            --tm-green: #00D936;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            line-height: 1.6;
+            background: var(--springs-bg);
+            color: #fff;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Loading */
-        .loading-overlay {
+        header {
             position: fixed;
-            inset: 0;
-            background: var(--color-bg-primary);
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26,26,26,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: rgba(255,255,255,0.35);
+            text-decoration: none;
+            font-size: 0.8rem;
+            padding: 7px 13px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+        .back-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+
+        .logo { font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; line-height: 1; }
+        .logo .p  { color: var(--springs-orange); }
+        .logo .i1 { color: var(--springs-purple); }
+        .logo .s2 { color: var(--springs-orange); }
+        .logo-sub { font-size: 0.55rem; letter-spacing: 4px; color: rgba(255,255,255,0.3); text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+
+        .account-btn {
+            padding: 8px 16px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            white-space: nowrap;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .account-btn:hover { border-color: var(--springs-orange); color: var(--springs-orange); }
+        .account-btn.player-active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.18); color: #fff; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-            transition: opacity 0.4s;
+            padding: 110px 32px 48px;
         }
-        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-        .spinner {
-            width: 48px; height: 48px;
-            border: 4px solid var(--color-bg-elevated);
-            border-top-color: var(--color-accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 16px;
+
+        .hero-title { text-align: center; margin-bottom: 52px; }
+        .hero-title h1 {
+            font-size: clamp(1.8rem, 4.5vw, 3.2rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.1;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .tm-accent { color: var(--tm-green); }
+        .hero-subtitle {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        /* Cups grid */
+        .cups-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
 
-        header {
-            background: #222222;
-            padding: 20px 32px;
+        .cup-card {
+            position: relative;
             border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-            border: 1px solid rgba(0, 217, 54, 0.12);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            display: block;
+            aspect-ratio: 3/4;
+            border: 1px solid rgba(255,255,255,0.07);
+            transition: transform 0.35s cubic-bezier(.22,.68,0,1.2), box-shadow 0.35s ease;
+        }
+        .cup-card:hover { transform: translateY(-10px) scale(1.01); }
+        .cup-card.monthly:hover { box-shadow: 0 28px 70px rgba(0,217,54,0.3); }
+        .cup-card.mania:hover   { box-shadow: 0 28px 70px rgba(255,184,0,0.3); }
+
+        .cup-card img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.45s ease;
+        }
+        .cup-card:hover img { transform: scale(1.06); }
+
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+        }
+        .monthly .card-overlay {
+            background: linear-gradient(to top, rgba(0,30,8,0.97) 0%, rgba(0,60,16,0.5) 45%, rgba(0,217,54,0.08) 100%);
+        }
+        .mania .card-overlay {
+            background: linear-gradient(to top, rgba(30,20,0,0.97) 0%, rgba(80,50,0,0.5) 45%, rgba(255,184,0,0.08) 100%);
         }
 
-        .logo-wrap { line-height: 1; }
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            letter-spacing: -1px;
+        .card-content {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 28px;
+        }
+
+        .card-tag {
+            display: inline-block;
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1px;
             text-transform: uppercase;
+            margin-bottom: 10px;
         }
-        .logo .p  { color: var(--springs-orange); }
-        .logo .i1 { color: var(--springs-purple); }
-        .logo .s2 { color: var(--springs-orange); }
-        .logo-sub {
-            font-size: 0.55rem;
-            letter-spacing: 4px;
-            color: rgba(255,255,255,0.3);
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-top: 1px;
-        }
+        .monthly .card-tag { background: rgba(0,217,54,0.15); color: var(--tm-green); border: 1px solid rgba(0,217,54,0.35); }
+        .mania .card-tag   { background: rgba(255,184,0,0.15); color: var(--springs-orange); border: 1px solid rgba(255,184,0,0.35); }
 
-        .header-center { text-align: center; }
-
-        h1 {
-            font-size: 1.9rem;
+        .card-title {
+            font-size: 1.55rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #00D936, #00ff3f);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
             text-transform: uppercase;
             letter-spacing: 1px;
+            line-height: 1.1;
+            margin-bottom: 8px;
         }
 
-        .subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-top: 4px; }
-
-        .tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            background: var(--color-bg-secondary);
-            padding: 5px;
-            border-radius: 12px;
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            background: transparent;
-            border: none;
-            color: var(--color-text-secondary);
-            padding: 10px 20px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .tab:hover { color: var(--color-text-primary); background: var(--color-bg-elevated); }
-        .tab.active { color: var(--color-bg-primary); background: var(--color-accent); font-weight: 600; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card {
-            background: var(--color-bg-secondary);
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .card h2 {
-            margin-bottom: 20px;
-            font-size: 1.25rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .form-group { margin-bottom: 14px; }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--color-text-secondary);
-            font-weight: 500;
+        .card-description {
+            color: rgba(255,255,255,0.55);
             font-size: 0.85rem;
+            margin-bottom: 18px;
+            line-height: 1.55;
         }
 
-        input, select {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--color-bg-elevated);
-            border: 1.5px solid transparent;
-            border-radius: 8px;
-            color: var(--color-text-primary);
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--color-accent);
-            box-shadow: 0 0 0 3px rgba(0, 217, 54, 0.12);
-        }
-
-        .btn {
-            padding: 9px 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-primary { background: var(--color-accent); color: var(--color-bg-primary); }
-        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,217,54,0.3); }
-        .btn-danger { background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
-        .btn-danger:hover { background: var(--color-danger); color: white; }
-        .btn-secondary { background: var(--color-bg-elevated); color: var(--color-text-primary); }
-        .btn-secondary:hover { background: #475569; }
-        .btn-small { padding: 4px 10px; font-size: 0.8rem; }
-
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        th { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; background: rgba(255,255,255,0.02); }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-
-        .badge {
-            display: inline-flex;
+        .card-btn {
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 3px 10px;
-            border-radius: 20px;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 8px;
             font-weight: 700;
-            font-size: 0.82rem;
-            min-width: 32px;
-        }
-        .badge-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
-        .badge-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #000; }
-        .badge-3 { background: linear-gradient(135deg, #cd7f32, #92400e); color: #fff; }
-        .badge-other { background: var(--color-bg-elevated); color: var(--color-text-secondary); }
-
-        .pts-badge {
-            background: rgba(0,217,54,0.12);
-            color: var(--color-accent);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: var(--color-bg-secondary);
-            padding: 20px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange));
-        }
-        .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); line-height: 1; margin: 8px 0 4px; }
-        .stat-label { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-
-        .edition-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .edition-badge { padding: 5px 14px; background: var(--color-bg-elevated); border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; border: 1.5px solid transparent; }
-        .edition-badge:hover { border-color: var(--color-accent); color: var(--color-accent); }
-        .edition-badge.active { background: var(--color-accent); color: var(--color-bg-primary); font-weight: 600; }
-
-        .empty-state { text-align: center; padding: 50px 20px; color: var(--color-text-secondary); }
-        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; display: block; }
-
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-
-        .search-wrapper { position: relative; margin-bottom: 16px; }
-        .search-wrapper input { padding-left: 36px; }
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary); }
-
-        .phase-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--color-text-secondary);
-            margin: 20px 0 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
-        .chip {
-            background: var(--color-bg-elevated);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            color: var(--color-text-secondary);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .chip-delete { background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 0.75rem; padding: 0; line-height: 1; }
-
-        .chart-container { position: relative; height: 280px; margin-top: 12px; }
-
-        /* Admin */
-        .admin-only { display: none; }
-        body.admin-mode .admin-only { display: block; }
-
-        .admin-btn {
-            padding: 7px 14px;
-            border: 1.5px solid var(--color-bg-elevated);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--color-text-secondary);
             font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
         }
-        .admin-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
-        .admin-btn.active { background: var(--color-warning); border-color: var(--color-warning); color: #000; }
+        .monthly .card-btn { background: var(--tm-green); color: #000; }
+        .mania .card-btn   { background: var(--springs-orange); color: #000; }
 
-        .admin-indicator {
-            display: none;
-            background: rgba(245,158,11,0.12);
-            color: var(--color-warning);
-            border: 1px solid rgba(245,158,11,0.25);
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        body.admin-mode .admin-indicator { display: inline-flex; align-items: center; gap: 5px; }
+        /* Guest mode */
+        body.guest-mode .card-btn { background: rgba(255,255,255,0.12) !important; color: rgba(255,255,255,0.4) !important; }
+        body.guest-mode .card-btn::before { content: '🔒 '; }
 
         /* Modal */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(4px);
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(6px);
         }
         .modal-overlay.open { display: flex; }
         .modal {
-            background: var(--color-bg-secondary);
-            padding: 36px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            background: #1e293b; padding: 32px; border-radius: 16px;
+            width: 100%; max-width: 400px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.7);
             border: 1px solid rgba(255,255,255,0.08);
-            animation: fadeIn 0.2s ease;
+            animation: fadeUp 0.2s ease;
+            max-height: 90vh; overflow-y: auto;
         }
-        .modal h2 { margin-bottom: 22px; font-size: 1.2rem; }
-        .modal-error {
-            color: var(--color-danger);
-            font-size: 0.85rem;
-            margin-top: 10px;
-            display: none;
-            background: rgba(239,68,68,0.1);
-            padding: 8px 12px;
-            border-radius: 6px;
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
+        .modal h2 { margin-bottom: 10px; font-size: 1.2rem; }
+        .modal p.sub { color: rgba(255,255,255,0.4); font-size: 0.88rem; margin-bottom: 22px; line-height: 1.6; }
 
-        #positionField { display: none; }
+        .btn-google {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 12px 20px; background: #fff; color: #1f1f1f;
+            border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s, box-shadow 0.2s;
+        }
+        .btn-google:hover { background: #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+        .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-secondary {
+            width: 100%; padding: 10px; border: none; border-radius: 8px;
+            background: #334155; color: #fff; font-weight: 600; cursor: pointer;
+            font-size: 0.9rem; transition: background 0.2s; margin-top: 10px;
+        }
+        .btn-secondary:hover { background: #3e526b; }
+
+        .btn-primary {
+            flex: 1; padding: 10px 20px; border: none; border-radius: 8px;
+            background: var(--springs-orange); color: #000; font-weight: 700;
+            cursor: pointer; font-size: 0.9rem; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #ffc733; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-logout {
+            padding: 8px 16px; border: 1.5px solid rgba(239,68,68,0.35); border-radius: 8px;
+            background: transparent; color: rgba(239,68,68,0.7); font-size: 0.82rem;
+            cursor: pointer; transition: all 0.2s; font-weight: 500;
+        }
+        .btn-logout:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.07); }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; color: rgba(255,255,255,0.45); font-size: 0.82rem; }
+        .form-group input {
+            width: 100%; padding: 10px 14px; background: #334155;
+            border: 1.5px solid transparent; border-radius: 8px; color: #fff; font-size: 0.92rem;
+        }
+        .form-group input:focus { outline: none; border-color: var(--springs-orange); }
+
+        .games-check { display: flex; gap: 10px; margin-top: 4px; }
+        .game-check-label {
+            flex: 1; display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; background: #334155; border: 1.5px solid transparent;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .game-check-label:has(input:checked) { border-color: var(--springs-orange); background: rgba(255,184,0,0.08); }
+        .game-check-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--springs-orange); flex-shrink: 0; }
+        .game-label-text { font-size: 0.84rem; font-weight: 600; line-height: 1.2; }
+        .game-label-sub { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+        .modal-footer-row { display: flex; justify-content: space-between; align-items: center; }
+
+        .modal-error { color: #ef4444; font-size: 0.82rem; margin-top: 10px; display: none; background: rgba(239,68,68,0.1); padding: 7px 12px; border-radius: 6px; }
+        .modal-success { color: #22c55e; font-size: 0.82rem; margin-top: 10px; display: none; background: rgba(34,197,94,0.1); padding: 7px 12px; border-radius: 6px; }
+        .form-note { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-bottom: 14px; }
 
         @media (max-width: 768px) {
-            h1 { font-size: 1.5rem; }
-            .tab { padding: 8px 12px; font-size: 0.82rem; }
-            th, td { padding: 9px 10px; font-size: 0.85rem; }
-            .card { padding: 16px; }
+            header { padding: 14px 20px; }
+            .logo { font-size: 1.3rem; }
+            .hero { padding: 80px 16px 32px; }
+            .hero-title { margin-bottom: 32px; }
+            .cups-grid { grid-template-columns: 1fr; gap: 16px; }
+            .cup-card { aspect-ratio: 4/3; }
+            .card-title { font-size: 1.3rem; }
+            .card-content { padding: 20px; }
         }
     </style>
 </head>
-<body>
+<body class="guest-mode">
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Chargement...</p>
-    </div>
-
-    <div class="container">
-        <header>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div class="logo-wrap">
-                    <div class="logo">
-                        <span>S</span><span class="p">P</span><span>R</span><span class="i1">I</span><span>NG</span><span class="s2">S</span>
-                    </div>
-                    <div class="logo-sub">Esport</div>
-                </div>
-                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);"></div>
-                <div>
-                    <h1>Trackmania Cup</h1>
-                    <p class="subtitle">Springs Monthly Cup — Résultats & Classements</p>
-                </div>
+<header>
+    <div class="header-left">
+        <a href="index.html" class="back-btn">← Accueil</a>
+        <div>
+            <div class="logo">
+                <span>S</span><span class="p">P</span><span>R</span><span class="i1">I</span><span>NG</span><span class="s2">S</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
-                <span class="admin-indicator">⚙️ Mode Admin</span>
-                <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
-            </div>
-        </header>
-
-        <div class="tabs">
-            <button class="tab active" data-tab="participants">👥 Joueurs</button>
-            <button class="tab" data-tab="editions">📅 Éditions</button>
-            <button class="tab" data-tab="results">🏁 Résultats</button>
-            <button class="tab" data-tab="rankings">📊 Classement</button>
-            <button class="tab" data-tab="stats">📈 Stats</button>
-        </div>
-
-        <!-- JOUEURS -->
-        <div class="tab-content active" id="participants">
-            <div class="card admin-only">
-                <h2>➕ Ajouter un joueur</h2>
-                <form id="addParticipantForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="playerName">Pseudo *</label>
-                            <input type="text" id="playerName" required placeholder="Ex: Player123">
-                        </div>
-                        <div class="form-group">
-                            <label for="playerTeam">Équipe (optionnel)</label>
-                            <input type="text" id="playerTeam" placeholder="Ex: Team Rocket">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>👥 Joueurs inscrits</h2>
-                <div class="search-wrapper">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchPlayers" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
-                </div>
-                <div id="participantsList"></div>
-            </div>
-        </div>
-
-        <!-- EDITIONS -->
-        <div class="tab-content" id="editions">
-            <div class="card admin-only">
-                <h2>➕ Créer une édition</h2>
-                <form id="addEditionForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editionName">Nom *</label>
-                            <input type="text" id="editionName" required placeholder="Ex: Monthly Cup #3">
-                        </div>
-                        <div class="form-group">
-                            <label for="editionDate">Date *</label>
-                            <input type="date" id="editionDate" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Créer</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>📅 Éditions</h2>
-                <div id="editionsList"></div>
-            </div>
-        </div>
-
-        <!-- RESULTATS -->
-        <div class="tab-content" id="results">
-            <div class="card admin-only">
-                <h2>➕ Enregistrer un résultat</h2>
-                <form id="addResultForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="resultEdition">Édition *</label>
-                            <select id="resultEdition" required>
-                                <option value="">Sélectionner une édition</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="resultPhase">Phase *</label>
-                            <select id="resultPhase" required onchange="onPhaseChange()">
-                                <option value="">Sélectionner une phase</option>
-                                <option value="qualification">Qualifications</option>
-                                <option value="finale">Finale</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="resultPlayer">Joueur *</label>
-                            <select id="resultPlayer" required>
-                                <option value="">Sélectionner un joueur</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="positionField">
-                            <label for="resultPosition">Position en finale *</label>
-                            <input type="number" id="resultPosition" min="1" placeholder="Ex: 1">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </form>
-            </div>
-            <div class="card">
-                <h2>🏁 Résultats par édition</h2>
-                <div class="edition-selector" id="resultsEditionSelector"></div>
-                <div id="resultsDisplay"></div>
-            </div>
-        </div>
-
-        <!-- CLASSEMENT -->
-        <div class="tab-content" id="rankings">
-            <div class="card">
-                <h2>
-                    <span>📊 Classement général</span>
-                    <button class="btn btn-secondary btn-small" onclick="exportCSV()">⬇️ Export CSV</button>
-                </h2>
-                <div id="generalRanking"></div>
-            </div>
-            <div class="card">
-                <h2>📈 Points — Top 10</h2>
-                <div class="chart-container">
-                    <canvas id="rankingChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- STATS -->
-        <div class="tab-content" id="stats">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Joueurs inscrits</div>
-                    <div class="stat-value" id="totalParticipants">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Éditions jouées</div>
-                    <div class="stat-value" id="totalEditions">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Participations qualifs</div>
-                    <div class="stat-value" id="totalQuals">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Participations finales</div>
-                    <div class="stat-value" id="totalFinals">0</div>
-                </div>
-            </div>
-            <div class="card">
-                <h2>📈 Statistiques par joueur</h2>
-                <div id="playerStats"></div>
-            </div>
+            <div class="logo-sub">Trackmania</div>
         </div>
     </div>
+    <button class="account-btn" id="accountBtn" onclick="openAccount()">Mon compte</button>
+</header>
 
-    <!-- EDIT PARTICIPANT MODAL -->
-    <div class="modal-overlay" id="editParticipantModal">
-        <div class="modal">
-            <h2>✏️ Modifier le joueur</h2>
-            <form id="editParticipantForm">
-                <input type="hidden" id="editParticipantId">
+<main class="hero">
+    <div class="hero-title">
+        <h1>Choisissez votre <span class="tm-accent">compétition</span></h1>
+        <p class="hero-subtitle">Springs E-Sport — Trackmania</p>
+    </div>
+
+    <div class="cups-grid">
+
+        <a href="trackmania-cup.html?cup=monthly" class="cup-card monthly">
+            <img src="Trackmania.png" alt="Springs Monthly Cup">
+            <div class="card-overlay"></div>
+            <div class="card-content">
+                <span class="card-tag">En ligne • Mensuel</span>
+                <h2 class="card-title">Springs<br>Monthly Cup</h2>
+                <p class="card-description">Compétition en ligne mensuelle ouverte à tous les joueurs.</p>
+                <div class="card-btn">Résultats &amp; Classements →</div>
+            </div>
+        </a>
+
+        <a href="trackmania-cup.html?cup=mania" class="cup-card mania">
+            <img src="Trackmania.png" alt="Springs Mania Cup">
+            <div class="card-overlay"></div>
+            <div class="card-content">
+                <span class="card-tag">LAN • Événement</span>
+                <h2 class="card-title">Springs<br>Mania Cup</h2>
+                <p class="card-description">Compétition LAN organisée par Springs E-Sport.</p>
+                <div class="card-btn">Résultats &amp; Classements →</div>
+            </div>
+        </a>
+
+    </div>
+</main>
+
+<!-- Account Modal -->
+<div class="modal-overlay" id="accountModal">
+    <div class="modal">
+
+        <!-- VIEW: Auth -->
+        <div id="view-auth">
+            <h2>Connexion</h2>
+            <p class="sub">Connecte-toi avec Google pour accéder aux résultats et classements.</p>
+            <button class="btn-google" id="googleSignInBtn" onclick="handleGoogleSignIn()">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+                Se connecter avec Google
+            </button>
+            <p class="modal-error" id="googleError" style="margin-top:12px"></p>
+            <button type="button" class="btn-secondary" onclick="closeAccount()">Annuler</button>
+        </div>
+
+        <!-- VIEW: First-time profile setup -->
+        <div id="view-setup" style="display:none">
+            <h2>Complète ton profil</h2>
+            <p class="sub">Renseigne ton pseudo de jeu pour apparaître dans les classements.</p>
+            <form id="setupForm" onsubmit="handleSetupSave(event)">
                 <div class="form-group">
-                    <label for="editPlayerName">Pseudo *</label>
-                    <input type="text" id="editPlayerName" required>
+                    <label>Pseudo in-game</label>
+                    <input type="text" id="setupPseudo" required placeholder="Ton pseudo de jeu">
                 </div>
                 <div class="form-group">
-                    <label for="editPlayerTeam">Équipe</label>
-                    <input type="text" id="editPlayerTeam" placeholder="Sans équipe">
+                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                    <input type="text" id="setupTeam" placeholder="Ton équipe">
                 </div>
-                <div style="display:flex;gap:10px;margin-top:16px">
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditParticipant()">Annuler</button>
+                <div class="form-group">
+                    <label>Je joue à</label>
+                    <div class="games-check">
+                        <label class="game-check-label">
+                            <input type="checkbox" id="setupGameTM" checked>
+                            <div><div class="game-label-text">Trackmania</div><div class="game-label-sub">Racing</div></div>
+                        </label>
+                        <label class="game-check-label">
+                            <input type="checkbox" id="setupGameRL">
+                            <div><div class="game-label-text">Rocket League</div><div class="game-label-sub">Football</div></div>
+                        </label>
+                    </div>
                 </div>
+                <div class="modal-btns">
+                    <button type="submit" class="btn-primary" id="setupSubmitBtn">Enregistrer</button>
+                </div>
+                <p class="modal-error" id="setupError"></p>
             </form>
         </div>
-    </div>
 
-    <!-- EDIT EDITION MODAL -->
-    <div class="modal-overlay" id="editEditionModal">
-        <div class="modal">
-            <h2>✏️ Modifier l'édition</h2>
-            <form id="editEditionForm">
-                <input type="hidden" id="editEditionId">
+        <!-- VIEW: Player profile -->
+        <div id="view-profile" style="display:none">
+            <h2>Mon profil</h2>
+            <form id="profileForm" onsubmit="handleProfileSave(event)">
                 <div class="form-group">
-                    <label for="editEditionName">Nom *</label>
-                    <input type="text" id="editEditionName" required>
+                    <label>Pseudo in-game</label>
+                    <input type="text" id="profPseudo" required>
                 </div>
                 <div class="form-group">
-                    <label for="editEditionDate">Date *</label>
-                    <input type="date" id="editEditionDate" required>
+                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                    <input type="text" id="profTeam">
                 </div>
-                <div style="display:flex;gap:10px;margin-top:16px">
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditEdition()">Annuler</button>
+                <div class="form-group">
+                    <label>Je joue à</label>
+                    <div class="games-check">
+                        <label class="game-check-label">
+                            <input type="checkbox" id="profGameTM">
+                            <div><div class="game-label-text">Trackmania</div><div class="game-label-sub">Racing</div></div>
+                        </label>
+                        <label class="game-check-label">
+                            <input type="checkbox" id="profGameRL">
+                            <div><div class="game-label-text">Rocket League</div><div class="game-label-sub">Football</div></div>
+                        </label>
+                    </div>
                 </div>
+                <p class="form-note" id="profEmail"></p>
+                <div class="modal-btns">
+                    <button type="submit" class="btn-primary" id="profileSubmitBtn">Enregistrer</button>
+                    <button type="button" class="btn-secondary" style="flex:none;margin-top:0" onclick="closeAccount()">Fermer</button>
+                </div>
+                <p class="modal-error" id="profileError"></p>
+                <p class="modal-success" id="profileSuccess">✅ Profil mis à jour !</p>
             </form>
+            <hr class="modal-divider">
+            <div class="modal-footer-row">
+                <span style="font-size:0.78rem;color:rgba(255,255,255,0.25)">Compte joueur</span>
+                <button class="btn-logout" onclick="handleLogout()">Se déconnecter</button>
+            </div>
         </div>
+
     </div>
+</div>
 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
+        authDomain: "monthly-cup.firebaseapp.com",
+        projectId: "monthly-cup",
+        storageBucket: "monthly-cup.firebasestorage.app",
+        messagingSenderId: "82527508810",
+        appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
+    };
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
-            authDomain: "monthly-cup.firebaseapp.com",
-            projectId: "monthly-cup",
-            storageBucket: "monthly-cup.firebasestorage.app",
-            messagingSenderId: "82527508810",
-            appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
-        };
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+    let currentUser = null;
 
-        // Points system: pos 1-10 = F1 points, pos 11+ = 1pt
-        const POINTS_SYSTEM = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-        const getPoints = (pos) => pos > 0 ? (POINTS_SYSTEM[pos - 1] ?? 1) : 0;
-
-        let isAdmin = false;
-        let data = { participants: [], editions: [], results: [] };
-        let rankingChart = null;
-        let loaded = { participants: false, editions: false, results: false };
-
-        function checkLoaded() {
-            if (loaded.participants && loaded.editions && loaded.results)
-                document.getElementById('loadingOverlay').classList.add('hidden');
+    // Auth state
+    onAuthStateChanged(auth, async user => {
+        currentUser = user;
+        if (!user) {
+            document.body.classList.add('guest-mode');
+            document.getElementById('accountBtn').textContent = 'Mon compte';
+            document.getElementById('accountBtn').className = 'account-btn';
+            return;
         }
 
-        // Auth — vérifie si l'utilisateur est dans la collection 'admins'
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
-                    isAdmin = adminSnap.exists();
-                } catch {
-                    isAdmin = false;
-                }
+        try {
+            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            if (userSnap.exists()) {
+                const pseudo = userSnap.data().pseudo;
+                document.body.classList.remove('guest-mode');
+                document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
+                document.getElementById('accountBtn').className = 'account-btn player-active';
+                closeAccount();
             } else {
-                isAdmin = false;
+                // First time: show profile setup
+                document.body.classList.remove('guest-mode');
+                document.getElementById('setupPseudo').value = user.displayName || '';
+                document.getElementById('accountModal').classList.add('open');
+                showView('view-setup');
             }
-            const btn = document.getElementById('adminToggleBtn');
-            if (isAdmin) {
-                document.body.classList.add('admin-mode');
-                btn.classList.add('active');
-                btn.textContent = '🔓 Déconnexion';
-            } else {
-                document.body.classList.remove('admin-mode');
-                btn.classList.remove('active');
-                btn.textContent = '⚙️ Admin';
-            }
-            displayParticipants();
-            displayEditions();
-            displayResults();
-        });
-
-        const googleProvider = new GoogleAuthProvider();
-
-        window.toggleAdmin = async () => {
-            if (isAdmin) {
-                signOut(auth);
-            } else {
-                try {
-                    await signInWithPopup(auth, googleProvider);
-                } catch(err) {
-                    if (err.code !== 'auth/popup-closed-by-user') {
-                        alert('Erreur de connexion Google.');
-                    }
-                }
-            }
-        };
-
-        // Edit participant
-        window.openEditParticipant = (id) => {
-            const p = data.participants.find(p => p.id === id);
-            if (!p) return;
-            document.getElementById('editParticipantId').value = id;
-            document.getElementById('editPlayerName').value = p.name;
-            document.getElementById('editPlayerTeam').value = p.team === 'Sans équipe' ? '' : p.team;
-            document.getElementById('editParticipantModal').classList.add('open');
-        };
-        window.closeEditParticipant = () => {
-            document.getElementById('editParticipantModal').classList.remove('open');
-        };
-        document.getElementById('editParticipantForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editParticipantId').value;
-            const name = document.getElementById('editPlayerName').value.trim();
-            const team = document.getElementById('editPlayerTeam').value.trim();
-            const duplicate = data.participants.find(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== id);
-            if (duplicate) { alert('Ce pseudo est déjà utilisé !'); return; }
-            await updateDoc(doc(db, 'participants', id), { name, team: team || 'Sans équipe' });
-            closeEditParticipant();
-        });
-
-        // Edit edition
-        window.openEditEdition = (id) => {
-            const e = data.editions.find(e => e.id === id);
-            if (!e) return;
-            document.getElementById('editEditionId').value = id;
-            document.getElementById('editEditionName').value = e.name;
-            document.getElementById('editEditionDate').value = e.date;
-            document.getElementById('editEditionModal').classList.add('open');
-        };
-        window.closeEditEdition = () => {
-            document.getElementById('editEditionModal').classList.remove('open');
-        };
-        document.getElementById('editEditionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editEditionId').value;
-            const name = document.getElementById('editEditionName').value.trim();
-            const date = document.getElementById('editEditionDate').value;
-            await updateDoc(doc(db, 'editions', id), { name, date });
-            closeEditEdition();
-        });
-
-        // Delete functions (global for onclick)
-        window.deleteParticipant = async (id) => {
-            if (!confirm('Supprimer ce joueur et tous ses résultats ?')) return;
-            for (const r of data.results.filter(r => r.playerId === id))
-                await deleteDoc(doc(db, 'results', r.id));
-            await deleteDoc(doc(db, 'participants', id));
-        };
-
-        window.deleteEdition = async (id) => {
-            if (!confirm('Supprimer cette édition et tous ses résultats ?')) return;
-            for (const r of data.results.filter(r => r.editionId === id))
-                await deleteDoc(doc(db, 'results', r.id));
-            await deleteDoc(doc(db, 'editions', id));
-        };
-
-        window.deleteResult = async (id) => {
-            if (!confirm('Supprimer ce résultat ?')) return;
-            await deleteDoc(doc(db, 'results', id));
-        };
-
-        // Phase change: show/hide position field
-        window.onPhaseChange = () => {
-            const phase = document.getElementById('resultPhase').value;
-            const field = document.getElementById('positionField');
-            const input = document.getElementById('resultPosition');
-            if (phase === 'finale') {
-                field.style.display = 'block';
-                input.required = true;
-            } else {
-                field.style.display = 'none';
-                input.required = false;
-                input.value = '';
-            }
-        };
-
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                const id = tab.dataset.tab;
-                document.getElementById(id).classList.add('active');
-                if (id === 'results') { displayResultsEditionSelector(); displayResults(); }
-                else if (id === 'rankings') displayGeneralRanking();
-                else if (id === 'stats') displayStats();
-            });
-        });
-
-        // Add participant
-        document.getElementById('addParticipantForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('playerName').value.trim();
-            const team = document.getElementById('playerTeam').value.trim();
-            if (data.participants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                alert('Ce joueur existe déjà !'); return;
-            }
-            await addDoc(collection(db, 'participants'), { name, team: team || 'Sans équipe' });
-            e.target.reset();
-        });
-
-        // Display participants
-        window.displayParticipants = function() {
-            const container = document.getElementById('participantsList');
-            const search = (document.getElementById('searchPlayers')?.value || '').toLowerCase();
-            const filtered = data.participants
-                .filter(p => p.name.toLowerCase().includes(search))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">👤</span><p>Aucun joueur trouvé</p></div>';
-                return;
-            }
-
-            const adminCol = isAdmin ? '<th></th>' : '';
-            let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Qualifs</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
-            filtered.forEach(p => {
-                const quals = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').length;
-                const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
-                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
-                html += `<tr>
-                    <td><strong>${p.name}</strong></td>
-                    <td style="color:var(--color-text-secondary)">${p.team}</td>
-                    <td>${quals}</td>
-                    <td>${finals}</td>
-                    ${del}
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        };
-
-        // Add edition
-        document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, 'editions'), {
-                name: document.getElementById('editionName').value.trim(),
-                date: document.getElementById('editionDate').value
-            });
-            e.target.reset();
-        });
-
-        // Display editions
-        function displayEditions() {
-            const container = document.getElementById('editionsList');
-            if (data.editions.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📅</span><p>Aucune édition créée</p></div>';
-                return;
-            }
-            const adminCol = isAdmin ? '<th></th>' : '';
-            let html = `<table><thead><tr><th>Nom</th><th>Date</th><th>Qualifiés</th><th>Finalistes</th>${adminCol}</tr></thead><tbody>`;
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
-                const quals = data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
-                const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
-                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button></td>` : '';
-                html += `<tr>
-                    <td><strong>${e.name}</strong></td>
-                    <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
-                    <td>${quals}</td>
-                    <td>${finals}</td>
-                    ${del}
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
+        } catch {
+            document.body.classList.remove('guest-mode');
+            document.getElementById('accountBtn').textContent = `👤 ${user.displayName || 'Joueur'}`;
+            document.getElementById('accountBtn').className = 'account-btn player-active';
         }
+    });
 
-        // Update form selectors
-        function updateSelectors() {
-            const edSel = document.getElementById('resultEdition');
-            edSel.innerHTML = '<option value="">Sélectionner une édition</option>';
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
-                edSel.innerHTML += `<option value="${e.id}">${e.name}</option>`;
-            });
-            const plSel = document.getElementById('resultPlayer');
-            plSel.innerHTML = '<option value="">Sélectionner un joueur</option>';
-            data.participants.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
-                plSel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-            });
+    // Modal
+    window.openAccount = () => {
+        document.getElementById('accountModal').classList.add('open');
+        if (!currentUser) {
+            showView('view-auth');
+        } else {
+            loadProfileView();
+            showView('view-profile');
         }
+    };
 
-        // Add result
-        document.getElementById('addResultForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const editionId = document.getElementById('resultEdition').value;
-            const phase = document.getElementById('resultPhase').value;
-            const playerId = document.getElementById('resultPlayer').value;
-            const posVal = document.getElementById('resultPosition').value;
-            const position = phase === 'finale' ? parseInt(posVal) : null;
+    window.closeAccount = () => {
+        document.getElementById('accountModal').classList.remove('open');
+    };
 
-            if (data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === phase)) {
-                alert('Un résultat existe déjà pour ce joueur dans cette phase !'); return;
-            }
-
-            const entry = { editionId, playerId, phase };
-            if (position) entry.position = position;
-            await addDoc(collection(db, 'results'), entry);
-
-            // Auto-add qualification if adding a finale result and not already in quals
-            if (phase === 'finale') {
-                const alreadyInQuals = data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === 'qualification');
-                if (!alreadyInQuals) {
-                    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'qualification' });
-                }
-            }
-
-            e.target.reset();
-            document.getElementById('positionField').style.display = 'none';
+    function showView(id) {
+        ['view-auth', 'view-setup', 'view-profile'].forEach(v => {
+            document.getElementById(v).style.display = v === id ? 'block' : 'none';
         });
+    }
 
-        // Display results edition selector
-        function displayResultsEditionSelector() {
-            const container = document.getElementById('resultsEditionSelector');
-            if (data.editions.length === 0) {
-                container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.9rem">Aucune édition disponible</p>';
-                return;
+    document.getElementById('accountModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('accountModal')) closeAccount();
+    });
+
+    // Google sign-in
+    const GOOGLE_SVG = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Se connecter avec Google`;
+
+    window.handleGoogleSignIn = async () => {
+        const btn = document.getElementById('googleSignInBtn');
+        btn.disabled = true; btn.textContent = 'Connexion...';
+        try {
+            await signInWithPopup(auth, provider);
+        } catch(err) {
+            if (err.code !== 'auth/popup-closed-by-user') {
+                const el = document.getElementById('googleError');
+                el.textContent = 'Erreur de connexion. Réessaye.';
+                el.style.display = 'block';
             }
-            let html = '<div class="edition-badge active" data-edition="all">Toutes</div>';
-            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
-                html += `<div class="edition-badge" data-edition="${e.id}">${e.name}</div>`;
-            });
-            container.innerHTML = html;
-            container.querySelectorAll('.edition-badge').forEach(badge => {
-                badge.addEventListener('click', () => {
-                    container.querySelectorAll('.edition-badge').forEach(b => b.classList.remove('active'));
-                    badge.classList.add('active');
-                    displayResults(badge.dataset.edition === 'all' ? null : badge.dataset.edition);
-                });
-            });
+            btn.disabled = false; btn.innerHTML = GOOGLE_SVG;
         }
+    };
 
-        // Display results
-        window.displayResults = function(filterEditionId = null) {
-            const container = document.getElementById('resultsDisplay');
-            const editions = (filterEditionId
-                ? data.editions.filter(e => e.id === filterEditionId)
-                : data.editions.sort((a, b) => new Date(b.date) - new Date(a.date))
-            );
+    // First-time setup
+    window.handleSetupSave = async (e) => {
+        e.preventDefault();
+        const pseudo = document.getElementById('setupPseudo').value.trim();
+        const team   = document.getElementById('setupTeam').value.trim();
+        const games  = [];
+        if (document.getElementById('setupGameTM').checked) games.push('trackmania');
+        if (document.getElementById('setupGameRL').checked) games.push('rocket-league');
 
-            let html = '';
-            editions.forEach(edition => {
-                const edResults = data.results.filter(r => r.editionId === edition.id);
-                if (edResults.length === 0) return;
-
-                const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
-                const qualResults = edResults.filter(r => r.phase === 'qualification');
-
-                html += `<h3 style="margin: 24px 0 14px; font-size: 1.05rem; color: var(--color-accent);">
-                    ${edition.name}
-                    <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">
-                        — ${new Date(edition.date).toLocaleDateString('fr-FR')}
-                    </span>
-                </h3>`;
-
-                if (finaleResults.length > 0) {
-                    html += '<div class="phase-title">🏆 Résultats Finale</div>';
-                    const adminCol = isAdmin ? '<th></th>' : '';
-                    html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
-                    finaleResults.forEach(r => {
-                        const player = data.participants.find(p => p.id === r.playerId);
-                        if (!player) return;
-                        const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
-                        const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
-                        html += `<tr>
-                            <td><span class="badge ${badgeClass}">${r.position}</span></td>
-                            <td><strong>${player.name}</strong></td>
-                            <td style="color:var(--color-text-secondary)">${player.team}</td>
-                            <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
-                            ${del}
-                        </tr>`;
-                    });
-                    html += '</tbody></table>';
-                }
-
-                if (qualResults.length > 0) {
-                    html += '<div class="phase-title" style="margin-top:18px">🎯 Participants Qualifications</div>';
-                    html += '<div class="chips">';
-                    qualResults.forEach(r => {
-                        const player = data.participants.find(p => p.id === r.playerId);
-                        if (!player) return;
-                        const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
-                        html += `<span class="chip">${player.name}${del}</span>`;
-                    });
-                    html += '</div>';
-                }
-            });
-
-            container.innerHTML = html || '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
-        };
-
-        // General ranking
-        function displayGeneralRanking() {
-            const container = document.getElementById('generalRanking');
-            const finales = data.results.filter(r => r.phase === 'finale');
-
-            if (finales.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>Aucun résultat de finale enregistré</p></div>';
-                updateChart([]);
-                return;
-            }
-
-            const stats = {};
-            data.participants.forEach(p => {
-                stats[p.id] = { player: p, points: 0, finals: 0, wins: 0, podiums: 0, best: Infinity };
-            });
-            finales.forEach(r => {
-                if (!stats[r.playerId]) return;
-                stats[r.playerId].points += getPoints(r.position);
-                stats[r.playerId].finals++;
-                if (r.position === 1) stats[r.playerId].wins++;
-                if (r.position <= 3) stats[r.playerId].podiums++;
-                if (r.position < stats[r.playerId].best) stats[r.playerId].best = r.position;
-            });
-
-            const ranking = Object.values(stats)
-                .filter(s => s.finals > 0)
-                .sort((a, b) => b.points - a.points || b.wins - a.wins || a.best - b.best);
-
-            let html = '<table><thead><tr><th>#</th><th>Joueur</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
-            ranking.forEach((s, i) => {
-                const badgeClass = (i + 1) <= 3 ? `badge-${i + 1}` : 'badge-other';
-                html += `<tr>
-                    <td><span class="badge ${badgeClass}">${i + 1}</span></td>
-                    <td>
-                        <strong>${s.player.name}</strong>
-                        <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
-                    </td>
-                    <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
-                    <td>${s.finals}</td>
-                    <td>${s.wins > 0 ? `🏆 ${s.wins}` : '—'}</td>
-                    <td>${s.podiums > 0 ? `🥇 ${s.podiums}` : '—'}</td>
-                    <td>${s.best === Infinity ? '—' : `P${s.best}`}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-            updateChart(ranking.slice(0, 10));
+        const btn = document.getElementById('setupSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Enregistrement...';
+        try {
+            const uid = currentUser.uid;
+            const createdAt = new Date().toISOString();
+            await setDoc(doc(db, 'users', uid), { pseudo, team, games, email: currentUser.email, uid, createdAt });
+            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
+            document.body.classList.remove('guest-mode');
+            document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
+            document.getElementById('accountBtn').className = 'account-btn player-active';
+            closeAccount();
+        } catch {
+            document.getElementById('setupError').textContent = 'Erreur. Réessaye.';
+            document.getElementById('setupError').style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Enregistrer';
         }
+    };
 
-        // Chart
-        function updateChart(ranking) {
-            const ctx = document.getElementById('rankingChart').getContext('2d');
-            if (rankingChart) rankingChart.destroy();
-            if (ranking.length === 0) return;
+    // Profile view
+    function loadProfileView() {
+        if (!currentUser) return;
+        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
+            document.getElementById('profPseudo').value = d.pseudo || '';
+            document.getElementById('profTeam').value   = d.team   || '';
+            document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
+            document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
+            document.getElementById('profEmail').textContent = `Email : ${currentUser.email}`;
+        });
+    }
 
-            rankingChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ranking.map(s => s.player.name),
-                    datasets: [{
-                        data: ranking.map(s => s.points),
-                        backgroundColor: ranking.map((_, i) =>
-                            i === 0 ? 'rgba(251,191,36,0.85)' :
-                            i === 1 ? 'rgba(148,163,184,0.85)' :
-                            i === 2 ? 'rgba(180,83,9,0.85)' :
-                            'rgba(56,189,248,0.65)'
-                        ),
-                        borderRadius: 6,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.04)' },
-                            ticks: { color: '#94a3b8', font: { size: 11 } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#94a3b8', font: { size: 11 } }
-                        }
-                    }
-                }
-            });
+    window.handleProfileSave = async (e) => {
+        e.preventDefault();
+        const pseudo = document.getElementById('profPseudo').value.trim();
+        const team   = document.getElementById('profTeam').value.trim();
+        const games  = [];
+        if (document.getElementById('profGameTM').checked) games.push('trackmania');
+        if (document.getElementById('profGameRL').checked) games.push('rocket-league');
+
+        const btn = document.getElementById('profileSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Enregistrement...';
+        try {
+            await setDoc(doc(db, 'users', currentUser.uid), { pseudo, team, games }, { merge: true });
+            const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
+            const snap = await getDocs(q);
+            await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+            document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
+            document.getElementById('profileSuccess').style.display = 'block';
+            document.getElementById('profileError').style.display = 'none';
+            setTimeout(() => { document.getElementById('profileSuccess').style.display = 'none'; }, 3000);
+        } catch {
+            document.getElementById('profileError').textContent = 'Erreur lors de la sauvegarde.';
+            document.getElementById('profileError').style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Enregistrer';
         }
+    };
 
-        // Stats
-        function displayStats() {
-            const quals = data.results.filter(r => r.phase === 'qualification').length;
-            const finals = data.results.filter(r => r.phase === 'finale').length;
-            document.getElementById('totalParticipants').textContent = data.participants.length;
-            document.getElementById('totalEditions').textContent = data.editions.length;
-            document.getElementById('totalQuals').textContent = quals;
-            document.getElementById('totalFinals').textContent = finals;
+    window.handleLogout = async () => { await signOut(auth); closeAccount(); };
 
-            const container = document.getElementById('playerStats');
-            const rows = data.participants.map(p => {
-                const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
-                const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
-                if (qRes.length === 0 && fRes.length === 0) return null;
-                return {
-                    p,
-                    quals: qRes.length,
-                    finals: fRes.length,
-                    points: fRes.reduce((sum, r) => sum + getPoints(r.position), 0),
-                    wins: fRes.filter(r => r.position === 1).length,
-                    podiums: fRes.filter(r => r.position <= 3).length,
-                };
-            }).filter(Boolean).sort((a, b) => b.points - a.points);
+    // Block cards for guests
+    document.querySelectorAll('.cup-card').forEach(card => {
+        card.addEventListener('click', e => {
+            if (!currentUser) { e.preventDefault(); openAccount(); }
+        });
+    });
+</script>
 
-            if (rows.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📈</span><p>Aucune statistique disponible</p></div>';
-                return;
-            }
-
-            let html = '<table><thead><tr><th>Joueur</th><th>Qualifs</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
-            rows.forEach(r => {
-                html += `<tr>
-                    <td><strong>${r.p.name}</strong></td>
-                    <td>${r.quals}</td>
-                    <td>${r.finals}</td>
-                    <td><strong style="color:var(--color-accent)">${r.points}</strong></td>
-                    <td>${r.wins > 0 ? `🏆 ${r.wins}` : '—'}</td>
-                    <td>${r.podiums > 0 ? `🥇 ${r.podiums}` : '—'}</td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-
-        // Export CSV
-        window.exportCSV = () => {
-            const finales = data.results.filter(r => r.phase === 'finale');
-            if (finales.length === 0) { alert('Aucun résultat de finale à exporter.'); return; }
-
-            const stats = {};
-            data.participants.forEach(p => { stats[p.id] = { ...p, points: 0, finals: 0, wins: 0, podiums: 0 }; });
-            finales.forEach(r => {
-                if (!stats[r.playerId]) return;
-                stats[r.playerId].points += getPoints(r.position);
-                stats[r.playerId].finals++;
-                if (r.position === 1) stats[r.playerId].wins++;
-                if (r.position <= 3) stats[r.playerId].podiums++;
-            });
-
-            const ranking = Object.values(stats).filter(s => s.finals > 0).sort((a, b) => b.points - a.points);
-            const csv = [
-                'Position,Joueur,Équipe,Points,Finales,Victoires,Podiums',
-                ...ranking.map((s, i) => `${i+1},"${s.name}","${s.team}",${s.points},${s.finals},${s.wins},${s.podiums}`)
-            ].join('\n');
-
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-            a.download = 'classement_trackmania.csv';
-            a.click();
-        };
-
-        // Real-time listeners
-        const onErr = (name) => (err) => {
-            console.error('Firestore error (' + name + '):', err);
-            loaded[name] = true;
-            checkLoaded();
-        };
-
-        onSnapshot(collection(db, 'participants'), snap => {
-            data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            loaded.participants = true;
-            checkLoaded();
-            displayParticipants(); updateSelectors(); displayStats(); displayGeneralRanking();
-        }, onErr('participants'));
-
-        onSnapshot(collection(db, 'editions'), snap => {
-            data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            loaded.editions = true;
-            checkLoaded();
-            displayEditions(); updateSelectors(); displayResultsEditionSelector(); displayResults(); displayStats();
-        }, onErr('editions'));
-
-        onSnapshot(collection(db, 'results'), snap => {
-            data.results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            loaded.results = true;
-            checkLoaded();
-            displayParticipants(); displayEditions(); displayResults(); displayStats(); displayGeneralRanking();
-        }, onErr('results'));
-    </script>
 </body>
 </html>

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Springs Monthly Cup — Trackmania</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --color-bg-primary: #1a1a1a;
+            --color-bg-secondary: #222222;
+            --color-bg-elevated: #2e2e2e;
+            --color-text-primary: #f0f0f0;
+            --color-text-secondary: #888888;
+            --color-accent: #00D936;
+            --color-accent-hover: #00ff3f;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --springs-orange: #FFB800;
+            --springs-purple: #7B2FBE;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--color-bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.4s;
+        }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--color-bg-elevated);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: #222222;
+            padding: 20px 32px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 217, 54, 0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-wrap { line-height: 1; }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+        .logo .p  { color: var(--springs-orange); }
+        .logo .i1 { color: var(--springs-purple); }
+        .logo .s2 { color: var(--springs-orange); }
+        .logo-sub {
+            font-size: 0.55rem;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        .header-center { text-align: center; }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00D936, #00ff3f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-top: 4px; }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--color-bg-secondary);
+            padding: 5px;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: transparent;
+            border: none;
+            color: var(--color-text-secondary);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .tab:hover { color: var(--color-text-primary); background: var(--color-bg-elevated); }
+        .tab.active { color: var(--color-bg-primary); background: var(--color-accent); font-weight: 600; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--color-bg-secondary);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .form-group { margin-bottom: 14px; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--color-bg-elevated);
+            border: 1.5px solid transparent;
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 54, 0.12);
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-primary { background: var(--color-accent); color: var(--color-bg-primary); }
+        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,217,54,0.3); }
+        .btn-danger { background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
+        .btn-danger:hover { background: var(--color-danger); color: white; }
+        .btn-secondary { background: var(--color-bg-elevated); color: var(--color-text-primary); }
+        .btn-secondary:hover { background: #475569; }
+        .btn-small { padding: 4px 10px; font-size: 0.8rem; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        th { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; background: rgba(255,255,255,0.02); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            min-width: 32px;
+        }
+        .badge-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
+        .badge-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #000; }
+        .badge-3 { background: linear-gradient(135deg, #cd7f32, #92400e); color: #fff; }
+        .badge-other { background: var(--color-bg-elevated); color: var(--color-text-secondary); }
+
+        .pts-badge {
+            background: rgba(0,217,54,0.12);
+            color: var(--color-accent);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--color-bg-secondary);
+            padding: 20px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange));
+        }
+        .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--color-accent); line-height: 1; margin: 8px 0 4px; }
+        .stat-label { color: var(--color-text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        .edition-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .edition-badge { padding: 5px 14px; background: var(--color-bg-elevated); border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; border: 1.5px solid transparent; }
+        .edition-badge:hover { border-color: var(--color-accent); color: var(--color-accent); }
+        .edition-badge.active { background: var(--color-accent); color: var(--color-bg-primary); font-weight: 600; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--color-text-secondary); }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; display: block; }
+
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+
+        .search-wrapper { position: relative; margin-bottom: 16px; }
+        .search-wrapper input { padding-left: 36px; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary); }
+
+        .phase-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-text-secondary);
+            margin: 20px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+        .chip {
+            background: var(--color-bg-elevated);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            color: var(--color-text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .chip-delete { background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 0.75rem; padding: 0; line-height: 1; }
+
+        .chart-container { position: relative; height: 280px; margin-top: 12px; }
+
+        /* Admin */
+        .admin-only { display: none; }
+        body.admin-mode .admin-only { display: block; }
+
+        .admin-btn {
+            padding: 7px 14px;
+            border: 1.5px solid var(--color-bg-elevated);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .admin-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+        .admin-btn.active { background: var(--color-warning); border-color: var(--color-warning); color: #000; }
+
+        .admin-indicator {
+            display: none;
+            background: rgba(245,158,11,0.12);
+            color: var(--color-warning);
+            border: 1px solid rgba(245,158,11,0.25);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        body.admin-mode .admin-indicator { display: inline-flex; align-items: center; gap: 5px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--color-bg-secondary);
+            padding: 36px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            animation: fadeIn 0.2s ease;
+        }
+        .modal h2 { margin-bottom: 22px; font-size: 1.2rem; }
+        .modal-error {
+            color: var(--color-danger);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+            background: rgba(239,68,68,0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        #positionField { display: none; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.5rem; }
+            .tab { padding: 8px 12px; font-size: 0.82rem; }
+            th, td { padding: 9px 10px; font-size: 0.85rem; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Chargement...</p>
+    </div>
+
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="logo-wrap">
+                    <div class="logo">
+                        <span>S</span><span class="p">P</span><span>R</span><span class="i1">I</span><span>NG</span><span class="s2">S</span>
+                    </div>
+                    <div class="logo-sub">Esport</div>
+                </div>
+                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08);"></div>
+                <div>
+                    <h1 id="cupTitle">Springs Monthly Cup</h1>
+                    <p class="subtitle" id="cupSubtitle">Springs E-Sport — En ligne — Résultats & Classements</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <a href="trackmania.html" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.8rem;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.25)'" onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.borderColor='rgba(255,255,255,0.08)'">← Accueil</a>
+                <span class="admin-indicator">⚙️ Mode Admin</span>
+                <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()">⚙️ Admin</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="participants">👥 Joueurs</button>
+            <button class="tab" data-tab="editions">📅 Éditions</button>
+            <button class="tab" data-tab="results">🏁 Résultats</button>
+            <button class="tab" data-tab="rankings">📊 Classement</button>
+            <button class="tab" data-tab="stats">📈 Stats</button>
+        </div>
+
+        <!-- JOUEURS -->
+        <div class="tab-content active" id="participants">
+            <div class="card admin-only">
+                <h2>➕ Ajouter un joueur</h2>
+                <form id="addParticipantForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="playerName">Pseudo *</label>
+                            <input type="text" id="playerName" required placeholder="Ex: Player123">
+                        </div>
+                        <div class="form-group">
+                            <label for="playerTeam">Équipe (optionnel)</label>
+                            <input type="text" id="playerTeam" placeholder="Ex: Team Rocket">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>👥 Joueurs inscrits</h2>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchPlayers" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
+                </div>
+                <div id="participantsList"></div>
+            </div>
+        </div>
+
+        <!-- EDITIONS -->
+        <div class="tab-content" id="editions">
+            <div class="card admin-only">
+                <h2>➕ Créer une édition</h2>
+                <form id="addEditionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editionName">Nom *</label>
+                            <input type="text" id="editionName" required placeholder="Ex: Monthly Cup #3">
+                        </div>
+                        <div class="form-group">
+                            <label for="editionDate">Date *</label>
+                            <input type="date" id="editionDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>📅 Éditions</h2>
+                <div id="editionsList"></div>
+            </div>
+        </div>
+
+        <!-- RESULTATS -->
+        <div class="tab-content" id="results">
+            <div class="card admin-only">
+                <h2>➕ Enregistrer un résultat</h2>
+                <form id="addResultForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="resultEdition">Édition *</label>
+                            <select id="resultEdition" required>
+                                <option value="">Sélectionner une édition</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultPhase">Phase *</label>
+                            <select id="resultPhase" required onchange="onPhaseChange()">
+                                <option value="">Sélectionner une phase</option>
+                                <option value="qualification">Qualifications</option>
+                                <option value="finale">Finale</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resultPlayer">Joueur *</label>
+                            <select id="resultPlayer" required>
+                                <option value="">Sélectionner un joueur</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="positionField">
+                            <label for="resultPosition">Position en finale *</label>
+                            <input type="number" id="resultPosition" min="1" placeholder="Ex: 1">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>🏁 Résultats par édition</h2>
+                <div class="edition-selector" id="resultsEditionSelector"></div>
+                <div id="resultsDisplay"></div>
+            </div>
+        </div>
+
+        <!-- CLASSEMENT -->
+        <div class="tab-content" id="rankings">
+            <div class="card">
+                <h2>
+                    <span>📊 Classement général</span>
+                    <button class="btn btn-secondary btn-small" onclick="exportCSV()">⬇️ Export CSV</button>
+                </h2>
+                <div id="generalRanking"></div>
+            </div>
+            <div class="card">
+                <h2>📈 Points — Top 10</h2>
+                <div class="chart-container">
+                    <canvas id="rankingChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="tab-content" id="stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Joueurs inscrits</div>
+                    <div class="stat-value" id="totalParticipants">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Éditions jouées</div>
+                    <div class="stat-value" id="totalEditions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Participations qualifs</div>
+                    <div class="stat-value" id="totalQuals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Participations finales</div>
+                    <div class="stat-value" id="totalFinals">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>📈 Statistiques par joueur</h2>
+                <div id="playerStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT PARTICIPANT MODAL -->
+    <div class="modal-overlay" id="editParticipantModal">
+        <div class="modal">
+            <h2>✏️ Modifier le joueur</h2>
+            <form id="editParticipantForm">
+                <input type="hidden" id="editParticipantId">
+                <div class="form-group">
+                    <label for="editPlayerName">Pseudo *</label>
+                    <input type="text" id="editPlayerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPlayerTeam">Équipe</label>
+                    <input type="text" id="editPlayerTeam" placeholder="Sans équipe">
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditParticipant()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT EDITION MODAL -->
+    <div class="modal-overlay" id="editEditionModal">
+        <div class="modal">
+            <h2>✏️ Modifier l'édition</h2>
+            <form id="editEditionForm">
+                <input type="hidden" id="editEditionId">
+                <div class="form-group">
+                    <label for="editEditionName">Nom *</label>
+                    <input type="text" id="editEditionName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEditionDate">Date *</label>
+                    <input type="date" id="editEditionDate" required>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditEdition()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
+            authDomain: "monthly-cup.firebaseapp.com",
+            projectId: "monthly-cup",
+            storageBucket: "monthly-cup.firebasestorage.app",
+            messagingSenderId: "82527508810",
+            appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Cup configuration from URL parameter
+        const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
+        const CUP = cupId === 'mania'
+            ? { name: 'Springs Mania Cup', color: '#FFB800', colorHover: '#ffc733', label: 'LAN' }
+            : { name: 'Springs Monthly Cup', color: '#00D936', colorHover: '#00ff3f', label: 'En ligne' };
+
+        // Apply cup colors and title
+        document.documentElement.style.setProperty('--color-accent', CUP.color);
+        document.documentElement.style.setProperty('--color-accent-hover', CUP.colorHover);
+        document.title = `${CUP.name} — Trackmania`;
+        document.getElementById('cupTitle').textContent = CUP.name;
+        document.getElementById('cupSubtitle').textContent = `Springs E-Sport — ${CUP.label} — Résultats & Classements`;
+
+        // Helper: get player display name (handles both 'pseudo' and 'name' fields)
+        const pName = p => p.pseudo || p.name || 'Inconnu';
+        // Cup filter: backward compat — existing docs without cupId are treated as 'monthly'
+        const cupFilter = item => (item.cupId || 'monthly') === cupId;
+
+        // Points system: pos 1-10 = F1 points, pos 11+ = 1pt
+        const POINTS_SYSTEM = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+        const getPoints = (pos) => pos > 0 ? (POINTS_SYSTEM[pos - 1] ?? 1) : 0;
+
+        let isAdmin = false;
+        let data = { participants: [], editions: [], results: [] };
+        let rankingChart = null;
+        let loaded = { participants: false, editions: false, results: false };
+
+        function checkLoaded() {
+            if (loaded.participants && loaded.editions && loaded.results)
+                document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        // Auth — vérifie si l'utilisateur est dans la collection 'admins'
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+                    isAdmin = adminSnap.exists();
+                } catch {
+                    isAdmin = false;
+                }
+            } else {
+                isAdmin = false;
+            }
+            const btn = document.getElementById('adminToggleBtn');
+            if (isAdmin) {
+                document.body.classList.add('admin-mode');
+                btn.classList.add('active');
+                btn.textContent = '🔓 Déconnexion';
+            } else {
+                document.body.classList.remove('admin-mode');
+                btn.classList.remove('active');
+                btn.textContent = '⚙️ Admin';
+            }
+            displayParticipants();
+            displayEditions();
+            displayResults();
+        });
+
+        const googleProvider = new GoogleAuthProvider();
+
+        window.toggleAdmin = async () => {
+            if (isAdmin) {
+                signOut(auth);
+            } else {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                } catch(err) {
+                    if (err.code !== 'auth/popup-closed-by-user') {
+                        alert('Erreur de connexion Google.');
+                    }
+                }
+            }
+        };
+
+        // Edit participant
+        window.openEditParticipant = (id) => {
+            const p = data.participants.find(p => p.id === id);
+            if (!p) return;
+            document.getElementById('editParticipantId').value = id;
+            document.getElementById('editPlayerName').value = pName(p);
+            document.getElementById('editPlayerTeam').value = p.team === 'Sans équipe' ? '' : p.team;
+            document.getElementById('editParticipantModal').classList.add('open');
+        };
+        window.closeEditParticipant = () => {
+            document.getElementById('editParticipantModal').classList.remove('open');
+        };
+        document.getElementById('editParticipantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editParticipantId').value;
+            const name = document.getElementById('editPlayerName').value.trim();
+            const team = document.getElementById('editPlayerTeam').value.trim();
+            const duplicate = data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
+            if (duplicate) { alert('Ce pseudo est déjà utilisé !'); return; }
+            await updateDoc(doc(db, 'participants', id), { name, team: team || 'Sans équipe' });
+            closeEditParticipant();
+        });
+
+        // Edit edition
+        window.openEditEdition = (id) => {
+            const e = data.editions.find(e => e.id === id);
+            if (!e) return;
+            document.getElementById('editEditionId').value = id;
+            document.getElementById('editEditionName').value = e.name;
+            document.getElementById('editEditionDate').value = e.date;
+            document.getElementById('editEditionModal').classList.add('open');
+        };
+        window.closeEditEdition = () => {
+            document.getElementById('editEditionModal').classList.remove('open');
+        };
+        document.getElementById('editEditionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editEditionId').value;
+            const name = document.getElementById('editEditionName').value.trim();
+            const date = document.getElementById('editEditionDate').value;
+            await updateDoc(doc(db, 'editions', id), { name, date });
+            closeEditEdition();
+        });
+
+        // Delete functions (global for onclick)
+        window.deleteParticipant = async (id) => {
+            if (!confirm('Supprimer ce joueur et tous ses résultats ?')) return;
+            for (const r of data.results.filter(r => r.playerId === id))
+                await deleteDoc(doc(db, 'results', r.id));
+            await deleteDoc(doc(db, 'participants', id));
+        };
+
+        window.deleteEdition = async (id) => {
+            if (!confirm('Supprimer cette édition et tous ses résultats ?')) return;
+            for (const r of data.results.filter(r => r.editionId === id))
+                await deleteDoc(doc(db, 'results', r.id));
+            await deleteDoc(doc(db, 'editions', id));
+        };
+
+        window.deleteResult = async (id) => {
+            if (!confirm('Supprimer ce résultat ?')) return;
+            await deleteDoc(doc(db, 'results', id));
+        };
+
+        // Phase change: show/hide position field
+        window.onPhaseChange = () => {
+            const phase = document.getElementById('resultPhase').value;
+            const field = document.getElementById('positionField');
+            const input = document.getElementById('resultPosition');
+            if (phase === 'finale') {
+                field.style.display = 'block';
+                input.required = true;
+            } else {
+                field.style.display = 'none';
+                input.required = false;
+                input.value = '';
+            }
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                const id = tab.dataset.tab;
+                document.getElementById(id).classList.add('active');
+                if (id === 'results') { displayResultsEditionSelector(); displayResults(); }
+                else if (id === 'rankings') displayGeneralRanking();
+                else if (id === 'stats') displayStats();
+            });
+        });
+
+        // Add participant
+        document.getElementById('addParticipantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('playerName').value.trim();
+            const team = document.getElementById('playerTeam').value.trim();
+            if (data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
+                alert('Ce joueur existe déjà !'); return;
+            }
+            await addDoc(collection(db, 'participants'), { name, team: team || 'Sans équipe', cupId });
+            e.target.reset();
+        });
+
+        // Display participants
+        window.displayParticipants = function() {
+            const container = document.getElementById('participantsList');
+            const search = (document.getElementById('searchPlayers')?.value || '').toLowerCase();
+            const filtered = data.participants
+                .filter(p => pName(p).toLowerCase().includes(search))
+                .sort((a, b) => pName(a).localeCompare(pName(b)));
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">👤</span><p>Aucun joueur trouvé</p></div>';
+                return;
+            }
+
+            const adminCol = isAdmin ? '<th></th>' : '';
+            let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Qualifs</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
+            filtered.forEach(p => {
+                const quals = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').length;
+                const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
+                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
+                html += `<tr>
+                    <td><strong>${pName(p)}</strong></td>
+                    <td style="color:var(--color-text-secondary)">${p.team}</td>
+                    <td>${quals}</td>
+                    <td>${finals}</td>
+                    ${del}
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        };
+
+        // Add edition
+        document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, 'editions'), {
+                name: document.getElementById('editionName').value.trim(),
+                date: document.getElementById('editionDate').value,
+                cupId
+            });
+            e.target.reset();
+        });
+
+        // Display editions
+        function displayEditions() {
+            const container = document.getElementById('editionsList');
+            if (data.editions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📅</span><p>Aucune édition créée</p></div>';
+                return;
+            }
+            const adminCol = isAdmin ? '<th></th>' : '';
+            let html = `<table><thead><tr><th>Nom</th><th>Date</th><th>Qualifiés</th><th>Finalistes</th>${adminCol}</tr></thead><tbody>`;
+            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
+                const quals = data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
+                const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
+                const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button></td>` : '';
+                html += `<tr>
+                    <td><strong>${e.name}</strong></td>
+                    <td>${new Date(e.date).toLocaleDateString('fr-FR')}</td>
+                    <td>${quals}</td>
+                    <td>${finals}</td>
+                    ${del}
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Update form selectors
+        function updateSelectors() {
+            const edSel = document.getElementById('resultEdition');
+            edSel.innerHTML = '<option value="">Sélectionner une édition</option>';
+            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
+                edSel.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+            });
+            const plSel = document.getElementById('resultPlayer');
+            plSel.innerHTML = '<option value="">Sélectionner un joueur</option>';
+            data.participants.sort((a, b) => pName(a).localeCompare(pName(b))).forEach(p => {
+                plSel.innerHTML += `<option value="${p.id}">${pName(p)}</option>`;
+            });
+        }
+
+        // Add result
+        document.getElementById('addResultForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editionId = document.getElementById('resultEdition').value;
+            const phase = document.getElementById('resultPhase').value;
+            const playerId = document.getElementById('resultPlayer').value;
+            const posVal = document.getElementById('resultPosition').value;
+            const position = phase === 'finale' ? parseInt(posVal) : null;
+
+            if (data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === phase)) {
+                alert('Un résultat existe déjà pour ce joueur dans cette phase !'); return;
+            }
+
+            const entry = { editionId, playerId, phase };
+            if (position) entry.position = position;
+            await addDoc(collection(db, 'results'), { ...entry, cupId });
+
+            // Auto-add qualification if adding a finale result and not already in quals
+            if (phase === 'finale') {
+                const alreadyInQuals = data.results.some(r => r.editionId === editionId && r.playerId === playerId && r.phase === 'qualification');
+                if (!alreadyInQuals) {
+                    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'qualification', cupId });
+                }
+            }
+
+            e.target.reset();
+            document.getElementById('positionField').style.display = 'none';
+        });
+
+        // Display results edition selector
+        function displayResultsEditionSelector() {
+            const container = document.getElementById('resultsEditionSelector');
+            if (data.editions.length === 0) {
+                container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.9rem">Aucune édition disponible</p>';
+                return;
+            }
+            let html = '<div class="edition-badge active" data-edition="all">Toutes</div>';
+            data.editions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
+                html += `<div class="edition-badge" data-edition="${e.id}">${e.name}</div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.edition-badge').forEach(badge => {
+                badge.addEventListener('click', () => {
+                    container.querySelectorAll('.edition-badge').forEach(b => b.classList.remove('active'));
+                    badge.classList.add('active');
+                    displayResults(badge.dataset.edition === 'all' ? null : badge.dataset.edition);
+                });
+            });
+        }
+
+        // Display results
+        window.displayResults = function(filterEditionId = null) {
+            const container = document.getElementById('resultsDisplay');
+            const editions = (filterEditionId
+                ? data.editions.filter(e => e.id === filterEditionId)
+                : data.editions.sort((a, b) => new Date(b.date) - new Date(a.date))
+            );
+
+            let html = '';
+            editions.forEach(edition => {
+                const edResults = data.results.filter(r => r.editionId === edition.id);
+                if (edResults.length === 0) return;
+
+                const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
+                const qualResults = edResults.filter(r => r.phase === 'qualification');
+
+                html += `<h3 style="margin: 24px 0 14px; font-size: 1.05rem; color: var(--color-accent);">
+                    ${edition.name}
+                    <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">
+                        — ${new Date(edition.date).toLocaleDateString('fr-FR')}
+                    </span>
+                </h3>`;
+
+                if (finaleResults.length > 0) {
+                    html += '<div class="phase-title">🏆 Résultats Finale</div>';
+                    const adminCol = isAdmin ? '<th></th>' : '';
+                    html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
+                    finaleResults.forEach(r => {
+                        const player = data.participants.find(p => p.id === r.playerId);
+                        if (!player) return;
+                        const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
+                        const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
+                        html += `<tr>
+                            <td><span class="badge ${badgeClass}">${r.position}</span></td>
+                            <td><strong>${pName(player)}</strong></td>
+                            <td style="color:var(--color-text-secondary)">${player.team}</td>
+                            <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
+                            ${del}
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                }
+
+                if (qualResults.length > 0) {
+                    html += '<div class="phase-title" style="margin-top:18px">🎯 Participants Qualifications</div>';
+                    html += '<div class="chips">';
+                    qualResults.forEach(r => {
+                        const player = data.participants.find(p => p.id === r.playerId);
+                        if (!player) return;
+                        const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
+                        html += `<span class="chip">${pName(player)}${del}</span>`;
+                    });
+                    html += '</div>';
+                }
+            });
+
+            container.innerHTML = html || '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
+        };
+
+        // General ranking
+        function displayGeneralRanking() {
+            const container = document.getElementById('generalRanking');
+            const finales = data.results.filter(r => r.phase === 'finale');
+
+            if (finales.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>Aucun résultat de finale enregistré</p></div>';
+                updateChart([]);
+                return;
+            }
+
+            const stats = {};
+            data.participants.forEach(p => {
+                stats[p.id] = { player: p, points: 0, finals: 0, wins: 0, podiums: 0, best: Infinity };
+            });
+            finales.forEach(r => {
+                if (!stats[r.playerId]) return;
+                stats[r.playerId].points += getPoints(r.position);
+                stats[r.playerId].finals++;
+                if (r.position === 1) stats[r.playerId].wins++;
+                if (r.position <= 3) stats[r.playerId].podiums++;
+                if (r.position < stats[r.playerId].best) stats[r.playerId].best = r.position;
+            });
+
+            const ranking = Object.values(stats)
+                .filter(s => s.finals > 0)
+                .sort((a, b) => b.points - a.points || b.wins - a.wins || a.best - b.best);
+
+            let html = '<table><thead><tr><th>#</th><th>Joueur</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
+            ranking.forEach((s, i) => {
+                const badgeClass = (i + 1) <= 3 ? `badge-${i + 1}` : 'badge-other';
+                html += `<tr>
+                    <td><span class="badge ${badgeClass}">${i + 1}</span></td>
+                    <td>
+                        <strong>${pName(s.player)}</strong>
+                        <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
+                    </td>
+                    <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
+                    <td>${s.finals}</td>
+                    <td>${s.wins > 0 ? `🏆 ${s.wins}` : '—'}</td>
+                    <td>${s.podiums > 0 ? `🥇 ${s.podiums}` : '—'}</td>
+                    <td>${s.best === Infinity ? '—' : `P${s.best}`}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            updateChart(ranking.slice(0, 10));
+        }
+
+        // Chart
+        function updateChart(ranking) {
+            const ctx = document.getElementById('rankingChart').getContext('2d');
+            if (rankingChart) rankingChart.destroy();
+            if (ranking.length === 0) return;
+
+            rankingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ranking.map(s => pName(s.player)),
+                    datasets: [{
+                        data: ranking.map(s => s.points),
+                        backgroundColor: ranking.map((_, i) =>
+                            i === 0 ? 'rgba(251,191,36,0.85)' :
+                            i === 1 ? 'rgba(148,163,184,0.85)' :
+                            i === 2 ? 'rgba(180,83,9,0.85)' :
+                            'rgba(56,189,248,0.65)'
+                        ),
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.04)' },
+                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Stats
+        function displayStats() {
+            const quals = data.results.filter(r => r.phase === 'qualification').length;
+            const finals = data.results.filter(r => r.phase === 'finale').length;
+            document.getElementById('totalParticipants').textContent = data.participants.length;
+            document.getElementById('totalEditions').textContent = data.editions.length;
+            document.getElementById('totalQuals').textContent = quals;
+            document.getElementById('totalFinals').textContent = finals;
+
+            const container = document.getElementById('playerStats');
+            const rows = data.participants.map(p => {
+                const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
+                const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
+                if (qRes.length === 0 && fRes.length === 0) return null;
+                return {
+                    p,
+                    quals: qRes.length,
+                    finals: fRes.length,
+                    points: fRes.reduce((sum, r) => sum + getPoints(r.position), 0),
+                    wins: fRes.filter(r => r.position === 1).length,
+                    podiums: fRes.filter(r => r.position <= 3).length,
+                };
+            }).filter(Boolean).sort((a, b) => b.points - a.points);
+
+            if (rows.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📈</span><p>Aucune statistique disponible</p></div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Joueur</th><th>Qualifs</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
+            rows.forEach(r => {
+                html += `<tr>
+                    <td><strong>${pName(r.p)}</strong></td>
+                    <td>${r.quals}</td>
+                    <td>${r.finals}</td>
+                    <td><strong style="color:var(--color-accent)">${r.points}</strong></td>
+                    <td>${r.wins > 0 ? `🏆 ${r.wins}` : '—'}</td>
+                    <td>${r.podiums > 0 ? `🥇 ${r.podiums}` : '—'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Export CSV
+        window.exportCSV = () => {
+            const finales = data.results.filter(r => r.phase === 'finale');
+            if (finales.length === 0) { alert('Aucun résultat de finale à exporter.'); return; }
+
+            const stats = {};
+            data.participants.forEach(p => { stats[p.id] = { ...p, points: 0, finals: 0, wins: 0, podiums: 0 }; });
+            finales.forEach(r => {
+                if (!stats[r.playerId]) return;
+                stats[r.playerId].points += getPoints(r.position);
+                stats[r.playerId].finals++;
+                if (r.position === 1) stats[r.playerId].wins++;
+                if (r.position <= 3) stats[r.playerId].podiums++;
+            });
+
+            const ranking = Object.values(stats).filter(s => s.finals > 0).sort((a, b) => b.points - a.points);
+            const csv = [
+                'Position,Joueur,Équipe,Points,Finales,Victoires,Podiums',
+                ...ranking.map((s, i) => `${i+1},"${pName(s)}","${s.team}",${s.points},${s.finals},${s.wins},${s.podiums}`)
+            ].join('\n');
+
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            a.download = `classement_${cupId}.csv`;
+            a.click();
+        };
+
+        // Real-time listeners
+        const onErr = (name) => (err) => {
+            console.error('Firestore error (' + name + '):', err);
+            loaded[name] = true;
+            checkLoaded();
+        };
+
+        onSnapshot(collection(db, 'participants'), snap => {
+            data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+            loaded.participants = true;
+            checkLoaded();
+            displayParticipants(); updateSelectors(); displayStats(); displayGeneralRanking();
+        }, onErr('participants'));
+
+        onSnapshot(collection(db, 'editions'), snap => {
+            data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+            loaded.editions = true;
+            checkLoaded();
+            displayEditions(); updateSelectors(); displayResultsEditionSelector(); displayResults(); displayStats();
+        }, onErr('editions'));
+
+        onSnapshot(collection(db, 'results'), snap => {
+            data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+            loaded.results = true;
+            checkLoaded();
+            displayParticipants(); displayEditions(); displayResults(); displayStats(); displayGeneralRanking();
+        }, onErr('results'));
+    </script>
+</body>
+</html>
