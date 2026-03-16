@@ -739,7 +739,7 @@
         .player-profile-team { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 2px; }
         .player-profile-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-bottom: 24px;
         }
@@ -814,6 +814,7 @@
             th, td { padding: 9px 10px; font-size: 0.85rem; }
             .card { padding: 16px; }
             .player-profile-stats { grid-template-columns: repeat(2, 1fr); }
+            .account-quick-stats { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -2125,6 +2126,12 @@
             const avatar = pName(player).charAt(0);
             const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
             const pStats = computePlayerStats(playerId);
+            const avgPos = finaleRes.length > 0
+                ? (finaleRes.reduce((s, r) => s + r.position, 0) / finaleRes.length).toFixed(1)
+                : null;
+            const winRate = finaleRes.length > 0
+                ? Math.round(wins / finaleRes.length * 100)
+                : null;
 
             // Achievement grid
             const achievementGridHtml = ACHIEVEMENTS.map(a => {
@@ -2152,6 +2159,8 @@
                     <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${wins > 0 ? `🏆 ${wins}` : '—'}</div><div class="pp-stat-label">Victoires</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${avgPos !== null ? `P${avgPos}` : '—'}</div><div class="pp-stat-label">Pos. moyenne</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${winRate !== null ? winRate + '%' : '—'}</div><div class="pp-stat-label">Win rate</div></div>
                 </div>
                 <div class="phase-title" style="margin-top:4px">🏅 Badges</div>
                 <div class="achievement-grid">${achievementGridHtml}</div>`;
@@ -2174,41 +2183,59 @@
 
             // Chart only if they have finale results
             if (finaleRes.length > 0) {
-                html += `<div class="phase-title" style="margin-top:20px">📈 Points par édition</div>
+                html += `<div class="phase-title" style="margin-top:20px">📈 Évolution du classement</div>
                     <div class="player-chart-container"><canvas id="playerChartCanvas"></canvas></div>`;
             }
 
             document.getElementById('playerProfileContent').innerHTML = html;
             document.getElementById('playerProfileModal').classList.add('open');
 
-            // Draw chart
+            // Draw chart — line showing rank evolution across all past editions
             if (finaleRes.length > 0) {
-                const chartEditions = pastEditions.filter(e => finaleRes.some(r => r.editionId === e.id));
-                const chartLabels = chartEditions.map(e => e.name);
-                const chartData = chartEditions.map(e => {
+                const chartLabels = pastEditions.map(e => e.name);
+                const chartData = pastEditions.map(e => {
                     const r = finaleRes.find(r => r.editionId === e.id);
-                    return r ? getPoints(r.position) : 0;
+                    return r ? r.position : null;
                 });
+                const pointColors = chartData.map(v => v === 1 ? '#fbbf24' : v !== null ? CUP.color : 'transparent');
                 const ctx = document.getElementById('playerChartCanvas').getContext('2d');
                 if (playerChart) playerChart.destroy();
                 playerChart = new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels: chartLabels,
                         datasets: [{
                             data: chartData,
-                            backgroundColor: chartData.map((_, i) => `hsla(${130 + i * 20}, 70%, 50%, 0.75)`),
-                            borderRadius: 6,
-                            borderSkipped: false,
+                            borderColor: CUP.color,
+                            backgroundColor: CUP.color + '20',
+                            borderWidth: 2,
+                            pointRadius: chartData.map(v => v !== null ? 5 : 0),
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: pointColors,
+                            fill: false,
+                            tension: 0.3,
+                            spanGaps: false,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => ctx.raw !== null ? `P${ctx.raw}` : 'Non finaliste',
+                                }
+                            }
+                        },
                         scales: {
-                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+                            y: {
+                                reverse: true,
+                                min: 1,
+                                ticks: { stepSize: 1, callback: v => `P${v}`, color: '#94a3b8', font: { size: 11 } },
+                                grid: { color: 'rgba(255,255,255,0.04)' }
+                            },
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 }, maxRotation: 30 } }
                         }
                     }
                 });
@@ -2248,13 +2275,38 @@
                 .filter(s => s.finals > 0)
                 .sort((a, b) => b.points - a.points || b.wins - a.wins || a.best - b.best);
 
-            let html = '<table><thead><tr><th>#</th><th>Joueur</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
+            // Find connected player's rank
+            const myEntry = currentUser
+                ? ranking.find(s => s.player.userId === currentUser.uid)
+                : null;
+            const myRank = myEntry ? ranking.indexOf(myEntry) + 1 : null;
+
+            let myRankHtml = '';
+            if (currentUser) {
+                if (myRank) {
+                    const myBadgeClass = myRank <= 3 ? `badge-${myRank}` : 'badge-other';
+                    myRankHtml = `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,217,54,0.06);border:1px solid rgba(0,217,54,0.18);border-radius:10px;margin-bottom:16px;flex-wrap:wrap">
+                        <span class="badge ${myBadgeClass}">${myRank}</span>
+                        <strong>${pName(myEntry.player)}</strong>
+                        <span style="color:var(--color-text-secondary);font-size:0.85rem">— ${myEntry.points} pts · ${myEntry.finals} finale${myEntry.finals !== 1 ? 's' : ''} · ${myEntry.wins > 0 ? myEntry.wins + ' victoire' + (myEntry.wins > 1 ? 's' : '') : 'aucune victoire'}</span>
+                    </div>`;
+                } else {
+                    myRankHtml = `<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px">
+                        Tu n'apparais pas encore au classement — participe à une finale !
+                    </div>`;
+                }
+            }
+
+            let html = myRankHtml + '<table><thead><tr><th>#</th><th>Joueur</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
             ranking.forEach((s, i) => {
                 const badgeClass = (i + 1) <= 3 ? `badge-${i + 1}` : 'badge-other';
-                html += `<tr>
+                const isMe = currentUser && s.player.userId === currentUser.uid;
+                const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
+                html += `<tr style="${rowStyle}">
                     <td><span class="badge ${badgeClass}">${i + 1}</span></td>
                     <td>
                         <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>${playerBadgesHtml(s.player.id)}
+                        ${isMe ? '<span style="color:var(--color-accent);font-size:0.78rem;margin-left:6px">← toi</span>' : ''}
                         <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
                     </td>
                     <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
