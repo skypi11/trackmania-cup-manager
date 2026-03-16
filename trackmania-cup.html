@@ -862,6 +862,10 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="editionDesc">Description (optionnel)</label>
+                        <textarea id="editionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires sur l'édition..."></textarea>
+                    </div>
                     <button type="submit" class="btn btn-primary">Créer</button>
                 </form>
             </div>
@@ -984,7 +988,7 @@
 
     <!-- EDIT EDITION MODAL -->
     <div class="modal-overlay" id="editEditionModal">
-        <div class="modal">
+        <div class="modal" style="max-width:560px">
             <h2>✏️ Modifier l'édition</h2>
             <form id="editEditionForm">
                 <input type="hidden" id="editEditionId">
@@ -1025,6 +1029,10 @@
                         <option value="terminee">✅ Terminée</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="editEditionDesc">Description</label>
+                    <textarea id="editEditionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires..."></textarea>
+                </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                     <button type="button" class="btn btn-secondary" onclick="closeEditEdition()">Annuler</button>
@@ -1044,7 +1052,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -1244,6 +1252,7 @@
             document.getElementById('editEditionSalon').value = e.salon || '';
             document.getElementById('editEditionPassword').value = e.password || '';
             document.getElementById('editEditionStatus').value = e.status || 'inscriptions';
+            document.getElementById('editEditionDesc').value = e.description || '';
             document.getElementById('editEditionModal').classList.add('open');
         };
         window.closeEditEdition = () => {
@@ -1251,15 +1260,22 @@
         };
         document.getElementById('editEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id    = document.getElementById('editEditionId').value;
+            const id       = document.getElementById('editEditionId').value;
             const name     = document.getElementById('editEditionName').value.trim();
             const date     = document.getElementById('editEditionDate').value;
             const time     = document.getElementById('editEditionTime').value;
             const club     = document.getElementById('editEditionClub').value.trim();
             const salon    = document.getElementById('editEditionSalon').value.trim();
             const password = document.getElementById('editEditionPassword').value.trim();
-            const status   = document.getElementById('editEditionStatus').value;
-            await updateDoc(doc(db, 'editions', id), { name, date, time, club, salon, password, status });
+            const description = document.getElementById('editEditionDesc').value.trim();
+            const newStatus = document.getElementById('editEditionStatus').value;
+            const current   = data.editions.find(ed => ed.id === id);
+            const updates   = { name, date, time, club, salon, password, description, status: newStatus };
+            // Log status change if status changed
+            if (current && current.status !== newStatus) {
+                updates.statusHistory = arrayUnion({ status: newStatus, at: new Date().toISOString() });
+            }
+            await updateDoc(doc(db, 'editions', id), updates);
             closeEditEdition();
         });
 
@@ -1342,19 +1358,22 @@
         // Add edition
         document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const time     = document.getElementById('editionTime').value;
-            const club     = document.getElementById('editionClub').value.trim();
-            const salon    = document.getElementById('editionSalon').value.trim();
-            const password = document.getElementById('editionPassword').value.trim();
-            const status   = document.getElementById('editionStatus').value;
+            const time        = document.getElementById('editionTime').value;
+            const club        = document.getElementById('editionClub').value.trim();
+            const salon       = document.getElementById('editionSalon').value.trim();
+            const password    = document.getElementById('editionPassword').value.trim();
+            const status      = document.getElementById('editionStatus').value;
+            const description = document.getElementById('editionDesc').value.trim();
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: document.getElementById('editionDate').value,
                 status,
-                ...(time     ? { time }     : {}),
-                ...(club     ? { club }     : {}),
-                ...(salon    ? { salon }    : {}),
-                ...(password ? { password } : {}),
+                statusHistory: [{ status, at: new Date().toISOString() }],
+                ...(time        ? { time }        : {}),
+                ...(club        ? { club }        : {}),
+                ...(salon       ? { salon }       : {}),
+                ...(password    ? { password }    : {}),
+                ...(description ? { description } : {}),
                 cupId
             });
             e.target.reset();
@@ -1443,7 +1462,10 @@
         };
 
         window.setEditionStatus = async (id, status) => {
-            await updateDoc(doc(db, 'editions', id), { status });
+            await updateDoc(doc(db, 'editions', id), {
+                status,
+                statusHistory: arrayUnion({ status, at: new Date().toISOString() })
+            });
         };
 
         window.goToEdition = (id) => {
@@ -1629,6 +1651,30 @@
             grid.innerHTML = html;
         }
 
+        // Status history helper
+        const STATUS_LOG_LABELS = {
+            fermee:       '🔒 Inscriptions fermées',
+            inscriptions: '📋 Inscriptions ouvertes',
+            en_cours:     '🎯 Événement lancé',
+            terminee:     '✅ Édition clôturée',
+        };
+        function buildStatusHistoryHtml(edition) {
+            const history = edition.statusHistory;
+            if (!history || history.length === 0) return '';
+            const sorted = [...history].sort((a, b) => new Date(a.at) - new Date(b.at));
+            const items = sorted.map(h => {
+                const d = new Date(h.at);
+                const dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const timeLabel = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--color-text-secondary)">
+                    <span>${STATUS_LOG_LABELS[h.status] || h.status}</span>
+                    <span style="opacity:0.5">·</span>
+                    <span>${dateLabel} à ${timeLabel}</span>
+                </span>`;
+            }).join('<span style="color:rgba(255,255,255,0.15);margin:0 6px">→</span>');
+            return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:16px;line-height:1.8">${items}</div>`;
+        }
+
         // Open edition detail
         window.openEditionDetail = (id) => {
             currentDetailEditionId = id;
@@ -1691,8 +1737,11 @@
                 const qualResults = edResults.filter(r => r.phase === 'qualification');
 
                 const timeStr = e.time ? ` à ${e.time}` : '';
+                const editBtnHtml = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
                 html += `<div class="card">
-                    <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span></h2>`;
+                    <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span>${editBtnHtml}</h2>
+                    ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${e.description}</p>` : ''}
+                    ${buildStatusHistoryHtml(e)}`;
 
                 if (finaleResults.length > 0) {
                     // Visual podium — order: 2nd (left), 1st (center), 3rd (right)
@@ -1860,9 +1909,12 @@
                     registrantsHtml += '</tbody></table>';
                 }
 
+                const upcomingEditBtn = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
                 html = `<div class="card">
-                    <h2>🏆 ${e.name}</h2>
+                    <h2>🏆 ${e.name}${upcomingEditBtn}</h2>
                     ${workflowHtml}
+                    ${buildStatusHistoryHtml(e)}
+                    ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px;line-height:1.6">${e.description}</p>` : ''}
                     ${infoHtml}
                     ${registrationHtml}
                     <div style="margin-top:28px">
@@ -2186,10 +2238,12 @@
             if (currentUser) {
                 if (myRank) {
                     const myBadgeClass = myRank <= 3 ? `badge-${myRank}` : 'badge-other';
-                    myRankHtml = `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,217,54,0.06);border:1px solid rgba(0,217,54,0.18);border-radius:10px;margin-bottom:16px;flex-wrap:wrap">
-                        <span class="badge ${myBadgeClass}">${myRank}</span>
-                        <strong>${pName(myEntry.player)}</strong>
-                        <span style="color:var(--color-text-secondary);font-size:0.85rem">— ${myEntry.points} pts · ${myEntry.finals} finale${myEntry.finals !== 1 ? 's' : ''} · ${myEntry.wins > 0 ? myEntry.wins + ' victoire' + (myEntry.wins > 1 ? 's' : '') : 'aucune victoire'}</span>
+                    myRankHtml = `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(0,217,54,0.06);border:1px solid rgba(0,217,54,0.2);border-radius:12px;margin-bottom:16px;flex-wrap:wrap">
+                        <span class="badge ${myBadgeClass}" style="font-size:1.1rem;padding:5px 13px">${myRank}</span>
+                        <div>
+                            <div style="font-weight:800;font-size:1.05rem">Tu es <span style="color:var(--color-accent)">#${myRank}</span> au classement</div>
+                            <div style="color:var(--color-text-secondary);font-size:0.82rem;margin-top:2px">${myEntry.points} pts · ${myEntry.finals} finale${myEntry.finals !== 1 ? 's' : ''} · ${myEntry.wins > 0 ? myEntry.wins + ' victoire' + (myEntry.wins > 1 ? 's' : '') : 'aucune victoire'}</div>
+                        </div>
                     </div>`;
                 } else {
                     myRankHtml = `<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px">
@@ -2198,7 +2252,7 @@
                 }
             }
 
-            let html = myRankHtml + '<table><thead><tr><th>#</th><th>Joueur</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
+            let html = myRankHtml + '<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
             ranking.forEach((s, i) => {
                 const badgeClass = (i + 1) <= 3 ? `badge-${i + 1}` : 'badge-other';
                 const isMe = currentUser && s.player.userId === currentUser.uid;
@@ -2208,8 +2262,8 @@
                     <td>
                         <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>${playerBadgesHtml(s.player.id)}
                         ${isMe ? '<span style="color:var(--color-accent);font-size:0.78rem;margin-left:6px">← toi</span>' : ''}
-                        <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
                     </td>
+                    <td style="color:var(--color-text-secondary)">${s.player.team || '—'}</td>
                     <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
                     <td>${s.finals}</td>
                     <td>${s.wins > 0 ? `🏆 ${s.wins}` : '—'}</td>
