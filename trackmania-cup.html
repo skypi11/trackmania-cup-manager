@@ -592,72 +592,67 @@
 
         /* Next edition banner */
         .next-edition-banner {
-            background: linear-gradient(135deg, rgba(0,217,54,0.07) 0%, rgba(255,184,0,0.13) 60%, rgba(123,47,190,0.08) 100%);
-            border: 1.5px solid rgba(255,184,0,0.35);
+            background: linear-gradient(135deg, #1e2a1e 0%, #2a2010 50%, #1e1a2a 100%);
+            border: 2px solid #FFB800;
             border-radius: 20px;
             padding: 36px 40px;
-            margin-bottom: 28px;
+            margin-bottom: 32px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 8px 40px rgba(255,184,0,0.08), 0 2px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 0 0 1px rgba(255,184,0,0.15), 0 12px 48px rgba(255,184,0,0.18), 0 4px 16px rgba(0,0,0,0.5);
         }
         .next-edition-banner::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange), var(--springs-purple));
+            background: linear-gradient(90deg, #00D936, #FFB800, #7B2FBE);
         }
-        .next-edition-banner::after {
-            content: '🏁';
+        .next-edition-filigrane {
             position: absolute;
-            right: -10px; bottom: -20px;
-            font-size: 9rem;
-            opacity: 0.04;
+            right: 20px;
+            bottom: -10px;
+            font-size: 10rem;
+            opacity: 0.07;
             pointer-events: none;
             line-height: 1;
+            user-select: none;
         }
         .next-edition-label {
             font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 3px;
-            color: var(--springs-orange);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            color: #FFB800;
+            margin-bottom: 12px;
         }
         .next-edition-name {
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 900;
             letter-spacing: -1px;
             margin-bottom: 12px;
             line-height: 1.1;
-            background: linear-gradient(135deg, #fff 60%, var(--springs-orange));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
         }
         .next-edition-meta {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
             font-size: 0.9rem;
-            color: var(--color-text-secondary);
+            color: rgba(255,255,255,0.55);
             margin-bottom: 24px;
         }
         .next-edition-countdown {
-            font-size: 2.8rem;
+            font-size: 3rem;
             font-weight: 900;
-            color: var(--springs-orange);
+            color: #FFB800;
             line-height: 1;
-            text-shadow: 0 0 40px rgba(255,184,0,0.4);
+            text-shadow: 0 0 30px rgba(255,184,0,0.6), 0 0 60px rgba(255,184,0,0.3);
         }
         @media (max-width: 600px) {
-            .next-edition-banner { padding: 22px 18px; }
-            .next-edition-name { font-size: 1.5rem; }
-            .next-edition-countdown { font-size: 2rem; }
+            .next-edition-banner { padding: 24px 20px; }
+            .next-edition-name { font-size: 1.6rem; }
+            .next-edition-countdown { font-size: 2.2rem; }
         }
 
         /* Achievement badges */
@@ -1375,7 +1370,8 @@
             if (next.salon) metaItems.push(`🎮 ${next.salon}`);
 
             banner.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px">
+                <div class="next-edition-filigrane">🏁</div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;position:relative;z-index:1">
                     <div style="flex:1;min-width:220px">
                         <div class="next-edition-label">🏁 Prochaine édition</div>
                         <div class="next-edition-name">${next.name}</div>
