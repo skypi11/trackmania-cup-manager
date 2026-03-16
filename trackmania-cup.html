@@ -563,6 +563,57 @@
             font-size: 0.9rem;
         }
 
+        /* Next edition banner */
+        .next-edition-banner {
+            background: linear-gradient(135deg, rgba(0,217,54,0.05) 0%, rgba(255,184,0,0.08) 100%);
+            border: 1px solid rgba(255,184,0,0.2);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .next-edition-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange));
+        }
+        .next-edition-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--springs-orange);
+            margin-bottom: 8px;
+        }
+        .next-edition-name {
+            font-size: 1.7rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+        .next-edition-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 0.88rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 20px;
+        }
+        .next-edition-countdown {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--springs-orange);
+            line-height: 1;
+        }
+        @media (max-width: 600px) {
+            .next-edition-banner { padding: 20px; }
+            .next-edition-name { font-size: 1.3rem; }
+            .next-edition-countdown { font-size: 1.6rem; }
+        }
+
         /* Achievement badges */
         .player-badges {
             font-size: 0.82rem;
@@ -705,6 +756,9 @@
                 <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
             </div>
         </header>
+
+        <!-- Next edition banner -->
+        <div id="nextEditionBanner" style="display:none"></div>
 
         <div class="tabs">
             <button class="tab active" data-tab="editions">📅 Éditions</button>
@@ -1039,6 +1093,7 @@
             checkLoaded();
             displayParticipants();
             displayEditions();
+            displayNextEditionBanner();
         });
 
         const googleProvider = new GoogleAuthProvider();
@@ -1211,6 +1266,80 @@
             });
             e.target.reset();
         });
+
+        // Next edition banner
+        function displayNextEditionBanner() {
+            const banner = document.getElementById('nextEditionBanner');
+            const today = new Date(); today.setHours(0,0,0,0);
+            const upcoming = data.editions
+                .filter(e => new Date(e.date) >= today && e.status !== 'terminee')
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (upcoming.length === 0) { banner.style.display = 'none'; return; }
+            const next = upcoming[0];
+
+            const dateStr = new Date(next.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const cd = getCountdown(next.date, next.time);
+
+            const statusMap = {
+                fermee:         { label: '🔒 Inscriptions fermées',    color: 'var(--color-text-secondary)' },
+                inscriptions:   { label: '📋 Inscriptions ouvertes',   color: 'var(--springs-orange)' },
+                qualifications: { label: '🎯 Qualifications en cours', color: '#38bdf8' },
+                finale:         { label: '🏆 Finale ce soir',          color: '#fbbf24' },
+            };
+            const statusInfo = statusMap[next.status] || statusMap.inscriptions;
+
+            const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+            const alreadyRegistered = currentPlayer
+                ? data.results.some(r => r.editionId === next.id && r.playerId === currentPlayer.id && r.phase === 'inscription')
+                : false;
+            const inscritCount = data.results.filter(r => r.editionId === next.id && r.phase === 'inscription').length;
+
+            // CTA
+            let ctaHtml = '';
+            const canRegister = !next.status || next.status === 'inscriptions';
+            if (canRegister) {
+                if (alreadyRegistered) {
+                    ctaHtml = `<div class="registered-badge" style="font-size:0.85rem;padding:8px 14px">✓ Vous êtes inscrit</div>`;
+                } else if (currentPlayer) {
+                    ctaHtml = `<button class="btn btn-primary" onclick="goToEdition('${next.id}')">S'inscrire à cette édition</button>`;
+                }
+            }
+
+            const metaItems = [`📅 ${dateStr}`];
+            if (next.time)  metaItems.push(`🕐 ${next.time}`);
+            if (next.club)  metaItems.push(`🏛️ ${next.club}`);
+            if (next.salon) metaItems.push(`🎮 ${next.salon}`);
+
+            banner.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px">
+                    <div style="flex:1;min-width:220px">
+                        <div class="next-edition-label">🏁 Prochaine édition</div>
+                        <div class="next-edition-name">${next.name}</div>
+                        <div class="next-edition-meta">${metaItems.join(' &nbsp;·&nbsp; ')}</div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                            ${ctaHtml}
+                            <button class="btn btn-secondary" onclick="goToEdition('${next.id}')">Voir l'édition →</button>
+                        </div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0">
+                        <div style="font-size:0.68rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Compte à rebours</div>
+                        <div class="next-edition-countdown">${cd || '🔜 Bientôt'}</div>
+                        <div style="margin-top:10px;font-size:0.8rem;color:var(--color-text-secondary)">👥 ${inscritCount} inscrit${inscritCount !== 1 ? 's' : ''}</div>
+                        <div style="margin-top:4px;font-size:0.8rem;font-weight:700;color:${statusInfo.color}">${statusInfo.label}</div>
+                    </div>
+                </div>`;
+            banner.style.display = 'block';
+        }
+
+        // Navigate to an edition (switch to Editions tab + open detail)
+        window.goToEdition = (id) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="editions"]').classList.add('active');
+            document.getElementById('editions').classList.add('active');
+            openEditionDetail(id);
+        };
 
         // ── Achievement system ──────────────────────────────────────────
         const ACHIEVEMENTS = [
@@ -1967,6 +2096,7 @@
             checkLoaded();
             displayParticipants();
             displayEditions();
+            displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
         }, onErr('participants'));
@@ -1976,6 +2106,7 @@
             loaded.editions = true;
             checkLoaded();
             displayEditions();
+            displayNextEditionBanner();
             displayStats();
         }, onErr('editions'));
 
@@ -1985,6 +2116,7 @@
             checkLoaded();
             displayParticipants();
             displayEditions();
+            displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
         }, onErr('results'));
