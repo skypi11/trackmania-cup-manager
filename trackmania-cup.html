@@ -409,6 +409,28 @@
             border-radius: 6px;
         }
 
+        /* Edition filter bar */
+        .edition-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            background: var(--color-bg-elevated);
+            border: 1.5px solid transparent;
+            color: var(--color-text-secondary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { color: var(--color-text-primary); border-color: rgba(255,255,255,0.15); }
+        .filter-btn.active { background: var(--color-bg-secondary); border-color: var(--color-accent); color: var(--color-accent); }
+
         /* Edition cards */
         .editions-grid {
             display: grid;
@@ -607,16 +629,6 @@
             top: 0; left: 0; right: 0;
             height: 4px;
             background: linear-gradient(90deg, #00D936, #FFB800, #7B2FBE);
-        }
-        .next-edition-filigrane {
-            position: absolute;
-            right: 20px;
-            bottom: -10px;
-            font-size: 10rem;
-            opacity: 0.07;
-            pointer-events: none;
-            line-height: 1;
-            user-select: none;
         }
         .next-edition-label {
             font-size: 0.68rem;
@@ -853,6 +865,18 @@
                 </form>
             </div>
 
+            <!-- Filter bar -->
+            <div class="edition-filters" id="editionFilters">
+                <button class="filter-btn active" data-filter="all"   onclick="setEditionFilter('all')">Toutes</button>
+                <button class="filter-btn"         data-filter="upcoming" onclick="setEditionFilter('upcoming')">À venir</button>
+                <button class="filter-btn"         data-filter="past"     onclick="setEditionFilter('past')">Passées</button>
+                <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                    <span style="font-size:0.78rem;color:var(--color-text-secondary)">Tri :</span>
+                    <button class="filter-btn active" data-sort="desc" onclick="setEditionSort('desc')">Plus récentes</button>
+                    <button class="filter-btn"         data-sort="asc"  onclick="setEditionSort('asc')">Plus anciennes</button>
+                </span>
+            </div>
+
             <!-- Grid of edition cards -->
             <div id="editionsList"></div>
 
@@ -1065,6 +1089,8 @@
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
         let playerChart = null;
+        let editionFilter = 'all';   // 'all' | 'upcoming' | 'past'
+        let editionSort   = 'desc';  // 'desc' | 'asc'
         // 'auth' included so loading overlay stays until Firebase resolves the session
         let loaded = { participants: false, editions: false, results: false, auth: false };
 
@@ -1370,8 +1396,7 @@
             if (next.salon) metaItems.push(`🎮 ${next.salon}`);
 
             banner.innerHTML = `
-                <div class="next-edition-filigrane">🏁</div>
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;position:relative;z-index:1">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px">
                     <div style="flex:1;min-width:220px">
                         <div class="next-edition-label">🏁 Prochaine édition</div>
                         <div class="next-edition-name">${next.name}</div>
@@ -1392,6 +1417,17 @@
         }
 
         // Navigate to an edition (switch to Editions tab + open detail)
+        window.setEditionFilter = (f) => {
+            editionFilter = f;
+            document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+            displayEditions();
+        };
+        window.setEditionSort = (s) => {
+            editionSort = s;
+            document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === s));
+            displayEditions();
+        };
+
         window.setEditionStatus = async (id, status) => {
             await updateDoc(doc(db, 'editions', id), { status });
         };
@@ -1491,9 +1527,20 @@
                 return;
             }
 
-            const sorted = [...data.editions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            const upcoming = sorted.filter(e => new Date(e.date) >= today && e.status !== 'terminee');
-            const past     = sorted.filter(e => new Date(e.date) <  today || e.status === 'terminee');
+            const sortFn = editionSort === 'asc'
+                ? (a, b) => new Date(a.date) - new Date(b.date)
+                : (a, b) => new Date(b.date) - new Date(a.date);
+            const sorted   = [...data.editions].sort(sortFn);
+            const allUpcoming = sorted.filter(e => new Date(e.date) >= today && e.status !== 'terminee');
+            const allPast     = sorted.filter(e => new Date(e.date) <  today || e.status === 'terminee');
+
+            // Apply filter
+            const upcoming = editionFilter === 'past'     ? [] : allUpcoming;
+            const past     = editionFilter === 'upcoming' ? [] : allPast;
+
+            // Hide filter bar when detail is open (handled by grid.style.display)
+            const filterBar = document.getElementById('editionFilters');
+            if (filterBar) filterBar.style.display = currentDetailEditionId ? 'none' : '';
 
             // Current player (for badge)
             const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
@@ -1862,6 +1909,7 @@
             currentDetailEditionId = null;
             document.getElementById('editionsList').style.display = '';
             document.getElementById('editionDetail').classList.remove('open');
+            document.getElementById('editionFilters').style.display = '';
             const createCard = document.getElementById('createEditionCard');
             if (createCard) createCard.style.display = '';
         };
