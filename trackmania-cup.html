@@ -563,6 +563,41 @@
             font-size: 0.9rem;
         }
 
+        /* Achievement badges */
+        .player-badges {
+            font-size: 0.82rem;
+            margin-left: 5px;
+            letter-spacing: 1px;
+            vertical-align: middle;
+        }
+        .player-badges span { cursor: default; }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin: 12px 0 4px;
+        }
+        .achievement-card {
+            border-radius: 10px;
+            padding: 14px 10px;
+            text-align: center;
+            border: 1px solid transparent;
+            position: relative;
+        }
+        .achievement-card.unlocked {
+            background: rgba(0,217,54,0.08);
+            border-color: rgba(0,217,54,0.2);
+        }
+        .achievement-card.locked {
+            background: var(--color-bg-elevated);
+            opacity: 0.38;
+        }
+        .achievement-icon { font-size: 1.7rem; line-height: 1; }
+        .achievement-name { font-size: 0.78rem; font-weight: 700; margin-top: 7px; }
+        .achievement-desc { font-size: 0.67rem; color: var(--color-text-secondary); margin-top: 3px; line-height: 1.3; }
+        .achievement-lock { position: absolute; top: 6px; right: 8px; font-size: 0.65rem; opacity: 0.5; }
+
         /* Player profile modal */
         .player-modal {
             background: var(--color-bg-secondary);
@@ -1145,7 +1180,7 @@
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
                 const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
                 html += `<tr>
-                    <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong></td>
+                    <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</td>
                     <td style="color:var(--color-text-secondary)">${p.team}</td>
                     <td>${quals}</td>
                     <td>${finals}</td>
@@ -1176,6 +1211,64 @@
             });
             e.target.reset();
         });
+
+        // ── Achievement system ──────────────────────────────────────────
+        const ACHIEVEMENTS = [
+            { id: 'rookie',         icon: '🌱', name: 'Rookie',             desc: '1ère participation',                          check: s => s.quals >= 1 },
+            { id: 'regulier',       icon: '⭐', name: 'Régulier',           desc: '5 participations',                            check: s => s.quals >= 5 },
+            { id: 'veteran',        icon: '💪', name: 'Vétéran',            desc: '10 participations',                           check: s => s.quals >= 10 },
+            { id: 'assidu',         icon: '📅', name: 'Assidu',             desc: 'A participé à toutes les éditions',           check: s => s.allEditions },
+            { id: 'finaliste',      icon: '🎯', name: 'Finaliste',          desc: '1ère finale',                                 check: s => s.finals >= 1 },
+            { id: 'podium',         icon: '🥉', name: 'Sur le podium',      desc: '1er podium (top 3)',                          check: s => s.podiums >= 1 },
+            { id: 'habitue',        icon: '🎪', name: 'Habitué du podium',  desc: '3 podiums',                                   check: s => s.podiums >= 3 },
+            { id: 'inarretable',    icon: '⚡', name: 'Inarrêtable',        desc: '5 podiums',                                   check: s => s.podiums >= 5 },
+            { id: 'champion',       icon: '🏆', name: 'Champion',           desc: '1ère victoire',                               check: s => s.wins >= 1 },
+            { id: 'patron',         icon: '👑', name: 'Patron',             desc: '3 victoires',                                 check: s => s.wins >= 3 },
+            { id: 'en_feu',         icon: '🔥', name: 'En feu',             desc: '2 victoires consécutives',                    check: s => s.maxConsecWins >= 2 },
+            { id: 'perfectionniste',icon: '💎', name: 'Perfectionniste',    desc: 'Top 5 à chaque finale (3 finales min.)',       check: s => s.finals >= 3 && s.alwaysTop5 },
+        ];
+
+        function computePlayerStats(playerId) {
+            const quals   = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+            const finales = data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+
+            const pastEditions = data.editions
+                .filter(e => new Date(e.date) < new Date())
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const allEditions = pastEditions.length > 0 &&
+                pastEditions.every(e => quals.some(r => r.editionId === e.id));
+
+            // Consecutive wins across editions ordered by date
+            let maxConsecWins = 0, cur = 0;
+            pastEditions.forEach(e => {
+                const f = finales.find(r => r.editionId === e.id);
+                if (f && f.position === 1) { cur++; maxConsecWins = Math.max(maxConsecWins, cur); }
+                else cur = 0;
+            });
+
+            const alwaysTop5 = finales.length >= 3 && finales.every(r => r.position <= 5);
+
+            return {
+                quals:          quals.length,
+                finals:         finales.length,
+                wins:           finales.filter(r => r.position === 1).length,
+                podiums:        finales.filter(r => r.position <= 3).length,
+                allEditions,
+                maxConsecWins,
+                alwaysTop5,
+            };
+        }
+
+        // Returns HTML for inline badges (icons only, with tooltip)
+        function playerBadgesHtml(playerId) {
+            const stats    = computePlayerStats(playerId);
+            const unlocked = ACHIEVEMENTS.filter(a => a.check(stats));
+            if (unlocked.length === 0) return '';
+            const icons = unlocked.map(a => `<span title="${a.name} : ${a.desc}">${a.icon}</span>`).join('');
+            return `<span class="player-badges">${icons}</span>`;
+        }
+        // ───────────────────────────────────────────────────────────────
 
         // Countdown helper
         function getCountdown(dateStr, timeStr) {
@@ -1363,6 +1456,7 @@
                                 <div class="podium-player">
                                     <div class="podium-medal">${medals[r.position] || r.position}</div>
                                     <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
+                                    <div>${playerBadgesHtml(player.id)}</div>
                                     <div class="podium-team">${player.team}</div>
                                     <div class="podium-pts">+${getPoints(r.position)} pts</div>
                                 </div>
@@ -1382,7 +1476,7 @@
                         const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                         html += `<tr>
                             <td><span class="badge ${badgeClass}">${r.position}</span></td>
-                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong></td>
+                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
                             <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
                             ${del}
@@ -1398,7 +1492,7 @@
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
                         const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
-                        html += `<span class="chip">${pName(player)}${del}</span>`;
+                        html += `<span class="chip" style="cursor:pointer" onclick="openPlayerProfile('${player.id}')">${pName(player)}${playerBadgesHtml(player.id)}${del}</span>`;
                     });
                     html += '</div>';
                 }
@@ -1481,7 +1575,7 @@
                         }
                         registrantsHtml += `<tr style="${meStyle}">
                             <td style="color:var(--color-text-secondary)">${i + 1}</td>
-                            <td><strong>${pName(player)}</strong>${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
+                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
                             ${passwordCell}
                             ${actionCell}
@@ -1603,6 +1697,18 @@
 
             const avatar = pName(player).charAt(0);
             const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+            const pStats = computePlayerStats(playerId);
+
+            // Achievement grid
+            const achievementGridHtml = ACHIEVEMENTS.map(a => {
+                const ok = a.check(pStats);
+                return `<div class="achievement-card ${ok ? 'unlocked' : 'locked'}">
+                    ${!ok ? '<span class="achievement-lock">🔒</span>' : ''}
+                    <div class="achievement-icon">${a.icon}</div>
+                    <div class="achievement-name">${a.name}</div>
+                    <div class="achievement-desc">${a.desc}</div>
+                </div>`;
+            }).join('');
 
             let html = `
                 <div class="player-profile-header">
@@ -1619,7 +1725,9 @@
                     <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${wins > 0 ? `🏆 ${wins}` : '—'}</div><div class="pp-stat-label">Victoires</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
-                </div>`;
+                </div>
+                <div class="phase-title" style="margin-top:4px">🏅 Badges</div>
+                <div class="achievement-grid">${achievementGridHtml}</div>`;
 
             if (historyRows.length > 0) {
                 html += `<div class="phase-title" style="margin-top:0">📅 Historique par édition</div>
@@ -1719,7 +1827,7 @@
                 html += `<tr>
                     <td><span class="badge ${badgeClass}">${i + 1}</span></td>
                     <td>
-                        <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>
+                        <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>${playerBadgesHtml(s.player.id)}
                         <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
                     </td>
                     <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
@@ -1807,7 +1915,7 @@
             let html = '<table><thead><tr><th>Joueur</th><th>Participations</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
             rows.forEach(r => {
                 html += `<tr>
-                    <td><strong>${pName(r.p)}</strong></td>
+                    <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong>${playerBadgesHtml(r.p.id)}</td>
                     <td>${r.quals}</td>
                     <td>${r.finals}</td>
                     <td><strong style="color:var(--color-accent)">${r.points}</strong></td>
