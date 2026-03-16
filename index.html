@@ -948,14 +948,8 @@
     // ── Gestion des clics sur les cards ──────────────────────────────────────
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', e => {
-            // Firebase pas encore prêt → laisser naviguer (la page cible gère l'auth)
-            if (!authReady) return;
-            // Non connecté → ouvrir le modal de connexion
-            if (!currentUser) {
-                e.preventDefault();
-                openAccount();
-            }
-            // Admin connecté → navigation libre (les éditables gèrent stopPropagation)
+            // Admin connecté : les éditables gèrent stopPropagation — navigation libre
+            // Non connecté ou joueur : navigation libre (la page cible est publique)
         });
     });
 

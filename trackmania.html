@@ -598,12 +598,7 @@
 
     window.handleLogout = async () => { await signOut(auth); closeAccount(); };
 
-    // Block cards for guests
-    document.querySelectorAll('.cup-card').forEach(card => {
-        card.addEventListener('click', e => {
-            if (!currentUser) { e.preventDefault(); openAccount(); }
-        });
-    });
+    // Cards are publicly accessible — no login required to navigate
 </script>
 
 </body>

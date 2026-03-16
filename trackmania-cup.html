@@ -592,53 +592,72 @@
 
         /* Next edition banner */
         .next-edition-banner {
-            background: linear-gradient(135deg, rgba(0,217,54,0.05) 0%, rgba(255,184,0,0.08) 100%);
-            border: 1px solid rgba(255,184,0,0.2);
-            border-radius: 16px;
-            padding: 28px 32px;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(0,217,54,0.07) 0%, rgba(255,184,0,0.13) 60%, rgba(123,47,190,0.08) 100%);
+            border: 1.5px solid rgba(255,184,0,0.35);
+            border-radius: 20px;
+            padding: 36px 40px;
+            margin-bottom: 28px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 8px 40px rgba(255,184,0,0.08), 0 2px 12px rgba(0,0,0,0.3);
         }
         .next-edition-banner::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange));
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-accent), var(--springs-orange), var(--springs-purple));
+        }
+        .next-edition-banner::after {
+            content: '🏁';
+            position: absolute;
+            right: -10px; bottom: -20px;
+            font-size: 9rem;
+            opacity: 0.04;
+            pointer-events: none;
+            line-height: 1;
         }
         .next-edition-label {
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: 0.68rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2.5px;
+            letter-spacing: 3px;
             color: var(--springs-orange);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .next-edition-name {
-            font-size: 1.7rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            letter-spacing: -0.5px;
-            margin-bottom: 10px;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 60%, var(--springs-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .next-edition-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 14px;
-            font-size: 0.88rem;
+            gap: 16px;
+            font-size: 0.9rem;
             color: var(--color-text-secondary);
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         .next-edition-countdown {
-            font-size: 2.2rem;
+            font-size: 2.8rem;
             font-weight: 900;
             color: var(--springs-orange);
             line-height: 1;
+            text-shadow: 0 0 40px rgba(255,184,0,0.4);
         }
         @media (max-width: 600px) {
-            .next-edition-banner { padding: 20px; }
-            .next-edition-name { font-size: 1.3rem; }
-            .next-edition-countdown { font-size: 1.6rem; }
+            .next-edition-banner { padding: 22px 18px; }
+            .next-edition-name { font-size: 1.5rem; }
+            .next-edition-countdown { font-size: 2rem; }
         }
 
         /* Achievement badges */
