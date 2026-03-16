@@ -438,12 +438,38 @@
         .edition-card-item.upcoming::before {
             background: linear-gradient(90deg, var(--color-warning), transparent);
         }
+        .edition-card-item.fermee::before {
+            background: linear-gradient(90deg, var(--color-text-secondary), transparent);
+        }
+        .edition-card-item.en-cours::before {
+            background: linear-gradient(90deg, #fbbf24, transparent);
+            animation: pulse-bar 2s ease-in-out infinite;
+        }
+        @keyframes pulse-bar { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
         .edition-card-item:hover {
             border-color: var(--color-accent);
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
         .edition-card-item.upcoming:hover { border-color: var(--color-warning); }
+        .edition-card-item.fermee .edition-card-status { color: var(--color-text-secondary); }
+        .edition-card-item.fermee:hover { border-color: var(--color-text-secondary); }
+        .edition-card-item.en-cours .edition-card-status { color: #fbbf24; }
+        .edition-card-item.en-cours:hover { border-color: #fbbf24; }
+
+        /* Workflow panel */
+        .workflow-panel {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--color-bg-elevated);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .workflow-status-label { font-size: 0.85rem; color: var(--color-text-secondary); }
+        .workflow-status-value { font-weight: 700; margin-left: 6px; }
         .edition-card-status {
             font-size: 0.7rem;
             font-weight: 700;
@@ -801,11 +827,11 @@
                             <input type="text" id="editionPassword" placeholder="Ex: 1234">
                         </div>
                         <div class="form-group">
-                            <label for="editionStatus">Statut</label>
+                            <label for="editionStatus">Statut initial</label>
                             <select id="editionStatus">
+                                <option value="fermee" selected>🔒 Inscriptions fermées</option>
                                 <option value="inscriptions">📋 Inscriptions ouvertes</option>
-                                <option value="qualifications">🎯 Qualifications en cours</option>
-                                <option value="finale">🏆 Finale ce soir</option>
+                                <option value="en_cours">🎯 Événement en cours</option>
                             </select>
                         </div>
                     </div>
@@ -954,9 +980,10 @@
                 <div class="form-group">
                     <label for="editEditionStatus">Statut</label>
                     <select id="editEditionStatus">
+                        <option value="fermee">🔒 Inscriptions fermées</option>
                         <option value="inscriptions">📋 Inscriptions ouvertes</option>
-                        <option value="qualifications">🎯 Qualifications en cours</option>
-                        <option value="finale">🏆 Finale ce soir</option>
+                        <option value="en_cours">🎯 Événement en cours</option>
+                        <option value="terminee">✅ Terminée</option>
                     </select>
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
@@ -1294,10 +1321,9 @@
             const cd = getCountdown(next.date, next.time);
 
             const statusMap = {
-                fermee:         { label: '🔒 Inscriptions fermées',    color: 'var(--color-text-secondary)' },
-                inscriptions:   { label: '📋 Inscriptions ouvertes',   color: 'var(--springs-orange)' },
-                qualifications: { label: '🎯 Qualifications en cours', color: '#38bdf8' },
-                finale:         { label: '🏆 Finale ce soir',          color: '#fbbf24' },
+                fermee:       { label: '🔒 Inscriptions fermées',  color: 'var(--color-text-secondary)' },
+                inscriptions: { label: '📋 Inscriptions ouvertes', color: 'var(--springs-orange)' },
+                en_cours:     { label: '🎯 Événement en cours',    color: '#fbbf24' },
             };
             const statusInfo = statusMap[next.status] || statusMap.inscriptions;
 
@@ -1309,8 +1335,10 @@
 
             // CTA
             let ctaHtml = '';
-            const canRegister = !next.status || next.status === 'inscriptions';
-            if (canRegister) {
+            const nStatus = next.status || 'inscriptions';
+            if (nStatus === 'fermee') {
+                ctaHtml = `<span style="color:var(--color-text-secondary);font-size:0.85rem">🔒 Inscriptions bientôt ouvertes</span>`;
+            } else if (nStatus === 'inscriptions') {
                 if (!currentUser) {
                     ctaHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
                 } else if (alreadyRegistered) {
@@ -1318,6 +1346,8 @@
                 } else if (currentPlayer) {
                     ctaHtml = `<button class="btn btn-primary" onclick="goToEdition('${next.id}')">S'inscrire à cette édition</button>`;
                 }
+            } else if (nStatus === 'en_cours') {
+                ctaHtml = `<span style="color:#fbbf24;font-weight:700;font-size:0.9rem">🎯 Événement en cours !</span>`;
             }
 
             const metaItems = [`📅 ${dateStr}`];
@@ -1347,6 +1377,10 @@
         }
 
         // Navigate to an edition (switch to Editions tab + open detail)
+        window.setEditionStatus = async (id, status) => {
+            await updateDoc(doc(db, 'editions', id), { status });
+        };
+
         window.goToEdition = (id) => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1443,29 +1477,29 @@
             }
 
             const sorted = [...data.editions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            const upcoming = sorted.filter(e => new Date(e.date) >= today);
-            const past = sorted.filter(e => new Date(e.date) < today);
+            const upcoming = sorted.filter(e => new Date(e.date) >= today && e.status !== 'terminee');
+            const past     = sorted.filter(e => new Date(e.date) <  today || e.status === 'terminee');
 
             // Current player (for badge)
             const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
 
+            const WORKFLOW_LABELS = {
+                fermee:       '🔒 Inscriptions fermées',
+                inscriptions: '📋 Inscriptions ouvertes',
+                en_cours:     '🎯 Événement en cours',
+                terminee:     '✅ Terminée',
+            };
+
             let html = '<div class="editions-grid">';
             [...upcoming, ...past].forEach(e => {
-                const isPast = new Date(e.date) < today;
-                const cardClass = isPast ? '' : 'upcoming';
+                const isPast = new Date(e.date) < today || e.status === 'terminee';
+                let cardClass = isPast ? '' : 'upcoming';
+                if (!isPast && e.status === 'fermee')   cardClass = 'fermee';
+                if (!isPast && e.status === 'en_cours') cardClass = 'en-cours';
 
-                // Status label
-                let statusLabel;
-                if (isPast) {
-                    statusLabel = '✅ Terminée';
-                } else {
-                    const statusMap = {
-                        inscriptions: '📋 Inscriptions ouvertes',
-                        qualifications: '🎯 Qualifications en cours',
-                        finale: '🏆 Finale ce soir',
-                    };
-                    statusLabel = statusMap[e.status] || '📋 Inscriptions ouvertes';
-                }
+                const statusLabel = isPast
+                    ? '✅ Terminée'
+                    : (WORKFLOW_LABELS[e.status] || '📋 Inscriptions ouvertes');
 
                 const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 const cardTime = e.time ? ` · ${e.time}` : '';
@@ -1526,7 +1560,7 @@
             if (!e) return;
 
             const today = new Date(); today.setHours(0, 0, 0, 0);
-            const isPast = new Date(e.date) < today;
+            const isPast = new Date(e.date) < today || e.status === 'terminee';
             const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
             const grid = document.getElementById('editionsList');
@@ -1656,9 +1690,32 @@
                     ? data.results.some(r => r.editionId === id && r.playerId === currentPlayer.id && r.phase === 'inscription')
                     : false;
 
+                // Admin workflow panel
+                let workflowHtml = '';
+                if (isAdmin) {
+                    const wfMap = {
+                        fermee:       { label: '🔒 Inscriptions fermées', color: 'var(--color-text-secondary)', next: { status: 'inscriptions', btn: '📋 Ouvrir les inscriptions' } },
+                        inscriptions: { label: '📋 Inscriptions ouvertes', color: 'var(--springs-orange)',       next: { status: 'en_cours',     btn: '🎯 Lancer l\'événement'     } },
+                        en_cours:     { label: '🎯 Événement en cours',    color: '#fbbf24',                    next: { status: 'terminee',     btn: '✅ Clôturer l\'édition'     } },
+                    };
+                    const wf = wfMap[e.status] || wfMap.fermee;
+                    const nextBtn = wf.next
+                        ? `<button class="btn btn-primary btn-small" onclick="setEditionStatus('${id}','${wf.next.status}')">→ ${wf.next.btn}</button>`
+                        : '';
+                    workflowHtml = `<div class="workflow-panel admin-only">
+                        <span class="workflow-status-label">Statut :<strong class="workflow-status-value" style="color:${wf.color}">${wf.label}</strong></span>
+                        ${nextBtn}
+                    </div>`;
+                }
+
                 // Registration button / status
                 let registrationHtml = '';
-                if (!currentUser) {
+                const status = e.status || 'inscriptions';
+                if (status === 'fermee') {
+                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">🔒 Les inscriptions ne sont pas encore ouvertes.</p>`;
+                } else if (status === 'en_cours') {
+                    registrationHtml = `<p style="color:#fbbf24;font-weight:600;font-size:0.9rem">🎯 L'événement est en cours — les inscriptions sont fermées.</p>`;
+                } else if (!currentUser) {
                     registrationHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
                 } else if (alreadyRegistered) {
                     registrationHtml = `<div class="registered-badge">✓ Vous êtes inscrit à cette édition</div>`;
@@ -1729,6 +1786,7 @@
 
                 html = `<div class="card">
                     <h2>🏆 ${e.name}</h2>
+                    ${workflowHtml}
                     ${infoHtml}
                     ${registrationHtml}
                     <div style="margin-top:28px">
