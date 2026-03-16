@@ -563,11 +563,68 @@
             font-size: 0.9rem;
         }
 
+        /* Player profile modal */
+        .player-modal {
+            background: var(--color-bg-secondary);
+            padding: 36px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            animation: fadeIn 0.2s ease;
+        }
+        .player-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .player-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-accent), var(--springs-orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #000;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .player-profile-name { font-size: 1.3rem; font-weight: 800; }
+        .player-profile-team { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 2px; }
+        .player-profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .pp-stat {
+            background: var(--color-bg-elevated);
+            border-radius: 10px;
+            padding: 14px 10px;
+            text-align: center;
+        }
+        .pp-stat-value { font-size: 1.55rem; font-weight: 800; color: var(--color-accent); line-height: 1; }
+        .pp-stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-text-secondary); margin-top: 5px; }
+        .player-chart-container { position: relative; height: 200px; margin: 12px 0 0; }
+        .player-name-link {
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .player-name-link:hover { color: var(--color-accent); }
+
         @media (max-width: 768px) {
             h1 { font-size: 1.5rem; }
             .tab { padding: 8px 12px; font-size: 0.82rem; }
             th, td { padding: 9px 10px; font-size: 0.85rem; }
             .card { padding: 16px; }
+            .player-profile-stats { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -819,6 +876,14 @@
     </div>
 
 
+    <!-- PLAYER PROFILE MODAL -->
+    <div class="modal-overlay" id="playerProfileModal">
+        <div class="player-modal">
+            <div id="playerProfileContent"></div>
+            <button class="btn btn-secondary" onclick="closePlayerProfile()" style="margin-top:20px">Fermer</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -866,6 +931,7 @@
         let currentDetailEditionId = null;
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
+        let playerChart = null;
         // 'auth' included so loading overlay stays until Firebase resolves the session
         let loaded = { participants: false, editions: false, results: false, auth: false };
 
@@ -1079,7 +1145,7 @@
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
                 const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
                 html += `<tr>
-                    <td><strong>${pName(p)}</strong></td>
+                    <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong></td>
                     <td style="color:var(--color-text-secondary)">${p.team}</td>
                     <td>${quals}</td>
                     <td>${finals}</td>
@@ -1296,7 +1362,7 @@
                             html += `<div class="podium-spot">
                                 <div class="podium-player">
                                     <div class="podium-medal">${medals[r.position] || r.position}</div>
-                                    <div class="podium-name">${pName(player)}</div>
+                                    <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
                                     <div class="podium-team">${player.team}</div>
                                     <div class="podium-pts">+${getPoints(r.position)} pts</div>
                                 </div>
@@ -1316,7 +1382,7 @@
                         const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                         html += `<tr>
                             <td><span class="badge ${badgeClass}">${r.position}</span></td>
-                            <td><strong>${pName(player)}</strong></td>
+                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong></td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
                             <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
                             ${del}
@@ -1511,6 +1577,114 @@
             openEditionDetail(editionId);
         };
 
+        // Player profile
+        window.openPlayerProfile = (playerId) => {
+            const player = data.participants.find(p => p.id === playerId);
+            if (!player) return;
+
+            const qualRes  = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+            const finaleRes = data.results.filter(r => r.playerId === playerId && r.phase === 'finale').sort((a, b) => a.position - b.position);
+            const points   = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
+            const wins     = finaleRes.filter(r => r.position === 1).length;
+            const podiums  = finaleRes.filter(r => r.position <= 3).length;
+            const bestRank = finaleRes.length > 0 ? Math.min(...finaleRes.map(r => r.position)) : null;
+
+            // Per-edition history (past editions only, sorted by date)
+            const pastEditions = data.editions
+                .filter(e => new Date(e.date) < new Date())
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const historyRows = pastEditions.map(e => {
+                const participated = qualRes.some(r => r.editionId === e.id);
+                const finale = finaleRes.find(r => r.editionId === e.id);
+                if (!participated && !finale) return null;
+                return { edition: e, participated, finale };
+            }).filter(Boolean);
+
+            const avatar = pName(player).charAt(0);
+            const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+            let html = `
+                <div class="player-profile-header">
+                    <div class="player-avatar">${avatar}</div>
+                    <div>
+                        <div class="player-profile-name">${pName(player)}</div>
+                        <div class="player-profile-team">${player.team || 'Sans équipe'}</div>
+                    </div>
+                </div>
+                <div class="player-profile-stats">
+                    <div class="pp-stat"><div class="pp-stat-value">${qualRes.length}</div><div class="pp-stat-label">Participations</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">Finales</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${points}</div><div class="pp-stat-label">Points</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${wins > 0 ? `🏆 ${wins}` : '—'}</div><div class="pp-stat-label">Victoires</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
+                </div>`;
+
+            if (historyRows.length > 0) {
+                html += `<div class="phase-title" style="margin-top:0">📅 Historique par édition</div>
+                    <table><thead><tr><th>Édition</th><th>Participation</th><th>Finale</th><th>Points</th></tr></thead><tbody>`;
+                historyRows.forEach(({ edition, participated, finale }) => {
+                    const pos = finale ? `${medals[finale.position] || ''} P${finale.position}` : '—';
+                    const pts = finale ? `<span class="pts-badge">+${getPoints(finale.position)}</span>` : '—';
+                    html += `<tr>
+                        <td><strong>${edition.name}</strong></td>
+                        <td>${participated ? '<span style="color:var(--color-accent)">✓</span>' : '—'}</td>
+                        <td>${pos}</td>
+                        <td>${pts}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+
+            // Chart only if they have finale results
+            if (finaleRes.length > 0) {
+                html += `<div class="phase-title" style="margin-top:20px">📈 Points par édition</div>
+                    <div class="player-chart-container"><canvas id="playerChartCanvas"></canvas></div>`;
+            }
+
+            document.getElementById('playerProfileContent').innerHTML = html;
+            document.getElementById('playerProfileModal').classList.add('open');
+
+            // Draw chart
+            if (finaleRes.length > 0) {
+                const chartEditions = pastEditions.filter(e => finaleRes.some(r => r.editionId === e.id));
+                const chartLabels = chartEditions.map(e => e.name);
+                const chartData = chartEditions.map(e => {
+                    const r = finaleRes.find(r => r.editionId === e.id);
+                    return r ? getPoints(r.position) : 0;
+                });
+                const ctx = document.getElementById('playerChartCanvas').getContext('2d');
+                if (playerChart) playerChart.destroy();
+                playerChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            data: chartData,
+                            backgroundColor: chartData.map((_, i) => `hsla(${130 + i * 20}, 70%, 50%, 0.75)`),
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+                        }
+                    }
+                });
+            }
+        };
+
+        window.closePlayerProfile = () => {
+            document.getElementById('playerProfileModal').classList.remove('open');
+            if (playerChart) { playerChart.destroy(); playerChart = null; }
+        };
+
         // General ranking
         function displayGeneralRanking() {
             const container = document.getElementById('generalRanking');
@@ -1545,7 +1719,7 @@
                 html += `<tr>
                     <td><span class="badge ${badgeClass}">${i + 1}</span></td>
                     <td>
-                        <strong>${pName(s.player)}</strong>
+                        <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>
                         <span style="color:var(--color-text-secondary);font-size:0.82rem;margin-left:6px">${s.player.team}</span>
                     </td>
                     <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
