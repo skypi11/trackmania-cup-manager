@@ -463,6 +463,29 @@
         .edition-card-item.upcoming .edition-card-action { color: var(--color-warning); }
         .edition-card-admin { display: flex; gap: 6px; margin-top: 4px; }
 
+        .edition-card-countdown {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--color-warning);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .edition-card-player-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 2px 9px;
+            border-radius: 20px;
+            background: rgba(0,217,54,0.12);
+            color: var(--color-accent);
+            align-self: flex-start;
+        }
+        .edition-card-player-badge.finalist { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .edition-card-player-badge.qualified { background: rgba(56,189,248,0.15); color: #38bdf8; }
+
         /* Edition detail */
         .edition-detail { display: none; }
         .edition-detail.open { display: block; }
@@ -583,6 +606,14 @@
                             <label for="editionPassword">Mot de passe du salon</label>
                             <input type="text" id="editionPassword" placeholder="Ex: 1234">
                         </div>
+                        <div class="form-group">
+                            <label for="editionStatus">Statut</label>
+                            <select id="editionStatus">
+                                <option value="inscriptions">📋 Inscriptions ouvertes</option>
+                                <option value="qualifications">🎯 Qualifications en cours</option>
+                                <option value="finale">🏆 Finale ce soir</option>
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Créer</button>
                 </form>
@@ -655,7 +686,7 @@
                     <div class="stat-value" id="totalEditions">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Participations qualifs</div>
+                    <div class="stat-label">Participations</div>
                     <div class="stat-value" id="totalQuals">0</div>
                 </div>
                 <div class="stat-card">
@@ -725,6 +756,14 @@
                         <label for="editEditionPassword">Mot de passe du salon</label>
                         <input type="text" id="editEditionPassword" placeholder="Ex: 1234">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="editEditionStatus">Statut</label>
+                    <select id="editEditionStatus">
+                        <option value="inscriptions">📋 Inscriptions ouvertes</option>
+                        <option value="qualifications">🎯 Qualifications en cours</option>
+                        <option value="finale">🏆 Finale ce soir</option>
+                    </select>
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
@@ -910,6 +949,7 @@
             document.getElementById('editEditionClub').value = e.club || '';
             document.getElementById('editEditionSalon').value = e.salon || '';
             document.getElementById('editEditionPassword').value = e.password || '';
+            document.getElementById('editEditionStatus').value = e.status || 'inscriptions';
             document.getElementById('editEditionModal').classList.add('open');
         };
         window.closeEditEdition = () => {
@@ -924,7 +964,8 @@
             const club     = document.getElementById('editEditionClub').value.trim();
             const salon    = document.getElementById('editEditionSalon').value.trim();
             const password = document.getElementById('editEditionPassword').value.trim();
-            await updateDoc(doc(db, 'editions', id), { name, date, time, club, salon, password });
+            const status   = document.getElementById('editEditionStatus').value;
+            await updateDoc(doc(db, 'editions', id), { name, date, time, club, salon, password, status });
             closeEditEdition();
         });
 
@@ -987,7 +1028,7 @@
             }
 
             const adminCol = isAdmin ? '<th></th>' : '';
-            let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Qualifs</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Participations</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
             filtered.forEach(p => {
                 const quals = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').length;
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
@@ -1011,9 +1052,11 @@
             const club     = document.getElementById('editionClub').value.trim();
             const salon    = document.getElementById('editionSalon').value.trim();
             const password = document.getElementById('editionPassword').value.trim();
+            const status   = document.getElementById('editionStatus').value;
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: document.getElementById('editionDate').value,
+                status,
                 ...(time     ? { time }     : {}),
                 ...(club     ? { club }     : {}),
                 ...(salon    ? { salon }    : {}),
@@ -1022,6 +1065,20 @@
             });
             e.target.reset();
         });
+
+        // Countdown helper
+        function getCountdown(dateStr, timeStr) {
+            const now = new Date();
+            const target = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
+            const diff = target - now;
+            if (diff <= 0) return null;
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            if (days > 0) return `Dans ${days} jour${days > 1 ? 's' : ''}`;
+            if (hours > 0) return `Dans ${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
+            return `Dans ${mins} min`;
+        }
 
         // Display editions as cards
         function displayEditions() {
@@ -1042,19 +1099,54 @@
             const upcoming = sorted.filter(e => new Date(e.date) >= today);
             const past = sorted.filter(e => new Date(e.date) < today);
 
+            // Current player (for badge)
+            const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+
             let html = '<div class="editions-grid">';
             [...upcoming, ...past].forEach(e => {
                 const isPast = new Date(e.date) < today;
                 const cardClass = isPast ? '' : 'upcoming';
-                const statusLabel = isPast ? 'Passée' : 'À venir';
+
+                // Status label
+                let statusLabel;
+                if (isPast) {
+                    statusLabel = '✅ Terminée';
+                } else {
+                    const statusMap = {
+                        inscriptions: '📋 Inscriptions ouvertes',
+                        qualifications: '🎯 Qualifications en cours',
+                        finale: '🏆 Finale ce soir',
+                    };
+                    statusLabel = statusMap[e.status] || '📋 Inscriptions ouvertes';
+                }
+
                 const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 const cardTime = e.time ? ` · ${e.time}` : '';
+
+                // Countdown for upcoming
+                let countdownHtml = '';
+                if (!isPast) {
+                    const cd = getCountdown(e.date, e.time);
+                    if (cd) countdownHtml = `<div class="edition-card-countdown">⏱ ${cd}</div>`;
+                }
+
+                // Player badge
+                let playerBadgeHtml = '';
+                if (currentPlayer) {
+                    const isFinaliste = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
+                    const isQualified = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
+                    const isInscrit   = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+                    if (isFinaliste)    playerBadgeHtml = `<div class="edition-card-player-badge finalist">🏆 Finaliste</div>`;
+                    else if (isQualified) playerBadgeHtml = `<div class="edition-card-player-badge qualified">🎯 Participé</div>`;
+                    else if (isInscrit)  playerBadgeHtml = `<div class="edition-card-player-badge">✓ Inscrit</div>`;
+                }
+
                 // Past: count qualifiers. Upcoming: count edition-specific registrations
                 const participantCount = isPast
                     ? data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length
                     : data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
                 const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
-                const actionLabel = isPast ? 'Voir les résultats →' : 'S\'inscrire →';
+                const actionLabel = isPast ? 'Voir les résultats →' : 'Voir l\'édition →';
 
                 const adminBtns = isAdmin ? `
                     <div class="edition-card-admin" onclick="event.stopPropagation()">
@@ -1070,6 +1162,8 @@
                         <span>👥 ${participantCount} participant${participantCount !== 1 ? 's' : ''}</span>
                         ${isPast ? `<span>🏆 ${finals} finaliste${finals !== 1 ? 's' : ''}</span>` : ''}
                     </div>
+                    ${countdownHtml}
+                    ${playerBadgeHtml}
                     <div class="edition-card-action">${actionLabel}</div>
                     ${adminBtns}
                 </div>`;
@@ -1164,7 +1258,7 @@
                 }
 
                 if (qualResults.length > 0) {
-                    html += '<div class="phase-title" style="margin-top:18px">🎯 Participants Qualifications</div>';
+                    html += '<div class="phase-title" style="margin-top:18px">🎯 Participants</div>';
                     html += '<div class="chips">';
                     qualResults.forEach(r => {
                         const player = data.participants.find(p => p.id === r.playerId);
@@ -1468,7 +1562,7 @@
                 return;
             }
 
-            let html = '<table><thead><tr><th>Joueur</th><th>Qualifs</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Joueur</th><th>Participations</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
             rows.forEach(r => {
                 html += `<tr>
                     <td><strong>${pName(r.p)}</strong></td>
