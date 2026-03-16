@@ -758,6 +758,56 @@
         }
         .player-name-link:hover { color: var(--color-accent); }
 
+        /* Player account modal */
+        .account-modal {
+            background: var(--color-bg-secondary);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            animation: fadeIn 0.2s ease;
+        }
+        .account-modal-header {
+            background: linear-gradient(135deg, rgba(0,217,54,0.08), rgba(123,47,190,0.08));
+            border-radius: 20px 20px 0 0;
+            padding: 28px 32px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .account-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-accent), var(--springs-orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            font-weight: 900;
+            color: #000;
+            flex-shrink: 0;
+        }
+        .account-modal-body { padding: 24px 32px 32px; }
+        .account-quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .account-stat {
+            background: var(--color-bg-elevated);
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+        .account-stat-value { font-size: 1.4rem; font-weight: 800; color: var(--color-accent); }
+        .account-stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-text-secondary); margin-top: 3px; }
+
         @media (max-width: 768px) {
             h1 { font-size: 1.5rem; }
             .tab { padding: 8px 12px; font-size: 0.82rem; }
@@ -806,7 +856,7 @@
                 <!-- Login button: visible when not logged in -->
                 <button class="admin-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
                 <!-- Player button: visible only for non-admin logged-in users -->
-                <button class="admin-btn" id="playerBtn" onclick="playerSignOut()" style="display:none">👤 ...</button>
+                <button class="admin-btn" id="playerBtn" onclick="openPlayerAccount()" style="display:none">👤 ...</button>
                 <!-- Admin button: visible for admins (sign in/out) -->
                 <button class="admin-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
             </div>
@@ -1033,6 +1083,43 @@
     </div>
 
 
+    <!-- PLAYER ACCOUNT MODAL -->
+    <div class="modal-overlay" id="playerAccountModal" onclick="if(event.target===this)closePlayerAccount()">
+        <div class="account-modal">
+            <div class="account-modal-header">
+                <div class="account-avatar" id="accountAvatar">?</div>
+                <div style="flex:1">
+                    <div style="font-size:1.2rem;font-weight:800" id="accountDisplayName">—</div>
+                    <div style="font-size:0.85rem;color:var(--color-text-secondary);margin-top:2px" id="accountDisplayTeam">—</div>
+                </div>
+                <button onclick="closePlayerAccount()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:1.3rem;cursor:pointer;line-height:1">✕</button>
+            </div>
+            <div class="account-modal-body">
+                <div class="account-quick-stats" id="accountQuickStats"></div>
+
+                <div class="phase-title" style="margin-top:0">🏅 Mes badges</div>
+                <div id="accountBadges" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px"></div>
+
+                <div class="phase-title">✏️ Modifier mon profil</div>
+                <form id="accountEditForm">
+                    <div class="form-group">
+                        <label>Pseudo</label>
+                        <input type="text" id="accountPseudo" required placeholder="Ton pseudo Trackmania">
+                    </div>
+                    <div class="form-group">
+                        <label>Équipe</label>
+                        <input type="text" id="accountTeam" placeholder="Sans équipe">
+                    </div>
+                    <div id="accountSaveMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                        <button type="button" class="btn btn-danger" onclick="playerSignOut()" style="margin-left:auto">🚪 Se déconnecter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- PLAYER PROFILE MODAL -->
     <div class="modal-overlay" id="playerProfileModal" onclick="if(event.target===this)closePlayerProfile()">
         <div class="player-modal">
@@ -1193,8 +1280,83 @@
         };
 
         window.playerSignOut = async () => {
+            closePlayerAccount();
             if (confirm('Se déconnecter ?')) await signOut(auth);
         };
+
+        window.openPlayerAccount = () => {
+            if (!currentUser) return;
+            const player = data.participants.find(p => p.userId === currentUser.uid);
+            const pseudo = player ? pName(player) : (currentUserProfile?.pseudo || currentUser.displayName || '?');
+            const team   = player?.team || '';
+
+            // Header
+            document.getElementById('accountAvatar').textContent = pseudo.charAt(0).toUpperCase();
+            document.getElementById('accountDisplayName').textContent = pseudo;
+            document.getElementById('accountDisplayTeam').textContent = team || 'Sans équipe';
+
+            // Quick stats
+            if (player) {
+                const s = computePlayerStats(player.id);
+                document.getElementById('accountQuickStats').innerHTML = `
+                    <div class="account-stat"><div class="account-stat-value">${s.quals}</div><div class="account-stat-label">Participations</div></div>
+                    <div class="account-stat"><div class="account-stat-value">${s.finals}</div><div class="account-stat-label">Finales</div></div>
+                    <div class="account-stat"><div class="account-stat-value">${s.wins > 0 ? '🏆 ' + s.wins : '—'}</div><div class="account-stat-label">Victoires</div></div>`;
+
+                // Unlocked badges
+                const unlocked = ACHIEVEMENTS.filter(a => a.check(s));
+                document.getElementById('accountBadges').innerHTML = unlocked.length
+                    ? unlocked.map(a => `<span class="chip" title="${a.desc}">${a.icon} ${a.name}</span>`).join('')
+                    : '<span style="color:var(--color-text-secondary);font-size:0.85rem">Aucun badge pour l\'instant — participe à une édition !</span>';
+            } else {
+                document.getElementById('accountQuickStats').innerHTML = '';
+                document.getElementById('accountBadges').innerHTML = '<span style="color:var(--color-text-secondary);font-size:0.85rem">Complète ton profil pour commencer !</span>';
+            }
+
+            // Prefill form
+            document.getElementById('accountPseudo').value = pseudo;
+            document.getElementById('accountTeam').value   = team === 'Sans équipe' ? '' : team;
+            document.getElementById('accountSaveMsg').style.display = 'none';
+            document.getElementById('playerAccountModal').classList.add('open');
+        };
+
+        window.closePlayerAccount = () => {
+            document.getElementById('playerAccountModal').classList.remove('open');
+        };
+
+        document.getElementById('accountEditForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pseudo = document.getElementById('accountPseudo').value.trim();
+            const team   = document.getElementById('accountTeam').value.trim() || 'Sans équipe';
+            const msg    = document.getElementById('accountSaveMsg');
+            if (!pseudo) return;
+            try {
+                // Update users collection
+                if (currentUser) {
+                    await updateDoc(doc(db, 'users', currentUser.uid), { pseudo, team });
+                }
+                // Update participants collection
+                const player = data.participants.find(p => p.userId === currentUser.uid);
+                if (player) {
+                    await updateDoc(doc(db, 'participants', player.id), { pseudo, team });
+                }
+                // Update header button label
+                document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
+                // Update header display in modal
+                document.getElementById('accountDisplayName').textContent = pseudo;
+                document.getElementById('accountDisplayTeam').textContent = team;
+                msg.style.display = 'block';
+                msg.style.background = 'rgba(0,217,54,0.1)';
+                msg.style.color = 'var(--color-accent)';
+                msg.textContent = '✓ Profil mis à jour !';
+                setTimeout(() => msg.style.display = 'none', 3000);
+            } catch(err) {
+                msg.style.display = 'block';
+                msg.style.background = 'rgba(239,68,68,0.1)';
+                msg.style.color = 'var(--color-danger)';
+                msg.textContent = 'Erreur lors de la sauvegarde.';
+            }
+        });
 
         // Edit participant
         window.openEditParticipant = (id) => {
