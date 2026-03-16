@@ -912,7 +912,7 @@
 
 
     <!-- PLAYER PROFILE MODAL -->
-    <div class="modal-overlay" id="playerProfileModal">
+    <div class="modal-overlay" id="playerProfileModal" onclick="if(event.target===this)closePlayerProfile()">
         <div class="player-modal">
             <div id="playerProfileContent"></div>
             <button class="btn btn-secondary" onclick="closePlayerProfile()" style="margin-top:20px">Fermer</button>
