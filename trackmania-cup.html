@@ -45,18 +45,19 @@
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
 
-        /* Auth overlay */
+        /* Auth overlay — modal */
         .auth-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: var(--color-bg-primary);
+            background: rgba(0,0,0,0.75);
             z-index: 1500;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 40px 20px;
+            padding: 20px;
+            backdrop-filter: blur(4px);
         }
         .auth-overlay.open { display: flex; }
         .auth-box {
@@ -722,16 +723,16 @@
     </div>
 
     <!-- Auth guard overlay -->
-    <div class="auth-overlay" id="authOverlay">
+    <div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
         <div class="auth-box">
+            <button onclick="closeAuthModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:1.3rem;cursor:pointer;line-height:1" title="Fermer">✕</button>
             <div class="lock-icon">🔒</div>
             <h2>Connexion requise</h2>
-            <p>Vous devez être connecté pour accéder aux résultats et classements de la <span id="authCupName">Springs Monthly Cup</span>.</p>
+            <p>Connectez-vous pour vous inscrire aux éditions de la <span id="authCupName">Springs Monthly Cup</span>.</p>
             <button class="btn-google" id="authGoogleBtn" onclick="authGoogleSignIn()">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
                 Se connecter avec Google
             </button>
-            <a href="trackmania.html" class="auth-back-link">← Retour à l'accueil</a>
         </div>
     </div>
 
@@ -750,6 +751,8 @@
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span class="admin-indicator">⚙️ Mode Admin</span>
+                <!-- Login button: visible when not logged in -->
+                <button class="admin-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
                 <!-- Player button: visible only for non-admin logged-in users -->
                 <button class="admin-btn" id="playerBtn" onclick="playerSignOut()" style="display:none">👤 ...</button>
                 <!-- Admin button: visible for admins (sign in/out) -->
@@ -1029,6 +1032,9 @@
                 document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
+        window.openAuthModal  = () => document.getElementById('authOverlay').classList.add('open');
+        window.closeAuthModal = () => document.getElementById('authOverlay').classList.remove('open');
+
         // Auth guard sign-in
         window.authGoogleSignIn = async () => {
             const btn = document.getElementById('authGoogleBtn');
@@ -1047,18 +1053,26 @@
             currentUser = user;
             const authOverlay = document.getElementById('authOverlay');
 
+            const loginBtn  = document.getElementById('loginBtn');
+            const adminBtn  = document.getElementById('adminToggleBtn');
+            const playerBtn = document.getElementById('playerBtn');
+
             if (!user) {
                 isAdmin = false;
                 currentUserProfile = null;
-                authOverlay.classList.add('open');
-                // Mark auth as resolved so loading overlay can hide
+                loginBtn.style.display  = '';
+                adminBtn.style.display  = 'none';
+                playerBtn.style.display = 'none';
                 loaded.auth = true;
                 checkLoaded();
+                displayParticipants();
+                displayEditions();
+                displayNextEditionBanner();
                 return;
             }
 
-            // User is logged in — hide auth overlay
-            authOverlay.classList.remove('open');
+            // User is logged in — hide login button
+            loginBtn.style.display = 'none';
 
             try {
                 const [adminSnap, profileSnap] = await Promise.all([
@@ -1072,8 +1086,6 @@
                 currentUserProfile = null;
             }
 
-            const adminBtn  = document.getElementById('adminToggleBtn');
-            const playerBtn = document.getElementById('playerBtn');
             if (isAdmin) {
                 document.body.classList.add('admin-mode');
                 adminBtn.style.display  = '';
@@ -1299,7 +1311,9 @@
             let ctaHtml = '';
             const canRegister = !next.status || next.status === 'inscriptions';
             if (canRegister) {
-                if (alreadyRegistered) {
+                if (!currentUser) {
+                    ctaHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
+                } else if (alreadyRegistered) {
                     ctaHtml = `<div class="registered-badge" style="font-size:0.85rem;padding:8px 14px">✓ Vous êtes inscrit</div>`;
                 } else if (currentPlayer) {
                     ctaHtml = `<button class="btn btn-primary" onclick="goToEdition('${next.id}')">S'inscrire à cette édition</button>`;
@@ -1645,7 +1659,7 @@
                 // Registration button / status
                 let registrationHtml = '';
                 if (!currentUser) {
-                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">Connectez-vous pour vous inscrire.</p>`;
+                    registrationHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
                 } else if (alreadyRegistered) {
                     registrationHtml = `<div class="registered-badge">✓ Vous êtes inscrit à cette édition</div>`;
                 } else if (!currentPlayer) {
