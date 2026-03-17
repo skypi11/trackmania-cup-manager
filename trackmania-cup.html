@@ -173,6 +173,57 @@ body.admin-mode .admin-indicator { display: flex; align-items: center; gap: 5px;
 .admin-only { display: none; }
 body.admin-mode .admin-only { display: block; }
 
+/* Twitch / Stream */
+.sidebar-twitch-btn {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 14px; border-radius: 10px; width: 100%;
+    border: 1px solid rgba(145,70,255,0.25);
+    background: rgba(145,70,255,0.1);
+    color: #b47aff; font-size: 0.84rem; font-weight: 600;
+    cursor: pointer; transition: all 0.18s;
+    text-decoration: none; font-family: 'Inter', sans-serif;
+}
+.sidebar-twitch-btn:hover { background: rgba(145,70,255,0.2); color: #c9a0ff; border-color: rgba(145,70,255,0.4); }
+.sidebar-twitch-btn svg { flex-shrink: 0; }
+.stream-embed-wrap {
+    border-radius: 14px; overflow: hidden;
+    aspect-ratio: 16/9; margin-bottom: 22px;
+    border: 1px solid rgba(145,70,255,0.25);
+    background: #0e0e10;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(145,70,255,0.08);
+}
+.stream-embed-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+.vod-embed-wrap {
+    border-radius: 14px; overflow: hidden;
+    aspect-ratio: 16/9; margin-bottom: 22px;
+    border: 1px solid rgba(255,0,0,0.2);
+    background: #0e0e0e;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.vod-embed-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+.stream-section-label {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: #9146ff; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.vod-section-label {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: rgba(255,80,80,0.8); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+/* LIVE badge on event rows */
+.event-row-live {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(239,68,68,0.13); border: 1px solid rgba(239,68,68,0.28);
+    border-radius: 20px; padding: 2px 9px;
+    font-size: 0.68rem; font-weight: 700; color: #ef4444;
+}
+.live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #ef4444;
+    animation: live-blink 1.2s ease-in-out infinite;
+}
+@keyframes live-blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+
 /* MAIN AREA */
 .main-area {
     margin-left: var(--sidebar-width);
@@ -615,6 +666,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label">Stats</span></button>
         </nav>
         <div class="sidebar-footer">
+          <a href="https://www.twitch.tv/springsesport" target="_blank" rel="noopener" class="sidebar-twitch-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+            Suivre sur Twitch
+          </a>
           <span class="admin-indicator">⚙️ Mode Admin</span>
           <button class="sidebar-user-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
           <button class="sidebar-user-btn" id="playerBtn" onclick="openPlayerAccount()" style="display:none">👤 ...</button>
@@ -681,6 +736,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div class="form-group">
                         <label for="editionDesc">Description (optionnel)</label>
                         <textarea id="editionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires sur l'édition..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editionYoutube">VOD YouTube (optionnel)</label>
+                        <input type="url" id="editionYoutube" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
                     <button type="submit" class="btn btn-primary">Créer</button>
                 </form>
@@ -850,6 +909,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <div class="form-group">
                     <label for="editEditionDesc">Description</label>
                     <textarea id="editEditionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editEditionYoutube">VOD YouTube (URL)</label>
+                    <input type="url" id="editEditionYoutube" placeholder="https://www.youtube.com/watch?v=...">
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
@@ -1071,6 +1134,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             document.getElementById('editEditionPassword').value = e.password || '';
             document.getElementById('editEditionStatus').value = e.status || 'inscriptions';
             document.getElementById('editEditionDesc').value = e.description || '';
+            document.getElementById('editEditionYoutube').value = e.youtubeUrl || '';
             document.getElementById('editEditionModal').classList.add('open');
         };
         window.closeEditEdition = () => {
@@ -1086,9 +1150,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const salon    = document.getElementById('editEditionSalon').value.trim();
             const password = document.getElementById('editEditionPassword').value.trim();
             const description = document.getElementById('editEditionDesc').value.trim();
+            const youtubeUrl  = document.getElementById('editEditionYoutube').value.trim();
             const newStatus = document.getElementById('editEditionStatus').value;
             const current   = data.editions.find(ed => ed.id === id);
-            const updates   = { name, date, time, club, salon, password, description, status: newStatus };
+            const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus };
             // Log status change if status changed
             if (current && current.status !== newStatus) {
                 updates.statusHistory = arrayUnion({ status: newStatus, at: new Date().toISOString() });
@@ -1188,6 +1253,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const password    = document.getElementById('editionPassword').value.trim();
             const status      = document.getElementById('editionStatus').value;
             const description = document.getElementById('editionDesc').value.trim();
+            const youtubeUrl  = document.getElementById('editionYoutube').value.trim();
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: document.getElementById('editionDate').value,
@@ -1198,6 +1264,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 ...(salon       ? { salon }       : {}),
                 ...(password    ? { password }    : {}),
                 ...(description ? { description } : {}),
+                ...(youtubeUrl  ? { youtubeUrl }  : {}),
                 cupId
             });
             e.target.reset();
@@ -1440,6 +1507,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const descHtml = e.description
                     ? `<div class="event-row-desc">${e.description}</div>`
                     : '';
+                const liveBadgeHtml = (!isPast && e.status === 'en_cours')
+                    ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
+                    : '';
 
                 return `<div class="event-row ${cardClass}" onclick="openEditionDetail('${e.id}')">
                     <div class="event-row-accent"></div>
@@ -1456,6 +1526,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             ${descHtml}
                         </div>
                         <div class="event-row-right">
+                            ${liveBadgeHtml}
                             ${playerBadgeHtml}
                             <span class="event-row-cta">Voir →</span>
                             ${isAdmin ? `<div class="edition-card-admin" onclick="event.stopPropagation()">
@@ -1478,6 +1549,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }
             html += '</div>';
             grid.innerHTML = html;
+        }
+
+        // YouTube video ID extractor
+        function extractYoutubeId(url) {
+            if (!url) return null;
+            const m = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+            return m ? m[1] : null;
         }
 
         // Status history helper
@@ -1567,9 +1645,18 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                 const timeStr = e.time ? ` à ${e.time}` : '';
                 const editBtnHtml = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
+                // YouTube VOD embed for past editions
+                const ytId = extractYoutubeId(e.youtubeUrl);
+                const vodEmbedHtml = ytId ? `
+                    <div class="vod-section-label">▶ VOD YouTube</div>
+                    <div class="vod-embed-wrap">
+                        <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
+                    </div>` : '';
+
                 html += `<div class="card">
                     <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span>${editBtnHtml}</h2>
                     ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${e.description}</p>` : ''}
+                    ${vodEmbedHtml}
                     ${buildStatusHistoryHtml(e)}`;
 
                 if (finaleResults.length > 0) {
@@ -1738,12 +1825,23 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     registrantsHtml += '</tbody></table>';
                 }
 
+                // Twitch live embed when event is en_cours
+                const twitchEmbedHtml = e.status === 'en_cours' ? `
+                    <div class="stream-section-label">
+                        <span class="live-dot" style="width:7px;height:7px"></span>
+                        EN DIRECT sur Twitch
+                    </div>
+                    <div class="stream-embed-wrap">
+                        <iframe src="https://player.twitch.tv/?channel=springsesport&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
+                    </div>` : '';
+
                 const upcomingEditBtn = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
                 html = `<div class="card">
                     <h2>🏆 ${e.name}${upcomingEditBtn}</h2>
                     ${workflowHtml}
                     ${buildStatusHistoryHtml(e)}
                     ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px;line-height:1.6">${e.description}</p>` : ''}
+                    ${twitchEmbedHtml}
                     ${infoHtml}
                     ${registrationHtml}
                     <div style="margin-top:28px">
