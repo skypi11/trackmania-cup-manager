@@ -234,6 +234,59 @@ body.admin-mode .admin-only { display: block; }
 }
 .main-content { flex: 1; padding: 36px 40px; }
 
+/* ── HOME SECTION ────────────────────────────── */
+#home.section-panel { padding: 0; }
+.home-hero {
+    padding: 60px 40px 48px;
+    text-align: center;
+    position: relative; overflow: hidden;
+}
+.home-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(0,217,54,0.07) 0%, transparent 70%);
+    pointer-events: none;
+}
+.home-hero-logo { height: 70px; margin-bottom: 22px; filter: drop-shadow(0 0 24px rgba(0,217,54,0.18)); }
+.home-hero-title {
+    font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.45));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.home-hero-sub { font-size: 0.88rem; color: rgba(255,255,255,0.28); margin-bottom: 36px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+.home-event-card {
+    max-width: 460px; margin: 0 auto;
+    background: #1b1b1b; border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 18px; padding: 26px 28px; text-align: left;
+    cursor: pointer; transition: all 0.2s;
+}
+.home-event-card:hover { border-color: rgba(255,255,255,0.15); background: #1e1e1e; }
+.home-event-card.live { border-color: rgba(251,191,36,0.28); background: linear-gradient(135deg, #1c1900, #1b1b1b); }
+.home-stats {
+    display: flex; justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.home-stat { flex: 1; max-width: 200px; text-align: center; padding: 28px 24px; border-right: 1px solid rgba(255,255,255,0.06); }
+.home-stat:last-child { border-right: none; }
+.home-stat-value { font-size: 2.2rem; font-weight: 900; color: var(--color-accent); letter-spacing: -1px; }
+.home-stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.3); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 1.2px; }
+.home-champions { padding: 36px 40px 40px; }
+.home-champions-title {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.8px; color: rgba(255,255,255,0.2);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+}
+.home-champions-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+.home-champions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.home-champion-card {
+    background: #181818; border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px 18px; cursor: pointer; transition: all 0.2s;
+}
+.home-champion-card:hover { border-color: rgba(255,184,0,0.25); background: #1c1c1c; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.home-champion-edition { font-size: 0.72rem; color: rgba(255,255,255,0.28); margin-bottom: 8px; }
+.home-champion-winner { font-size: 1rem; font-weight: 700; }
+.home-champion-meta { font-size: 0.75rem; color: rgba(255,255,255,0.25); margin-top: 5px; }
+
 /* Topbar (mobile) */
 .topbar {
     display: none; position: sticky; top: 0; z-index: 150;
@@ -680,7 +733,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           </div>
         </div>
         <nav class="sidebar-nav">
-          <button class="nav-item active" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label">Éditions</span></button>
+          <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label">Accueil</span></button>
+          <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label">Éditions</span></button>
           <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label">Classement</span></button>
           <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label">Joueurs</span></button>
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label">Stats</span></button>
@@ -707,15 +761,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           </button>
           <div class="topbar-brand">
             <img src="Springs Esport.png" style="height:26px">
-            <span class="topbar-section-name" id="topbarTitle">Éditions</span>
+            <span class="topbar-section-name" id="topbarTitle">Accueil</span>
           </div>
         </div>
 
         <div class="main-content">
+          <!-- HOME -->
+          <div class="section-panel" id="home">
+            <div id="homeContent"></div>
+          </div>
+
           <div id="nextEditionBanner" class="next-edition-banner" style="display:none"></div>
 
           <!-- EDITIONS -->
-          <div class="section-panel" id="editions">
+          <div class="section-panel" id="editions" style="display:none">
             <div class="card admin-only" id="createEditionCard">
                 <h2>➕ Créer une édition</h2>
                 <form id="addEditionForm">
@@ -1072,10 +1131,109 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // 'auth' included so loading overlay stays until Firebase resolves the session
         let loaded = { participants: false, editions: false, results: false, auth: false };
 
+        function displayHome() {
+            const container = document.getElementById('homeContent');
+            if (!container) return;
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            const liveEdition = data.editions.find(e => e.status === 'en_cours');
+            const nextEdition = data.editions
+                .filter(e => new Date(e.date) >= today && e.status !== 'terminee' && e.status !== 'en_cours')
+                .sort((a,b) => new Date(a.date) - new Date(b.date))[0];
+
+            const totalEditions = data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
+            const totalPlayers = data.participants.length;
+            const totalParticipations = data.results.filter(r => r.phase === 'qualification').length;
+
+            const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+
+            // Featured event block
+            let featuredHtml = '';
+            if (liveEdition) {
+                featuredHtml = `<div class="home-event-card live" onclick="showSection('editions');openEditionDetail('${liveEdition.id}')">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                        <span class="live-dot" style="width:8px;height:8px"></span>
+                        <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#fbbf24">En direct maintenant</span>
+                    </div>
+                    <div style="font-size:1.2rem;font-weight:800;margin-bottom:14px">${liveEdition.name}</div>
+                    <a href="https://www.twitch.tv/springsesport" target="_blank" rel="noopener"
+                       onclick="event.stopPropagation()"
+                       style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#9146ff,#7b2fff);color:#fff;font-weight:700;font-size:0.88rem">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                        Regarder sur Twitch
+                    </a>
+                </div>`;
+            } else if (nextEdition) {
+                const dateStr = new Date(nextEdition.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                const timeStr = nextEdition.time ? ` à ${nextEdition.time}` : '';
+                const countdown = getCountdown(nextEdition.date, nextEdition.time);
+                const isRegistered = currentPlayer && data.results.some(r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+                let ctaHtml = '';
+                if (nextEdition.status === 'inscriptions') {
+                    if (!currentUser) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();openAuthModal()" style="margin-top:18px">🔑 Se connecter pour s'inscrire</button>`;
+                    else if (isRegistered) ctaHtml = `<div class="registered-badge" style="margin-top:16px">✓ Vous êtes inscrit</div>`;
+                    else if (currentPlayer) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')" style="margin-top:18px">S'inscrire à cette édition</button>`;
+                }
+                featuredHtml = `<div class="home-event-card" onclick="showSection('editions');openEditionDetail('${nextEdition.id}')">
+                    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-warning);margin-bottom:12px">Prochain événement</div>
+                    <div style="font-size:1.2rem;font-weight:800;margin-bottom:10px">${nextEdition.name}</div>
+                    <div style="font-size:0.87rem;color:rgba(255,255,255,0.4);margin-bottom:10px">📅 ${dateStr}${timeStr}</div>
+                    ${countdown ? `<span class="event-countdown-pill">⏱ ${countdown}</span>` : ''}
+                    ${ctaHtml}
+                </div>`;
+            } else {
+                featuredHtml = `<div class="home-event-card" style="text-align:center;padding:40px 24px;cursor:default">
+                    <div style="font-size:2rem;margin-bottom:12px">🏁</div>
+                    <div style="color:rgba(255,255,255,0.3);font-size:0.9rem">Aucun événement à venir pour le moment</div>
+                </div>`;
+            }
+
+            // Last champions
+            const pastWithChampion = data.editions
+                .filter(e => data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
+                .sort((a,b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 3);
+
+            let championsHtml = '';
+            if (pastWithChampion.length > 0) {
+                const cards = pastWithChampion.map(e => {
+                    const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+                    const player = winner ? data.participants.find(p => p.id === winner.playerId) : null;
+                    if (!player) return '';
+                    const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                    return `<div class="home-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
+                        <div class="home-champion-edition">${e.name}</div>
+                        <div class="home-champion-winner">🥇 ${pName(player)}</div>
+                        <div class="home-champion-meta">${dateStr}${player.team ? ' · ' + player.team : ''}</div>
+                    </div>`;
+                }).join('');
+                championsHtml = `<div class="home-champions">
+                    <div class="home-champions-title">Derniers champions</div>
+                    <div class="home-champions-grid">${cards}</div>
+                </div>`;
+            }
+
+            container.innerHTML = `
+                <div class="home-hero">
+                    <img src="Springs Esport.png" class="home-hero-logo" alt="Springs Esport">
+                    <div class="home-hero-title">Springs Monthly Cup</div>
+                    <div class="home-hero-sub">Springs E-Sport · Trackmania · En ligne</div>
+                    ${featuredHtml}
+                </div>
+                <div class="home-stats">
+                    <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">Éditions</div></div>
+                    <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">Joueurs</div></div>
+                    <div class="home-stat"><div class="home-stat-value">${totalParticipations}</div><div class="home-stat-label">Participations</div></div>
+                </div>
+                ${championsHtml}`;
+        }
+        window.displayHome = displayHome;
+
         let urlAutoOpenDone = false;
         function checkLoaded() {
             if (Object.values(loaded).every(Boolean)) {
                 document.getElementById('loadingOverlay').classList.add('hidden');
+                displayHome();
                 // Auto-open edition from URL param (once)
                 if (!urlAutoOpenDone) {
                     urlAutoOpenDone = true;
@@ -1291,7 +1449,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (panel) panel.style.display = '';
             if (id === 'rankings') displayGeneralRanking();
             else if (id === 'stats') displayStats();
-            const titles = { editions: 'Éditions', rankings: 'Classement', participants: 'Joueurs', stats: 'Statistiques' };
+            else if (id === 'home') displayHome();
+            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', participants: 'Joueurs', stats: 'Statistiques' };
             const t = document.getElementById('topbarTitle');
             if (t) t.textContent = titles[id] || '';
         }
@@ -2448,6 +2607,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             checkLoaded();
             displayParticipants();
             displayEditions();
+            displayHome();
             displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
@@ -2458,6 +2618,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             loaded.editions = true;
             checkLoaded();
             displayEditions();
+            displayHome();
             displayNextEditionBanner();
             displayStats();
         }, onErr('editions'));
@@ -2468,6 +2629,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             checkLoaded();
             displayParticipants();
             displayEditions();
+            displayHome();
             displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
