@@ -532,6 +532,25 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif;
 }
 .edition-detail-back:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.07); }
+.edition-detail-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.edition-share-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.4); border-radius: 10px; padding: 8px 14px;
+    cursor: pointer; font-size: 0.84rem; font-weight: 500;
+    transition: all 0.2s; font-family: 'Inter', sans-serif; margin-left: auto;
+}
+.edition-share-btn:hover { color: var(--color-accent); border-color: rgba(0,217,54,0.25); background: rgba(0,217,54,0.06); }
+
+/* Toast */
+.toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #222; border: 1px solid rgba(0,217,54,0.3); color: #fff;
+    padding: 10px 20px; border-radius: 10px; font-size: 0.88rem; font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 3000;
+    opacity: 0; transition: all 0.25s cubic-bezier(.22,.68,0,1.2); pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ── REGISTERED BADGE ───────────────────────────── */
 .registered-badge {
@@ -632,6 +651,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         <div class="spinner"></div>
         <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Chargement...</p>
     </div>
+    <div class="toast" id="toast"></div>
 
     <!-- Auth guard overlay -->
     <div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
@@ -762,7 +782,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             <!-- Edition detail panel -->
             <div class="edition-detail" id="editionDetail">
-                <button class="edition-detail-back" onclick="closeEditionDetail()">← Retour aux éditions</button>
+                <div class="edition-detail-topbar">
+                    <button class="edition-detail-back" onclick="closeEditionDetail()">← Retour aux éditions</button>
+                    <button class="edition-share-btn" onclick="shareEdition()">🔗 Copier le lien</button>
+                </div>
                 <div id="editionDetailContent"></div>
             </div>
           </div>
@@ -1049,9 +1072,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // 'auth' included so loading overlay stays until Firebase resolves the session
         let loaded = { participants: false, editions: false, results: false, auth: false };
 
+        let urlAutoOpenDone = false;
         function checkLoaded() {
-            if (Object.values(loaded).every(Boolean))
+            if (Object.values(loaded).every(Boolean)) {
                 document.getElementById('loadingOverlay').classList.add('hidden');
+                // Auto-open edition from URL param (once)
+                if (!urlAutoOpenDone) {
+                    urlAutoOpenDone = true;
+                    const editionId = new URLSearchParams(window.location.search).get('edition');
+                    if (editionId && data.editions.find(e => e.id === editionId)) {
+                        showSection('editions');
+                        openEditionDetail(editionId);
+                    }
+                }
+            }
         }
 
         window.openAuthModal  = () => document.getElementById('authOverlay').classList.add('open');
@@ -1970,6 +2004,26 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             document.getElementById('editionFilters').style.display = '';
             const createCard = document.getElementById('createEditionCard');
             if (createCard) createCard.style.display = '';
+            // Remove edition param from URL
+            const url = new URL(window.location);
+            url.searchParams.delete('edition');
+            history.replaceState(null, '', url);
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        window.shareEdition = () => {
+            if (!currentDetailEditionId) return;
+            const url = new URL(window.location);
+            url.searchParams.set('edition', currentDetailEditionId);
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                showToast('✅ Lien copié dans le presse-papier !');
+            });
         };
 
         window.cancelInscription = async (resultId, editionId) => {
