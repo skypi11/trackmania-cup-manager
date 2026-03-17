@@ -311,6 +311,51 @@ body.admin-mode .admin-only { display: block; }
 }
 .btn-discord-notify:hover { background: rgba(88,101,242,0.22); color: #9ba8f5; }
 
+/* Discord link banner */
+.discord-link-banner {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin: 0 40px 24px; padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(88,101,242,0.15), rgba(88,101,242,0.07));
+    border: 1px solid rgba(88,101,242,0.3); border-radius: 14px;
+    animation: fadeIn 0.3s ease;
+}
+.discord-link-banner-text { flex: 1; min-width: 0; }
+.discord-link-banner-text strong { display: block; font-size: 0.92rem; color: #9ba8f5; margin-bottom: 2px; }
+.discord-link-banner-text span { font-size: 0.8rem; color: rgba(255,255,255,0.4); }
+.discord-banner-close {
+    background: none; border: none; color: rgba(255,255,255,0.25);
+    cursor: pointer; font-size: 1.1rem; padding: 0 4px; line-height: 1; flex-shrink: 0;
+}
+.discord-banner-close:hover { color: rgba(255,255,255,0.5); }
+
+/* Badge point on sidebar player button */
+.sidebar-user-btn { position: relative; }
+.discord-badge-dot {
+    position: absolute; top: 6px; right: 8px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #f59e0b; border: 2px solid #111;
+    animation: live-blink 2s ease-in-out infinite;
+}
+
+/* Discord link prompt modal */
+.discord-prompt-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 1800;
+    align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(8px);
+}
+.discord-prompt-overlay.open { display: flex; }
+.discord-prompt-box {
+    background: #1c1c1c; border: 1px solid rgba(88,101,242,0.3);
+    border-radius: 24px; padding: 40px 36px; max-width: 420px; width: 100%;
+    text-align: center; box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(88,101,242,0.1);
+}
+.discord-prompt-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.discord-prompt-box h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+.discord-prompt-box p { color: var(--color-text-secondary); font-size: 0.88rem; line-height: 1.7; margin-bottom: 28px; }
+.discord-prompt-skip { display: block; margin-top: 14px; font-size: 0.8rem; color: rgba(255,255,255,0.2); cursor: pointer; background: none; border: none; font-family: 'Inter', sans-serif; }
+.discord-prompt-skip:hover { color: rgba(255,255,255,0.45); }
+
 /* Topbar (mobile) */
 .topbar {
     display: none; position: sticky; top: 0; z-index: 150;
@@ -795,6 +840,21 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <div id="homeContent"></div>
           </div>
 
+          <!-- Discord link banner (shown when player not linked) -->
+          <div id="discordLinkBanner" style="display:none">
+            <div class="discord-link-banner">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#7289da" style="flex-shrink:0"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                <div class="discord-link-banner-text">
+                    <strong>Lie ton compte Discord pour recevoir les rappels de la cup !</strong>
+                    <span>Les joueurs qui ont lié Discord reçoivent une mention avant chaque édition.</span>
+                </div>
+                <button class="btn-discord" onclick="linkDiscord()" style="flex-shrink:0;padding:8px 16px;font-size:0.82rem">
+                    Lier Discord
+                </button>
+                <button class="discord-banner-close" onclick="document.getElementById('discordLinkBanner').style.display='none'" title="Fermer">✕</button>
+            </div>
+          </div>
+
           <div id="nextEditionBanner" class="next-edition-banner" style="display:none"></div>
 
           <!-- EDITIONS -->
@@ -1005,6 +1065,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         </footer>
 
       </div>
+    </div>
+
+    <!-- DISCORD LINK PROMPT (shown after first login) -->
+    <div class="discord-prompt-overlay" id="discordPromptOverlay">
+        <div class="discord-prompt-box">
+            <div class="discord-prompt-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="#7289da"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            </div>
+            <h2>Lie ton compte Discord !</h2>
+            <p>Pour recevoir une <strong style="color:#9ba8f5">mention personnelle</strong> avant chaque édition de la Springs Monthly Cup, lie ton compte Discord maintenant.<br><br>C'est rapide et tu pourras toujours le faire plus tard depuis ton profil.</p>
+            <button class="btn-discord" onclick="linkDiscord()" style="width:100%;justify-content:center;padding:13px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                Lier mon compte Discord
+            </button>
+            <button class="discord-prompt-skip" onclick="dismissDiscordPrompt()">Plus tard</button>
+        </div>
     </div>
 
     <!-- DISCORD NOTIFY MODAL -->
@@ -1227,6 +1303,51 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }
         }
 
+        function updateDiscordReminders() {
+            if (!currentUser || isAdmin) {
+                document.getElementById('discordLinkBanner').style.display = 'none';
+                const dot = document.getElementById('discordBadgeDot');
+                if (dot) dot.remove();
+                return;
+            }
+            const player = data.participants.find(p => p.userId === currentUser.uid);
+            if (!player) return;
+            const linked = !!player.discordId;
+
+            // Banner
+            const banner = document.getElementById('discordLinkBanner');
+            banner.style.display = linked ? 'none' : '';
+
+            // Badge dot on playerBtn
+            const playerBtn = document.getElementById('playerBtn');
+            let dot = document.getElementById('discordBadgeDot');
+            if (!linked) {
+                if (!dot) {
+                    dot = document.createElement('span');
+                    dot.id = 'discordBadgeDot';
+                    dot.className = 'discord-badge-dot';
+                    playerBtn.appendChild(dot);
+                }
+            } else {
+                if (dot) dot.remove();
+            }
+        }
+
+        window.dismissDiscordPrompt = () => {
+            document.getElementById('discordPromptOverlay').classList.remove('open');
+            sessionStorage.setItem('discordPromptDismissed', '1');
+        };
+
+        function maybeShowDiscordPrompt() {
+            if (sessionStorage.getItem('discordPromptDismissed')) return;
+            const player = data.participants.find(p => p.userId === currentUser?.uid);
+            if (player && !player.discordId) {
+                setTimeout(() => {
+                    document.getElementById('discordPromptOverlay').classList.add('open');
+                }, 1200);
+            }
+        }
+
         window.unlinkDiscord = async (playerId) => {
             if (!confirm('Délier ton compte Discord ?')) return;
             await updateDoc(doc(db, 'participants', playerId), { discordId: '', discordUsername: '' });
@@ -1384,11 +1505,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (Object.values(loaded).every(Boolean)) {
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 displayHome();
+                updateDiscordReminders();
                 // Handle Discord OAuth callback
                 if (pendingDiscordToken && currentUser) {
                     handleDiscordCallback(pendingDiscordToken);
                     pendingDiscordToken = null;
                 }
+                maybeShowDiscordPrompt();
                 // Auto-open edition from URL param (once)
                 if (!urlAutoOpenDone) {
                     urlAutoOpenDone = true;
@@ -2780,6 +2903,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
+            updateDiscordReminders();
         }, onErr('participants'));
 
         onSnapshot(collection(db, 'editions'), snap => {
