@@ -1585,6 +1585,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 playerBtn.style.display = '';
                 adminBtn.classList.add('active');
                 adminBtn.textContent = '🔓 Déconnexion';
+                const pseudoAdmin = currentUserProfile?.pseudo || user.displayName || 'Mon compte';
+                playerBtn.textContent = `👤 ${pseudoAdmin}`;
             } else {
                 document.body.classList.remove('admin-mode');
                 adminBtn.style.display  = 'none';
