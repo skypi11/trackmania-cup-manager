@@ -1154,6 +1154,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </div>
               </form>
             </div>
+
+            <!-- Outils Admin -->
+            <div class="card" style="margin-top:20px">
+              <h2>🛠️ Outils Admin</h2>
+              <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700">Stream Overlay (OBS)</p>
+              <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
+              <div id="overlayUrlsContainer"></div>
+            </div>
           </div>
         </div>
 
@@ -1459,6 +1467,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             // Populate form fields
             const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl };
             Object.entries(fields).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val || ''; });
+            // Overlay URL
+            const overlayContainer = document.getElementById('overlayUrlsContainer');
+            if (overlayContainer) {
+                const baseUrl = 'https://skypi11.github.io/trackmania-cup-manager/overlay.html';
+                const overlayUrl = `${baseUrl}?cup=${cupId}`;
+                overlayContainer.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px">
+                        <code style="flex:1;font-size:0.82rem;color:var(--color-accent);word-break:break-all">${overlayUrl}</code>
+                        <button onclick="navigator.clipboard.writeText('${overlayUrl}').then(()=>{this.textContent='✅ Copié';setTimeout(()=>this.textContent='📋 Copier',2000)})" style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--color-text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem">📋 Copier</button>
+                    </div>`;
+            }
         }
 
         window.saveSiteConfig = async (e) => {
