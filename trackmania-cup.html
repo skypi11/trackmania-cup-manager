@@ -3216,6 +3216,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const player = data.participants.find(p => p.id === playerId);
             if (!player) return;
 
+            const qualRes   = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
             const finaleRes = data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
             const points  = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
             const wins    = finaleRes.filter(r => r.position === 1).length;
@@ -3224,13 +3225,23 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const pStats  = computePlayerStats(playerId);
             const unlockedBadges = ACHIEVEMENTS.filter(a => a.check(pStats));
 
-            const W = 600, H = 340;
+            // Pre-load logo
+            const logo = await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = 'Springs Esport.png';
+            });
+
+            const W = 620, H = 360;
             const canvas = document.createElement('canvas');
-            canvas.width = W * 2; canvas.height = H * 2; // retina
+            canvas.width = W * 2; canvas.height = H * 2;
             const ctx = canvas.getContext('2d');
             ctx.scale(2, 2);
 
             const ACCENT = CUP.color || '#00d936';
+            const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial';
+
             const roundRect = (x, y, w, h, r) => {
                 ctx.beginPath();
                 ctx.moveTo(x + r, y);
@@ -3247,7 +3258,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             ctx.fill();
 
             // Top-right radial glow
-            const grd = ctx.createRadialGradient(W, 0, 0, W, 0, 280);
+            const grd = ctx.createRadialGradient(W, 0, 0, W, 0, 300);
             grd.addColorStop(0, ACCENT + '22');
             grd.addColorStop(1, 'transparent');
             roundRect(0, 0, W, H, 16);
@@ -3256,7 +3267,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             // Border
             roundRect(0, 0, W, H, 16);
-            ctx.strokeStyle = ACCENT + '99';
+            ctx.strokeStyle = ACCENT + '88';
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
@@ -3265,14 +3276,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             ctx.fillRect(0, H - 5, W, 5);
 
             // Cup label (top-left)
-            ctx.fillStyle = ACCENT + 'aa';
-            ctx.font = 'bold 10px "Arial"';
+            ctx.fillStyle = ACCENT + 'cc';
+            ctx.font = `bold 10px Arial`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText(siteConfig.siteName.toUpperCase(), 24, 22);
 
+            // Logo (top-right)
+            if (logo) {
+                const logoH = 24, logoW = logo.naturalWidth * (logoH / logo.naturalHeight);
+                ctx.globalAlpha = 0.55;
+                ctx.drawImage(logo, W - logoW - 20, 14, logoW, logoH);
+                ctx.globalAlpha = 1;
+            }
+
             // Avatar circle
-            const aX = 66, aY = 110, aR = 44;
+            const aX = 66, aY = 118, aR = 46;
             const avatarGrad = ctx.createRadialGradient(aX - 10, aY - 10, 0, aX, aY, aR);
             avatarGrad.addColorStop(0, ACCENT);
             avatarGrad.addColorStop(1, '#ff8c00');
@@ -3282,7 +3301,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             ctx.fill();
 
             // Avatar glow
-            ctx.shadowBlur = 18;
+            ctx.shadowBlur = 20;
             ctx.shadowColor = ACCENT + '88';
             ctx.beginPath();
             ctx.arc(aX, aY, aR, 0, Math.PI * 2);
@@ -3293,95 +3312,114 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             // Avatar letter
             ctx.fillStyle = '#000';
-            ctx.font = 'bold 38px "Arial"';
+            ctx.font = `bold 40px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(pName(player).charAt(0).toUpperCase(), aX, aY);
 
             // Player name
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 26px "Arial"';
+            ctx.font = `bold 26px Arial`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
-            ctx.fillText(pName(player), 130, 95);
+            ctx.fillText(pName(player), 132, 100);
 
             // Team
             ctx.fillStyle = '#64748b';
-            ctx.font = '14px "Arial"';
-            ctx.fillText(player.team || 'Sans équipe', 130, 116);
+            ctx.font = `15px Arial`;
+            ctx.fillText(player.team || 'Sans équipe', 132, 120);
 
-            // Wins badge
+            // Wins badge (text only, no emoji for reliability)
             if (wins > 0) {
-                const badgeTxt = `🏆 ${wins} victoire${wins > 1 ? 's' : ''}`;
-                ctx.font = 'bold 12px "Arial"';
-                const bw = ctx.measureText(badgeTxt).width + 18;
-                roundRect(130, 125, bw, 22, 11);
-                ctx.fillStyle = 'rgba(251,191,36,0.12)';
+                const badgeTxt = `${wins} victoire${wins > 1 ? 's' : ''}`;
+                ctx.font = `bold 12px Arial`;
+                const bw = ctx.measureText(badgeTxt).width + 28;
+                roundRect(132, 128, bw, 22, 11);
+                ctx.fillStyle = 'rgba(251,191,36,0.14)';
                 ctx.fill();
-                roundRect(130, 125, bw, 22, 11);
-                ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+                roundRect(132, 128, bw, 22, 11);
+                ctx.strokeStyle = 'rgba(251,191,36,0.4)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.fillStyle = '#fbbf24';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(badgeTxt, 139, 136);
+                ctx.fillText('🏆 ' + badgeTxt, 142, 139);
             }
 
-            // Unlocked badges row
+            // Unlocked badges row — use emoji font explicitly
             if (unlockedBadges.length > 0) {
-                ctx.font = '18px "Arial"';
-                ctx.textAlign = 'left';
+                const badgeY = wins > 0 ? 177 : 148;
+                ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const startX = wins > 0 ? 130 : 130;
-                const badgeY = wins > 0 ? 172 : 140;
-                unlockedBadges.slice(0, 5).forEach((b, i) => {
-                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                    roundRect(startX + i * 32, badgeY - 12, 26, 26, 6);
+                unlockedBadges.slice(0, 6).forEach((b, i) => {
+                    const bx = 132 + i * 34;
+                    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+                    roundRect(bx, badgeY - 14, 28, 28, 7);
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                    ctx.lineWidth = 0.5;
-                    roundRect(startX + i * 32, badgeY - 12, 26, 26, 6);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                    ctx.lineWidth = 0.8;
+                    roundRect(bx, badgeY - 14, 28, 28, 7);
                     ctx.stroke();
-                    ctx.fillText(b.icon, startX + i * 32 + 4, badgeY + 1);
+                    ctx.font = `20px ${EMOJI_FONT}`;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(b.icon, bx + 14, badgeY + 1);
                 });
+                if (unlockedBadges.length > 6) {
+                    ctx.font = `11px Arial`;
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`+${unlockedBadges.length - 6}`, 132 + 6 * 34 + 4, badgeY + 2);
+                }
             }
 
             // Divider
-            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(20, 228);
-            ctx.lineTo(W - 20, 228);
+            ctx.moveTo(20, 242);
+            ctx.lineTo(W - 20, 242);
             ctx.stroke();
 
-            // Stats row
+            // Stats row — 6 stats with participations
             const statsData = [
-                { label: 'POINTS', value: String(points) },
-                { label: 'FINALES', value: String(finaleRes.length) },
-                { label: 'VICTOIRES', value: String(wins) },
-                { label: 'PODIUMS', value: String(podiums) },
-                { label: 'WIN RATE', value: winRate !== null ? winRate + '%' : '—' },
+                { label: 'PARTICIPATIONS', value: String(qualRes.length) },
+                { label: 'FINALES',        value: String(finaleRes.length) },
+                { label: 'POINTS',         value: String(points) },
+                { label: 'VICTOIRES',      value: String(wins) },
+                { label: 'PODIUMS',        value: String(podiums) },
+                { label: 'WIN RATE',       value: winRate !== null ? winRate + '%' : '—' },
             ];
             const statW = W / statsData.length;
             statsData.forEach((s, i) => {
                 const x = i * statW + statW / 2;
+                // Stat value
                 ctx.fillStyle = ACCENT;
-                ctx.font = 'bold 22px "Arial"';
+                ctx.font = `bold 21px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'alphabetic';
-                ctx.fillText(s.value, x, 268);
+                ctx.fillText(s.value, x, 282);
+                // Separator (except last)
+                if (i < statsData.length - 1) {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo((i + 1) * statW, 254);
+                    ctx.lineTo((i + 1) * statW, 298);
+                    ctx.stroke();
+                }
+                // Label
                 ctx.fillStyle = '#64748b';
-                ctx.font = '10px "Arial"';
-                ctx.fillText(s.label, x, 284);
+                ctx.font = `9px Arial`;
+                ctx.fillText(s.label, x, 297);
             });
 
-            // Bottom footer: site name + "Springs E-Sport"
-            ctx.fillStyle = 'rgba(255,255,255,0.12)';
-            ctx.font = '10px "Arial"';
-            ctx.textAlign = 'right';
+            // Footer: "Springs E-Sport" text
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.font = `10px Arial`;
+            ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
-            ctx.fillText('Springs E-Sport', W - 22, H - 16);
+            ctx.fillText('Springs E-Sport', W / 2, H - 16);
 
             // Convert to blob and copy
             canvas.toBlob(async blob => {
@@ -3390,7 +3428,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                     if (btn) { btn.textContent = '✅ Copiée !'; setTimeout(() => btn.textContent = orig, 2500); }
                 } catch {
-                    // Fallback: download the image
                     const a = document.createElement('a');
                     a.href = canvas.toDataURL('image/png');
                     a.download = `${pName(player).replace(/\s+/g, '_')}_springs.png`;
