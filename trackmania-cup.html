@@ -980,6 +980,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 <option value="en_cours">🎯 Événement en cours</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="editionSaison">Saison</label>
+                            <input type="number" id="editionSaison" min="2020" max="2099" placeholder="2026">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="editionDesc">Description (optionnel)</label>
@@ -1025,6 +1029,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <span>📊 Classement général</span>
                     <button class="btn btn-secondary btn-small" onclick="exportCSV()">⬇️ Export CSV</button>
                 </h2>
+                <div id="rankingSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
                 <div id="generalRanking"></div>
             </div>
             <div class="card">
@@ -1331,14 +1336,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <input type="text" id="editEditionPassword" placeholder="Ex: 1234">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="editEditionStatus">Statut</label>
-                    <select id="editEditionStatus">
-                        <option value="fermee">🔒 Inscriptions fermées</option>
-                        <option value="inscriptions">📋 Inscriptions ouvertes</option>
-                        <option value="en_cours">🎯 Événement en cours</option>
-                        <option value="terminee">✅ Terminée</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEditionStatus">Statut</label>
+                        <select id="editEditionStatus">
+                            <option value="fermee">🔒 Inscriptions fermées</option>
+                            <option value="inscriptions">📋 Inscriptions ouvertes</option>
+                            <option value="en_cours">🎯 Événement en cours</option>
+                            <option value="terminee">✅ Terminée</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editEditionSaison">Saison</label>
+                        <input type="number" id="editEditionSaison" min="2020" max="2099">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editEditionDesc">Description</label>
@@ -1758,8 +1769,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const container = document.getElementById('hallofFameContent');
             if (!container) return;
 
+            const finaleResults = data.results.filter(r => r.phase === 'finale');
             const editionsWithWinner = data.editions
-                .filter(e => data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
+                .filter(e => finaleResults.some(r => r.editionId === e.id && r.position === 1))
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (editionsWithWinner.length === 0) {
@@ -1767,20 +1779,23 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 return;
             }
 
-            // Wins per player
-            const winCounts = {};
-            editionsWithWinner.forEach(e => {
-                const win = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
-                if (win) winCounts[win.playerId] = (winCounts[win.playerId] || 0) + 1;
+            // --- All-time player stats ---
+            const playerStats = {};
+            data.participants.forEach(p => {
+                playerStats[p.id] = { player: p, wins: 0, podiums: 0, finals: 0, points: 0 };
             });
+            finaleResults.forEach(r => {
+                if (!playerStats[r.playerId]) return;
+                playerStats[r.playerId].finals++;
+                playerStats[r.playerId].points += getPoints(r.position);
+                if (r.position === 1) playerStats[r.playerId].wins++;
+                if (r.position <= 3) playerStats[r.playerId].podiums++;
+            });
+            const allStats = Object.values(playerStats).filter(s => s.finals > 0);
 
-            const topChampions = Object.entries(winCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5)
-                .map(([id, wins]) => ({ player: data.participants.find(p => p.id === id), wins }))
-                .filter(x => x.player);
-
+            // --- Top champions (by wins) ---
             const rankMedals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+            const topChampions = [...allStats].sort((a, b) => b.wins - a.wins || b.podiums - a.podiums).slice(0, 5).filter(c => c.wins > 0);
             const topHtml = topChampions.length > 0 ? `
                 <div class="card" style="margin-bottom:20px">
                     <h2>🏆 Champions les plus titrés</h2>
@@ -1790,32 +1805,124 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 <span style="font-size:1.4rem;width:30px;text-align:center;flex-shrink:0">${rankMedals[i]}</span>
                                 <span style="font-weight:800;flex:1">${pName(c.player)}</span>
                                 <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team || ''}</span>
-                                <span class="hof-wins-badge">${c.wins} victoire${c.wins > 1 ? 's' : ''}</span>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+                                    <span class="hof-wins-badge">🏆 ${c.wins} victoire${c.wins > 1 ? 's' : ''}</span>
+                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">🎯 ${c.podiums} podiums</span>
+                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">${c.points} pts</span>
+                                </div>
                             </div>`).join('')}
                     </div>
                 </div>` : '';
 
-            const cardsHtml = editionsWithWinner.map(e => {
-                const win = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
-                const player = win ? data.participants.find(p => p.id === win.playerId) : null;
-                if (!player) return '';
-                const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-                return `<div class="hof-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
-                    <div class="hof-trophy">🏆</div>
-                    <div class="hof-info">
-                        <div class="hof-edition-name">${e.name}</div>
-                        <div class="hof-winner-name">${pName(player)}</div>
-                        <div class="hof-winner-team">${player.team || ''}</div>
+            // --- Records ---
+            const mostFinals = [...allStats].sort((a, b) => b.finals - a.finals)[0];
+            const mostPodiums = [...allStats].sort((a, b) => b.podiums - a.podiums)[0];
+            const bestWinRate = [...allStats].filter(s => s.finals >= 3).sort((a, b) => (b.wins / b.finals) - (a.wins / a.finals))[0];
+            const mostPoints = [...allStats].sort((a, b) => b.points - a.points)[0];
+            const recordsHtml = `
+                <div class="card" style="margin-bottom:20px">
+                    <h2>🎖️ Records</h2>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px">
+                        ${mostPoints ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🏅 Plus de points</div>
+                            <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostPoints.player.id}')">${pName(mostPoints.player)}</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPoints.points} pts</div>
+                        </div>` : ''}
+                        ${mostFinals ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🎯 Plus de finales jouées</div>
+                            <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostFinals.player.id}')">${pName(mostFinals.player)}</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostFinals.finals} finales</div>
+                        </div>` : ''}
+                        ${mostPodiums ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🥇 Plus de podiums</div>
+                            <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostPodiums.player.id}')">${pName(mostPodiums.player)}</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPodiums.podiums} podiums</div>
+                        </div>` : ''}
+                        ${bestWinRate ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">📈 Meilleur taux de victoire <span style="opacity:0.5">(min. 3 finales)</span></div>
+                            <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${bestWinRate.player.id}')">${pName(bestWinRate.player)}</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${Math.round(bestWinRate.wins / bestWinRate.finals * 100)}%</div>
+                        </div>` : ''}
                     </div>
-                    <div class="hof-date">${dateStr}</div>
                 </div>`;
-            }).join('');
+
+            // --- Champions par saison ---
+            const seasons = [...new Set(editionsWithWinner.map(e => e.saison || new Date(e.date).getFullYear()))].sort((a, b) => b - a);
+            const seasonChampionsHtml = seasons.length > 0 ? `
+                <div class="card" style="margin-bottom:20px">
+                    <h2>📅 Champions par saison</h2>
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+                        ${seasons.map(year => {
+                            const seasonEditions = editionsWithWinner.filter(e => (e.saison || new Date(e.date).getFullYear()) === year);
+                            // Compute points per player for this season
+                            const seasonStats = {};
+                            seasonEditions.forEach(e => {
+                                finaleResults.filter(r => r.editionId === e.id).forEach(r => {
+                                    if (!seasonStats[r.playerId]) seasonStats[r.playerId] = { wins: 0, points: 0, podiums: 0 };
+                                    seasonStats[r.playerId].points += getPoints(r.position);
+                                    if (r.position === 1) seasonStats[r.playerId].wins++;
+                                    if (r.position <= 3) seasonStats[r.playerId].podiums++;
+                                });
+                            });
+                            const sorted = Object.entries(seasonStats).sort((a, b) => b[1].points - a[1].points || b[1].wins - a[1].wins);
+                            if (sorted.length === 0) return '';
+                            const [champId, champData] = sorted[0];
+                            const champ = data.participants.find(p => p.id === champId);
+                            if (!champ) return '';
+                            return `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:12px">
+                                <span style="font-size:1.8rem;flex-shrink:0">🏆</span>
+                                <div style="flex:1">
+                                    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:rgba(251,191,36,0.7);font-weight:700;margin-bottom:2px">Saison ${year}</div>
+                                    <div style="font-weight:800;font-size:1.05rem;cursor:pointer" onclick="openPlayerProfile('${champ.id}')">${pName(champ)}</div>
+                                    ${champ.team ? `<div style="font-size:0.78rem;color:var(--color-text-secondary)">${champ.team}</div>` : ''}
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:0.78rem;color:rgba(255,255,255,0.4)">${seasonEditions.length} édition${seasonEditions.length > 1 ? 's' : ''}</div>
+                                    <div style="font-weight:700;color:var(--color-accent)">${champData.points} pts</div>
+                                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${champData.wins} victoire${champData.wins > 1 ? 's' : ''}</div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>` : '';
+
+            // --- Palmarès complet groupé par saison ---
+            let palmaresBySeasonHtml = '';
+            seasons.forEach(year => {
+                const yearEditions = editionsWithWinner.filter(e => (e.saison || new Date(e.date).getFullYear()) === year);
+                if (yearEditions.length === 0) return;
+                const cardsHtml = yearEditions.map(e => {
+                    const win = finaleResults.find(r => r.editionId === e.id && r.position === 1);
+                    const player = win ? data.participants.find(p => p.id === win.playerId) : null;
+                    if (!player) return '';
+                    const p2 = finaleResults.find(r => r.editionId === e.id && r.position === 2);
+                    const p3 = finaleResults.find(r => r.editionId === e.id && r.position === 3);
+                    const player2 = p2 ? data.participants.find(p => p.id === p2.playerId) : null;
+                    const player3 = p3 ? data.participants.find(p => p.id === p3.playerId) : null;
+                    const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                    return `<div class="hof-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
+                        <div class="hof-trophy">🏆</div>
+                        <div class="hof-info">
+                            <div class="hof-edition-name">${e.name}</div>
+                            <div class="hof-winner-name">${pName(player)}</div>
+                            ${player2 || player3 ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:4px">${player2 ? '🥈 ' + pName(player2) : ''}${player2 && player3 ? ' · ' : ''}${player3 ? '🥉 ' + pName(player3) : ''}</div>` : ''}
+                        </div>
+                        <div class="hof-date">${dateStr}</div>
+                    </div>`;
+                }).join('');
+                palmaresBySeasonHtml += `<div style="margin-bottom:24px">
+                    <div style="font-size:0.82rem;text-transform:uppercase;letter-spacing:2px;color:var(--color-text-secondary);font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)">Saison ${year}</div>
+                    <div class="hof-champion-grid">${cardsHtml}</div>
+                </div>`;
+            });
 
             container.innerHTML = `
+                ${seasonChampionsHtml}
                 ${topHtml}
+                ${recordsHtml}
                 <div class="card">
                     <h2>🏅 Palmarès complet</h2>
-                    <div class="hof-champion-grid">${cardsHtml}</div>
+                    ${palmaresBySeasonHtml || '<div class="empty-state"><span class="empty-state-icon">🏅</span><p>Aucun palmarès</p></div>'}
                 </div>`;
         }
         window.displayHallOfFame = displayHallOfFame;
@@ -1843,6 +1950,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 }
             }
         }
+
+        // Pre-fill saison field with current year
+        const saisonInput = document.getElementById('editionSaison');
+        if (saisonInput && !saisonInput.value) saisonInput.value = new Date().getFullYear();
 
         window.openAuthModal  = () => document.getElementById('authOverlay').classList.add('open');
         window.closeAuthModal = () => document.getElementById('authOverlay').classList.remove('open');
@@ -1992,6 +2103,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             document.getElementById('editEditionStatus').value = e.status || 'inscriptions';
             document.getElementById('editEditionDesc').value = e.description || '';
             document.getElementById('editEditionYoutube').value = e.youtubeUrl || '';
+            document.getElementById('editEditionSaison').value = e.saison || new Date(e.date).getFullYear();
             document.getElementById('editEditionModal').classList.add('open');
         };
         window.closeEditEdition = () => {
@@ -2010,7 +2122,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const youtubeUrl  = document.getElementById('editEditionYoutube').value.trim();
             const newStatus = document.getElementById('editEditionStatus').value;
             const current   = data.editions.find(ed => ed.id === id);
-            const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus };
+            const saison  = parseInt(document.getElementById('editEditionSaison').value) || new Date(date).getFullYear();
+            const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus, saison };
             // Log status change if status changed
             if (current && current.status !== newStatus) {
                 updates.statusHistory = arrayUnion({ status: newStatus, at: new Date().toISOString() });
@@ -2107,6 +2220,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // Add edition
         document.getElementById('addEditionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const dateVal     = document.getElementById('editionDate').value;
             const time        = document.getElementById('editionTime').value;
             const club        = document.getElementById('editionClub').value.trim();
             const salon       = document.getElementById('editionSalon').value.trim();
@@ -2114,10 +2228,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const status      = document.getElementById('editionStatus').value;
             const description = document.getElementById('editionDesc').value.trim();
             const youtubeUrl  = document.getElementById('editionYoutube').value.trim();
+            const saison      = parseInt(document.getElementById('editionSaison').value) || (dateVal ? new Date(dateVal).getFullYear() : new Date().getFullYear());
             await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
-                date: document.getElementById('editionDate').value,
+                date: dateVal,
                 status,
+                saison,
                 statusHistory: [{ status, at: new Date().toISOString() }],
                 ...(time        ? { time }        : {}),
                 ...(club        ? { club }        : {}),
@@ -2128,6 +2244,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 cupId
             });
             e.target.reset();
+            document.getElementById('editionSaison').value = new Date().getFullYear();
         });
 
         // Next edition banner
@@ -3022,9 +3139,27 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         // General ranking
+        let selectedRankingSeason = 'all';
+        window.setRankingSeason = (s) => { selectedRankingSeason = s; displayGeneralRanking(); };
+
         function displayGeneralRanking() {
             const container = document.getElementById('generalRanking');
-            const finales = data.results.filter(r => r.phase === 'finale');
+
+            // Build season filter bar
+            const seasons = [...new Set(data.editions.map(e => e.saison || new Date(e.date).getFullYear()))].sort((a, b) => b - a);
+            const filterBar = document.getElementById('rankingSeasonFilter');
+            if (filterBar && seasons.length > 0) {
+                filterBar.innerHTML = [
+                    `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">Toutes saisons</button>`,
+                    ...seasons.map(s => `<button class="filter-btn${selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
+                ].join('');
+            }
+
+            // Filter editions by selected season
+            const editionIds = selectedRankingSeason === 'all'
+                ? null
+                : new Set(data.editions.filter(e => (e.saison || new Date(e.date).getFullYear()) === selectedRankingSeason).map(e => e.id));
+            const finales = data.results.filter(r => r.phase === 'finale' && (editionIds === null || editionIds.has(r.editionId)));
 
             if (finales.length === 0) {
                 container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>Aucun résultat de finale enregistré</p></div>';
