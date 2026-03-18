@@ -3036,7 +3036,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             ${wins > 0 ? `<span class="hof-wins-badge" style="display:inline-block;margin-top:7px">🏆 ${wins} victoire${wins > 1 ? 's' : ''}</span>` : ''}
                             ${badgePreviewHtml}
                         </div>
-                        <button class="player-card-share-btn" onclick="copyPlayerLink('${playerId}', this)">🔗 Partager</button>
+                        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+                            <button class="player-card-share-btn" onclick="copyPlayerCard('${playerId}', this)" title="Copier l'image — parfait pour Discord">📷 Copier</button>
+                            <button class="player-card-share-btn" style="font-size:0.72rem;padding:4px 10px;opacity:0.7" onclick="copyPlayerLink('${playerId}', this)">🔗 Lien</button>
+                        </div>
                     </div>
                     <div class="player-card-stats" style="position:relative;z-index:1">
                         <div class="player-card-stat"><div class="player-card-stat-value">${points}</div><div class="player-card-stat-label">Points</div></div>
@@ -3207,6 +3210,194 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             navigator.clipboard.writeText(url).then(() => {
                 if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copié !'; setTimeout(() => btn.textContent = orig, 2000); }
             });
+        };
+
+        window.copyPlayerCard = async (playerId, btn) => {
+            const player = data.participants.find(p => p.id === playerId);
+            if (!player) return;
+
+            const finaleRes = data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+            const points  = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
+            const wins    = finaleRes.filter(r => r.position === 1).length;
+            const podiums = finaleRes.filter(r => r.position <= 3).length;
+            const winRate = finaleRes.length > 0 ? Math.round(wins / finaleRes.length * 100) : null;
+            const pStats  = computePlayerStats(playerId);
+            const unlockedBadges = ACHIEVEMENTS.filter(a => a.check(pStats));
+
+            const W = 600, H = 340;
+            const canvas = document.createElement('canvas');
+            canvas.width = W * 2; canvas.height = H * 2; // retina
+            const ctx = canvas.getContext('2d');
+            ctx.scale(2, 2);
+
+            const ACCENT = CUP.color || '#00d936';
+            const roundRect = (x, y, w, h, r) => {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            };
+
+            // Background
+            ctx.fillStyle = '#0e0e0e';
+            roundRect(0, 0, W, H, 16);
+            ctx.fill();
+
+            // Top-right radial glow
+            const grd = ctx.createRadialGradient(W, 0, 0, W, 0, 280);
+            grd.addColorStop(0, ACCENT + '22');
+            grd.addColorStop(1, 'transparent');
+            roundRect(0, 0, W, H, 16);
+            ctx.fillStyle = grd;
+            ctx.fill();
+
+            // Border
+            roundRect(0, 0, W, H, 16);
+            ctx.strokeStyle = ACCENT + '99';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Bottom accent bar
+            ctx.fillStyle = ACCENT;
+            ctx.fillRect(0, H - 5, W, 5);
+
+            // Cup label (top-left)
+            ctx.fillStyle = ACCENT + 'aa';
+            ctx.font = 'bold 10px "Arial"';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(siteConfig.siteName.toUpperCase(), 24, 22);
+
+            // Avatar circle
+            const aX = 66, aY = 110, aR = 44;
+            const avatarGrad = ctx.createRadialGradient(aX - 10, aY - 10, 0, aX, aY, aR);
+            avatarGrad.addColorStop(0, ACCENT);
+            avatarGrad.addColorStop(1, '#ff8c00');
+            ctx.beginPath();
+            ctx.arc(aX, aY, aR, 0, Math.PI * 2);
+            ctx.fillStyle = avatarGrad;
+            ctx.fill();
+
+            // Avatar glow
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = ACCENT + '88';
+            ctx.beginPath();
+            ctx.arc(aX, aY, aR, 0, Math.PI * 2);
+            ctx.strokeStyle = ACCENT + '66';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Avatar letter
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 38px "Arial"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(pName(player).charAt(0).toUpperCase(), aX, aY);
+
+            // Player name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 26px "Arial"';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText(pName(player), 130, 95);
+
+            // Team
+            ctx.fillStyle = '#64748b';
+            ctx.font = '14px "Arial"';
+            ctx.fillText(player.team || 'Sans équipe', 130, 116);
+
+            // Wins badge
+            if (wins > 0) {
+                const badgeTxt = `🏆 ${wins} victoire${wins > 1 ? 's' : ''}`;
+                ctx.font = 'bold 12px "Arial"';
+                const bw = ctx.measureText(badgeTxt).width + 18;
+                roundRect(130, 125, bw, 22, 11);
+                ctx.fillStyle = 'rgba(251,191,36,0.12)';
+                ctx.fill();
+                roundRect(130, 125, bw, 22, 11);
+                ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#fbbf24';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(badgeTxt, 139, 136);
+            }
+
+            // Unlocked badges row
+            if (unlockedBadges.length > 0) {
+                ctx.font = '18px "Arial"';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                const startX = wins > 0 ? 130 : 130;
+                const badgeY = wins > 0 ? 172 : 140;
+                unlockedBadges.slice(0, 5).forEach((b, i) => {
+                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                    roundRect(startX + i * 32, badgeY - 12, 26, 26, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    ctx.lineWidth = 0.5;
+                    roundRect(startX + i * 32, badgeY - 12, 26, 26, 6);
+                    ctx.stroke();
+                    ctx.fillText(b.icon, startX + i * 32 + 4, badgeY + 1);
+                });
+            }
+
+            // Divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(20, 228);
+            ctx.lineTo(W - 20, 228);
+            ctx.stroke();
+
+            // Stats row
+            const statsData = [
+                { label: 'POINTS', value: String(points) },
+                { label: 'FINALES', value: String(finaleRes.length) },
+                { label: 'VICTOIRES', value: String(wins) },
+                { label: 'PODIUMS', value: String(podiums) },
+                { label: 'WIN RATE', value: winRate !== null ? winRate + '%' : '—' },
+            ];
+            const statW = W / statsData.length;
+            statsData.forEach((s, i) => {
+                const x = i * statW + statW / 2;
+                ctx.fillStyle = ACCENT;
+                ctx.font = 'bold 22px "Arial"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText(s.value, x, 268);
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px "Arial"';
+                ctx.fillText(s.label, x, 284);
+            });
+
+            // Bottom footer: site name + "Springs E-Sport"
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.font = '10px "Arial"';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText('Springs E-Sport', W - 22, H - 16);
+
+            // Convert to blob and copy
+            canvas.toBlob(async blob => {
+                const orig = btn ? btn.textContent : '';
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    if (btn) { btn.textContent = '✅ Copiée !'; setTimeout(() => btn.textContent = orig, 2500); }
+                } catch {
+                    // Fallback: download the image
+                    const a = document.createElement('a');
+                    a.href = canvas.toDataURL('image/png');
+                    a.download = `${pName(player).replace(/\s+/g, '_')}_springs.png`;
+                    a.click();
+                    if (btn) { btn.textContent = '⬇️ Téléchargée'; setTimeout(() => btn.textContent = orig, 2500); }
+                }
+            }, 'image/png');
         };
 
         // General ranking
