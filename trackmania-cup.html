@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Springs Monthly Cup — Trackmania</title>
+    <meta name="description" content="Résultats, classements et inscriptions pour les compétitions Trackmania de Springs E-Sport.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Springs E-Sport">
+    <meta property="og:title" content="Springs Monthly Cup — Trackmania">
+    <meta property="og:description" content="Résultats, classements et inscriptions pour la Springs Monthly Cup — compétition Trackmania mensuelle par Springs E-Sport.">
+    <meta property="og:image" content="https://skypi11.github.io/trackmania-cup-manager/Springs%20Esport.png">
+    <meta property="og:url" content="https://skypi11.github.io/trackmania-cup-manager/trackmania-cup.html">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Springs Monthly Cup — Trackmania">
+    <meta name="twitter:description" content="Résultats, classements et inscriptions pour la Springs Monthly Cup — compétition Trackmania mensuelle.">
+    <meta name="twitter:image" content="https://skypi11.github.io/trackmania-cup-manager/Springs%20Esport.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -759,6 +770,24 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .player-name-link { cursor: pointer; transition: color 0.15s; }
 .player-name-link:hover { color: var(--color-accent); }
 
+/* ── HALL OF FAME ────────────────────────────────── */
+.hof-champion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 16px; }
+.hof-champion-card {
+    background: linear-gradient(135deg, #1c1a00, #1a1a1a);
+    border: 1px solid rgba(251,191,36,0.18);
+    border-radius: 14px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.2s;
+}
+.hof-champion-card:hover { border-color: rgba(251,191,36,0.38); background: linear-gradient(135deg, #221f00, #1d1d1d); transform: translateY(-1px); }
+.hof-trophy { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+.hof-info { flex: 1; min-width: 0; }
+.hof-edition-name { font-size: 0.7rem; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+.hof-winner-name { font-size: 1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hof-winner-team { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.hof-date { font-size: 0.72rem; color: rgba(255,255,255,0.22); flex-shrink: 0; text-align: right; line-height: 1.5; }
+.hof-wins-badge { background: rgba(251,191,36,0.12); color: #fbbf24; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.22); white-space: nowrap; }
+
 /* ── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 960px) {
     .sidebar { transform: translateX(-240px); }
@@ -768,13 +797,52 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     .main-content { padding: 20px 18px; }
 }
 @media (max-width: 600px) {
-    .player-profile-stats { grid-template-columns: repeat(2, 1fr); }
+    .main-content { padding: 16px 14px; }
+    .card { padding: 18px; }
+    /* Home hero */
+    .home-hero { padding: 32px 20px 24px; }
+    .home-hero-logo { height: 48px; margin-bottom: 14px; }
+    .home-hero-title { font-size: 1.65rem; letter-spacing: -0.5px; }
+    .home-hero-sub { font-size: 0.75rem; margin-bottom: 22px; }
+    .home-event-card { max-width: 100%; padding: 18px; }
+    /* Stats bar: 2 colonnes */
+    .home-stats { flex-wrap: wrap; }
+    .home-stat { min-width: 50%; max-width: 50%; padding: 18px 14px; }
+    .home-stat:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.06); }
+    .home-stat-value { font-size: 1.8rem; }
+    /* Champions */
+    .home-champions { padding: 20px 16px; }
+    .home-champions-grid { grid-template-columns: 1fr; }
+    /* Podium */
+    .podium { gap: 4px; }
+    .podium-spot { max-width: 100px; }
+    .podium-medal { font-size: 1.5rem; }
+    .podium-name { font-size: 0.78rem; }
+    .podium-block-1 { height: 68px; }
+    .podium-block-2 { height: 50px; }
+    .podium-block-3 { height: 36px; }
+    /* Tables scrollables */
+    table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Modals */
+    .modal { padding: 22px 18px; width: calc(100% - 24px); max-height: 92vh; }
+    .auth-box { padding: 30px 20px; }
+    .discord-prompt-box { padding: 28px 20px; }
+    /* Edition detail */
+    .edition-detail-topbar { flex-wrap: wrap; gap: 8px; }
+    .edition-share-btn { margin-left: 0; }
+    /* Inscriptions */
     .next-edition-banner { padding: 24px 20px; }
     .next-edition-name { font-size: 1.6rem; }
     .next-edition-countdown { font-size: 2rem; }
+    /* Listes */
     .event-row-body { padding: 14px 16px; gap: 12px; }
-    .card { padding: 18px; }
-    .main-content { padding: 16px 14px; }
+    .player-profile-stats { grid-template-columns: repeat(2, 1fr); }
+    /* Forms: 1 colonne */
+    .form-row { grid-template-columns: 1fr; }
+    /* Hall of Fame */
+    .hof-champion-grid { grid-template-columns: 1fr; }
+    .hof-champion-card { flex-wrap: wrap; gap: 10px; }
+    .hof-date { width: 100%; text-align: left; }
 }
     </style>
 </head>
@@ -818,6 +886,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label">Classement</span></button>
           <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label">Joueurs</span></button>
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label">Stats</span></button>
+          <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label">Hall of Fame</span></button>
           <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label">Personnalisation</span></button>
         </nav>
         <div class="sidebar-footer">
@@ -1018,6 +1087,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <h2>📈 Statistiques par joueur</h2>
                 <div id="playerStats"></div>
             </div>
+          </div>
+
+          <!-- HALL OF FAME -->
+          <div class="section-panel" id="halloffame" style="display:none">
+            <div id="hallofFameContent"></div>
           </div>
 
           <!-- PERSONNALISATION (admin only) -->
@@ -1661,6 +1735,72 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         }
         window.displayHome = displayHome;
 
+        function displayHallOfFame() {
+            const container = document.getElementById('hallofFameContent');
+            if (!container) return;
+
+            const editionsWithWinner = data.editions
+                .filter(e => data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (editionsWithWinner.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="margin-top:40px"><span class="empty-state-icon">🏅</span><p>Aucun champion enregistré pour le moment</p></div>`;
+                return;
+            }
+
+            // Wins per player
+            const winCounts = {};
+            editionsWithWinner.forEach(e => {
+                const win = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+                if (win) winCounts[win.playerId] = (winCounts[win.playerId] || 0) + 1;
+            });
+
+            const topChampions = Object.entries(winCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([id, wins]) => ({ player: data.participants.find(p => p.id === id), wins }))
+                .filter(x => x.player);
+
+            const rankMedals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+            const topHtml = topChampions.length > 0 ? `
+                <div class="card" style="margin-bottom:20px">
+                    <h2>🏆 Champions les plus titrés</h2>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+                        ${topChampions.map((c, i) => `
+                            <div onclick="openPlayerProfile('${c.player.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:background 0.18s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                                <span style="font-size:1.4rem;width:30px;text-align:center;flex-shrink:0">${rankMedals[i]}</span>
+                                <span style="font-weight:800;flex:1">${pName(c.player)}</span>
+                                <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team || ''}</span>
+                                <span class="hof-wins-badge">${c.wins} victoire${c.wins > 1 ? 's' : ''}</span>
+                            </div>`).join('')}
+                    </div>
+                </div>` : '';
+
+            const cardsHtml = editionsWithWinner.map(e => {
+                const win = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+                const player = win ? data.participants.find(p => p.id === win.playerId) : null;
+                if (!player) return '';
+                const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                return `<div class="hof-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
+                    <div class="hof-trophy">🏆</div>
+                    <div class="hof-info">
+                        <div class="hof-edition-name">${e.name}</div>
+                        <div class="hof-winner-name">${pName(player)}</div>
+                        <div class="hof-winner-team">${player.team || ''}</div>
+                    </div>
+                    <div class="hof-date">${dateStr}</div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                ${topHtml}
+                <div class="card">
+                    <h2>🏅 Palmarès complet</h2>
+                    <div class="hof-champion-grid">${cardsHtml}</div>
+                </div>`;
+        }
+        window.displayHallOfFame = displayHallOfFame;
+
         let urlAutoOpenDone = false;
         function checkLoaded() {
             if (Object.values(loaded).every(Boolean)) {
@@ -1891,8 +2031,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (id === 'rankings') displayGeneralRanking();
             else if (id === 'stats') displayStats();
             else if (id === 'home') displayHome();
+            else if (id === 'halloffame') displayHallOfFame();
             else if (id === 'personnalisation') applySiteConfig();
-            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', participants: 'Joueurs', stats: 'Statistiques', personnalisation: 'Personnalisation' };
+            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', participants: 'Joueurs', stats: 'Statistiques', halloffame: 'Hall of Fame', personnalisation: 'Personnalisation' };
             const t = document.getElementById('topbarTitle');
             if (t) t.textContent = titles[id] || '';
         }
@@ -3067,6 +3208,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayParticipants();
             displayEditions();
             displayHome();
+            displayHallOfFame();
             displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
@@ -3090,6 +3232,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayParticipants();
             displayEditions();
             displayHome();
+            displayHallOfFame();
             displayNextEditionBanner();
             displayStats();
             displayGeneralRanking();
