@@ -201,6 +201,27 @@
         body.guest-mode .card-btn { background: rgba(255,255,255,0.12) !important; color: rgba(255,255,255,0.4) !important; }
         body.guest-mode .card-btn::before { content: '🔒 '; }
 
+        /* Editable (admin mode) */
+        .editable { border-radius: 4px; outline: none; transition: background 0.2s, outline 0.2s; }
+        body.admin-mode .editable:hover { background: rgba(255,184,0,0.12); outline: 1px dashed rgba(255,184,0,0.5); cursor: text; }
+        body.admin-mode .editable:focus { background: rgba(255,184,0,0.15); outline: 2px solid rgba(255,184,0,0.7); }
+
+        .save-btn {
+            display: none; padding: 8px 16px; border-radius: 8px;
+            background: #22c55e; color: #fff; border: none;
+            font-size: 0.8rem; cursor: pointer; font-weight: 700; transition: background 0.2s;
+        }
+        .save-btn:hover { background: #16a34a; }
+        body.admin-mode .save-btn { display: inline-block; }
+
+        .admin-hint {
+            display: none; position: fixed; top: 72px; right: 20px;
+            background: rgba(255,184,0,0.1); border: 1px solid rgba(255,184,0,0.3);
+            color: #FFB800; padding: 7px 14px; border-radius: 8px;
+            font-size: 0.75rem; font-weight: 500; z-index: 90;
+        }
+        body.admin-mode .admin-hint { display: block; }
+
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -303,13 +324,18 @@
             <img src="Springs Esport.png" alt="Springs Esport" style="height:44px;width:auto;display:block;">
         </div>
     </div>
-    <button class="account-btn" id="accountBtn" onclick="openAccount()">Mon compte</button>
+    <div style="display:flex;align-items:center;gap:8px">
+        <button class="save-btn" id="saveBtn" onclick="saveContent()">💾 Sauvegarder</button>
+        <button class="account-btn" id="accountBtn" onclick="openAccount()">Mon compte</button>
+    </div>
 </header>
+
+<div class="admin-hint">✏️ Cliquez sur les textes pour les modifier</div>
 
 <main class="hero">
     <div class="hero-title">
-        <h1>Choisissez votre <span class="tm-accent">compétition</span></h1>
-        <p class="hero-subtitle">Springs E-Sport — Trackmania</p>
+        <h1><span class="editable" id="hero-title-pre" contenteditable="false">Choisissez votre</span> <span class="tm-accent editable" id="hero-title-hl" contenteditable="false">compétition</span></h1>
+        <p class="hero-subtitle editable" id="hero-subtitle" contenteditable="false">Springs E-Sport — Trackmania</p>
     </div>
 
     <div class="cups-grid">
@@ -318,10 +344,10 @@
             <img src="Trackmania.png" alt="Springs Monthly Cup">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag">En ligne • Mensuel</span>
-                <h2 class="card-title">Springs<br>Monthly Cup</h2>
-                <p class="card-description">Compétition en ligne mensuelle ouverte à tous les joueurs.</p>
-                <div class="card-btn">Résultats &amp; Classements →</div>
+                <span class="card-tag editable" id="monthly-tag" contenteditable="false">En ligne • Mensuel</span>
+                <h2 class="card-title editable" id="monthly-title" contenteditable="false">Springs Monthly Cup</h2>
+                <p class="card-description editable" id="monthly-description" contenteditable="false">Compétition en ligne mensuelle ouverte à tous les joueurs.</p>
+                <div class="card-btn editable" id="monthly-btn" contenteditable="false">Résultats &amp; Classements →</div>
             </div>
         </a>
 
@@ -329,10 +355,10 @@
             <img src="Trackmania.png" alt="Springs Mania Cup">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag">LAN • Événement</span>
-                <h2 class="card-title">Springs<br>Mania Cup</h2>
-                <p class="card-description">Compétition LAN organisée par Springs E-Sport.</p>
-                <div class="card-btn">Résultats &amp; Classements →</div>
+                <span class="card-tag editable" id="mania-tag" contenteditable="false">LAN • Événement</span>
+                <h2 class="card-title editable" id="mania-title" contenteditable="false">Springs Mania Cup</h2>
+                <p class="card-description editable" id="mania-description" contenteditable="false">Compétition LAN organisée par Springs E-Sport.</p>
+                <div class="card-btn editable" id="mania-btn" contenteditable="false">Résultats &amp; Classements →</div>
             </div>
         </a>
 
@@ -453,16 +479,71 @@
     const provider = new GoogleAuthProvider();
 
     let currentUser = null;
+    let isAdminUser = false;
+
+    const FIELDS = ['hero-title-pre', 'hero-title-hl', 'hero-subtitle', 'monthly-tag', 'monthly-title', 'monthly-description', 'monthly-btn', 'mania-tag', 'mania-title', 'mania-description', 'mania-btn'];
+
+    async function loadContent() {
+        try {
+            const snap = await getDoc(doc(db, 'siteContent', 'trackmania_hub'));
+            if (snap.exists()) {
+                const d = snap.data();
+                FIELDS.forEach(id => { if (d[id]) document.getElementById(id).textContent = d[id]; });
+            }
+        } catch { /* default content shown */ }
+    }
+    loadContent();
+
+    window.saveContent = async () => {
+        const data = {};
+        FIELDS.forEach(id => { data[id] = document.getElementById(id).textContent.trim(); });
+        await setDoc(doc(db, 'siteContent', 'trackmania_hub'), data);
+        const btn = document.getElementById('saveBtn');
+        btn.textContent = '✅ Sauvegardé !';
+        setTimeout(() => btn.textContent = '💾 Sauvegarder', 2000);
+    };
+
+    function activateAdminMode() {
+        document.body.classList.remove('guest-mode');
+        document.body.classList.add('admin-mode');
+        document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+        document.getElementById('accountBtn').textContent = '🛡️ Admin';
+        document.getElementById('accountBtn').className = 'account-btn';
+        document.getElementById('accountBtn').style.background = '#FFB800';
+        document.getElementById('accountBtn').style.color = '#000';
+        document.getElementById('accountBtn').style.borderColor = '#FFB800';
+        document.getElementById('accountBtn').style.fontWeight = '700';
+    }
+
+    // Prevent link navigation when clicking editable inside <a> in admin mode
+    document.querySelectorAll('.editable').forEach(el => {
+        el.addEventListener('click', e => {
+            if (isAdminUser) { e.stopPropagation(); e.preventDefault(); }
+        });
+    });
 
     // Auth state
     onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (!user) {
+            isAdminUser = false;
             document.body.classList.add('guest-mode');
+            document.body.classList.remove('admin-mode');
+            document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
             document.getElementById('accountBtn').textContent = 'Mon compte';
             document.getElementById('accountBtn').className = 'account-btn';
             return;
         }
+
+        try {
+            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+            if (adminSnap.exists()) {
+                isAdminUser = true;
+                activateAdminMode();
+                closeAccount();
+                return;
+            }
+        } catch {}
 
         try {
             const userSnap = await getDoc(doc(db, 'users', user.uid));

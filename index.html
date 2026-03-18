@@ -499,8 +499,8 @@
 
 <main class="hero">
     <div class="hero-title">
-        <h1>Choisissez votre <span class="highlight">discipline</span></h1>
-        <p class="hero-subtitle">Springs Monthly Cup — Résultats &amp; Classements</p>
+        <h1><span class="editable" id="hero-title-pre" contenteditable="false">Choisissez votre</span> <span class="highlight editable" id="hero-title-hl" contenteditable="false">discipline</span></h1>
+        <p class="hero-subtitle editable" id="hero-subtitle" contenteditable="false">Springs Monthly Cup — Résultats &amp; Classements</p>
     </div>
 
     <div class="games-grid">
@@ -510,7 +510,7 @@
             <img src="Trackmania.png" alt="Trackmania">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag">Racing</span>
+                <span class="card-tag editable" id="tm-tag" contenteditable="false">Racing</span>
                 <h2 class="card-title">Trackmania</h2>
                 <p class="card-description editable" id="tm-description" contenteditable="false">
                     Springs Monthly Cup — Compétition mensuelle Trackmania ouverte à tous.
@@ -519,7 +519,7 @@
                     <div class="event-label">Prochain événement</div>
                     <div class="event-text editable" id="tm-event" contenteditable="false">Prochainement...</div>
                 </div>
-                <div class="card-btn">Résultats &amp; Classements →</div>
+                <div class="card-btn editable" id="tm-btn" contenteditable="false">Résultats &amp; Classements →</div>
             </div>
         </a>
 
@@ -528,7 +528,7 @@
             <img src="RL.webp" alt="Rocket League">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag">Football / Voiture</span>
+                <span class="card-tag editable" id="rl-tag" contenteditable="false">Football / Voiture</span>
                 <h2 class="card-title">Rocket League</h2>
                 <p class="card-description editable" id="rl-description" contenteditable="false">
                     Springs Monthly Cup — Tournoi mensuel Rocket League.
@@ -537,7 +537,7 @@
                     <div class="event-label">Prochain événement</div>
                     <div class="event-text editable" id="rl-event" contenteditable="false">Prochainement...</div>
                 </div>
-                <div class="card-btn">Résultats &amp; Classements →</div>
+                <div class="card-btn editable" id="rl-btn" contenteditable="false">Résultats &amp; Classements →</div>
             </div>
         </a>
 
@@ -701,7 +701,7 @@
     let hasProfile  = false; // true once user has saved their first-time profile
     let authReady = false; // true once Firebase has determined the auth state
 
-    const FIELDS = ['tm-description', 'tm-event', 'rl-description', 'rl-event'];
+    const FIELDS = ['hero-title-pre', 'hero-title-hl', 'hero-subtitle', 'tm-tag', 'tm-description', 'tm-event', 'tm-btn', 'rl-tag', 'rl-description', 'rl-event', 'rl-btn'];
 
     // ── Site content ──────────────────────────────────────────────────────────
 
