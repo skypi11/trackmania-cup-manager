@@ -1054,6 +1054,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <label for="cfgTwitchUrl">Twitch (URL directe)</label>
                     <input type="url" id="cfgTwitchUrl" placeholder="https://www.twitch.tv/...">
                   </div>
+                  <div class="form-group">
+                    <label for="cfgDiscordInviteUrl">Discord (lien d'invitation)</label>
+                    <input type="url" id="cfgDiscordInviteUrl" placeholder="https://discord.gg/...">
+                  </div>
                 </div>
                 <div style="margin-top:22px;display:flex;gap:14px;align-items:center">
                   <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
@@ -1119,6 +1123,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 " onmouseover="this.style.background='rgba(145,70,255,0.15)';this.style.color='#9146ff';this.style.borderColor='rgba(145,70,255,0.3)'"
                    onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='rgba(255,255,255,0.08)'">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                </a>
+                <a id="footerDiscord" href="https://discord.gg/ZXHRRd95C3" target="_blank" rel="noopener" title="Discord" style="
+                    display:flex;align-items:center;justify-content:center;
+                    width:36px;height:36px;border-radius:10px;
+                    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+                    color:rgba(255,255,255,0.4);transition:all 0.18s;text-decoration:none;
+                " onmouseover="this.style.background='rgba(114,137,218,0.15)';this.style.color='#7289da';this.style.borderColor='rgba(114,137,218,0.3)'"
+                   onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='rgba(255,255,255,0.08)'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
                 </a>
             </div>
         </footer>
@@ -1323,6 +1336,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             twitterUrl: 'https://x.com/SpringsEsportRL',
             tiktokUrl: 'https://www.tiktok.com/@springsesport',
             twitchUrl: 'https://www.twitch.tv/springsesport',
+            discordInviteUrl: 'https://discord.gg/ZXHRRd95C3',
             copyrightText: '© 2026 Springs E-Sport',
         };
         let siteConfig = { ...CONFIG_DEFAULTS };
@@ -1347,12 +1361,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (authName) authName.textContent = c.siteName;
             const copyright = document.getElementById('footerCopyright');
             if (copyright) copyright.textContent = c.copyrightText;
-            const footerIds = { footerYoutube: 'youtubeUrl', footerInstagram: 'instagramUrl', footerTwitter: 'twitterUrl', footerTiktok: 'tiktokUrl', footerTwitch: 'twitchUrl' };
+            const footerIds = { footerYoutube: 'youtubeUrl', footerInstagram: 'instagramUrl', footerTwitter: 'twitterUrl', footerTiktok: 'tiktokUrl', footerTwitch: 'twitchUrl', footerDiscord: 'discordInviteUrl' };
             Object.entries(footerIds).forEach(([id, key]) => { const el = document.getElementById(id); if (el) el.href = c[key]; });
             const sidebarTwitch = document.getElementById('sidebarTwitchBtn');
             if (sidebarTwitch) sidebarTwitch.href = c.twitchUrl;
             // Populate form fields
-            const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl };
+            const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl };
             Object.entries(fields).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val || ''; });
         }
 
@@ -1368,7 +1382,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 instagramUrl:  get('cfgInstagramUrl')  || CONFIG_DEFAULTS.instagramUrl,
                 twitterUrl:    get('cfgTwitterUrl')    || CONFIG_DEFAULTS.twitterUrl,
                 tiktokUrl:     get('cfgTiktokUrl')     || CONFIG_DEFAULTS.tiktokUrl,
-                twitchUrl:     get('cfgTwitchUrl')     || CONFIG_DEFAULTS.twitchUrl,
+                twitchUrl:        get('cfgTwitchUrl')        || CONFIG_DEFAULTS.twitchUrl,
+                discordInviteUrl: get('cfgDiscordInviteUrl') || CONFIG_DEFAULTS.discordInviteUrl,
             };
             try {
                 await setDoc(doc(db, 'siteContent', `config_${cupId}`), cfg);
