@@ -515,9 +515,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .chart-container { position: relative; height: 280px; margin-top: 12px; }
 /* Maps qualification grid */
 .maps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
-.map-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
-.map-card-header { background: rgba(255,255,255,0.06); padding: 6px 12px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); }
-.tmx-thumb { width: 100%; height: 56px; object-fit: cover; display: block; background: rgba(0,0,0,0.3); }
+.map-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+.map-card-header { background: rgba(255,255,255,0.06); padding: 6px 12px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); flex-shrink: 0; }
+.tmx-thumb-wrap { width: 100%; height: 72px; overflow: hidden; flex-shrink: 0; background: rgba(0,0,0,0.3); }
+.tmx-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.map-slots-wrap { flex: 1; display: flex; flex-direction: column; }
 .tmx-map-name { font-size: 0.7rem; color: rgba(255,255,255,0.5); font-weight: 400; text-transform: none; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .map-slot { display: flex; align-items: center; gap: 8px; padding: 7px 12px; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.04); }
 .map-slot-filled { cursor: pointer; }
@@ -2876,9 +2878,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
                         const tmxId   = extractTmxId(e[`map${m}tmx`]);
                         const tmxName = e[`map${m}name`] || '';
-                        const thumbHtml = tmxId ? `<img data-tmxid="${tmxId}" class="tmx-thumb" alt="Map ${m}">` : '';
+                        const thumbHtml = tmxId ? `<div class="tmx-thumb-wrap"><img data-tmxid="${tmxId}" class="tmx-thumb" alt="Map ${m}"></div>` : '';
                         const tmxNameHtml = tmxName ? `<span class="tmx-map-name">${tmxName}</span>` : '';
-                        html += `<div class="map-card"><div class="map-card-header" style="display:flex;align-items:center;justify-content:space-between">Map ${m} ${tmxNameHtml}</div>${thumbHtml}`;
+                        html += `<div class="map-card"><div class="map-card-header" style="display:flex;align-items:center;justify-content:space-between">Map ${m} ${tmxNameHtml}</div>${thumbHtml}<div class="map-slots-wrap">`;
                         for (let pos = 1; pos <= 3; pos++) {
                             const r = mapQuals.find(r => r.position === pos);
                             if (r) {
@@ -2897,7 +2899,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 html += `<div class="map-slot map-slot-empty"><span class="map-medal">${medals3[pos-1]}</span><span style="font-size:0.8rem">—</span></div>`;
                             }
                         }
-                        html += '</div>';
+                        html += '</div></div>';
                     }
                     html += '</div>';
                     if (legacyQuals.length > 0) {
