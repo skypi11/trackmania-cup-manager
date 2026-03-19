@@ -1054,8 +1054,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                     <details style="margin-bottom:16px">
                         <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none">🗺️ IDs TMX des maps (optionnel)</summary>
-                        <div class="form-row" style="margin-top:10px">
-                            ${[1,2,3,4,5,6].map(n => `<div class="form-group"><label>Map ${n} — ID TMX</label><input type="text" id="editionMap${n}tmx" placeholder="Ex: 80643"></div>`).join('')}
+                        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                            ${[1,2,3,4,5,6].map(n => `<div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map ${n} — ID TMX</label><input type="text" id="editionMap${n}tmx" placeholder="Ex: 80643"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap${n}name" placeholder="Nom de la map"></div></div>`).join('')}
                         </div>
                     </details>
                     <button type="submit" class="btn btn-primary">Créer</button>
@@ -1452,13 +1452,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </div>
                 <details style="margin-bottom:16px">
                     <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none">🗺️ IDs TMX des maps (optionnel)</summary>
-                    <div class="form-row" style="margin-top:10px">
-                        <div class="form-group"><label>Map 1 — ID TMX</label><input type="text" id="editEditionMap1tmx" placeholder="Ex: 80643"></div>
-                        <div class="form-group"><label>Map 2 — ID TMX</label><input type="text" id="editEditionMap2tmx" placeholder="Ex: 80643"></div>
-                        <div class="form-group"><label>Map 3 — ID TMX</label><input type="text" id="editEditionMap3tmx" placeholder="Ex: 80643"></div>
-                        <div class="form-group"><label>Map 4 — ID TMX</label><input type="text" id="editEditionMap4tmx" placeholder="Ex: 80643"></div>
-                        <div class="form-group"><label>Map 5 — ID TMX</label><input type="text" id="editEditionMap5tmx" placeholder="Ex: 80643"></div>
-                        <div class="form-group"><label>Map 6 — ID TMX</label><input type="text" id="editEditionMap6tmx" placeholder="Ex: 80643"></div>
+                    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        ${[1,2,3,4,5,6].map(n => `<div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map ${n} — ID TMX</label><input type="text" id="editEditionMap${n}tmx" placeholder="Ex: 80643"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap${n}name" placeholder="Nom de la map"></div></div>`).join('')}
                     </div>
                 </details>
                 <div style="display:flex;gap:10px;margin-top:16px">
@@ -1626,17 +1621,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         let currentUserProfile = null;
         let currentDetailEditionId = null;
         let twitchCollapsed = false;
-        const tmxCache = {};
-        async function fetchTmxName(id) {
-            if (!id) return null;
-            if (tmxCache[id] !== undefined) return tmxCache[id];
-            try {
-                const res = await fetch(`https://trackmania.exchange/api/maps/get_map_info/multi/${id}`);
-                const arr = await res.json();
-                tmxCache[id] = arr?.[0]?.Name || null;
-            } catch { tmxCache[id] = null; }
-            return tmxCache[id];
-        }
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
         let playerChart = null;
@@ -2848,9 +2832,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const medals3 = ['🥇', '🥈', '🥉'];
                     for (let m = 1; m <= 6; m++) {
                         const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
-                        const tmxId = e[`map${m}tmx`];
+                        const tmxId   = e[`map${m}tmx`];
+                        const tmxName = e[`map${m}name`] || '';
                         const thumbHtml = tmxId ? `<img src="https://trackmania.exchange/maps/screenshot/normal/${tmxId}" class="tmx-thumb" alt="Map ${m}" onerror="this.style.display='none'">` : '';
-                        const tmxNameHtml = tmxId ? `<span class="tmx-map-name" data-tmx="${tmxId}">…</span>` : '';
+                        const tmxNameHtml = tmxName ? `<span class="tmx-map-name">${tmxName}</span>` : '';
                         html += `<div class="map-card"><div class="map-card-header" style="display:flex;align-items:center;justify-content:space-between">Map ${m} ${tmxNameHtml}</div>${thumbHtml}`;
                         for (let pos = 1; pos <= 3; pos++) {
                             const r = mapQuals.find(r => r.position === pos);
@@ -2873,14 +2858,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         html += '</div>';
                     }
                     html += '</div>';
-                    // Async fetch TMX map names
-                    setTimeout(() => {
-                        document.querySelectorAll('.tmx-map-name[data-tmx]').forEach(async el => {
-                            const name = await fetchTmxName(el.dataset.tmx);
-                            if (name) el.textContent = name;
-                            else el.textContent = '';
-                        });
-                    }, 0);
                     if (legacyQuals.length > 0) {
                         html += '<div style="margin-top:6px" class="chips">';
                         legacyQuals.forEach(r => {
