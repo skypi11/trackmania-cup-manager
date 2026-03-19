@@ -2776,9 +2776,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
                     </div>` : '';
 
+                const twitchLiveHtml = e.status === 'en_cours' ? `
+                    <div class="stream-section-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+                        <span style="display:flex;align-items:center;gap:6px">
+                            <span class="live-dot" style="width:7px;height:7px"></span>
+                            EN DIRECT sur Twitch
+                        </span>
+                        <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">▼ Réduire</button>
+                    </div>
+                    <div id="twitchEmbedWrap" class="stream-embed-wrap">
+                        <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
+                    </div>` : '';
+
                 html += `<div class="card">
                     <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span>${editBtnHtml}</h2>
                     ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${e.description}</p>` : ''}
+                    ${twitchLiveHtml}
                     ${vodEmbedHtml}`;
 
                 // ── Qualifications — 6 maps ──
@@ -3028,17 +3041,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                     try {
                         if (phase === 'qualification') {
-                            const map       = parseInt(document.getElementById('detailResultMap').value);
-                            const position  = parseInt(document.getElementById('detailResultQualPos').value);
-                            const viesBonus = parseInt(document.getElementById('detailResultVies').value) || 0;
+                            const map      = parseInt(document.getElementById('detailResultMap').value);
+                            const position = parseInt(document.getElementById('detailResultQualPos').value);
 
-                            if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
-                                alert('Ce joueur est déjà qualifié dans cette édition !'); return;
+                            const existingQual = data.results.find(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification');
+                            if (existingQual) {
+                                // Joueur déjà qualifié → +1 vie bonus
+                                const newVies = (existingQual.viesBonus || 0) + 1;
+                                await updateDoc(doc(db, 'results', existingQual.id), { viesBonus: newVies });
+                                const pn = pName(data.participants.find(p => p.id === playerId) || {});
+                                showToast(`❤️ Vie bonus ajoutée — ${pn} a maintenant ×${newVies}`);
+                            } else {
+                                if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
+                                    alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
+                                }
+                                await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, viesBonus: 0, cupId });
                             }
-                            if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
-                                alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
-                            }
-                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, viesBonus, cupId });
 
                         } else if (phase === 'finale') {
                             const position = parseInt(document.getElementById('detailResultPosition').value);
@@ -3055,6 +3073,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     }
                 });
             }
+        };
+
+        window.toggleTwitchEmbed = (btn) => {
+            const wrap = document.getElementById('twitchEmbedWrap');
+            const hidden = wrap.style.display === 'none';
+            wrap.style.display = hidden ? '' : 'none';
+            btn.textContent = hidden ? '▼ Réduire' : '▶ Afficher';
         };
 
         window.detailOnPhaseChange = () => {
