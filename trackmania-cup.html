@@ -3997,7 +3997,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         onSnapshot(collection(db, 'participants'), snap => {
-            data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+            data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             loaded.participants = true;
             checkLoaded();
             displayParticipants();
