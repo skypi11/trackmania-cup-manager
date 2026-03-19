@@ -509,6 +509,18 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 }
 .chip-delete { background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 0.75rem; padding: 0; }
 .chart-container { position: relative; height: 280px; margin-top: 12px; }
+/* Maps qualification grid */
+.maps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+.map-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+.map-card-header { background: rgba(255,255,255,0.06); padding: 6px 12px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); }
+.map-slot { display: flex; align-items: center; gap: 8px; padding: 7px 12px; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.04); }
+.map-slot-filled { cursor: pointer; }
+.map-slot-filled:hover { background: rgba(255,255,255,0.04); }
+.map-slot-empty { opacity: 0.35; cursor: default; }
+.map-medal { font-size: 0.95rem; flex-shrink: 0; }
+.map-player-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vie-badge { font-size: 0.72rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 1px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+@media (max-width: 600px) { .maps-grid { grid-template-columns: repeat(2, 1fr); } }
 
 /* ── MODAL ──────────────────────────────────────── */
 .modal-overlay {
@@ -2709,9 +2721,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 <div class="form-group">
                                     <label>Phase *</label>
                                     <select id="detailResultPhase" required onchange="detailOnPhaseChange()">
-                                        <option value="">Sélectionner une phase</option>
-                                        <option value="qualification">Qualifications</option>
-                                        <option value="finale">Finale</option>
+                                        <option value="">Phase…</option>
+                                        <option value="qualification">🎯 Qualifications</option>
+                                        <option value="finale">🏆 Finale KO</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="detailMapField" style="display:none">
+                                    <label>Map *</label>
+                                    <select id="detailResultMap">
+                                        ${[1,2,3,4,5,6].map(n => `<option value="${n}">Map ${n}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -2721,8 +2739,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                         ${playerOptions}
                                     </select>
                                 </div>
+                                <div class="form-group" id="detailQualPosField" style="display:none">
+                                    <label>Position sur la map *</label>
+                                    <select id="detailResultQualPos">
+                                        <option value="1">🥇 1er qualifié</option>
+                                        <option value="2">🥈 2ème qualifié</option>
+                                        <option value="3">🥉 3ème qualifié</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="detailViesField" style="display:none">
+                                    <label>Vies bonus ❤️</label>
+                                    <input type="number" id="detailResultVies" min="0" max="5" value="0">
+                                </div>
                                 <div class="form-group" id="detailPositionField" style="display:none">
-                                    <label>Position en finale *</label>
+                                    <label>Position finale *</label>
                                     <input type="number" id="detailResultPosition" min="1" placeholder="Ex: 1">
                                 </div>
                             </div>
@@ -2751,8 +2781,49 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${e.description}</p>` : ''}
                     ${vodEmbedHtml}`;
 
+                // ── Qualifications — 6 maps ──
+                const hasQuals = qualResults.some(r => r.map);
+                const legacyQuals = qualResults.filter(r => !r.map);
+                if (hasQuals || qualResults.length > 0) {
+                    html += '<div class="phase-title">🎯 Qualifications — Phase 1</div>';
+                    html += '<div class="maps-grid">';
+                    const medals3 = ['🥇', '🥈', '🥉'];
+                    for (let m = 1; m <= 6; m++) {
+                        const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
+                        html += `<div class="map-card"><div class="map-card-header">Map ${m}</div>`;
+                        for (let pos = 1; pos <= 3; pos++) {
+                            const r = mapQuals.find(r => r.position === pos);
+                            if (r) {
+                                const player = data.participants.find(p => p.id === r.playerId);
+                                const viesHtml = r.viesBonus > 0 ? `<span class="vie-badge">❤️×${r.viesBonus}</span>` : '';
+                                const del = isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
+                                html += `<div class="map-slot map-slot-filled" onclick="openPlayerProfile('${player?.id}')">
+                                    <span class="map-medal">${medals3[pos-1]}</span>
+                                    <span class="map-player-name">${player ? pName(player) : '?'}</span>
+                                    ${viesHtml}${del}
+                                </div>`;
+                            } else {
+                                html += `<div class="map-slot map-slot-empty"><span class="map-medal">${medals3[pos-1]}</span><span style="font-size:0.8rem">—</span></div>`;
+                            }
+                        }
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                    // Legacy quals without map info
+                    if (legacyQuals.length > 0) {
+                        html += '<div style="margin-top:6px" class="chips">';
+                        legacyQuals.forEach(r => {
+                            const player = data.participants.find(p => p.id === r.playerId);
+                            if (!player) return;
+                            const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
+                            html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
+                        });
+                        html += '</div>';
+                    }
+                }
+
+                // ── Finale KO ──
                 if (finaleResults.length > 0) {
-                    // Visual podium — order: 2nd (left), 1st (center), 3rd (right)
                     const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
                     const podiumOrder = [2, 1, 3]
                         .map(pos => finaleResults.find(r => r.position === pos))
@@ -2762,11 +2833,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         podiumOrder.forEach(r => {
                             const player = data.participants.find(p => p.id === r.playerId);
                             if (!player) return;
+                            const qualR = qualResults.find(q => q.playerId === player.id);
+                            const viesHtml = qualR?.viesBonus > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${qualR.viesBonus}</div>` : '';
                             html += `<div class="podium-spot">
                                 <div class="podium-player">
                                     <div class="podium-medal">${medals[r.position] || r.position}</div>
                                     <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
                                     <div>${playerBadgesHtml(player.id)}</div>
+                                    ${viesHtml}
                                     <div class="podium-team">${player.team}</div>
                                     <div class="podium-pts">+${getPoints(r.position)} pts</div>
                                 </div>
@@ -2777,34 +2851,26 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     }
 
                     const adminCol = isAdmin ? '<th></th>' : '';
-                    html += '<div class="phase-title">🏆 Résultats Finale</div>';
-                    html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
+                    html += '<div class="phase-title">🏆 Finale KO — Phase 2</div>';
+                    html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">Élimination directe — le dernier survivant est déclaré vainqueur 🏆</p>`;
+                    html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Vies ❤️</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
                     finaleResults.forEach(r => {
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
+                        const qualR = qualResults.find(q => q.playerId === player.id);
+                        const vies = qualR?.viesBonus > 0 ? `×${qualR.viesBonus}` : '—';
                         const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
                         const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                         html += `<tr>
                             <td><span class="badge ${badgeClass}">${r.position}</span></td>
                             <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</td>
                             <td style="color:var(--color-text-secondary)">${player.team}</td>
+                            <td style="color:#ef4444;font-size:0.85rem">${vies}</td>
                             <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
                             ${del}
                         </tr>`;
                     });
                     html += '</tbody></table>';
-                }
-
-                if (qualResults.length > 0) {
-                    html += '<div class="phase-title" style="margin-top:18px">🎯 Participants</div>';
-                    html += '<div class="chips">';
-                    qualResults.forEach(r => {
-                        const player = data.participants.find(p => p.id === r.playerId);
-                        if (!player) return;
-                        const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
-                        html += `<span class="chip" style="cursor:pointer" onclick="openPlayerProfile('${player.id}')">${pName(player)}${playerBadgesHtml(player.id)}${del}</span>`;
-                    });
-                    html += '</div>';
                 }
 
                 if (finaleResults.length === 0 && qualResults.length === 0) {
@@ -2953,44 +3019,54 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (detailForm) {
                 detailForm.addEventListener('submit', async (ev) => {
                     ev.preventDefault();
-                    const phase = document.getElementById('detailResultPhase').value;
+                    const phase    = document.getElementById('detailResultPhase').value;
                     const playerId = document.getElementById('detailResultPlayer').value;
-                    const posVal = document.getElementById('detailResultPosition').value;
-                    const position = phase === 'finale' ? parseInt(posVal) : null;
+                    if (!phase || !playerId) return;
 
-                    if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === phase)) {
-                        alert('Un résultat existe déjà pour ce joueur dans cette phase !'); return;
-                    }
+                    const btn = detailForm.querySelector('[type="submit"]');
+                    btn.disabled = true;
 
-                    const entry = { editionId: id, playerId, phase };
-                    if (position) entry.position = position;
-                    await addDoc(collection(db, 'results'), { ...entry, cupId });
+                    try {
+                        if (phase === 'qualification') {
+                            const map       = parseInt(document.getElementById('detailResultMap').value);
+                            const position  = parseInt(document.getElementById('detailResultQualPos').value);
+                            const viesBonus = parseInt(document.getElementById('detailResultVies').value) || 0;
 
-                    if (phase === 'finale') {
-                        const alreadyInQuals = data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification');
-                        if (!alreadyInQuals) {
-                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', cupId });
+                            if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
+                                alert('Ce joueur est déjà qualifié dans cette édition !'); return;
+                            }
+                            if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
+                                alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
+                            }
+                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, viesBonus, cupId });
+
+                        } else if (phase === 'finale') {
+                            const position = parseInt(document.getElementById('detailResultPosition').value);
+                            if (!position) return;
+                            if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'finale')) {
+                                alert('Un résultat de finale existe déjà pour ce joueur !'); return;
+                            }
+                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'finale', position, cupId });
                         }
+                        detailForm.reset();
+                        detailOnPhaseChange();
+                    } finally {
+                        btn.disabled = false;
                     }
-
-                    detailForm.reset();
-                    document.getElementById('detailPositionField').style.display = 'none';
                 });
             }
         };
 
         window.detailOnPhaseChange = () => {
-            const phase = document.getElementById('detailResultPhase').value;
-            const field = document.getElementById('detailPositionField');
-            const input = document.getElementById('detailResultPosition');
-            if (phase === 'finale') {
-                field.style.display = 'block';
-                input.required = true;
-            } else {
-                field.style.display = 'none';
-                input.required = false;
-                input.value = '';
-            }
+            const phase = document.getElementById('detailResultPhase')?.value;
+            const isQual   = phase === 'qualification';
+            const isFinale = phase === 'finale';
+            document.getElementById('detailMapField').style.display      = isQual   ? '' : 'none';
+            document.getElementById('detailQualPosField').style.display  = isQual   ? '' : 'none';
+            document.getElementById('detailViesField').style.display     = isQual   ? '' : 'none';
+            document.getElementById('detailPositionField').style.display = isFinale ? '' : 'none';
+            const posInput = document.getElementById('detailResultPosition');
+            if (posInput) posInput.required = isFinale;
         };
 
         window.closeEditionDetail = () => {
