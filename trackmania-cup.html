@@ -2706,10 +2706,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const imgMatch  = html.match(/property="og:image"\s+content="([^"]+)"/i);
             const nameMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
             const thumbUrl  = imgMatch ? imgMatch[1] : null;
-            // og:title is like "Silver Grove by saghzs | TMX" — keep only the map name part
-            const rawName   = nameMatch ? nameMatch[1] : null;
-            const name      = rawName ? rawName.replace(/\s*\|.*$/, '').replace(/\s+by\s+.*/i, '').trim() : null;
-            return { thumbUrl, name };
+            // og:title is like "Silver Grove by saghzs | TMX"
+            const rawName   = nameMatch ? nameMatch[1].replace(/\s*\|.*$/, '').trim() : null;
+            let name = null, mapper = null;
+            if (rawName) {
+                const byMatch = rawName.match(/^(.+?)\s+by\s+(.+)$/i);
+                if (byMatch) { name = byMatch[1].trim(); mapper = byMatch[2].trim(); }
+                else { name = rawName; }
+            }
+            return { thumbUrl, name, mapper };
         }
 
         // Fetch og:image + og:title for a TMX map ID — tries multiple CORS proxies in order
@@ -2730,7 +2735,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tmxUrl)}`);
                 if (r.ok) { const p = parseTmxPage(await r.text()); if (p.thumbUrl) return p; }
             } catch {}
-            return { thumbUrl: null, name: null };
+            return { thumbUrl: null, name: null, mapper: null };
         }
         // Fetch and store thumb URLs in Firestore for an edition (called after admin saves maps)
         async function storeTmxThumbs(editionId, mapTmxValues) {
@@ -2744,9 +2749,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             await Promise.all([1,2,3,4,5,6,7].map(async n => {
                 const tmxId = extractTmxId(mapTmxValues[n]);
                 if (!tmxId) return;
-                const { thumbUrl, name } = await fetchTmxMapInfo(tmxId);
+                const { thumbUrl, name, mapper } = await fetchTmxMapInfo(tmxId);
                 if (thumbUrl) thumbUpdates[`map${n}thumbUrl`] = thumbUrl;
-                if (name) thumbUpdates[`map${n}name`] = name;
+                if (name)     thumbUpdates[`map${n}name`]     = name;
+                if (mapper)   thumbUpdates[`map${n}mapper`]   = mapper;
             }));
             if (Object.keys(thumbUpdates).length > 0) {
                 await updateDoc(doc(db, 'editions', editionId), thumbUpdates);
@@ -2923,11 +2929,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const medals3 = ['🥇', '🥈', '🥉'];
                     for (let m = 1; m <= 6; m++) {
                         const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
-                        const tmxName    = e[`map${m}name`] || '';
-                        const thumbUrl   = e[`map${m}thumbUrl`] || '';
-                        const thumbHtml  = thumbUrl ? `<div class="tmx-thumb-wrap"><img src="${thumbUrl}" class="tmx-thumb" alt="Map ${m}"></div>` : '';
-                        const tmxNameHtml = tmxName ? `<span class="tmx-map-name">${tmxName}</span>` : '';
-                        html += `<div class="map-card">${thumbHtml}<div class="map-card-header" style="display:flex;align-items:center;justify-content:space-between">Map ${m} ${tmxNameHtml}</div><div class="map-slots-wrap">`;
+                        const tmxName   = e[`map${m}name`]   || '';
+                        const tmxMapper = e[`map${m}mapper`] || '';
+                        const thumbUrl  = e[`map${m}thumbUrl`] || '';
+                        const thumbHtml = thumbUrl ? `<div class="tmx-thumb-wrap"><img src="${thumbUrl}" class="tmx-thumb" alt="Map ${m}"></div>` : '';
+                        const mapLabelHtml = `<div class="map-card-header">Map ${m}</div>`;
+                        const mapTitleHtml = tmxName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${tmxName}${tmxMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> by ${tmxMapper}</span>` : ''}</div>` : '';
+                        html += `<div class="map-card">${thumbHtml}${mapLabelHtml}${mapTitleHtml}<div class="map-slots-wrap">`;
                         for (let pos = 1; pos <= 3; pos++) {
                             const r = mapQuals.find(r => r.position === pos);
                             if (r) {
@@ -2993,10 +3001,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     html += '<div class="phase-title">🏆 Finale KO — Phase 2</div>';
                     const finaleThumbUrl = e.map7thumbUrl || '';
                     const finaleMapName  = e.map7name || '';
+                    const finaleMapper   = e.map7mapper || '';
                     if (finaleThumbUrl) {
                         html += `<div class="map-card" style="max-width:340px;margin-bottom:14px">
                             <div class="tmx-thumb-wrap"><img src="${finaleThumbUrl}" class="tmx-thumb" alt="Map Finale"></div>
-                            <div class="map-card-header">🏆 Map Finale${finaleMapName ? ` — ${finaleMapName}` : ''}</div>
+                            <div class="map-card-header">🏆 Map Finale</div>
+                            ${finaleMapName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${finaleMapName}${finaleMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> by ${finaleMapper}</span>` : ''}</div>` : ''}
                         </div>`;
                     }
                     html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">Élimination directe — le dernier survivant est déclaré vainqueur 🏆</p>`;
