@@ -1063,6 +1063,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 4 — URL ou ID TMX</label><input type="text" id="editionMap4tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap4name" placeholder="Nom de la map"></div></div>
                             <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 5 — URL ou ID TMX</label><input type="text" id="editionMap5tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap5name" placeholder="Nom de la map"></div></div>
                             <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 6 — URL ou ID TMX</label><input type="text" id="editionMap6tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap6name" placeholder="Nom de la map"></div></div>
+                            <div style="display:flex;gap:6px;align-items:flex-end;grid-column:1/-1"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">🏆 Map Finale — URL ou ID TMX</label><input type="text" id="editionMap7tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap7name" placeholder="Nom de la map finale"></div></div>
                         </div>
                     </details>
                     <button type="submit" class="btn btn-primary">Créer</button>
@@ -1466,6 +1467,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 4 — URL ou ID TMX</label><input type="text" id="editEditionMap4tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap4name" placeholder="Nom de la map"></div></div>
                         <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 5 — URL ou ID TMX</label><input type="text" id="editEditionMap5tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap5name" placeholder="Nom de la map"></div></div>
                         <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 6 — URL ou ID TMX</label><input type="text" id="editEditionMap6tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap6name" placeholder="Nom de la map"></div></div>
+                        <div style="display:flex;gap:6px;align-items:flex-end;grid-column:1/-1"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">🏆 Map Finale — URL ou ID TMX</label><input type="text" id="editEditionMap7tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap7name" placeholder="Nom de la map finale"></div></div>
                     </div>
                 </details>
                 <div style="display:flex;gap:10px;margin-top:16px">
@@ -2264,7 +2266,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             document.getElementById('editEditionDesc').value = e.description || '';
             document.getElementById('editEditionYoutube').value = e.youtubeUrl || '';
             document.getElementById('editEditionSaison').value = e.saison || new Date(e.date).getFullYear();
-            [1,2,3,4,5,6].forEach(n => {
+            [1,2,3,4,5,6,7].forEach(n => {
                 document.getElementById(`editEditionMap${n}tmx`).value = e[`map${n}tmx`] || '';
                 document.getElementById(`editEditionMap${n}name`).value = e[`map${n}name`] || '';
             });
@@ -2287,7 +2289,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const newStatus = document.getElementById('editEditionStatus').value;
             const current   = data.editions.find(ed => ed.id === id);
             const saison  = parseInt(document.getElementById('editEditionSaison').value) || new Date(date).getFullYear();
-            const mapsTmx = {}; [1,2,3,4,5,6].forEach(n => { mapsTmx[`map${n}tmx`] = document.getElementById(`editEditionMap${n}tmx`).value.trim(); mapsTmx[`map${n}name`] = document.getElementById(`editEditionMap${n}name`).value.trim(); });
+            const mapsTmx = {}; [1,2,3,4,5,6,7].forEach(n => { mapsTmx[`map${n}tmx`] = document.getElementById(`editEditionMap${n}tmx`).value.trim(); mapsTmx[`map${n}name`] = document.getElementById(`editEditionMap${n}name`).value.trim(); });
             const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus, saison, ...mapsTmx };
             // Log status change if status changed
             if (current && current.status !== newStatus) {
@@ -2296,7 +2298,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             await updateDoc(doc(db, 'editions', id), updates);
             closeEditEdition();
             // Fetch and store TMX thumbnails in background (admin save only)
-            const mapTmxVals = {}; [1,2,3,4,5,6].forEach(n => { mapTmxVals[n] = mapsTmx[`map${n}tmx`]; });
+            const mapTmxVals = {}; [1,2,3,4,5,6,7].forEach(n => { mapTmxVals[n] = mapsTmx[`map${n}tmx`]; });
             storeTmxThumbs(id, mapTmxVals);
         });
 
@@ -2397,7 +2399,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const description = document.getElementById('editionDesc').value.trim();
             const youtubeUrl  = document.getElementById('editionYoutube').value.trim();
             const saison      = parseInt(document.getElementById('editionSaison').value) || (dateVal ? new Date(dateVal).getFullYear() : new Date().getFullYear());
-            const mapTmxValsCreate = Object.fromEntries([1,2,3,4,5,6].map(n => [n, document.getElementById(`editionMap${n}tmx`)?.value.trim() || '']));
+            const mapTmxValsCreate = Object.fromEntries([1,2,3,4,5,6,7].map(n => [n, document.getElementById(`editionMap${n}tmx`)?.value.trim() || '']));
             const newEditionRef = await addDoc(collection(db, 'editions'), {
                 name: document.getElementById('editionName').value.trim(),
                 date: dateVal,
@@ -2410,7 +2412,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 ...(password    ? { password }    : {}),
                 ...(description ? { description } : {}),
                 ...(youtubeUrl  ? { youtubeUrl }  : {}),
-                ...(Object.fromEntries([1,2,3,4,5,6].flatMap(n => [[`map${n}tmx`, mapTmxValsCreate[n]], [`map${n}name`, document.getElementById(`editionMap${n}name`)?.value.trim() || '']]))),
+                ...(Object.fromEntries([1,2,3,4,5,6,7].flatMap(n => [[`map${n}tmx`, mapTmxValsCreate[n]], [`map${n}name`, document.getElementById(`editionMap${n}name`)?.value.trim() || '']]))),
                 cupId
             });
             storeTmxThumbs(newEditionRef.id, mapTmxValsCreate);
@@ -2732,14 +2734,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         }
         // Fetch and store thumb URLs in Firestore for an edition (called after admin saves maps)
         async function storeTmxThumbs(editionId, mapTmxValues) {
-            const hasMaps = [1,2,3,4,5,6].some(n => extractTmxId(mapTmxValues[n]));
+            const hasMaps = [1,2,3,4,5,6,7].some(n => extractTmxId(mapTmxValues[n]));
             if (!hasMaps) return;
             const toast = document.createElement('div');
             toast.textContent = '⏳ Récupération des miniatures TMX…';
             Object.assign(toast.style, { position:'fixed', bottom:'20px', right:'20px', background:'#1e293b', color:'#f1f5f9', padding:'10px 16px', borderRadius:'10px', fontSize:'0.85rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.4)' });
             document.body.appendChild(toast);
             const thumbUpdates = {};
-            await Promise.all([1,2,3,4,5,6].map(async n => {
+            await Promise.all([1,2,3,4,5,6,7].map(async n => {
                 const tmxId = extractTmxId(mapTmxValues[n]);
                 if (!tmxId) return;
                 const { thumbUrl, name } = await fetchTmxMapInfo(tmxId);
@@ -2880,7 +2882,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <span>▶ VOD YouTube</span>
                         <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${youtubeCollapsed ? '▶ Afficher' : '▼ Réduire'}</button>
                     </div>
-                    <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="${youtubeCollapsed ? 'display:none' : ''}margin-top:10px">
+                    <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="margin-top:10px${youtubeCollapsed ? ';display:none' : ''}">
                         <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
                     </div>` : '';
 
@@ -2989,6 +2991,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                     const adminCol = isAdmin ? '<th></th>' : '';
                     html += '<div class="phase-title">🏆 Finale KO — Phase 2</div>';
+                    const finaleThumbUrl = e.map7thumbUrl || '';
+                    const finaleMapName  = e.map7name || '';
+                    if (finaleThumbUrl) {
+                        html += `<div class="map-card" style="max-width:340px;margin-bottom:14px">
+                            <div class="tmx-thumb-wrap"><img src="${finaleThumbUrl}" class="tmx-thumb" alt="Map Finale"></div>
+                            <div class="map-card-header">🏆 Map Finale${finaleMapName ? ` — ${finaleMapName}` : ''}</div>
+                        </div>`;
+                    }
                     html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">Élimination directe — le dernier survivant est déclaré vainqueur 🏆</p>`;
                     html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Vies ❤️</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
                     finaleResults.forEach(r => {
