@@ -2692,6 +2692,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             grid.innerHTML = html;
         }
 
+        const tmxThumbCache = {};
+        async function loadTmxThumbs() {
+            const imgs = document.querySelectorAll('img[data-tmxid]');
+            for (const img of imgs) {
+                const id = img.dataset.tmxid;
+                if (tmxThumbCache[id]) { img.src = tmxThumbCache[id]; continue; }
+                try {
+                    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://trackmania.exchange/mapshow/' + id)}`);
+                    const d = await r.json();
+                    const m = d.contents.match(/property="og:image"\s+content="([^"]+)"/i);
+                    if (m) { tmxThumbCache[id] = m[1]; img.src = m[1]; }
+                    else img.style.display = 'none';
+                } catch { img.style.display = 'none'; }
+            }
+        }
+
         // TMX map ID extractor (accepts full URL or plain numeric ID)
         function extractTmxId(value) {
             if (!value) return null;
@@ -2860,7 +2876,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
                         const tmxId   = extractTmxId(e[`map${m}tmx`]);
                         const tmxName = e[`map${m}name`] || '';
-                        const thumbHtml = tmxId ? `<img src="https://wsrv.nl/?url=trackmania.exchange/maps/screenshot/normal/${tmxId}" class="tmx-thumb" alt="Map ${m}" onerror="this.style.display='none'">` : '';
+                        const thumbHtml = tmxId ? `<img data-tmxid="${tmxId}" class="tmx-thumb" alt="Map ${m}">` : '';
                         const tmxNameHtml = tmxName ? `<span class="tmx-map-name">${tmxName}</span>` : '';
                         html += `<div class="map-card"><div class="map-card-header" style="display:flex;align-items:center;justify-content:space-between">Map ${m} ${tmxNameHtml}</div>${thumbHtml}`;
                         for (let pos = 1; pos <= 3; pos++) {
@@ -3087,6 +3103,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }
 
             content.innerHTML = html;
+            loadTmxThumbs();
 
             // Bind admin form if present
             const detailForm = document.getElementById('detailAddResultForm');
