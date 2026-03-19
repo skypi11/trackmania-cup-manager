@@ -2694,7 +2694,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (!e) return;
 
             const today = new Date(); today.setHours(0, 0, 0, 0);
-            const isPast = new Date(e.date) < today || e.status === 'terminee';
+            const isPast = new Date(e.date) < today || e.status === 'terminee' || e.status === 'en_cours';
             const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
             const grid = document.getElementById('editionsList');
