@@ -2710,9 +2710,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const rawName   = nameMatch ? nameMatch[1].replace(/\s*\|.*$/, '').trim() : null;
             let name = null, mapper = null;
             if (rawName) {
-                const byMatch = rawName.match(/^(.+?)\s+by\s+(.+)$/i);
-                if (byMatch) { name = byMatch[1].trim(); mapper = byMatch[2].trim(); }
-                else { name = rawName; }
+                const lastByIdx = rawName.toLowerCase().lastIndexOf(' by ');
+                if (lastByIdx > 0) {
+                    name   = rawName.substring(0, lastByIdx).trim();
+                    mapper = rawName.substring(lastByIdx + 4).trim();
+                } else {
+                    name = rawName;
+                }
             }
             return { thumbUrl, name, mapper };
         }
