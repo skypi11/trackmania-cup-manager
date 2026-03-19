@@ -2699,17 +2699,46 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             grid.innerHTML = html;
         }
 
-        // Fetch og:image URL for a TMX map ID via CORS proxy (used only at admin save time)
+        // Fetch og:image URL for a TMX map ID — tries multiple CORS proxies in order
         async function fetchTmxThumbUrl(tmxId) {
+            const tmxUrl = `https://trackmania.exchange/mapshow/${tmxId}`;
+            // corsproxy.io: returns HTML directly
             try {
-                const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://trackmania.exchange/mapshow/' + tmxId)}`);
-                const d = await r.json();
-                const m = d.contents.match(/property="og:image"\s+content="([^"]+)"/i);
-                return m ? m[1] : null;
-            } catch { return null; }
+                const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(tmxUrl)}`);
+                if (r.ok) {
+                    const html = await r.text();
+                    const m = html.match(/property="og:image"\s+content="([^"]+)"/i);
+                    if (m) return m[1];
+                }
+            } catch {}
+            // allorigins: returns JSON { contents: html }
+            try {
+                const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(tmxUrl)}`);
+                if (r.ok) {
+                    const d = await r.json();
+                    const m = (d.contents || '').match(/property="og:image"\s+content="([^"]+)"/i);
+                    if (m) return m[1];
+                }
+            } catch {}
+            // codetabs: returns HTML directly
+            try {
+                const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tmxUrl)}`);
+                if (r.ok) {
+                    const html = await r.text();
+                    const m = html.match(/property="og:image"\s+content="([^"]+)"/i);
+                    if (m) return m[1];
+                }
+            } catch {}
+            return null;
         }
         // Fetch and store thumb URLs in Firestore for an edition (called after admin saves maps)
         async function storeTmxThumbs(editionId, mapTmxValues) {
+            const hasMaps = [1,2,3,4,5,6].some(n => extractTmxId(mapTmxValues[n]));
+            if (!hasMaps) return;
+            const toast = document.createElement('div');
+            toast.textContent = '⏳ Récupération des miniatures TMX…';
+            Object.assign(toast.style, { position:'fixed', bottom:'20px', right:'20px', background:'#1e293b', color:'#f1f5f9', padding:'10px 16px', borderRadius:'10px', fontSize:'0.85rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.4)' });
+            document.body.appendChild(toast);
             const thumbUpdates = {};
             await Promise.all([1,2,3,4,5,6].map(async n => {
                 const tmxId = extractTmxId(mapTmxValues[n]);
@@ -2717,8 +2746,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const url = await fetchTmxThumbUrl(tmxId);
                 if (url) thumbUpdates[`map${n}thumbUrl`] = url;
             }));
-            if (Object.keys(thumbUpdates).length > 0)
+            if (Object.keys(thumbUpdates).length > 0) {
                 await updateDoc(doc(db, 'editions', editionId), thumbUpdates);
+                toast.textContent = `✅ ${Object.keys(thumbUpdates).length} miniature(s) enregistrée(s)`;
+            } else {
+                toast.textContent = '❌ Impossible de récupérer les miniatures (réessaie plus tard)';
+            }
+            setTimeout(() => toast.remove(), 4000);
         }
 
         // TMX map ID extractor (accepts full URL or plain numeric ID)
