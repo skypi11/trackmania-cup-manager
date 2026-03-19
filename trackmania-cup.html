@@ -2793,9 +2793,19 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     ${vodEmbedHtml}`;
 
                 // ── Qualifications — 6 maps ──
-                const hasQuals = qualResults.some(r => r.map);
+                // Auto-calculate vies: nb of map appearances - 1 per player
+                const playerMapCount = {};
+                qualResults.filter(r => r.map).forEach(r => {
+                    playerMapCount[r.playerId] = (playerMapCount[r.playerId] || 0) + 1;
+                });
+                // First map per player (where they "officially" qualified)
+                const playerFirstMap = {};
+                qualResults.filter(r => r.map).sort((a,b) => a.map - b.map).forEach(r => {
+                    if (!playerFirstMap[r.playerId]) playerFirstMap[r.playerId] = r.map;
+                });
+
                 const legacyQuals = qualResults.filter(r => !r.map);
-                if (hasQuals || qualResults.length > 0) {
+                if (qualResults.length > 0) {
                     html += '<div class="phase-title">🎯 Qualifications — Phase 1</div>';
                     html += '<div class="maps-grid">';
                     const medals3 = ['🥇', '🥈', '🥉'];
@@ -2806,7 +2816,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             const r = mapQuals.find(r => r.position === pos);
                             if (r) {
                                 const player = data.participants.find(p => p.id === r.playerId);
-                                const viesHtml = r.viesBonus > 0 ? `<span class="vie-badge">❤️×${r.viesBonus}</span>` : '';
+                                const isVieEntry = playerFirstMap[r.playerId] < m;
+                                const viesTotal = (playerMapCount[r.playerId] || 1) - 1;
+                                const viesHtml = isVieEntry ? `<span class="vie-badge">❤️ +vie</span>` : (viesTotal > 0 ? `<span class="vie-badge">❤️×${viesTotal}</span>` : '');
                                 const del = isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
                                 html += `<div class="map-slot map-slot-filled" onclick="openPlayerProfile('${player?.id}')">
                                     <span class="map-medal">${medals3[pos-1]}</span>
@@ -2820,7 +2832,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         html += '</div>';
                     }
                     html += '</div>';
-                    // Legacy quals without map info
                     if (legacyQuals.length > 0) {
                         html += '<div style="margin-top:6px" class="chips">';
                         legacyQuals.forEach(r => {
@@ -2844,8 +2855,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         podiumOrder.forEach(r => {
                             const player = data.participants.find(p => p.id === r.playerId);
                             if (!player) return;
-                            const qualR = qualResults.find(q => q.playerId === player.id);
-                            const viesHtml = qualR?.viesBonus > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${qualR.viesBonus}</div>` : '';
+                            const viesCountP = qualResults.filter(q => q.playerId === player.id).length - 1;
+                            const viesHtml = viesCountP > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${viesCountP}</div>` : '';
                             html += `<div class="podium-spot">
                                 <div class="podium-player">
                                     <div class="podium-medal">${medals[r.position] || r.position}</div>
@@ -2868,8 +2879,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     finaleResults.forEach(r => {
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
-                        const qualR = qualResults.find(q => q.playerId === player.id);
-                        const vies = qualR?.viesBonus > 0 ? `×${qualR.viesBonus}` : '—';
+                        const viesCount = qualResults.filter(q => q.playerId === player.id).length - 1;
+                        const vies = viesCount > 0 ? `×${viesCount}` : '—';
                         const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
                         const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                         html += `<tr>
@@ -3042,19 +3053,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             const map      = parseInt(document.getElementById('detailResultMap').value);
                             const position = parseInt(document.getElementById('detailResultQualPos').value);
 
-                            const existingQual = data.results.find(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification');
-                            if (existingQual) {
-                                // Joueur déjà qualifié → +1 vie bonus
-                                const newVies = (existingQual.viesBonus || 0) + 1;
-                                await updateDoc(doc(db, 'results', existingQual.id), { viesBonus: newVies });
-                                const pn = pName(data.participants.find(p => p.id === playerId) || {});
-                                showToast(`❤️ Vie bonus ajoutée — ${pn} a maintenant ×${newVies}`);
-                            } else {
-                                if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
-                                    alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
-                                }
-                                await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, viesBonus: 0, cupId });
+                            // Same player can't appear twice on the same map
+                            if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification' && r.map === map)) {
+                                alert(`Ce joueur est déjà enregistré sur la Map ${map} !`); return;
                             }
+                            // Same position on same map already taken
+                            if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
+                                alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
+                            }
+                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, cupId });
 
                         } else if (phase === 'finale') {
                             const position = parseInt(document.getElementById('detailResultPosition').value);
@@ -3096,24 +3103,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         window.detailOnPlayerChange = () => {
             const phase    = document.getElementById('detailResultPhase')?.value;
             const playerId = document.getElementById('detailResultPlayer')?.value;
-            if (phase !== 'qualification' || !playerId) return;
-
-            const existingQual = data.results.find(r => r.editionId === currentDetailEditionId && r.playerId === playerId && r.phase === 'qualification');
             const info     = document.getElementById('detailViesBonusInfo');
-            const mapField = document.getElementById('detailMapField');
-            const posField = document.getElementById('detailQualPosField');
+            if (phase !== 'qualification' || !playerId) { info.style.display = 'none'; return; }
 
-            if (existingQual) {
-                const currentVies = existingQual.viesBonus || 0;
-                const fromMap = existingQual.map ? `Map ${existingQual.map}` : 'une map précédente';
+            const existingQuals = data.results.filter(r => r.editionId === currentDetailEditionId && r.playerId === playerId && r.phase === 'qualification');
+            if (existingQuals.length > 0) {
+                const maps = existingQuals.map(r => r.map ? `Map ${r.map}` : '?').join(', ');
+                const vies = existingQuals.length - 1;
                 info.style.display = '';
-                info.innerHTML = `❤️ Déjà qualifié depuis <strong>${fromMap}</strong> — confirmer pour ajouter <strong>+1 vie bonus</strong> (total actuel : ×${currentVies})`;
-                mapField.style.display = 'none';
-                posField.style.display = 'none';
+                info.innerHTML = `⚡ Déjà dans le top 3 sur : <strong>${maps}</strong>${vies > 0 ? ` — ❤️×${vies} vie(s) en finale` : ' — pas encore de vie bonus'}. Enregistrer sur une nouvelle map lui accordera <strong>+1 vie ❤️</strong>`;
             } else {
                 info.style.display = 'none';
-                mapField.style.display = '';
-                posField.style.display = '';
             }
         };
 
