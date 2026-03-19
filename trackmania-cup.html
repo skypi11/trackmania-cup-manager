@@ -517,8 +517,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .maps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
 .map-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
 .map-card-header { background: rgba(255,255,255,0.06); padding: 6px 12px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); flex-shrink: 0; }
-.tmx-thumb-wrap { display: flex; justify-content: center; align-items: center; padding: 10px 10px 6px; flex-shrink: 0; }
-.tmx-thumb { height: 200px; width: auto; max-width: 100%; display: block; border-radius: 8px; object-fit: contain; }
+.tmx-thumb-wrap { width: 100%; height: 160px; overflow: hidden; flex-shrink: 0; }
+.tmx-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
 .map-slots-wrap { flex: 1; display: flex; flex-direction: column; }
 .tmx-map-name { font-size: 0.7rem; color: rgba(255,255,255,0.5); font-weight: 400; text-transform: none; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .map-slot { display: flex; align-items: center; gap: 8px; padding: 7px 12px; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.04); }
@@ -2699,37 +2699,36 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             grid.innerHTML = html;
         }
 
-        // Fetch og:image URL for a TMX map ID — tries multiple CORS proxies in order
-        async function fetchTmxThumbUrl(tmxId) {
+        // Parse og:image and og:title from TMX HTML page
+        function parseTmxPage(html) {
+            const imgMatch  = html.match(/property="og:image"\s+content="([^"]+)"/i);
+            const nameMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
+            const thumbUrl  = imgMatch ? imgMatch[1] : null;
+            // og:title is like "Silver Grove by saghzs | TMX" — keep only the map name part
+            const rawName   = nameMatch ? nameMatch[1] : null;
+            const name      = rawName ? rawName.replace(/\s*\|.*$/, '').replace(/\s+by\s+.*/i, '').trim() : null;
+            return { thumbUrl, name };
+        }
+
+        // Fetch og:image + og:title for a TMX map ID — tries multiple CORS proxies in order
+        async function fetchTmxMapInfo(tmxId) {
             const tmxUrl = `https://trackmania.exchange/mapshow/${tmxId}`;
             // corsproxy.io: returns HTML directly
             try {
                 const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(tmxUrl)}`);
-                if (r.ok) {
-                    const html = await r.text();
-                    const m = html.match(/property="og:image"\s+content="([^"]+)"/i);
-                    if (m) return m[1];
-                }
+                if (r.ok) { const p = parseTmxPage(await r.text()); if (p.thumbUrl) return p; }
             } catch {}
             // allorigins: returns JSON { contents: html }
             try {
                 const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(tmxUrl)}`);
-                if (r.ok) {
-                    const d = await r.json();
-                    const m = (d.contents || '').match(/property="og:image"\s+content="([^"]+)"/i);
-                    if (m) return m[1];
-                }
+                if (r.ok) { const d = await r.json(); const p = parseTmxPage(d.contents || ''); if (p.thumbUrl) return p; }
             } catch {}
             // codetabs: returns HTML directly
             try {
                 const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tmxUrl)}`);
-                if (r.ok) {
-                    const html = await r.text();
-                    const m = html.match(/property="og:image"\s+content="([^"]+)"/i);
-                    if (m) return m[1];
-                }
+                if (r.ok) { const p = parseTmxPage(await r.text()); if (p.thumbUrl) return p; }
             } catch {}
-            return null;
+            return { thumbUrl: null, name: null };
         }
         // Fetch and store thumb URLs in Firestore for an edition (called after admin saves maps)
         async function storeTmxThumbs(editionId, mapTmxValues) {
@@ -2743,8 +2742,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             await Promise.all([1,2,3,4,5,6].map(async n => {
                 const tmxId = extractTmxId(mapTmxValues[n]);
                 if (!tmxId) return;
-                const url = await fetchTmxThumbUrl(tmxId);
-                if (url) thumbUpdates[`map${n}thumbUrl`] = url;
+                const { thumbUrl, name } = await fetchTmxMapInfo(tmxId);
+                if (thumbUrl) thumbUpdates[`map${n}thumbUrl`] = thumbUrl;
+                if (name) thumbUpdates[`map${n}name`] = name;
             }));
             if (Object.keys(thumbUpdates).length > 0) {
                 await updateDoc(doc(db, 'editions', editionId), thumbUpdates);
