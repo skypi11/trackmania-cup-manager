@@ -1282,6 +1282,32 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
       </div>
     </div>
 
+    <!-- CREATE PROFILE MODAL (shown on first login if no participant record) -->
+    <div class="modal-overlay" id="createProfileModal">
+        <div class="modal" style="max-width:460px">
+            <h2>👤 Créer mon profil joueur</h2>
+            <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px">
+                Bienvenue ! Renseignez vos informations pour participer aux compétitions <strong>Springs E-Sport</strong>.
+            </p>
+            <form id="createProfileForm">
+                <div class="form-group">
+                    <label for="newProfilePseudo">Pseudo en jeu <span id="newProfileGameLabel" style="color:var(--color-text-secondary);font-size:0.85rem"></span> *</label>
+                    <input type="text" id="newProfilePseudo" required placeholder="Votre pseudo en jeu" autocomplete="off">
+                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px">Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.</small>
+                </div>
+                <div class="form-group" style="margin-top:14px">
+                    <label for="newProfileTeam">Équipe (optionnel)</label>
+                    <input type="text" id="newProfileTeam" placeholder="Ex: Team Rocket" autocomplete="off">
+                </div>
+                <div id="createProfileMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0"></div>
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button type="submit" class="btn btn-primary" style="flex:1">✅ Créer mon profil</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateProfile()">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- DISCORD LINK PROMPT (shown after first login) -->
     <div class="discord-prompt-overlay" id="discordPromptOverlay">
         <div class="discord-prompt-box">
@@ -2068,7 +2094,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 adminBtn.style.display  = 'none';
                 playerBtn.style.display = '';
                 adminBtn.classList.remove('active');
-                const pseudo = currentUserProfile?.pseudo || user.displayName || 'Mon compte';
+                const linkedPlayer = data.participants.find(p => p.userId === user.uid);
+                const pseudo = linkedPlayer ? pName(linkedPlayer) : (currentUserProfile?.pseudo || user.displayName || 'Mon compte');
                 playerBtn.textContent = `👤 ${pseudo}`;
             }
             // Mark auth as resolved so loading overlay can hide
@@ -2102,14 +2129,58 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
         // Opens the player's own fiche joueur (with edit section)
         window.openPlayerAccount = () => {
-            if (!currentUser) return;
+            if (!currentUser) return openAuthModal();
             const player = data.participants.find(p => p.userId === currentUser.uid);
             if (player) {
                 openPlayerProfile(player.id);
             } else {
-                openAuthModal();
+                openCreateProfile();
             }
         };
+
+        window.openCreateProfile = () => {
+            const gameLabel = CUP.id === 'mania' ? '(Rocket League)' : '(Trackmania)';
+            document.getElementById('newProfileGameLabel').textContent = gameLabel;
+            document.getElementById('newProfilePseudo').value = '';
+            document.getElementById('newProfileTeam').value = '';
+            document.getElementById('createProfileMsg').style.display = 'none';
+            document.getElementById('createProfileModal').classList.add('open');
+        };
+        window.closeCreateProfile = () => {
+            document.getElementById('createProfileModal').classList.remove('open');
+        };
+
+        document.getElementById('createProfileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const pseudo = document.getElementById('newProfilePseudo').value.trim();
+            const team   = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
+            const msg    = document.getElementById('createProfileMsg');
+
+            if (!pseudo) return;
+            if (data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
+                msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
+                msg.textContent = '❌ Ce pseudo est déjà utilisé dans cette cup.';
+                return;
+            }
+            const btn = e.target.querySelector('[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Création...';
+            try {
+                await addDoc(collection(db, 'participants'), { pseudo, team, userId: currentUser.uid, cupId, discordId: '', discordUsername: '' });
+                await setDoc(doc(db, 'users', currentUser.uid), { pseudo, team }, { merge: true });
+                closeCreateProfile();
+                document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
+                showToast('Profil créé ! Bienvenue 🎉');
+                sessionStorage.removeItem('discordPromptDismissed');
+                setTimeout(() => {
+                    document.getElementById('discordPromptOverlay').classList.add('open');
+                }, 700);
+            } catch {
+                msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
+                msg.textContent = 'Erreur lors de la création du profil.';
+                btn.disabled = false; btn.textContent = '✅ Créer mon profil';
+            }
+        });
 
         // Edit participant
         window.openEditParticipant = (id) => {
@@ -3579,7 +3650,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const quals = data.results.filter(r => r.phase === 'qualification').length;
             const finals = data.results.filter(r => r.phase === 'finale').length;
             document.getElementById('totalParticipants').textContent = data.participants.length;
-            document.getElementById('totalEditions').textContent = data.editions.length;
+            const today = new Date(); today.setHours(0,0,0,0);
+            document.getElementById('totalEditions').textContent = data.editions.filter(e => e.status === 'terminee' || new Date(e.date) < today).length;
             document.getElementById('totalQuals').textContent = quals;
             document.getElementById('totalFinals').textContent = finals;
 
