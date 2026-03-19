@@ -1602,6 +1602,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         let currentUser = null;
         let currentUserProfile = null;
         let currentDetailEditionId = null;
+        let twitchCollapsed = false;
         let data = { participants: [], editions: [], results: [] };
         let rankingChart = null;
         let playerChart = null;
@@ -2734,11 +2735,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 </div>
                                 <div class="form-group">
                                     <label>Joueur *</label>
-                                    <select id="detailResultPlayer" required>
+                                    <select id="detailResultPlayer" required onchange="detailOnPlayerChange()">
                                         <option value="">Sélectionner un joueur</option>
                                         ${playerOptions}
                                     </select>
                                 </div>
+                                <div id="detailViesBonusInfo" style="display:none;background:rgba(239,68,68,0.1);color:#ef4444;font-size:0.82rem;padding:8px 12px;border-radius:8px;border:1px solid rgba(239,68,68,0.2)"></div>
                                 <div class="form-group" id="detailQualPosField" style="display:none">
                                     <label>Position sur la map *</label>
                                     <select id="detailResultQualPos">
@@ -2746,10 +2748,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                         <option value="2">🥈 2ème qualifié</option>
                                         <option value="3">🥉 3ème qualifié</option>
                                     </select>
-                                </div>
-                                <div class="form-group" id="detailViesField" style="display:none">
-                                    <label>Vies bonus ❤️</label>
-                                    <input type="number" id="detailResultVies" min="0" max="5" value="0">
                                 </div>
                                 <div class="form-group" id="detailPositionField" style="display:none">
                                     <label>Position finale *</label>
@@ -2782,9 +2780,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             <span class="live-dot" style="width:7px;height:7px"></span>
                             EN DIRECT sur Twitch
                         </span>
-                        <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">▼ Réduire</button>
+                        <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${twitchCollapsed ? '▶ Afficher' : '▼ Réduire'}</button>
                     </div>
-                    <div id="twitchEmbedWrap" class="stream-embed-wrap">
+                    <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${twitchCollapsed ? 'display:none' : ''}">
                         <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
                     </div>` : '';
 
@@ -3076,10 +3074,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         window.toggleTwitchEmbed = (btn) => {
-            const wrap = document.getElementById('twitchEmbedWrap');
-            const hidden = wrap.style.display === 'none';
-            wrap.style.display = hidden ? '' : 'none';
-            btn.textContent = hidden ? '▼ Réduire' : '▶ Afficher';
+            twitchCollapsed = !twitchCollapsed;
+            document.getElementById('twitchEmbedWrap').style.display = twitchCollapsed ? 'none' : '';
+            btn.textContent = twitchCollapsed ? '▶ Afficher' : '▼ Réduire';
         };
 
         window.detailOnPhaseChange = () => {
@@ -3088,10 +3085,36 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const isFinale = phase === 'finale';
             document.getElementById('detailMapField').style.display      = isQual   ? '' : 'none';
             document.getElementById('detailQualPosField').style.display  = isQual   ? '' : 'none';
-            document.getElementById('detailViesField').style.display     = isQual   ? '' : 'none';
             document.getElementById('detailPositionField').style.display = isFinale ? '' : 'none';
+            document.getElementById('detailViesBonusInfo').style.display = 'none';
             const posInput = document.getElementById('detailResultPosition');
             if (posInput) posInput.required = isFinale;
+            // Reset player detection
+            document.getElementById('detailResultPlayer').value = '';
+        };
+
+        window.detailOnPlayerChange = () => {
+            const phase    = document.getElementById('detailResultPhase')?.value;
+            const playerId = document.getElementById('detailResultPlayer')?.value;
+            if (phase !== 'qualification' || !playerId) return;
+
+            const existingQual = data.results.find(r => r.editionId === currentDetailEditionId && r.playerId === playerId && r.phase === 'qualification');
+            const info     = document.getElementById('detailViesBonusInfo');
+            const mapField = document.getElementById('detailMapField');
+            const posField = document.getElementById('detailQualPosField');
+
+            if (existingQual) {
+                const currentVies = existingQual.viesBonus || 0;
+                const fromMap = existingQual.map ? `Map ${existingQual.map}` : 'une map précédente';
+                info.style.display = '';
+                info.innerHTML = `❤️ Déjà qualifié depuis <strong>${fromMap}</strong> — confirmer pour ajouter <strong>+1 vie bonus</strong> (total actuel : ×${currentVies})`;
+                mapField.style.display = 'none';
+                posField.style.display = 'none';
+            } else {
+                info.style.display = 'none';
+                mapField.style.display = '';
+                posField.style.display = '';
+            }
         };
 
         window.closeEditionDetail = () => {
