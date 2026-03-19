@@ -2820,9 +2820,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             const r = mapQuals.find(r => r.position === pos);
                             if (r) {
                                 const player = data.participants.find(p => p.id === r.playerId);
-                                const isVieEntry = playerFirstMap[r.playerId] < m;
-                                const viesTotal = (playerMapCount[r.playerId] || 1) - 1;
-                                const viesHtml = isVieEntry ? `<span class="vie-badge">❤️ +vie</span>` : (viesTotal > 0 ? `<span class="vie-badge">❤️×${viesTotal}</span>` : '');
+                                // Cumulative vies at this map: rank of this appearance (0 = first = no vie)
+                                const playerQualsSorted = qualResults.filter(q => q.playerId === r.playerId && q.map).sort((a, b) => a.map - b.map);
+                                const appearanceIndex = playerQualsSorted.findIndex(q => q.map === m);
+                                const viesHtml = appearanceIndex > 0 ? `<span class="vie-badge">❤️×${appearanceIndex}</span>` : '';
                                 const del = isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
                                 html += `<div class="map-slot map-slot-filled" onclick="openPlayerProfile('${player?.id}')">
                                     <span class="map-medal">${medals3[pos-1]}</span>
