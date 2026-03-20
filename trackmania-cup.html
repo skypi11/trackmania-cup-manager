@@ -530,6 +530,88 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .vie-badge { font-size: 0.72rem; background: rgba(239,68,68,0.15); color: #ef4444; padding: 1px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
 @media (max-width: 600px) { .maps-grid { grid-template-columns: repeat(2, 1fr); } }
 
+/* ── MAPS TIMELINE ───────────────────────────────── */
+.maps-edition-block {
+    margin-bottom: 28px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
+}
+.maps-edition-header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.04);
+    cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.maps-edition-header:hover { background: rgba(255,255,255,0.06); }
+.maps-edition-title { font-weight: 800; font-size: 1rem; flex: 1; }
+.maps-edition-date { font-size: 0.8rem; color: var(--color-text-secondary); }
+.maps-edition-winner { font-size: 0.82rem; color: #fbbf24; font-weight: 600; }
+.maps-edition-body { padding: 14px 16px; }
+.maps-timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+.maps-timeline-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex; flex-direction: column;
+    transition: border-color 0.18s, transform 0.15s;
+    cursor: pointer;
+}
+.maps-timeline-card:hover { border-color: rgba(255,255,255,0.22); transform: translateY(-2px); }
+.maps-timeline-card.finale-map { border-color: rgba(251,191,36,0.3); }
+.maps-timeline-card.finale-map:hover { border-color: rgba(251,191,36,0.6); }
+.maps-timeline-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+.maps-timeline-thumb-placeholder { width: 100%; aspect-ratio: 16/9; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: rgba(255,255,255,0.1); }
+.maps-timeline-label { padding: 7px 10px 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-secondary); }
+.maps-timeline-name { padding: 0 10px 8px; font-size: 0.82rem; font-weight: 600; line-height: 1.3; color: #f1f5f9; }
+.maps-timeline-mapper { font-size: 0.72rem; color: var(--color-text-secondary); font-weight: 400; }
+.maps-timeline-notmx { padding: 0 10px 8px; font-size: 0.75rem; color: rgba(255,255,255,0.2); font-style: italic; }
+
+/* ── PREDICTIONS ─────────────────────────────────── */
+.pred-edition-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.pred-edition-header {
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.pred-badge { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 3px 8px; border-radius: 6px; }
+.pred-badge.open { background: rgba(0,217,54,0.15); color: #00D936; }
+.pred-badge.closed { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+.pred-badge.scored { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.pred-body { padding: 16px 18px; }
+.pred-player-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.pred-player-chip {
+    padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+    border: 2px solid transparent; cursor: pointer; background: rgba(255,255,255,0.06);
+    transition: all 0.15s; user-select: none;
+}
+.pred-player-chip:hover { background: rgba(255,255,255,0.1); }
+.pred-player-chip.selected-finalist { background: rgba(0,217,54,0.12); border-color: var(--color-accent); color: var(--color-accent); }
+.pred-player-chip.selected-top1 { background: rgba(251,191,36,0.18); border-color: #fbbf24; color: #fbbf24; }
+.pred-player-chip.selected-top2 { background: rgba(148,163,184,0.18); border-color: #94a3b8; color: #94a3b8; }
+.pred-player-chip.selected-top3 { background: rgba(180,83,9,0.18); border-color: #cd7c3a; color: #cd7c3a; }
+.pred-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.35); margin: 14px 0 6px; }
+.pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
+.pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
+
+@media (max-width: 600px) { .maps-timeline-grid { grid-template-columns: repeat(2, 1fr); } }
+
 /* ── MODAL ──────────────────────────────────────── */
 .modal-overlay {
     display: none; position: fixed; inset: 0;
@@ -945,6 +1027,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label">Accueil</span></button>
           <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label">Éditions</span></button>
           <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label">Classement</span></button>
+          <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label">Maps</span></button>
+          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label">Prédictions</span></button>
           <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label">Joueurs</span></button>
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label">Stats</span></button>
           <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label">Hall of Fame</span></button>
@@ -1111,6 +1195,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <canvas id="rankingChart"></canvas>
                 </div>
             </div>
+          </div>
+
+          <!-- MAPS TIMELINE -->
+          <div class="section-panel" id="maps" style="display:none">
+            <div class="card" style="padding-bottom:8px">
+              <h2>🗺️ Maps jouées</h2>
+              <div id="mapsSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+              <div id="mapsTimeline"></div>
+            </div>
+          </div>
+
+          <!-- PRÉDICTIONS -->
+          <div class="section-panel" id="predictions" style="display:none">
+            <div id="predictionsContent"></div>
           </div>
 
           <!-- JOUEURS -->
@@ -1640,13 +1738,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         let currentDetailEditionId = null;
         let twitchCollapsed = false;
         let youtubeCollapsed = false;
-        let data = { participants: [], editions: [], results: [] };
+        let data = { participants: [], editions: [], results: [], predictions: [] };
         let rankingChart = null;
         let playerChart = null;
         let editionFilter = 'all';   // 'all' | 'upcoming' | 'past'
         let editionSort   = 'desc';  // 'desc' | 'asc'
         // 'auth' included so loading overlay stays until Firebase resolves the session
-        let loaded = { participants: false, editions: false, results: false, auth: false };
+        let loaded = { participants: false, editions: false, results: false, predictions: false, auth: false };
 
         // ── DISCORD ───────────────────────────────────────
         window.linkDiscord = () => {
@@ -2358,7 +2456,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             else if (id === 'home') displayHome();
             else if (id === 'halloffame') displayHallOfFame();
             else if (id === 'personnalisation') applySiteConfig();
-            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', participants: 'Joueurs', stats: 'Statistiques', halloffame: 'Hall of Fame', personnalisation: 'Personnalisation' };
+            else if (id === 'maps') displayMapsTimeline();
+            else if (id === 'predictions') displayPredictions();
+            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', maps: 'Maps', predictions: 'Prédictions', participants: 'Joueurs', stats: 'Statistiques', halloffame: 'Hall of Fame', personnalisation: 'Personnalisation' };
             const t = document.getElementById('topbarTitle');
             if (t) t.textContent = titles[id] || '';
         }
@@ -4096,6 +4196,328 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }, 'image/png');
         };
 
+        // ── Maps Timeline ────────────────────────────────
+        let selectedMapsSeason = null;
+        window.setMapsSeason = (s) => { selectedMapsSeason = s; displayMapsTimeline(); };
+
+        function displayMapsTimeline() {
+            const filterBar  = document.getElementById('mapsSeasonFilter');
+            const container  = document.getElementById('mapsTimeline');
+            if (!filterBar || !container) return;
+
+            // Seasons with any map data
+            const allSeasons = [...new Set(
+                data.editions.map(e => e.saison || new Date(e.date).getFullYear())
+            )].sort((a, b) => b - a);
+
+            if (selectedMapsSeason === null) selectedMapsSeason = allSeasons[0] ?? 'all';
+
+            const tabs = [
+                `<button class="filter-btn${selectedMapsSeason === 'all' ? ' active' : ''}" onclick="setMapsSeason('all')">Toutes</button>`,
+                ...allSeasons.map(s => `<button class="filter-btn${selectedMapsSeason === s ? ' active' : ''}" onclick="setMapsSeason(${s})">${s}</button>`)
+            ];
+            filterBar.innerHTML = tabs.join('');
+
+            const editions = data.editions
+                .filter(e => {
+                    if (selectedMapsSeason === 'all') return true;
+                    return (e.saison || new Date(e.date).getFullYear()) === selectedMapsSeason;
+                })
+                .filter(e => e.status === 'terminee' || [1,2,3,4,5,6,7].some(n => e[`map${n}tmx`] || e[`map${n}name`]))
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (editions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🗺️</span><p>Aucune édition avec des maps enregistrées</p></div>';
+                return;
+            }
+
+            let html = '';
+            editions.forEach(e => {
+                const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+                const winnerPlayer = winner ? data.participants.find(p => p.id === winner.playerId) : null;
+                const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+                let mapsHtml = '';
+                for (let n = 1; n <= 7; n++) {
+                    const tmxVal  = e[`map${n}tmx`]     || '';
+                    const tmxId   = extractTmxId(tmxVal);
+                    const name    = e[`map${n}name`]    || '';
+                    const mapper  = e[`map${n}mapper`]  || '';
+                    const thumb   = e[`map${n}thumbUrl`] || '';
+                    const isFinale = n === 7;
+
+                    // Skip if no data at all
+                    if (!tmxId && !name && !thumb) continue;
+
+                    const tmxLink = tmxId ? `https://trackmania.exchange/mapshow/${tmxId}` : null;
+                    const thumbHtml = thumb
+                        ? `<img class="maps-timeline-thumb" src="${thumb}" alt="Map ${n}" loading="lazy">`
+                        : `<div class="maps-timeline-thumb-placeholder">${isFinale ? '🏆' : n}</div>`;
+                    const labelHtml = isFinale
+                        ? `<div class="maps-timeline-label" style="color:#fbbf24">🏆 Map Finale</div>`
+                        : `<div class="maps-timeline-label">Map ${n}</div>`;
+                    const nameHtml  = name
+                        ? `<div class="maps-timeline-name">${name}${mapper ? `<div class="maps-timeline-mapper">by ${mapper}</div>` : ''}</div>`
+                        : `<div class="maps-timeline-notmx">Nom non renseigné</div>`;
+
+                    const cardOpen = tmxLink
+                        ? `<a class="maps-timeline-card${isFinale ? ' finale-map' : ''}" href="${tmxLink}" target="_blank" rel="noopener" title="Voir sur TMX">`
+                        : `<div class="maps-timeline-card${isFinale ? ' finale-map' : ''}">`;
+                    const cardClose = tmxLink ? '</a>' : '</div>';
+                    mapsHtml += `${cardOpen}${thumbHtml}${labelHtml}${nameHtml}${cardClose}`;
+                }
+
+                if (!mapsHtml) {
+                    mapsHtml = '<p style="color:var(--color-text-secondary);font-size:0.85rem;padding:4px 0">Aucune map renseignée pour cette édition.</p>';
+                }
+
+                html += `<div class="maps-edition-block">
+                    <div class="maps-edition-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+                        <div class="maps-edition-title">${e.name || 'Édition'}</div>
+                        <div class="maps-edition-date">${dateStr}</div>
+                        ${winnerPlayer ? `<div class="maps-edition-winner">🏆 ${pName(winnerPlayer)}</div>` : ''}
+                        <span style="color:rgba(255,255,255,0.2);font-size:0.8rem">▼</span>
+                    </div>
+                    <div class="maps-edition-body">
+                        <div class="maps-timeline-grid">${mapsHtml}</div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ── Predictions ──────────────────────────────────
+
+        let predState = {}; // { editionId: { finalists: Set, top3: [null,null,null] } } — local UI state
+
+        window.togglePredFinalist = function(edId, playerId) {
+            if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+            const s = predState[edId];
+            if (s.finalists.has(playerId)) s.finalists.delete(playerId);
+            else s.finalists.add(playerId);
+            renderPredForm(edId);
+        };
+
+        window.setPredTop = function(edId, rank, playerId) {
+            if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+            const s = predState[edId];
+            // If already placed at another rank, remove it
+            s.top3 = s.top3.map((p, i) => (p === playerId && i !== rank - 1) ? null : p);
+            s.top3[rank - 1] = s.top3[rank - 1] === playerId ? null : playerId;
+            renderPredForm(edId);
+        };
+
+        window.submitPrediction = async function(edId) {
+            if (!currentUser) { alert('Connecte-toi pour prédire !'); return; }
+            const s = predState[edId];
+            if (!s || s.finalists.size === 0) { alert('Sélectionne au moins un finaliste !'); return; }
+            const myPart = data.participants.find(p => p.userId === currentUser.uid);
+            if (!myPart) { alert('Tu dois être inscrit comme joueur pour prédire.'); return; }
+
+            const existing = data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id);
+            const payload = {
+                editionId: edId,
+                playerId: myPart.id,
+                cupId,
+                finalists: [...s.finalists],
+                top3: s.top3,
+                createdAt: new Date().toISOString(),
+                score: null, scored: false
+            };
+            if (existing) {
+                await updateDoc(doc(db, 'predictions', existing.id), payload);
+            } else {
+                await addDoc(collection(db, 'predictions'), payload);
+            }
+            alert('Prédiction enregistrée ✅');
+        };
+
+        window.calculatePredictionScores = async function(edId) {
+            if (!isAdmin) return;
+            const finaleRes = data.results.filter(r => r.editionId === edId && r.phase === 'finale');
+            if (finaleRes.length === 0) { alert('Aucun résultat de finale pour calculer les scores.'); return; }
+
+            const finalistIds = new Set(finaleRes.map(r => r.playerId));
+            const top3 = [1,2,3].map(pos => finaleRes.find(r => r.position === pos)?.playerId ?? null);
+
+            const preds = data.predictions.filter(p => p.editionId === edId);
+            for (const pred of preds) {
+                let score = 0;
+                // +1 per correct finalist
+                (pred.finalists || []).forEach(pid => { if (finalistIds.has(pid)) score += 1; });
+                // +3 per correct podium position
+                (pred.top3 || []).forEach((pid, i) => { if (pid && pid === top3[i]) score += 3; });
+                await updateDoc(doc(db, 'predictions', pred.id), { score, scored: true });
+            }
+            alert(`Scores calculés pour ${preds.length} prédiction(s) ✅`);
+        };
+
+        function renderPredForm(edId) {
+            const container = document.getElementById(`pred-form-${edId}`);
+            if (!container) return;
+            const edition = data.editions.find(e => e.id === edId);
+            if (!edition) return;
+
+            const myPart = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+            const myPred = myPart ? data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id) : null;
+
+            // Init state from saved prediction if not yet set
+            if (!predState[edId] && myPred) {
+                predState[edId] = { finalists: new Set(myPred.finalists || []), top3: myPred.top3 || [null,null,null] };
+            }
+            if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+            const s = predState[edId];
+
+            // Inscribed players (for this edition) — those who have an inscription or qualification result
+            const inscribedIds = new Set(data.results
+                .filter(r => r.editionId === edId && (r.phase === 'inscription' || r.phase === 'qualification'))
+                .map(r => r.playerId));
+            const players = data.participants.filter(p => inscribedIds.has(p.id));
+
+            const rankLabels = ['🥇 1er', '🥈 2ème', '🥉 3ème'];
+
+            let html = `<div class="pred-section-title">Qui sera en finale ?</div>`;
+            html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Sélectionne les joueurs que tu penses voir en finale</p>`;
+            html += `<div class="pred-player-grid">`;
+            players.forEach(p => {
+                const sel = s.finalists.has(p.id) ? ' selected-finalist' : '';
+                html += `<div class="pred-player-chip${sel}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
+            });
+            html += `</div>`;
+
+            html += `<div class="pred-section-title" style="margin-top:16px">Ton top 3</div>`;
+            html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Clique sur une position puis un joueur (+3 pts si correct)</p>`;
+            [0,1,2].forEach(i => {
+                const chosen = s.top3[i] ? data.participants.find(p => p.id === s.top3[i]) : null;
+                const rankClass = `selected-top${i+1}`;
+                html += `<div style="margin-bottom:6px">
+                    <span style="font-size:0.82rem;font-weight:700;margin-right:8px">${rankLabels[i]}</span>
+                    <div class="pred-player-grid" style="display:inline-flex;flex-wrap:wrap;gap:6px">`;
+                players.forEach(p => {
+                    const isChosen = s.top3[i] === p.id;
+                    html += `<div class="pred-player-chip${isChosen ? ' ' + rankClass : ''}" onclick="setPredTop('${edId}',${i+1},'${p.id}')">${pName(p)}</div>`;
+                });
+                html += `</div></div>`;
+            });
+
+            const canSubmit = !!(currentUser && myPart);
+            html += `<button class="btn btn-primary" style="margin-top:14px" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
+                ${myPred ? '✏️ Modifier ma prédiction' : '✅ Envoyer ma prédiction'}
+            </button>`;
+            if (!currentUser) html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>`;
+
+            container.innerHTML = html;
+        }
+
+        function displayPredictions() {
+            const container = document.getElementById('predictionsContent');
+            if (!container) return;
+
+            // Upcoming editions (open for predictions)
+            const today = new Date();
+            const upcoming = data.editions
+                .filter(e => e.status === 'upcoming' || new Date(e.date) > today)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Past editions with prediction results
+            const past = data.editions
+                .filter(e => e.status === 'terminee' || new Date(e.date) <= today)
+                .filter(e => data.predictions.some(p => p.editionId === e.id))
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+
+            let html = '';
+
+            if (upcoming.length === 0 && past.length === 0) {
+                html = '<div class="card"><div class="empty-state"><span class="empty-state-icon">🔮</span><p>Aucune prédiction disponible pour le moment</p></div></div>';
+                container.innerHTML = html;
+                return;
+            }
+
+            // ── Upcoming: prediction forms ──
+            if (upcoming.length > 0) {
+                html += '<div class="card"><h2>🔮 Prédis l\'édition suivante</h2>';
+                upcoming.forEach(e => {
+                    const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                    const inscribedIds = new Set(data.results
+                        .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
+                        .map(r => r.playerId));
+                    if (inscribedIds.size === 0) return; // skip if no players registered yet
+
+                    // Count predictions
+                    const predCount = data.predictions.filter(p => p.editionId === e.id).length;
+                    html += `<div class="pred-edition-card">
+                        <div class="pred-edition-header">
+                            <div style="flex:1;font-weight:800">${e.name}</div>
+                            <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
+                            <span class="pred-badge open">Ouvert</span>
+                            <span style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${predCount} prédiction${predCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="pred-body">
+                            <div id="pred-form-${e.id}"></div>
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            // ── Past: leaderboards ──
+            if (past.length > 0) {
+                html += '<div class="card"><h2>📊 Résultats des prédictions</h2>';
+                past.forEach(e => {
+                    const preds = data.predictions.filter(p => p.editionId === e.id && p.scored);
+                    if (preds.length === 0) {
+                        // Scored not yet — show admin calc button
+                        if (!isAdmin) return;
+                        html += `<div class="pred-edition-card">
+                            <div class="pred-edition-header">
+                                <div style="flex:1;font-weight:700">${e.name}</div>
+                                <span class="pred-badge closed">Non calculé</span>
+                            </div>
+                            <div class="pred-body">
+                                <button class="btn btn-secondary" onclick="calculatePredictionScores('${e.id}')">⚡ Calculer les scores</button>
+                            </div>
+                        </div>`;
+                        return;
+                    }
+
+                    const ranked = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
+                    const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '';
+                    const adminCalc = isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">🔄 Recalculer</button>` : '';
+                    html += `<div class="pred-edition-card">
+                        <div class="pred-edition-header">
+                            <div style="flex:1;font-weight:700">${e.name}</div>
+                            <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
+                            <span class="pred-badge scored">Calculé</span>
+                            ${adminCalc}
+                        </div>
+                        <div class="pred-body">`;
+                    ranked.forEach((pred, i) => {
+                        const player = data.participants.find(p => p.id === pred.playerId);
+                        const isMe = currentUser && player?.userId === currentUser.uid;
+                        html += `<div class="pred-score-row" style="${isMe ? 'background:rgba(0,217,54,0.04);border-radius:6px;padding:8px 6px;' : ''}">
+                            <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;min-width:22px">${i+1}.</span>
+                            <span style="flex:1;font-weight:${isMe?'700':'400'}">${player ? pName(player) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.75rem">← toi</span>' : ''}</span>
+                            <span class="pred-score-pts">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>
+                        </div>`;
+                    });
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+
+            // Render prediction forms for upcoming editions
+            upcoming.forEach(e => {
+                const inscribedIds = new Set(data.results
+                    .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
+                    .map(r => r.playerId));
+                if (inscribedIds.size > 0) renderPredForm(e.id);
+            });
+        }
+
         // General ranking
         let selectedRankingSeason = null; // null = auto-detect on first load
         window.setRankingSeason = (s) => { selectedRankingSeason = s; displayGeneralRanking(); };
@@ -4499,6 +4921,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayHome();
             displayNextEditionBanner();
             displayStats();
+            if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
+            if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
         }, onErr('editions'));
 
         onSnapshot(collection(db, 'results'), snap => {
@@ -4513,6 +4937,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayStats();
             displayGeneralRanking();
         }, onErr('results'));
+
+        onSnapshot(query(collection(db, 'predictions'), where('cupId', '==', cupId)), snap => {
+            data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            loaded.predictions = true;
+            checkLoaded();
+            // Refresh predictions section if visible
+            if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
+        }, onErr('predictions'));
     </script>
 </body>
 </html>
