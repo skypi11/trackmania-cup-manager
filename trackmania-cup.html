@@ -3062,6 +3062,22 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     html += '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
                 }
 
+                // Inscrits présents mais non qualifiés
+                const inscritIds = new Set(edResults.filter(r => r.phase === 'inscription').map(r => r.playerId));
+                const qualIds    = new Set(qualResults.map(r => r.playerId));
+                const presentOnly = [...inscritIds].filter(pid => !qualIds.has(pid));
+                if (presentOnly.length > 0) {
+                    html += `<div class="phase-title" style="margin-top:20px">👤 Présents — non qualifiés (${presentOnly.length})</div>
+                        <div class="chips">`;
+                    presentOnly.forEach(pid => {
+                        const player = data.participants.find(p => p.id === pid);
+                        if (!player) return;
+                        const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${edResults.find(r => r.playerId === pid && r.phase === 'inscription')?.id}')">✕</button>` : '';
+                        html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
+                    });
+                    html += '</div>';
+                }
+
                 html += '</div>';
 
             } else {
@@ -3183,6 +3199,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>` : '';
 
                 const upcomingEditBtn = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
+                const adminInscriptionHtml = isAdmin ? (() => {
+                    const opts = data.participants
+                        .filter(p => !inscriptions.some(r => r.playerId === p.id))
+                        .sort((a, b) => pName(a).localeCompare(pName(b)))
+                        .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+                    return `<form id="adminInscriptionForm" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                        <select id="adminInscriptionPlayer" style="flex:1;min-width:160px;padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:0.85rem">
+                            <option value="">Inscrire un joueur…</option>
+                            ${opts}
+                        </select>
+                        <button type="submit" class="btn btn-secondary btn-small">➕ Inscrire</button>
+                    </form>`;
+                })() : '';
+
                 html = `<div class="card">
                     <h2>🏆 ${e.name}${upcomingEditBtn}</h2>
                     ${workflowHtml}
@@ -3193,11 +3223,30 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div style="margin-top:28px">
                         <div class="phase-title" style="margin-top:0">👥 Inscrits (${inscriptions.length})</div>
                         ${registrantsHtml}
+                        ${adminInscriptionHtml}
                     </div>
                 </div>`;
             }
 
             content.innerHTML = html;
+
+            // Bind admin inscription form for upcoming editions
+            const adminInscForm = document.getElementById('adminInscriptionForm');
+            if (adminInscForm) {
+                adminInscForm.addEventListener('submit', async (ev) => {
+                    ev.preventDefault();
+                    const playerId = document.getElementById('adminInscriptionPlayer').value;
+                    if (!playerId) return;
+                    const btn = adminInscForm.querySelector('[type="submit"]');
+                    btn.disabled = true;
+                    try {
+                        await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'inscription', cupId });
+                        openEditionDetail(id);
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
 
             // Bind admin form if present
             const detailForm = document.getElementById('detailAddResultForm');
@@ -3367,8 +3416,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const historyRows = pastEditions.map(e => {
                 const participated = qualRes.some(r => r.editionId === e.id);
                 const finale = finaleRes.find(r => r.editionId === e.id);
-                if (!participated && !finale) return null;
-                return { edition: e, participated, finale };
+                const inscrit = data.results.some(r => r.editionId === e.id && r.playerId === playerId && r.phase === 'inscription');
+                if (!participated && !finale && !inscrit) return null;
+                return { edition: e, participated, finale, inscrit };
             }).filter(Boolean);
 
             const isOwnProfile = currentUser && player.userId === currentUser.uid;
@@ -3439,12 +3489,16 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (historyRows.length > 0) {
                 html += `<div class="phase-title" style="margin-top:0">📅 Historique par édition</div>
                     <table><thead><tr><th>Édition</th><th>Participation</th><th>Finale</th><th>Points</th></tr></thead><tbody>`;
-                historyRows.forEach(({ edition, participated, finale }) => {
+                historyRows.forEach(({ edition, participated, finale, inscrit }) => {
                     const pos = finale ? `${medals[finale.position] || ''} P${finale.position}` : '—';
                     const pts = finale ? `<span class="pts-badge">+${getPoints(finale.position)}</span>` : '—';
+                    let presenceHtml;
+                    if (participated) presenceHtml = '<span style="color:var(--color-accent)">✓ Qualifié</span>';
+                    else if (inscrit)  presenceHtml = '<span style="color:rgba(255,255,255,0.35)">Présent</span>';
+                    else               presenceHtml = '—';
                     html += `<tr>
                         <td><strong>${edition.name}</strong></td>
-                        <td>${participated ? '<span style="color:var(--color-accent)">✓</span>' : '—'}</td>
+                        <td>${presenceHtml}</td>
                         <td>${pos}</td>
                         <td>${pts}</td>
                     </tr>`;
