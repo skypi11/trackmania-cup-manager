@@ -1380,7 +1380,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     </div>
 
     <!-- EDIT PARTICIPANT MODAL -->
-    <div class="modal-overlay" id="editParticipantModal">
+    <div class="modal-overlay" id="editParticipantModal" onclick="if(event.target===this)closeEditParticipant()">
         <div class="modal">
             <h2>✏️ Modifier le joueur</h2>
             <form id="editParticipantForm">

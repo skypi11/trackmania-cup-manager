@@ -685,7 +685,9 @@
         try {
             const uid = currentUser.uid;
             const createdAt = new Date().toISOString();
-            await setDoc(doc(db, 'users', uid), { pseudo, team, games, email: currentUser.email, uid, createdAt });
+            const pseudoTM = games.includes('trackmania') ? pseudo : '';
+            const pseudoRL = games.includes('rocket-league') ? pseudo : '';
+            await setDoc(doc(db, 'users', uid), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, uid, createdAt });
             await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
             document.body.classList.remove('guest-mode');
             document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
@@ -713,7 +715,7 @@
             document.getElementById('profTeam').value   = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
-            document.getElementById('profPseudoTM').value = d.pseudoTM || '';
+            document.getElementById('profPseudoTM').value = d.pseudoTM || d.pseudo || '';
             document.getElementById('profPseudoRL').value = d.pseudoRL || '';
             document.getElementById('profEmail').textContent = `Email : ${currentUser.email}`;
             togglePseudoFields();

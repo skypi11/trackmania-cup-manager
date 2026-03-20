@@ -708,6 +708,7 @@
                 </div>
                 <p class="modal-error" id="setupError"></p>
             </form>
+            <button type="button" class="btn-secondary" onclick="handleLogout()" style="width:100%;margin-top:8px;font-size:0.82rem;opacity:0.6">Se déconnecter</button>
         </div>
 
         <!-- VIEW: Player profile — shown when logged in as player -->
@@ -984,8 +985,10 @@
         try {
             const uid = currentUser.uid;
             const createdAt = new Date().toISOString();
+            const pseudoTM = games.includes('trackmania') ? pseudo : '';
+            const pseudoRL = games.includes('rocket-league') ? pseudo : '';
             await setDoc(doc(db, 'users', uid), {
-                pseudo, team, games,
+                pseudo, pseudoTM, pseudoRL, team, games,
                 email: currentUser.email,
                 uid, createdAt
             });
@@ -1016,7 +1019,7 @@
             document.getElementById('profTeam').value    = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
-            document.getElementById('profPseudoTM').value = d.pseudoTM || '';
+            document.getElementById('profPseudoTM').value = d.pseudoTM || d.pseudo || '';
             document.getElementById('profPseudoRL').value = d.pseudoRL || '';
             document.getElementById('profEmail').textContent = `Email : ${currentUser.email}`;
             togglePseudoFields();
@@ -1064,7 +1067,8 @@
 
     window.handleLogout = async () => {
         await signOut(auth);
-        closeAccount();
+        hasProfile = false;
+        document.getElementById('accountModal').classList.remove('open');
     };
 
     // ── Gestion des clics sur les cards ──────────────────────────────────────
