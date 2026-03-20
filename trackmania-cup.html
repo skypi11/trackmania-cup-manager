@@ -2865,6 +2865,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                     <label>Phase *</label>
                                     <select id="detailResultPhase" required onchange="detailOnPhaseChange()">
                                         <option value="">Phase…</option>
+                                        <option value="inscription">📋 Inscription (présent)</option>
                                         <option value="qualification">🎯 Qualifications</option>
                                         <option value="finale">🏆 Finale KO</option>
                                     </select>
@@ -3211,7 +3212,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     btn.disabled = true;
 
                     try {
-                        if (phase === 'qualification') {
+                        if (phase === 'inscription') {
+                            if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'inscription')) {
+                                alert('Ce joueur est déjà inscrit à cette édition !'); return;
+                            }
+                            await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'inscription', cupId });
+
+                        } else if (phase === 'qualification') {
                             const map      = parseInt(document.getElementById('detailResultMap').value);
                             const position = parseInt(document.getElementById('detailResultQualPos').value);
 
