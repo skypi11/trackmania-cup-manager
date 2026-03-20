@@ -2495,7 +2495,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const adminCol = isAdmin ? '<th></th>' : '';
             let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Participations</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
             filtered.forEach(p => {
-                const quals = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').length;
+                const quals = new Set(data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
                 const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
                 html += `<tr>
@@ -2675,7 +2675,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const alwaysTop5 = finales.length >= 3 && finales.every(r => r.position <= 5);
 
             return {
-                quals:          quals.length,
+                quals:          new Set(quals.map(r => r.editionId)).size,
                 finals:         finales.length,
                 wins:           finales.filter(r => r.position === 1).length,
                 podiums:        finales.filter(r => r.position <= 3).length,
@@ -3626,7 +3626,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                 </div>
                 <div class="player-profile-stats" style="margin-bottom:20px">
-                    <div class="pp-stat"><div class="pp-stat-value">${qualRes.length}</div><div class="pp-stat-label">Participations</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${new Set(qualRes.map(r => r.editionId)).size}</div><div class="pp-stat-label">Participations</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">Finales</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
@@ -3985,7 +3985,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             // Stats row — 6 stats with participations
             const statsData = [
-                { label: 'PARTICIPATIONS', value: String(qualRes.length) },
+                { label: 'PARTICIPATIONS', value: String(new Set(qualRes.map(r => r.editionId)).size) },
                 { label: 'FINALES',        value: String(finaleRes.length) },
                 { label: 'POINTS',         value: String(points) },
                 { label: 'VICTOIRES',      value: String(wins) },
@@ -4757,7 +4757,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 if (qRes.length === 0 && fRes.length === 0) return null;
                 return {
                     p,
-                    quals: qRes.length,
+                    quals: new Set(qRes.map(r => r.editionId)).size,
                     finals: fRes.length,
                     points: fRes.reduce((sum, r) => sum + getPoints(r.position), 0),
                     wins: fRes.filter(r => r.position === 1).length,
