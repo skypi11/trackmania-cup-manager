@@ -1165,6 +1165,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <h2>📈 Statistiques par joueur</h2>
                 <div id="playerStats"></div>
             </div>
+            <div class="card">
+                <h2>⚡ Streaks & Records</h2>
+                <div id="streaksStats"></div>
+            </div>
           </div>
 
           <!-- HALL OF FAME -->
@@ -4162,6 +4166,84 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             });
             html += '</tbody></table>';
             container.innerHTML = html;
+
+            // ── Streaks & Records ──────────────────────────────────────────
+            const streaksContainer = document.getElementById('streaksStats');
+            const pastEditionsAsc = data.editions
+                .filter(e => e.status === 'terminee' || new Date(e.date) < today)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            const pastEditionsDesc = [...pastEditionsAsc].reverse();
+
+            const streakRows = data.participants.map(p => {
+                const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
+                const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
+                if (qRes.length === 0 && fRes.length === 0) return null;
+
+                // Current participation streak
+                let curPart = 0;
+                for (const e of pastEditionsDesc) {
+                    if (qRes.some(r => r.editionId === e.id)) curPart++; else break;
+                }
+                // Best participation streak
+                let bestPart = 0, tmp = 0;
+                for (const e of pastEditionsAsc) {
+                    if (qRes.some(r => r.editionId === e.id)) { tmp++; bestPart = Math.max(bestPart, tmp); } else tmp = 0;
+                }
+                // Current finale streak
+                let curFin = 0;
+                for (const e of pastEditionsDesc) {
+                    if (fRes.some(r => r.editionId === e.id)) curFin++; else break;
+                }
+                // Max vies bonus in a single edition
+                let maxVies = 0;
+                pastEditionsAsc.forEach(e => {
+                    const v = qRes.filter(r => r.editionId === e.id).length - 1;
+                    if (v > maxVies) maxVies = v;
+                });
+
+                return { p, curPart, bestPart, curFin, maxVies };
+            }).filter(Boolean).sort((a, b) => b.curPart - a.curPart || b.bestPart - a.bestPart);
+
+            if (streakRows.length === 0) {
+                streaksContainer.innerHTML = '<div class="empty-state"><span class="empty-state-icon">⚡</span><p>Pas encore de données</p></div>';
+                return;
+            }
+
+            // Record holders highlights
+            const topCurPart  = streakRows.reduce((best, r) => r.curPart  > best.curPart  ? r : best);
+            const topBestPart = streakRows.reduce((best, r) => r.bestPart > best.bestPart ? r : best);
+            const topCurFin   = streakRows.reduce((best, r) => r.curFin   > best.curFin   ? r : best);
+            const topVies     = streakRows.reduce((best, r) => r.maxVies  > best.maxVies  ? r : best);
+
+            const recordCards = [
+                topCurPart.curPart  > 0 ? { icon: '🔥', label: 'Streak actif',           value: `${topCurPart.curPart} éd.`,  player: topCurPart.p  } : null,
+                topBestPart.bestPart > 1 ? { icon: '📈', label: 'Meilleur streak',         value: `${topBestPart.bestPart} éd.`, player: topBestPart.p } : null,
+                topCurFin.curFin    > 0 ? { icon: '🏆', label: 'Finales consécutives',    value: `${topCurFin.curFin} éd.`,   player: topCurFin.p   } : null,
+                topVies.maxVies     > 0 ? { icon: '❤️',  label: 'Max vies bonus (édition)', value: `×${topVies.maxVies}`,        player: topVies.p     } : null,
+            ].filter(Boolean);
+
+            let streakHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px">
+                ${recordCards.map(c => `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px">
+                    <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-bottom:6px">${c.icon} ${c.label}</div>
+                    <div style="font-size:1.25rem;font-weight:900;color:var(--color-accent)">${c.value}</div>
+                    <div class="player-name-link" onclick="openPlayerProfile('${c.player.id}')" style="font-size:0.82rem;margin-top:4px;color:rgba(255,255,255,0.7)">${pName(c.player)}</div>
+                </div>`).join('')}
+            </div>`;
+
+            streakHtml += `<table><thead><tr><th>Joueur</th><th>🔥 Streak actuel</th><th>📈 Meilleur streak</th><th>🏆 Finales consécutives</th><th>❤️ Max vies</th></tr></thead><tbody>`;
+            streakRows.forEach(r => {
+                const isMe = currentUser && r.p.userId === currentUser.uid;
+                const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
+                streakHtml += `<tr style="${rowStyle}">
+                    <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong></td>
+                    <td>${r.curPart  > 0 ? `<span style="color:${r.curPart >= 3 ? '#f97316' : '#fff'};font-weight:700">${r.curPart >= 3 ? '🔥' : ''}${r.curPart}</span>` : '—'}</td>
+                    <td>${r.bestPart > 0 ? r.bestPart : '—'}</td>
+                    <td>${r.curFin   > 0 ? `<span style="color:#fbbf24;font-weight:700">${r.curFin}</span>` : '—'}</td>
+                    <td>${r.maxVies  > 0 ? `<span style="color:#f87171">×${r.maxVies}</span>` : '—'}</td>
+                </tr>`;
+            });
+            streakHtml += '</tbody></table>';
+            streaksContainer.innerHTML = streakHtml;
         }
 
         // Export CSV
