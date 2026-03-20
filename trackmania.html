@@ -694,7 +694,7 @@
             document.getElementById('accountBtn').textContent = `👤 ${pseudo || currentUser.displayName}`;
             document.getElementById('profileSuccess').style.display = 'block';
             document.getElementById('profileError').style.display = 'none';
-            setTimeout(() => { document.getElementById('profileSuccess').style.display = 'none'; }, 3000);
+            setTimeout(() => closeAccount(), 1500);
         } catch {
             document.getElementById('profileError').textContent = 'Erreur lors de la sauvegarde.';
             document.getElementById('profileError').style.display = 'block';

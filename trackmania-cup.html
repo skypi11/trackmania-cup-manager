@@ -1145,19 +1145,19 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <div class="section-panel" id="stats" style="display:none">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Joueurs inscrits</div>
+                    <div class="stat-label">Joueurs ayant participé</div>
                     <div class="stat-value" id="totalParticipants">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Éditions jouées</div>
+                    <div class="stat-label">Éditions terminées</div>
                     <div class="stat-value" id="totalEditions">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Participations</div>
+                    <div class="stat-label">Qualifications enregistrées</div>
                     <div class="stat-value" id="totalQuals">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Participations finales</div>
+                    <div class="stat-label">Entrées en finale</div>
                     <div class="stat-value" id="totalFinals">0</div>
                 </div>
             </div>
@@ -1402,7 +1402,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     </div>
 
     <!-- EDIT EDITION MODAL -->
-    <div class="modal-overlay" id="editEditionModal">
+    <div class="modal-overlay" id="editEditionModal" onclick="if(event.target===this)closeEditEdition()">
         <div class="modal" style="max-width:560px">
             <h2>✏️ Modifier l'édition</h2>
             <form id="editEditionForm">
@@ -2213,7 +2213,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             btn.disabled = true; btn.textContent = 'Création...';
             try {
                 await addDoc(collection(db, 'participants'), { pseudo, team, userId: currentUser.uid, cupId, discordId: '', discordUsername: '' });
-                await setDoc(doc(db, 'users', currentUser.uid), { pseudo, team }, { merge: true });
+                await setDoc(doc(db, 'users', currentUser.uid), {
+                    pseudo, team, pseudoTM: pseudo,
+                    games: ['trackmania'],
+                    email: currentUser.email
+                }, { merge: true });
                 closeCreateProfile();
                 document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
                 showToast('Profil créé ! Bienvenue 🎉');
@@ -2812,6 +2816,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             currentDetailEditionId = id;
             const e = data.editions.find(e => e.id === id);
             if (!e) return;
+            // Restore collapsed states from sessionStorage
+            youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
+            twitchCollapsed  = sessionStorage.getItem('twCollapsed_' + id) === '1';
 
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const isPast = new Date(e.date) < today || e.status === 'terminee' || e.status === 'en_cours';
@@ -3221,12 +3228,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
         window.toggleTwitchEmbed = (btn) => {
             twitchCollapsed = !twitchCollapsed;
+            sessionStorage.setItem('twCollapsed_' + currentDetailEditionId, twitchCollapsed ? '1' : '');
             document.getElementById('twitchEmbedWrap').style.display = twitchCollapsed ? 'none' : '';
             btn.textContent = twitchCollapsed ? '▶ Afficher' : '▼ Réduire';
         };
 
         window.toggleYoutubeEmbed = (btn) => {
             youtubeCollapsed = !youtubeCollapsed;
+            sessionStorage.setItem('ytCollapsed_' + currentDetailEditionId, youtubeCollapsed ? '1' : '');
             document.getElementById('youtubeEmbedWrap').style.display = youtubeCollapsed ? 'none' : '';
             btn.textContent = youtubeCollapsed ? '▶ Afficher' : '▼ Réduire';
         };
@@ -3918,7 +3927,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         function displayStats() {
             const quals = data.results.filter(r => r.phase === 'qualification').length;
             const finals = data.results.filter(r => r.phase === 'finale').length;
-            document.getElementById('totalParticipants').textContent = data.participants.length;
+            const activePlayerIds = new Set(data.results.map(r => r.playerId));
+            document.getElementById('totalParticipants').textContent = data.participants.filter(p => activePlayerIds.has(p.id)).length;
             const today = new Date(); today.setHours(0,0,0,0);
             document.getElementById('totalEditions').textContent = data.editions.filter(e => e.status === 'terminee' || new Date(e.date) < today).length;
             document.getElementById('totalQuals').textContent = quals;
