@@ -607,9 +607,9 @@
         } catch {}
 
         try {
-            const userSnap = await getDoc(doc(db, 'users', user.uid));
-            if (userSnap.exists()) {
-                const pseudo = userSnap.data().pseudo;
+            const partSnap = await getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)));
+            if (!partSnap.empty) {
+                const pseudo = partSnap.docs[0].data().pseudo;
                 document.body.classList.remove('guest-mode');
                 document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
                 document.getElementById('accountBtn').className = 'account-btn player-active';
@@ -687,8 +687,10 @@
             const createdAt = new Date().toISOString();
             const pseudoTM = games.includes('trackmania') ? pseudo : '';
             const pseudoRL = games.includes('rocket-league') ? pseudo : '';
-            await setDoc(doc(db, 'users', uid), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, uid, createdAt });
-            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
+            await addDoc(collection(db, 'participants'), {
+                pseudo, pseudoTM, pseudoRL, team, games,
+                email: currentUser.email, userId: uid, createdAt
+            });
             document.body.classList.remove('guest-mode');
             document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
             document.getElementById('accountBtn').className = 'account-btn player-active';
@@ -709,9 +711,9 @@
 
     function loadProfileView() {
         if (!currentUser) return;
-        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
-            if (!snap.exists()) return;
-            const d = snap.data();
+        getDocs(query(collection(db, 'participants'), where('userId', '==', currentUser.uid))).then(snap => {
+            if (snap.empty) return;
+            const d = snap.docs[0].data();
             document.getElementById('profTeam').value   = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
@@ -735,10 +737,13 @@
         const btn = document.getElementById('profileSubmitBtn');
         btn.disabled = true; btn.textContent = 'Enregistrement...';
         try {
-            await setDoc(doc(db, 'users', currentUser.uid), { pseudo, pseudoTM, pseudoRL, team, games }, { merge: true });
             const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
             const snap = await getDocs(q);
-            await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+            if (snap.empty) {
+                await addDoc(collection(db, 'participants'), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid, createdAt: new Date().toISOString() });
+            } else {
+                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, pseudoTM, pseudoRL, team, games })));
+            }
             document.getElementById('accountBtn').textContent = `👤 ${pseudo || currentUser.displayName}`;
             document.getElementById('profileSuccess').style.display = 'block';
             document.getElementById('profileError').style.display = 'none';

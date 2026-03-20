@@ -862,10 +862,10 @@
 
         // Check if player has a profile
         try {
-            const userSnap = await getDoc(doc(db, 'users', user.uid));
-            if (userSnap.exists()) {
+            const partSnap = await getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)));
+            if (!partSnap.empty) {
                 hasProfile = true;
-                activatePlayerUI(userSnap.data().pseudo);
+                activatePlayerUI(partSnap.docs[0].data().pseudo);
                 closeAccount();
             } else {
                 // Première connexion Google : demander le pseudo
@@ -987,12 +987,10 @@
             const createdAt = new Date().toISOString();
             const pseudoTM = games.includes('trackmania') ? pseudo : '';
             const pseudoRL = games.includes('rocket-league') ? pseudo : '';
-            await setDoc(doc(db, 'users', uid), {
+            await addDoc(collection(db, 'participants'), {
                 pseudo, pseudoTM, pseudoRL, team, games,
-                email: currentUser.email,
-                uid, createdAt
+                email: currentUser.email, userId: uid, createdAt
             });
-            await addDoc(collection(db, 'participants'), { pseudo, team, userId: uid, createdAt });
             hasProfile = true;
             activatePlayerUI(pseudo);
             closeAccount();
@@ -1013,9 +1011,9 @@
 
     function loadProfileView() {
         if (!currentUser) return;
-        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
-            if (!snap.exists()) return;
-            const d = snap.data();
+        getDocs(query(collection(db, 'participants'), where('userId', '==', currentUser.uid))).then(snap => {
+            if (snap.empty) return;
+            const d = snap.docs[0].data();
             document.getElementById('profTeam').value    = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
@@ -1040,14 +1038,12 @@
         btn.disabled = true; btn.textContent = 'Enregistrement...';
 
         try {
-            await setDoc(doc(db, 'users', currentUser.uid), { pseudo, pseudoTM, pseudoRL, team, games }, { merge: true });
-
             const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
             const snap = await getDocs(q);
             if (snap.empty) {
-                await addDoc(collection(db, 'participants'), { pseudo, team, userId: currentUser.uid, createdAt: new Date().toISOString() });
+                await addDoc(collection(db, 'participants'), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid, createdAt: new Date().toISOString() });
             } else {
-                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, team })));
+                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, pseudoTM, pseudoRL, team, games })));
             }
 
             activatePlayerUI(pseudo || currentUser.displayName);

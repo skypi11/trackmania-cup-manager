@@ -1489,7 +1489,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
 
@@ -2132,12 +2132,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             closeAuthModal();
 
             try {
-                const [adminSnap, profileSnap] = await Promise.all([
+                const [adminSnap, partSnap] = await Promise.all([
                     getDoc(doc(db, 'admins', user.uid)),
-                    getDoc(doc(db, 'users', user.uid))
+                    getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)))
                 ]);
                 isAdmin = adminSnap.exists();
-                currentUserProfile = profileSnap.exists() ? profileSnap.data() : null;
+                currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
             } catch {
                 isAdmin = false;
                 currentUserProfile = null;
@@ -2228,12 +2228,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const btn = e.target.querySelector('[type="submit"]');
             btn.disabled = true; btn.textContent = 'Création...';
             try {
-                await addDoc(collection(db, 'participants'), { pseudo, team, userId: currentUser.uid, cupId, discordId: '', discordUsername: '' });
-                await setDoc(doc(db, 'users', currentUser.uid), {
-                    pseudo, team, pseudoTM: pseudo,
-                    games: ['trackmania'],
-                    email: currentUser.email
-                }, { merge: true });
+                await addDoc(collection(db, 'participants'), {
+                    pseudo, team, userId: currentUser.uid, cupId,
+                    pseudoTM: pseudo, games: ['trackmania'],
+                    email: currentUser.email, discordId: '', discordUsername: ''
+                });
                 closeCreateProfile();
                 document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
                 showToast('Profil créé ! Bienvenue 🎉');
@@ -3503,7 +3502,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const msg    = document.getElementById('ownProfileSaveMsg');
                     if (!pseudo) return;
                     try {
-                        if (currentUser) await updateDoc(doc(db, 'users', currentUser.uid), { pseudo, team });
                         await updateDoc(doc(db, 'participants', player.id), { pseudo, team });
                         document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
                         msg.style.display = 'block';
