@@ -2873,6 +2873,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                     <label>Map *</label>
                                     <select id="detailResultMap">
                                         ${[1,2,3,4,5,6].map(n => `<option value="${n}">Map ${n}</option>`).join('')}
+                                        <option value="7">Map 7 (Finale)</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -3236,6 +3237,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             if (!position) return;
                             if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'finale')) {
                                 alert('Un résultat de finale existe déjà pour ce joueur !'); return;
+                            }
+                            if (!data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
+                                alert('Ce joueur n\'a aucune qualification enregistrée pour cette édition !'); return;
                             }
                             await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'finale', position, cupId });
                         }
