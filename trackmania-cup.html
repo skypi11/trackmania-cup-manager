@@ -4223,7 +4223,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     if (selectedMapsSeason === 'all') return true;
                     return (e.saison || new Date(e.date).getFullYear()) === selectedMapsSeason;
                 })
-                .filter(e => e.status === 'terminee' || [1,2,3,4,5,6,7].some(n => e[`map${n}tmx`] || e[`map${n}name`]))
+                .filter(e => e.status === 'terminee' || e.status === 'live' || isAdmin)
+                .filter(e => [1,2,3,4,5,6,7].some(n => e[`map${n}tmx`] || e[`map${n}name`]))
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (editions.length === 0) {
