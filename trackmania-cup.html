@@ -1862,6 +1862,21 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </div>`;
             }
 
+            const guestCtaHtml = !currentUser ? `
+                <div style="background:linear-gradient(135deg,rgba(0,0,0,0.18),rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:18px;margin-bottom:20px">
+                    <div style="font-size:2rem;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(255,255,255,0.15))">🎮</div>
+                    <div style="flex:1">
+                        <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-accent);margin-bottom:4px">Rejoins la compétition</div>
+                        <div style="font-size:0.83rem;color:var(--color-text-secondary);line-height:1.5">Connecte-toi pour apparaître dans les classements, suivre tes stats et t'inscrire aux prochaines éditions.</div>
+                        <div style="display:flex;gap:16px;margin-top:8px">
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🔑 Connexion Google</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">✏️ Choix du pseudo</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🏆 Prêt à jouer</div>
+                        </div>
+                    </div>
+                    <button onclick="openAuthModal()" style="flex-shrink:0;background:var(--color-accent);color:#000;border:none;border-radius:10px;padding:12px 22px;font-weight:800;font-size:0.85rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Créer mon profil →</button>
+                </div>` : '';
+
             container.innerHTML = `
                 <div class="home-hero">
                     <img src="Springs Esport.png" class="home-hero-logo" alt="Springs Esport">
@@ -1869,6 +1884,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div class="home-hero-sub">${siteConfig.siteSubtitle}</div>
                     ${featuredHtml}
                 </div>
+                ${guestCtaHtml}
                 <div class="home-stats">
                     <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">Éditions</div></div>
                     <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">Joueurs</div></div>
