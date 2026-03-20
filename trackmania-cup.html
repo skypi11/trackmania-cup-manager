@@ -3421,6 +3421,47 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 return { edition: e, participated, finale, inscrit };
             }).filter(Boolean);
 
+            // ── Streaks & Records ──────────────────────────────────────────
+            const pastDesc = [...pastEditions].reverse(); // most recent first
+
+            // Current participation streak (from last edition backwards)
+            let currentPartStreak = 0;
+            for (const e of pastDesc) {
+                if (qualRes.some(r => r.editionId === e.id)) currentPartStreak++;
+                else break;
+            }
+            // Best participation streak (all-time)
+            let bestPartStreak = 0, tmpStreak = 0;
+            for (const e of pastEditions) {
+                if (qualRes.some(r => r.editionId === e.id)) { tmpStreak++; bestPartStreak = Math.max(bestPartStreak, tmpStreak); }
+                else tmpStreak = 0;
+            }
+            // Current finale streak
+            let currentFinStreak = 0;
+            for (const e of pastDesc) {
+                if (finaleRes.some(r => r.editionId === e.id)) currentFinStreak++;
+                else break;
+            }
+            // Best finale streak
+            let bestFinStreak = 0, tmpFinStreak = 0;
+            for (const e of pastEditions) {
+                if (finaleRes.some(r => r.editionId === e.id)) { tmpFinStreak++; bestFinStreak = Math.max(bestFinStreak, tmpFinStreak); }
+                else tmpFinStreak = 0;
+            }
+            // Max vies bonus in a single edition
+            let maxVies = 0;
+            pastEditions.forEach(e => {
+                const v = qualRes.filter(r => r.editionId === e.id).length - 1;
+                if (v > maxVies) maxVies = v;
+            });
+            // Best edition by points (single finale)
+            const bestEditionResult = finaleRes.length > 0
+                ? finaleRes.reduce((best, r) => getPoints(r.position) > getPoints(best.position) ? r : best)
+                : null;
+            const bestEditionName = bestEditionResult
+                ? (data.editions.find(e => e.id === bestEditionResult.editionId)?.name || '?')
+                : null;
+
             const isOwnProfile = currentUser && player.userId === currentUser.uid;
             const avatar = pName(player).charAt(0);
             const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -3483,6 +3524,31 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
                     <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
                 </div>
+                ${(currentPartStreak > 0 || bestPartStreak > 0 || maxVies > 0 || bestEditionName) ? `
+                <div class="phase-title" style="margin-top:0">⚡ Streaks & Records</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin-bottom:20px">
+                    ${currentPartStreak > 0 ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
+                        <div style="font-size:1.6rem;font-weight:900;color:${currentPartStreak >= 3 ? '#f97316' : '#fff'}">${currentPartStreak >= 3 ? '🔥' : ''}${currentPartStreak}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Streak actuel</div>
+                    </div>` : ''}
+                    ${bestPartStreak > 1 ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
+                        <div style="font-size:1.6rem;font-weight:900">${bestPartStreak}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Meilleur streak</div>
+                    </div>` : ''}
+                    ${currentFinStreak > 0 ? `<div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:12px 14px;text-align:center">
+                        <div style="font-size:1.6rem;font-weight:900;color:#fbbf24">${currentFinStreak}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Finales consécutives</div>
+                    </div>` : ''}
+                    ${maxVies > 0 ? `<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:12px 14px;text-align:center">
+                        <div style="font-size:1.6rem;font-weight:900;color:#f87171">❤️×${maxVies}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Max vies bonus</div>
+                    </div>` : ''}
+                    ${bestEditionName ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
+                        <div style="font-size:1.6rem;font-weight:900;color:var(--color-accent)">+${getPoints(bestEditionResult.position)}</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Meilleure édition</div>
+                        <div style="font-size:0.72rem;color:rgba(255,255,255,0.25);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${bestEditionName}</div>
+                    </div>` : ''}
+                </div>` : ''}
                 <div class="phase-title" style="margin-top:0">🏅 Badges</div>
                 <div class="achievement-grid">${achievementGridHtml}</div>`;
 
@@ -3870,6 +3936,24 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         let selectedRankingSeason = 'all';
         window.setRankingSeason = (s) => { selectedRankingSeason = s; displayGeneralRanking(); };
 
+        function buildRankingStats(finaleResults) {
+            const stats = {};
+            data.participants.forEach(p => {
+                stats[p.id] = { player: p, points: 0, finals: 0, wins: 0, podiums: 0, best: Infinity };
+            });
+            finaleResults.forEach(r => {
+                if (!stats[r.playerId]) return;
+                stats[r.playerId].points += getPoints(r.position);
+                stats[r.playerId].finals++;
+                if (r.position === 1) stats[r.playerId].wins++;
+                if (r.position <= 3) stats[r.playerId].podiums++;
+                if (r.position < stats[r.playerId].best) stats[r.playerId].best = r.position;
+            });
+            return Object.values(stats)
+                .filter(s => s.finals > 0)
+                .sort((a, b) => b.points - a.points || b.wins - a.wins || a.best - b.best);
+        }
+
         function displayGeneralRanking() {
             const container = document.getElementById('generalRanking');
 
@@ -3884,9 +3968,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }
 
             // Filter editions by selected season
-            const editionIds = selectedRankingSeason === 'all'
-                ? null
-                : new Set(data.editions.filter(e => (e.saison || new Date(e.date).getFullYear()) === selectedRankingSeason).map(e => e.id));
+            const seasonEditions = selectedRankingSeason === 'all'
+                ? data.editions
+                : data.editions.filter(e => (e.saison || new Date(e.date).getFullYear()) === selectedRankingSeason);
+            const editionIds = selectedRankingSeason === 'all' ? null : new Set(seasonEditions.map(e => e.id));
             const finales = data.results.filter(r => r.phase === 'finale' && (editionIds === null || editionIds.has(r.editionId)));
 
             if (finales.length === 0) {
@@ -3895,29 +3980,43 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 return;
             }
 
-            const stats = {};
-            data.participants.forEach(p => {
-                stats[p.id] = { player: p, points: 0, finals: 0, wins: 0, podiums: 0, best: Infinity };
-            });
-            finales.forEach(r => {
-                if (!stats[r.playerId]) return;
-                stats[r.playerId].points += getPoints(r.position);
-                stats[r.playerId].finals++;
-                if (r.position === 1) stats[r.playerId].wins++;
-                if (r.position <= 3) stats[r.playerId].podiums++;
-                if (r.position < stats[r.playerId].best) stats[r.playerId].best = r.position;
-            });
+            const ranking = buildRankingStats(finales);
 
-            const ranking = Object.values(stats)
-                .filter(s => s.finals > 0)
-                .sort((a, b) => b.points - a.points || b.wins - a.wins || a.best - b.best);
+            // Compute previous ranking (without the most recent edition) for trend indicator
+            const today = new Date();
+            const doneEditions = seasonEditions
+                .filter(e => e.status === 'terminee' || new Date(e.date) < today)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            const prevRankMap = {};
+            if (doneEditions.length >= 2) {
+                const latestId = doneEditions[0].id;
+                const prevRanking = buildRankingStats(finales.filter(r => r.editionId !== latestId));
+                prevRanking.forEach((s, i) => { prevRankMap[s.player.id] = i + 1; });
+            }
 
-            // Find connected player's rank
-            const myEntry = currentUser
-                ? ranking.find(s => s.player.userId === currentUser.uid)
-                : null;
-            const myRank = myEntry ? ranking.indexOf(myEntry) + 1 : null;
+            // Champion de saison banner (only for a specific season)
+            let championBannerHtml = '';
+            if (selectedRankingSeason !== 'all' && ranking.length > 0) {
+                const champ = ranking[0];
+                const doneCount = doneEditions.length;
+                championBannerHtml = `<div style="background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                    <div style="font-size:2.4rem;line-height:1">🏆</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">Leader saison ${selectedRankingSeason}</div>
+                        <div style="font-size:1.35rem;font-weight:900;letter-spacing:-0.5px" class="player-name-link" onclick="openPlayerProfile('${champ.player.id}')">${pName(champ.player)}</div>
+                        <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:2px">${champ.player.team || 'Sans équipe'}</div>
+                    </div>
+                    <div style="display:flex;gap:20px;text-align:center">
+                        <div><div style="font-size:1.4rem;font-weight:900;color:#fbbf24">${champ.points}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">pts</div></div>
+                        <div><div style="font-size:1.4rem;font-weight:900">${champ.wins}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">victoire${champ.wins !== 1 ? 's' : ''}</div></div>
+                        <div><div style="font-size:1.4rem;font-weight:900">${champ.finals}<span style="font-size:0.9rem;font-weight:400;color:rgba(255,255,255,0.35)">/${doneCount}</span></div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">finales</div></div>
+                    </div>
+                </div>`;
+            }
 
+            // "Ma position" block
+            const myEntry = currentUser ? ranking.find(s => s.player.userId === currentUser.uid) : null;
+            const myRank  = myEntry ? ranking.indexOf(myEntry) + 1 : null;
             let myRankHtml = '';
             if (currentUser) {
                 if (myRank) {
@@ -3936,12 +4035,28 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 }
             }
 
-            let html = myRankHtml + '<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th></tr></thead><tbody>';
+            const showTrend = Object.keys(prevRankMap).length > 0;
+            const trendHeader = showTrend ? '<th title="Évolution vs édition précédente">±</th>' : '';
+            let html = championBannerHtml + myRankHtml + `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th>${trendHeader}</tr></thead><tbody>`;
             ranking.forEach((s, i) => {
                 const rank = i + 1;
                 const badgeClass = rank <= 3 ? `badge-${rank}` : 'badge-other';
                 const isMe = currentUser && s.player.userId === currentUser.uid;
                 const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
+
+                let trendHtml = '';
+                if (showTrend) {
+                    const prev = prevRankMap[s.player.id];
+                    if (prev === undefined) {
+                        trendHtml = `<td><span style="color:#60a5fa;font-size:0.7rem;font-weight:700">NEW</span></td>`;
+                    } else {
+                        const delta = prev - rank;
+                        if (delta > 0)      trendHtml = `<td><span style="color:#4ade80;font-size:0.78rem;font-weight:700">▲${delta}</span></td>`;
+                        else if (delta < 0) trendHtml = `<td><span style="color:#f87171;font-size:0.78rem;font-weight:700">▼${Math.abs(delta)}</span></td>`;
+                        else                trendHtml = `<td><span style="color:rgba(255,255,255,0.2);font-size:0.78rem">—</span></td>`;
+                    }
+                }
+
                 html += `<tr data-rank="${rank}" style="${rowStyle}">
                     <td><span class="badge ${badgeClass}">${rank}</span></td>
                     <td>
@@ -3954,6 +4069,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <td>${s.wins > 0 ? `🏆 ${s.wins}` : '—'}</td>
                     <td>${s.podiums > 0 ? `🥇 ${s.podiums}` : '—'}</td>
                     <td>${s.best === Infinity ? '—' : `P${s.best}`}</td>
+                    ${trendHtml}
                 </tr>`;
             });
             html += '</tbody></table>';
