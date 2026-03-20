@@ -4097,7 +4097,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         // General ranking
-        let selectedRankingSeason = 'all';
+        let selectedRankingSeason = null; // null = auto-detect on first load
         window.setRankingSeason = (s) => { selectedRankingSeason = s; displayGeneralRanking(); };
 
         function buildRankingStats(finaleResults) {
@@ -4121,14 +4121,29 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         function displayGeneralRanking() {
             const container = document.getElementById('generalRanking');
 
-            // Build season filter bar
-            const seasons = [...new Set(data.editions.map(e => e.saison || new Date(e.date).getFullYear()))].sort((a, b) => b - a);
+            // Build available seasons (only those with finale data)
+            const seasons = [...new Set(
+                data.results.filter(r => r.phase === 'finale').map(r => {
+                    const e = data.editions.find(ed => ed.id === r.editionId);
+                    return e ? (e.saison || new Date(e.date).getFullYear()) : null;
+                }).filter(Boolean)
+            )].sort((a, b) => b - a);
+
+            // Auto-select most recent season on first load
+            if (selectedRankingSeason === null) {
+                selectedRankingSeason = seasons.length > 0 ? seasons[0] : 'all';
+            }
+            const currentSeason = seasons[0] || null;
+
+            // Build tab bar
             const filterBar = document.getElementById('rankingSeasonFilter');
-            if (filterBar && seasons.length > 0) {
-                filterBar.innerHTML = [
-                    `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">Toutes saisons</button>`,
-                    ...seasons.map(s => `<button class="filter-btn${selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
-                ].join('');
+            if (filterBar) {
+                const tabs = [
+                    currentSeason ? `<button class="filter-btn${selectedRankingSeason === currentSeason ? ' active' : ''}" onclick="setRankingSeason(${currentSeason})">Saison ${currentSeason}</button>` : null,
+                    `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">All-time</button>`,
+                    ...seasons.slice(1).map(s => `<button class="filter-btn${selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
+                ].filter(Boolean);
+                filterBar.innerHTML = tabs.join('');
             }
 
             // Filter editions by selected season
@@ -4199,9 +4214,16 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 }
             }
 
+            // Build evolution data — last 6 completed editions in the selected scope
+            const last6 = doneEditions.slice(0, 6).reverse(); // oldest → newest
+            const edResultMap = {};
+            last6.forEach(e => { edResultMap[e.id] = {}; });
+            finales.forEach(r => { if (edResultMap[r.editionId]) edResultMap[r.editionId][r.playerId] = r.position; });
+
             const showTrend = Object.keys(prevRankMap).length > 0;
             const trendHeader = showTrend ? '<th title="Évolution vs édition précédente">±</th>' : '';
-            let html = championBannerHtml + myRankHtml + `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th>${trendHeader}</tr></thead><tbody>`;
+            const evolHeader = last6.length > 1 ? '<th title="Positions sur les dernières éditions">Historique</th>' : '';
+            let html = championBannerHtml + myRankHtml + `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th>${trendHeader}${evolHeader}</tr></thead><tbody>`;
             ranking.forEach((s, i) => {
                 const rank = i + 1;
                 const badgeClass = rank <= 3 ? `badge-${rank}` : 'badge-other';
@@ -4221,6 +4243,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     }
                 }
 
+                let evolHtml = '';
+                if (last6.length > 1) {
+                    const dots = last6.map(e => {
+                        const pos = edResultMap[e.id]?.[s.player.id];
+                        if (pos === undefined) return `<span style="color:rgba(255,255,255,0.12);font-size:0.72rem">·</span>`;
+                        const color = pos === 1 ? '#fbbf24' : pos === 2 ? '#94a3b8' : pos === 3 ? '#cd7c3a' : 'rgba(255,255,255,0.45)';
+                        return `<span style="color:${color};font-weight:700;font-size:0.72rem" title="${data.editions.find(ed=>ed.id===e.id)?.name||''}">P${pos}</span>`;
+                    }).join('<span style="color:rgba(255,255,255,0.1);margin:0 2px;font-size:0.7rem">›</span>');
+                    evolHtml = `<td><span style="display:flex;align-items:center;gap:2px;flex-wrap:nowrap">${dots}</span></td>`;
+                }
+
                 html += `<tr data-rank="${rank}" style="${rowStyle}">
                     <td><span class="badge ${badgeClass}">${rank}</span></td>
                     <td>
@@ -4234,6 +4267,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <td>${s.podiums > 0 ? `🥇 ${s.podiums}` : '—'}</td>
                     <td>${s.best === Infinity ? '—' : `P${s.best}`}</td>
                     ${trendHtml}
+                    ${evolHtml}
                 </tr>`;
             });
             html += '</tbody></table>';
