@@ -1689,16 +1689,24 @@ async function loadAdminSection() {
       </div>`;
   }
 
-  // Pools
+  // Pools — triées : Pool A, Pool B, sans pool
+  const poolOrder = t => t.pool === 'A' ? 0 : t.pool === 'B' ? 1 : 2;
+  const sortedTeams = [...allTeams].sort((a, b) => poolOrder(a) - poolOrder(b) || a.name.localeCompare(b.name));
+  const poolRows = (teams, label, tagCls) => teams.length === 0 ? '' :
+    `<div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 0 4px">${label}</div>` +
+    teams.map(t =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="flex:1;font-size:0.85rem;font-weight:700">${t.name}</span>
+        <span class="tag ${tagCls}">${t.pool || '—'}</span>
+        <button class="btn btn-secondary btn-sm" onclick="openAssignPool('${t.id}','${t.name.replace(/'/g,"\\'")}')">Modifier</button>
+      </div>`
+    ).join('');
+
   document.getElementById('admin-pools-list').innerHTML = allTeams.length === 0
     ? `<p style="color:var(--muted);font-size:0.83rem">Aucune équipe.</p>`
-    : allTeams.map(t =>
-        `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="flex:1;font-size:0.85rem;font-weight:700">${t.name}</span>
-          <span class="tag tag-${t.pool === 'A' ? 'blue' : t.pool === 'B' ? 'orange' : 'muted'}">${t.pool ? `Pool ${t.pool}` : 'Sans pool'}</span>
-          <button class="btn btn-secondary btn-sm" onclick="openAssignPool('${t.id}','${t.name.replace(/'/g,"\\'")}')">Modifier</button>
-        </div>`
-      ).join('');
+    : poolRows(sortedTeams.filter(t => t.pool === 'A'), 'Pool A', 'tag-blue') +
+      poolRows(sortedTeams.filter(t => t.pool === 'B'), 'Pool B', 'tag-orange') +
+      poolRows(sortedTeams.filter(t => !t.pool), 'Sans pool', 'tag-muted');
 
   // Fondateurs
   const fondateurs = allRosters.filter(r => r.role === 'fondateur' && r.status === 'active');
