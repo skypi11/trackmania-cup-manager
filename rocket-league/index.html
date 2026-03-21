@@ -998,7 +998,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" data-close="modal-confirm-score">Annuler</button>
-      <button class="btn btn-primary" id="btn-do-confirm-score">Confirmer ce résultat</button>
+      <button class="btn btn-danger" id="btn-do-dispute-score">Contester</button>
+      <button class="btn btn-primary" id="btn-do-confirm-score">Confirmer ✓</button>
     </div>
   </div>
 </div>
@@ -1946,6 +1947,7 @@ function renderMatchCard(m) {
     pending_schedule: { label: 'Créneau à fixer',  cls: 'tag-gold' },
     confirmed:        { label: 'Confirmé',          cls: 'tag-blue' },
     pending_confirm:  { label: 'À confirmer',       cls: 'tag-orange' },
+    disputed:         { label: 'Contesté',          cls: 'tag-red' },
     played:           { label: 'Joué',              cls: 'tag-green' },
     forfeit:          { label: 'Forfait',           cls: 'tag-red' }
   };
@@ -1955,20 +1957,28 @@ function renderMatchCard(m) {
   const awayScore = isPlayed ? (m.awayScore ?? '—') : '—';
 
   // Actions
-  const canPropose = isManagerOf(m.homeTeamId) && m.status === 'scheduled';
-  const canPick    = isManagerOf(m.awayTeamId) && m.status === 'pending_schedule';
-  const canConfirm = (isManagerOf(m.homeTeamId) || isManagerOf(m.awayTeamId)) && m.status === 'pending_confirm';
-  // Check if already confirmed by my side
-  const alreadyConfirmed = (isManagerOf(m.homeTeamId) && m.homeConfirmed) || (isManagerOf(m.awayTeamId) && m.awayConfirmed);
+  const isMgr = isManagerOf(m.homeTeamId) || isManagerOf(m.awayTeamId);
+  const canPropose    = isManagerOf(m.homeTeamId) && m.status === 'scheduled';
+  const canPick       = isManagerOf(m.awayTeamId) && m.status === 'pending_schedule';
+  // Manager saisit le score (celui qui n'a pas encore saisi)
+  const canEnterScore = isMgr && m.status === 'confirmed';
+  // L'autre manager confirme ou conteste
+  const scorerIsHome  = m.scoredByTeam === m.homeTeamId;
+  const iAmScorer     = (scorerIsHome && isManagerOf(m.homeTeamId)) || (!scorerIsHome && isManagerOf(m.awayTeamId));
+  const canReact      = isMgr && m.status === 'pending_confirm' && !iAmScorer;
+  // Admin peut toujours forcer le score et valider les litiges
+  const isDisputed    = m.status === 'disputed';
 
   let actions = '';
-  if (canPropose) actions += `<button class="btn btn-primary btn-sm" onclick="openProposeSlots('${m.id}')">Proposer créneaux</button>`;
-  if (canPick)    actions += `<button class="btn btn-primary btn-sm" onclick="openPickSlot('${m.id}')">Choisir créneau</button>`;
-  if (canConfirm && !alreadyConfirmed) actions += `<button class="btn btn-primary btn-sm" onclick="openConfirmScore('${m.id}')">Confirmer score</button>`;
+  if (canPropose)    actions += `<button class="btn btn-primary btn-sm" onclick="openProposeSlots('${m.id}')">Proposer créneaux</button>`;
+  if (canPick)       actions += `<button class="btn btn-primary btn-sm" onclick="openPickSlot('${m.id}')">Choisir créneau</button>`;
+  if (canEnterScore) actions += `<button class="btn btn-primary btn-sm" onclick="openManagerScore('${m.id}')">Saisir le score</button>`;
+  if (canReact)      actions += `<button class="btn btn-primary btn-sm" onclick="openConfirmScore('${m.id}')">Confirmer / Contester</button>`;
   if (isAdmin) {
-    actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Score</button>`;
+    if (!isPlayed && !m.status === 'forfeit') actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Score (admin)</button>`;
     if (isPlayed) actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterStats('${m.id}')">Stats</button>`;
-    if (m.status === 'pending_confirm') actions += `<button class="btn btn-secondary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>`;
+    if (m.status === 'pending_confirm' || isDisputed) actions += `<button class="btn btn-secondary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>`;
+    if (isDisputed) actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Corriger score</button>`;
   }
 
   return `<div class="match-card">
@@ -1983,7 +1993,8 @@ function renderMatchCard(m) {
     </div>
     <div class="match-meta">
       <span>📅 ${fmtDate(m.scheduledAt)}</span>
-      ${m.status === 'pending_confirm' ? `<span style="color:var(--gold)">En attente : ${m.homeConfirmed ? '✅' : '⏳'} ${homeTeam?.tag} / ${m.awayConfirmed ? '✅' : '⏳'} ${awayTeam?.tag}</span>` : ''}
+      ${m.status === 'pending_confirm' ? `<span style="color:var(--gold)">Score saisi — en attente de confirmation adverse</span>` : ''}
+      ${m.status === 'disputed' ? `<span style="color:var(--red);font-weight:700">⚠️ Score contesté — arbitrage admin en cours</span>` : ''}
       ${actions ? `<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${actions}</div>` : ''}
     </div>
   </div>`;
@@ -2119,9 +2130,15 @@ document.getElementById('btn-confirm-slot').addEventListener('click', async () =
   closeModal('modal-pick-slot');
 });
 
+// ── MODAL : Saisir score (manager) ────────────────────────────────────
+
+window.openManagerScore = function(matchId) {
+  openEnterScore(matchId, false); // pas de forfait pour les managers
+};
+
 // ── MODAL : Saisir score (admin) ───────────────────────────────────────
 
-window.openEnterScore = function(matchId) {
+window.openEnterScore = function(matchId, allowForfeit = true) {
   currentMatchForAction = allMatches.find(m => m.id === matchId);
   if (!currentMatchForAction) return;
   const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
@@ -2135,6 +2152,8 @@ window.openEnterScore = function(matchId) {
   document.getElementById('es-forfeit-team-wrap').style.display = 'none';
   document.getElementById('es-forfeit-home-opt').textContent = ht?.name || 'Domicile';
   document.getElementById('es-forfeit-away-opt').textContent = at?.name || 'Extérieur';
+  // Montrer/masquer l'option forfait selon le rôle
+  document.getElementById('es-forfeit').closest('.form-group').style.display = allowForfeit ? '' : 'none';
   openModal('modal-enter-score');
 };
 
@@ -2157,15 +2176,23 @@ document.getElementById('btn-save-score').addEventListener('click', async () => 
       playedAt: serverTimestamp()
     };
   } else {
+    // Déterminer si c'est un manager ou un admin qui saisit
+    const scorerTeamId = isManagerOf(currentMatchForAction.homeTeamId)
+      ? currentMatchForAction.homeTeamId
+      : isManagerOf(currentMatchForAction.awayTeamId)
+      ? currentMatchForAction.awayTeamId
+      : null; // admin
     update = {
       homeScore: parseInt(document.getElementById('es-home-score').value) || 0,
       awayScore: parseInt(document.getElementById('es-away-score').value) || 0,
-      status: 'pending_confirm',
-      adminConfirmed: true, homeConfirmed: false, awayConfirmed: false
+      status: scorerTeamId ? 'pending_confirm' : 'played',
+      scoredByTeam: scorerTeamId,
+      adminConfirmed: !scorerTeamId,
+      homeConfirmed: false, awayConfirmed: false
     };
   }
   await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), update);
-  toast(isForfeit ? 'Forfait enregistré !' : 'Score enregistré — managers doivent confirmer.');
+  toast(isForfeit ? 'Forfait enregistré !' : update.status === 'played' ? 'Score enregistré !' : 'Score soumis — l\'équipe adverse doit confirmer.');
   closeModal('modal-enter-score');
 });
 
@@ -2183,13 +2210,20 @@ window.openConfirmScore = function(matchId) {
 
 document.getElementById('btn-do-confirm-score').addEventListener('click', async () => {
   if (!currentMatchForAction) return;
-  const isHome = isManagerOf(currentMatchForAction.homeTeamId);
-  const field = isHome ? 'homeConfirmed' : 'awayConfirmed';
-  const otherConfirmed = isHome ? currentMatchForAction.awayConfirmed : currentMatchForAction.homeConfirmed;
-  const update = { [field]: true };
-  if (otherConfirmed) { update.status = 'played'; update.playedAt = serverTimestamp(); }
-  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), update);
-  toast(otherConfirmed ? 'Match validé des deux côtés !' : 'Confirmation enregistrée, en attente de l\'autre manager.');
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), {
+    status: 'played', playedAt: serverTimestamp(), adminConfirmed: true
+  });
+  toast('Score confirmé ! Match validé ✓');
+  closeModal('modal-confirm-score');
+});
+
+document.getElementById('btn-do-dispute-score').addEventListener('click', async () => {
+  if (!currentMatchForAction) return;
+  if (!confirm('Contester ce score ? Un admin sera alerté pour arbitrer.')) return;
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), {
+    status: 'disputed', disputedAt: serverTimestamp()
+  });
+  toast('Score contesté — un admin va arbitrer.', false);
   closeModal('modal-confirm-score');
 });
 
@@ -2260,7 +2294,7 @@ document.getElementById('btn-save-stats').addEventListener('click', async () => 
 function updateAdminScoresBadge() {
   const badge = document.getElementById('scores-badge');
   if (!badge || !isAdmin) return;
-  const count = allMatches.filter(m => m.status === 'pending_confirm').length;
+  const count = allMatches.filter(m => m.status === 'pending_confirm' || m.status === 'disputed').length;
   badge.textContent = count;
   badge.style.display = count > 0 ? '' : 'none';
 }
@@ -2337,7 +2371,7 @@ const _origLoadAdmin = loadAdminSection;
 loadAdminSection = async function() {
   await _origLoadAdmin();
   // Scores en attente
-  const pending = allMatches.filter(m => m.status === 'pending_confirm');
+  const pending = allMatches.filter(m => m.status === 'pending_confirm' || m.status === 'disputed');
   const badge = document.getElementById('scores-badge');
   if (badge) { badge.textContent = pending.length; badge.style.display = pending.length > 0 ? '' : 'none'; }
   document.getElementById('admin-pending-scores').innerHTML = pending.length === 0
@@ -2345,14 +2379,15 @@ loadAdminSection = async function() {
     : pending.map(m => {
         const ht = allTeams.find(t => t.id === m.homeTeamId);
         const at = allTeams.find(t => t.id === m.awayTeamId);
-        return `<div class="app-item">
+        const isDisputed = m.status === 'disputed';
+        return `<div class="app-item" style="${isDisputed ? 'border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)' : ''}">
           <div class="app-info">
-            <h4>${ht?.name || '?'} ${m.homeScore} : ${m.awayScore} ${at?.name || '?'}</h4>
-            <p>Pool ${m.pool} · S${m.week} · ${m.homeConfirmed ? '✅' : '⏳'} ${ht?.tag} / ${m.awayConfirmed ? '✅' : '⏳'} ${at?.tag}</p>
+            <h4>${isDisputed ? '⚠️ ' : ''}${ht?.name || '?'} ${m.homeScore} : ${m.awayScore} ${at?.name || '?'}</h4>
+            <p>Pool ${m.pool} · S${m.week} · ${isDisputed ? '<span style="color:var(--red);font-weight:700">Score contesté par l\'équipe adverse</span>' : 'En attente de confirmation'}</p>
           </div>
           <div class="app-actions">
             <button class="btn btn-primary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>
-            <button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Modifier</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Corriger</button>
           </div>
         </div>`;
       }).join('');
