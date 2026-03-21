@@ -950,18 +950,30 @@ document.getElementById('profile-form').addEventListener('submit', async e => {
   const country = document.getElementById('pf-country').value;
   if (!epicId) return;
 
-  const existing = (await getDoc(doc(db, 'participants', currentUser.uid))).data() || {};
-  await setDoc(doc(db, 'participants', currentUser.uid), {
-    ...existing,
-    epicId,
-    trackerRL: tracker || null,
-    discord: discord || null,
-    country: country || null,
-    uid: currentUser.uid,
-    pseudo: existing.pseudo || currentUser.displayName || epicId,
-    photoURL: currentUser.photoURL || null,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enregistrement…';
+
+  try {
+    const existing = (await getDoc(doc(db, 'participants', currentUser.uid))).data() || {};
+    await setDoc(doc(db, 'participants', currentUser.uid), {
+      ...existing,
+      epicId,
+      trackerRL: tracker || null,
+      discord: discord || null,
+      country: country || null,
+      uid: currentUser.uid,
+      pseudo: existing.pseudo || currentUser.displayName || epicId,
+      photoURL: currentUser.photoURL || null,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('Erreur profil:', err);
+    toast('Erreur : ' + err.message, false);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enregistrer mon profil';
+    return;
+  }
 
   toast('Profil enregistré !');
   document.getElementById('profile-overlay').classList.add('hidden');
