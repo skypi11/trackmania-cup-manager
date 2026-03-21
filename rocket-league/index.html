@@ -1117,6 +1117,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // Navigation
 function navigate(section) {
+  if (section === 'admin' && !isAdmin) return;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`sec-${section}`).classList.add('active');
@@ -1725,6 +1726,7 @@ document.getElementById('btn-leave-team').addEventListener('click', async () => 
 
 // ── ADMIN SECTION ──────────────────────────────────────────────────────
 async function loadAdminSection() {
+  if (!isAdmin) { navigate('home'); return; }
   // Season
   if (activeSeason) {
     const statusLabels = { active: 'En cours', upcoming: 'À venir', finished: 'Terminée' };
