@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>Overlay — Qualifications</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    color: #f0f0f0;
+  }
+
+  #bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 24px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .map-col {
+    flex: 1;
+    background: rgba(10, 10, 10, 0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 3px solid rgba(0, 217, 54, 0.25);
+    border-radius: 10px 10px 6px 6px;
+    padding: 10px 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.4s;
+  }
+
+  .map-col.complete {
+    border-bottom-color: #00D936;
+  }
+
+  .map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .map-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #555;
+  }
+
+  .map-col.complete .map-label {
+    color: #00D936;
+  }
+
+  .map-check {
+    font-size: 0.7rem;
+    color: #00D936;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .map-col.complete .map-check {
+    opacity: 1;
+  }
+
+  .slot {
+    height: 28px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.4s ease;
+  }
+
+  .slot.filled {
+    background: rgba(0, 217, 54, 0.1);
+    border-color: rgba(0, 217, 54, 0.2);
+  }
+
+  .slot-rank {
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: #555;
+    min-width: 14px;
+  }
+
+  .slot.filled .slot-rank { color: #00D936; }
+  .slot:nth-child(2).filled .slot-rank { color: #FFB800; }
+  .slot:nth-child(3).filled .slot-rank { color: #c0c0c0; }
+
+  .slot-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #e0e0e0;
+  }
+
+  .slot:not(.filled) .slot-name {
+    color: rgba(255,255,255,0.15);
+    font-weight: 400;
+  }
+
+  /* Edition info top-left */
+  #edition-info {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: rgba(10,10,10,0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-left: 3px solid #FFB800;
+    border-radius: 8px;
+    padding: 10px 16px;
+    backdrop-filter: blur(8px);
+    display: none;
+  }
+
+  #edition-info.visible { display: block; }
+
+  .edition-name {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #FFB800;
+  }
+
+  .edition-phase {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #555;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Springs logo top-right */
+  #logo {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    opacity: 0.5;
+  }
+
+  #logo img { height: 36px; }
+
+  /* Qualified count */
+  #qual-count {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,10,0.88);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px 20px;
+    backdrop-filter: blur(8px);
+    text-align: center;
+    display: none;
+  }
+
+  #qual-count.visible { display: block; }
+
+  .count-value {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #00D936;
+    letter-spacing: -1px;
+  }
+
+  .count-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #444;
+    margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div id="edition-info" class="visible">
+  <div class="edition-name" id="editionName">—</div>
+  <div class="edition-phase">Phase de qualification</div>
+</div>
+
+<div id="qual-count">
+  <div class="count-value" id="qualCount">0</div>
+  <div class="count-label">Qualifiés</div>
+</div>
+
+<div id="logo">
+  <img src="Springs Esport.png" alt="Springs E-Sport" onerror="this.style.display='none'">
+</div>
+
+<div id="bar"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
+    authDomain: "monthly-cup.firebaseapp.com",
+    projectId: "monthly-cup",
+    storageBucket: "monthly-cup.firebasestorage.app",
+    messagingSenderId: "82527508810",
+    appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const cupId = params.get('cup') || 'monthly';
+const forceEditionId = params.get('edition') || null;
+const MAP_COUNT = parseInt(params.get('maps') || '6');
+
+let editionId = null;
+let participants = {};
+let qualResults = {};
+const cupFilter = item => (item.cupId || 'monthly') === cupId;
+
+// Load participants for name lookup
+const partSnap = await getDocs(collection(db, 'participants'));
+partSnap.forEach(d => { participants[d.id] = d.data(); });
+
+function pName(p) {
+    return p?.pseudoTM || p?.pseudo || p?.name || '?';
+}
+
+// Find current edition
+async function findEdition() {
+    if (forceEditionId) return forceEditionId;
+    const snap = await getDocs(collection(db, 'editions'));
+    const editions = [];
+    snap.forEach(d => {
+        const e = d.data();
+        if (!cupFilter(e)) return;
+        editions.push({ id: d.id, ...e });
+    });
+    // prefer live, then most recent past
+    const live = editions.find(e => e.status === 'live');
+    if (live) return live.id;
+    const past = editions.filter(e => new Date(e.date) < new Date()).sort((a,b) => new Date(b.date) - new Date(a.date));
+    return past[0]?.id || null;
+}
+
+function renderBar() {
+    const bar = document.getElementById('bar');
+    let html = '';
+    let totalQuals = new Set();
+
+    for (let m = 1; m <= MAP_COUNT; m++) {
+        const mapQuals = (qualResults[m] || []).slice(0, 3);
+        const complete = mapQuals.length >= 3;
+        mapQuals.forEach(r => totalQuals.add(r.playerId));
+
+        html += `<div class="map-col ${complete ? 'complete' : ''}">
+            <div class="map-header">
+                <span class="map-label">Map ${m}</span>
+                <span class="map-check">✓</span>
+            </div>`;
+
+        for (let slot = 0; slot < 3; slot++) {
+            const r = mapQuals[slot];
+            const name = r ? pName(participants[r.playerId]) : '—';
+            const rankLabel = slot === 0 ? 'P1' : slot === 1 ? 'P2' : 'P3';
+            html += `<div class="slot ${r ? 'filled' : ''}">
+                <span class="slot-rank">${rankLabel}</span>
+                <span class="slot-name">${r ? name : '—'}</span>
+            </div>`;
+        }
+
+        html += `</div>`;
+    }
+
+    bar.innerHTML = html;
+
+    const countEl = document.getElementById('qualCount');
+    countEl.textContent = totalQuals.size;
+    document.getElementById('qual-count').classList.toggle('visible', totalQuals.size > 0);
+}
+
+async function init() {
+    editionId = await findEdition();
+    if (!editionId) { document.getElementById('editionName').textContent = 'Aucune édition'; return; }
+
+    const edSnap = await getDoc(doc(db, 'editions', editionId));
+    if (edSnap.exists()) {
+        document.getElementById('editionName').textContent = edSnap.data().name || 'Édition en cours';
+    }
+
+    // Watch results in real-time
+    onSnapshot(
+        query(collection(db, 'results'), where('editionId', '==', editionId), where('phase', '==', 'qualification')),
+        snap => {
+            qualResults = {};
+            snap.forEach(d => {
+                const r = { id: d.id, ...d.data() };
+                if (!qualResults[r.map]) qualResults[r.map] = [];
+                qualResults[r.map].push(r);
+            });
+            // Sort each map by position
+            Object.keys(qualResults).forEach(m => {
+                qualResults[m].sort((a, b) => a.position - b.position);
+            });
+            renderBar();
+        }
+    );
+}
+
+init();
+</script>
+</body>
+</html>

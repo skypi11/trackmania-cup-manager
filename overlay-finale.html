@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>Overlay — Finale</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    color: #f0f0f0;
+  }
+
+  /* Top bar — edition name + phase */
+  #top-bar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,10,0.90);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-top: 3px solid #FFB800;
+    border-radius: 6px 6px 10px 10px;
+    padding: 10px 28px 10px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+
+  #top-bar .edition { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #FFB800; }
+  #top-bar .phase   { font-size: 0.6rem;  font-weight: 600; text-transform: uppercase; letter-spacing: 1px;   color: #555; margin-top: 2px; }
+
+  /* Player list — bottom center strip */
+  #players-strip {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .player-card {
+    background: rgba(10,10,10,0.88);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 120px;
+    max-width: 160px;
+    backdrop-filter: blur(8px);
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .player-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(0, 217, 54, 0.4);
+  }
+
+  .player-card.eliminated {
+    opacity: 0.35;
+    filter: grayscale(0.8);
+  }
+
+  .player-card.eliminated::before {
+    background: rgba(239, 68, 68, 0.5);
+  }
+
+  .player-card.winner::before {
+    background: #FFB800;
+    height: 4px;
+  }
+
+  .card-rank {
+    font-size: 0.6rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #444;
+    margin-bottom: 4px;
+  }
+
+  .player-card.winner .card-rank { color: #FFB800; }
+  .player-card:not(.eliminated):not(.winner) .card-rank { color: #00D936; }
+
+  .card-name {
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f0f0f0;
+  }
+
+  .card-lives {
+    margin-top: 6px;
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 14px;
+  }
+
+  .life-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00D936;
+    box-shadow: 0 0 4px rgba(0, 217, 54, 0.6);
+  }
+
+  .life-dot.lost {
+    background: rgba(255,255,255,0.08);
+    box-shadow: none;
+  }
+
+  /* Logo */
+  #logo {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    opacity: 0.4;
+  }
+  #logo img { height: 32px; }
+
+  /* Waiting state */
+  #waiting {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,10,0.88);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #333;
+    backdrop-filter: blur(8px);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+  <div class="edition" id="editionName">—</div>
+  <div class="phase">Finale</div>
+</div>
+
+<div id="logo">
+  <img src="Springs Esport.png" alt="Springs" onerror="this.style.display='none'">
+</div>
+
+<div id="players-strip" style="display:none"></div>
+<div id="waiting">En attente des résultats de finale…</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
+    authDomain: "monthly-cup.firebaseapp.com",
+    projectId: "monthly-cup",
+    storageBucket: "monthly-cup.firebasestorage.app",
+    messagingSenderId: "82527508810",
+    appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const cupId = params.get('cup') || 'monthly';
+const forceEditionId = params.get('edition') || null;
+const MAX_LIVES = parseInt(params.get('lives') || '3');
+
+let participants = {};
+const cupFilter = item => (item.cupId || 'monthly') === cupId;
+
+const partSnap = await getDocs(collection(db, 'participants'));
+partSnap.forEach(d => { participants[d.id] = d.data(); });
+
+function pName(p) { return p?.pseudoTM || p?.pseudo || p?.name || '?'; }
+
+async function findEdition() {
+    if (forceEditionId) return forceEditionId;
+    const snap = await getDocs(collection(db, 'editions'));
+    const editions = [];
+    snap.forEach(d => { const e = d.data(); if (cupFilter(e)) editions.push({ id: d.id, ...e }); });
+    const live = editions.find(e => e.status === 'live');
+    if (live) return live.id;
+    const past = editions.filter(e => new Date(e.date) < new Date()).sort((a,b) => new Date(b.date) - new Date(a.date));
+    return past[0]?.id || null;
+}
+
+function render(finaleResults, qualResults) {
+    // Build finalist list: qualified players ordered by finale position (or by qual order if no finale yet)
+    const qualPlayerIds = [...new Set(qualResults.map(r => r.playerId))];
+
+    // Group finale results per player
+    const finaleByPlayer = {};
+    finaleResults.forEach(r => {
+        if (!finaleByPlayer[r.playerId]) finaleByPlayer[r.playerId] = [];
+        finaleByPlayer[r.playerId].push(r);
+    });
+
+    const players = qualPlayerIds.map(pid => {
+        const finales = finaleByPlayer[pid] || [];
+        // Lives lost = number of non-winning finale entries (eliminations)
+        // Best (lowest) position = final rank
+        const bestPos = finales.length > 0 ? Math.min(...finales.map(r => r.position)) : null;
+        // Consider eliminated if they have a finale entry with a high position (we treat max position = eliminated)
+        // Simple heuristic: if they have any finale result, show their position
+        return { pid, finales, bestPos };
+    }).sort((a, b) => {
+        if (a.bestPos !== null && b.bestPos !== null) return a.bestPos - b.bestPos;
+        if (a.bestPos !== null) return -1;
+        if (b.bestPos !== null) return 1;
+        return 0;
+    });
+
+    const strip = document.getElementById('players-strip');
+    const waiting = document.getElementById('waiting');
+
+    if (qualPlayerIds.length === 0) {
+        strip.style.display = 'none';
+        waiting.style.display = 'block';
+        return;
+    }
+
+    waiting.style.display = 'none';
+    strip.style.display = 'flex';
+
+    const totalFinalists = qualPlayerIds.length;
+    // Dynamic card width based on count
+    const maxW = Math.min(160, Math.max(90, Math.floor(1400 / totalFinalists) - 10));
+
+    strip.innerHTML = players.map(({ pid, finales, bestPos }) => {
+        const p = participants[pid];
+        const name = pName(p);
+        const isWinner = bestPos === 1;
+        const isEliminated = bestPos !== null && bestPos > 1 && finales.length > 0;
+        const livesLost = finales.filter(r => r.position > 1).length;
+        const livesLeft = Math.max(0, MAX_LIVES - livesLost);
+
+        let rankLabel = bestPos ? `P${bestPos}` : 'En course';
+        if (!bestPos) rankLabel = 'En course';
+
+        let dots = '';
+        for (let i = 0; i < MAX_LIVES; i++) {
+            dots += `<div class="life-dot ${i >= livesLeft ? 'lost' : ''}"></div>`;
+        }
+
+        return `<div class="player-card ${isWinner ? 'winner' : ''} ${isEliminated ? 'eliminated' : ''}" style="max-width:${maxW}px;min-width:${Math.max(90, maxW - 20)}px">
+            <div class="card-rank">${rankLabel}</div>
+            <div class="card-name">${name}</div>
+            ${MAX_LIVES > 0 ? `<div class="card-lives">${dots}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+async function init() {
+    const editionId = await findEdition();
+    if (!editionId) return;
+
+    const edSnap = await getDoc(doc(db, 'editions', editionId));
+    if (edSnap.exists()) {
+        document.getElementById('editionName').textContent = edSnap.data().name || 'Édition en cours';
+    }
+
+    let qualResults = [];
+    let finaleResults = [];
+
+    onSnapshot(query(collection(db, 'results'), where('editionId', '==', editionId), where('phase', '==', 'qualification')), snap => {
+        qualResults = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        render(finaleResults, qualResults);
+    });
+
+    onSnapshot(query(collection(db, 'results'), where('editionId', '==', editionId), where('phase', '==', 'finale')), snap => {
+        finaleResults = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        render(finaleResults, qualResults);
+    });
+}
+
+init();
+</script>
+</body>
+</html>

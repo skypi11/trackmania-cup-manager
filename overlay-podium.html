@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>Overlay — Podium</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: 'Inter', sans-serif;
+    color: #f0f0f0;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0, 217, 54, 0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255, 184, 0, 0.04) 0%, transparent 60%);
+  }
+
+  /* Grid lines subtle */
+  body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  /* Header */
+  #header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 36px 60px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.2s forwards;
+  }
+
+  .header-left .cup-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #FFB800;
+  }
+
+  .header-left .edition-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #f0f0f0;
+    margin-top: 4px;
+    letter-spacing: -0.5px;
+  }
+
+  .header-right img { height: 44px; opacity: 0.6; }
+
+  /* Podium stage */
+  #stage {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 740px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0;
+    z-index: 10;
+  }
+
+  .podium-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+  }
+
+  /* Animations per position */
+  .podium-slot.p3 { animation: slideInRight 0.7s cubic-bezier(0.22, 1, 0.36, 1) 1.0s forwards; }
+  .podium-slot.p1 { animation: dropIn      0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.9s forwards; }
+  .podium-slot.p2 { animation: slideInLeft 0.7s cubic-bezier(0.22, 1, 0.36, 1) 2.8s forwards; }
+
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(120px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-120px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-80px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  /* Player card above podium block */
+  .player-info {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .player-medal {
+    font-size: 2.4rem;
+    line-height: 1;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 12px rgba(255,184,0,0.4));
+  }
+
+  .player-name {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .podium-slot.p1 .player-name { font-size: 1.9rem; color: #FFB800; }
+  .podium-slot.p2 .player-name { font-size: 1.5rem; color: #d0d0d0; }
+  .podium-slot.p3 .player-name { font-size: 1.3rem; color: #cd7f32; }
+
+  .player-team {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #444;
+    margin-top: 5px;
+  }
+
+  .player-points {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .podium-slot.p1 .player-points { background: rgba(255,184,0,0.15); color: #FFB800; border: 1px solid rgba(255,184,0,0.3); }
+  .podium-slot.p2 .player-points { background: rgba(192,192,192,0.1); color: #c0c0c0; border: 1px solid rgba(192,192,192,0.2); }
+  .podium-slot.p3 .player-points { background: rgba(205,127,50,0.1); color: #cd7f32; border: 1px solid rgba(205,127,50,0.2); }
+
+  /* Podium blocks */
+  .podium-block {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 16px;
+  }
+
+  .podium-block-label {
+    font-size: 2.2rem;
+    font-weight: 900;
+    opacity: 0.08;
+  }
+
+  .podium-slot.p1 .podium-block { height: 280px; width: 380px; background: linear-gradient(180deg, rgba(255,184,0,0.18) 0%, rgba(255,184,0,0.05) 100%); border: 1px solid rgba(255,184,0,0.2); border-bottom: none; }
+  .podium-slot.p2 .podium-block { height: 200px; width: 320px; background: linear-gradient(180deg, rgba(192,192,192,0.12) 0%, rgba(192,192,192,0.03) 100%); border: 1px solid rgba(192,192,192,0.12); border-bottom: none; }
+  .podium-slot.p3 .podium-block { height: 140px; width: 280px; background: linear-gradient(180deg, rgba(205,127,50,0.12) 0%, rgba(205,127,50,0.03) 100%); border: 1px solid rgba(205,127,50,0.1); border-bottom: none; }
+
+  /* Glow under winner */
+  .podium-slot.p1 .podium-block::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 2px;
+    background: #FFB800;
+    box-shadow: 0 0 20px 4px rgba(255,184,0,0.5);
+  }
+
+  /* No data */
+  #no-data {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+
+<div id="header" style="opacity:0">
+  <div class="header-left">
+    <div class="cup-name">Springs Monthly Cup</div>
+    <div class="edition-name" id="editionName">—</div>
+  </div>
+  <div class="header-right">
+    <img src="Springs Esport.png" onerror="this.style.display='none'">
+  </div>
+</div>
+
+<div id="stage"></div>
+<div id="no-data" style="display:none">Aucun résultat de finale disponible</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
+    authDomain: "monthly-cup.firebaseapp.com",
+    projectId: "monthly-cup",
+    storageBucket: "monthly-cup.firebasestorage.app",
+    messagingSenderId: "82527508810",
+    appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
+};
+
+const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const cupId = params.get('cup') || 'monthly';
+const forceEditionId = params.get('edition') || null;
+const cupFilter = item => (item.cupId || 'monthly') === cupId;
+
+let participants = {};
+const partSnap = await getDocs(collection(db, 'participants'));
+partSnap.forEach(d => { participants[d.id] = d.data(); });
+
+function pName(p) { return p?.pseudoTM || p?.pseudo || p?.name || '?'; }
+
+async function findEdition() {
+    if (forceEditionId) return forceEditionId;
+    const snap = await getDocs(collection(db, 'editions'));
+    const editions = [];
+    snap.forEach(d => { const e = d.data(); if (cupFilter(e)) editions.push({ id: d.id, ...e }); });
+    const live = editions.find(e => e.status === 'live');
+    if (live) return live.id;
+    const past = editions.filter(e => new Date(e.date) < new Date()).sort((a,b) => new Date(b.date) - new Date(a.date));
+    return past[0]?.id || null;
+}
+
+async function init() {
+    const editionId = await findEdition();
+    if (!editionId) { document.getElementById('no-data').style.display = 'flex'; return; }
+
+    const edSnap = await getDoc(doc(db, 'editions', editionId));
+    if (edSnap.exists()) {
+        document.getElementById('editionName').textContent = edSnap.data().name || 'Édition';
+    }
+
+    const resSnap = await getDocs(query(collection(db, 'results'), where('editionId', '==', editionId), where('phase', '==', 'finale')));
+    const results = resSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.position - b.position);
+
+    const p1 = results.find(r => r.position === 1);
+    const p2 = results.find(r => r.position === 2);
+    const p3 = results.find(r => r.position === 3);
+
+    if (!p1 && !p2 && !p3) { document.getElementById('no-data').style.display = 'flex'; return; }
+
+    function card(r, cls, medal) {
+        if (!r) return `<div class="podium-slot ${cls}" style="visibility:hidden"><div class="player-info"></div><div class="podium-block"></div></div>`;
+        const p = participants[r.playerId];
+        const pts = POINTS[r.position - 1] || 0;
+        return `<div class="podium-slot ${cls}">
+            <div class="player-info">
+                <div class="player-medal">${medal}</div>
+                <div class="player-name">${pName(p)}</div>
+                <div class="player-team">${p?.team || ''}</div>
+                <div class="player-points">+${pts} pts</div>
+            </div>
+            <div class="podium-block">
+                <span class="podium-block-label">${r.position}</span>
+            </div>
+        </div>`;
+    }
+
+    document.getElementById('stage').innerHTML =
+        card(p3, 'p3', '🥉') +
+        card(p1, 'p1', '🥇') +
+        card(p2, 'p2', '🥈');
+}
+
+init();
+</script>
+</body>
+</html>
