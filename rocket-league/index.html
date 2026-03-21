@@ -844,7 +844,8 @@ let selectedTeamForPool = null;
 let selectedInvitePlayer = null;
 let teamOfInvite = null;
 
-const pName = pNameHelper;
+// En RL on affiche en priorité l'Epic ID (pseudo in-game), jamais le vrai nom Google
+const pName = p => p?.pseudoTM || p?.epicId || p?.pseudo || '?';
 
 // ── UTILS ──────────────────────────────────────────────────────────────
 function toast(msg, ok = true) {
