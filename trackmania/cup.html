@@ -9,12 +9,12 @@
     <meta property="og:site_name" content="Springs E-Sport">
     <meta property="og:title" content="Springs Monthly Cup — Trackmania">
     <meta property="og:description" content="Résultats, classements et inscriptions pour la Springs Monthly Cup — compétition Trackmania mensuelle par Springs E-Sport.">
-    <meta property="og:image" content="https://skypi11.github.io/trackmania-cup-manager/Springs%20Esport.png">
-    <meta property="og:url" content="https://skypi11.github.io/trackmania-cup-manager/trackmania-cup.html">
+    <meta property="og:image" content="../assets/springs-logo.png">
+    <meta property="og:url" content="/trackmania/cup.html">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Springs Monthly Cup — Trackmania">
     <meta name="twitter:description" content="Résultats, classements et inscriptions pour la Springs Monthly Cup — compétition Trackmania mensuelle.">
-    <meta name="twitter:image" content="https://skypi11.github.io/trackmania-cup-manager/Springs%20Esport.png">
+    <meta name="twitter:image" content="../assets/springs-logo.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -1014,9 +1014,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <div class="app-wrapper">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <a href="trackmania.html" class="sidebar-back-link">← Retour</a>
+          <a href="index.html" class="sidebar-back-link">← Retour</a>
           <div class="sidebar-brand">
-            <img src="Springs Esport.png" style="height:38px">
+            <img src="../assets/springs-logo.png" style="height:38px">
             <div>
               <div class="sidebar-cup-name" id="cupTitle">Springs Monthly Cup</div>
               <div class="sidebar-cup-sub" id="cupSubtitle">Springs E-Sport · En ligne</div>
@@ -1059,7 +1059,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <span></span><span></span><span></span>
           </button>
           <div class="topbar-brand">
-            <img src="Springs Esport.png" style="height:26px">
+            <img src="../assets/springs-logo.png" style="height:26px">
             <span class="topbar-section-name" id="topbarTitle">Accueil</span>
           </div>
         </div>
@@ -1352,7 +1352,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;
         ">
             <div style="display:flex;align-items:center;gap:10px">
-                <img src="Springs Esport.png" style="height:28px;opacity:0.6">
+                <img src="../assets/springs-logo.png" style="height:28px;opacity:0.6">
                 <span id="footerCopyright" style="font-size:0.8rem;color:rgba(255,255,255,0.2)">© 2026 Springs E-Sport</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
@@ -1590,22 +1590,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { app, db, auth } from '../shared/firebase-config.js';
+        import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
-            authDomain: "monthly-cup.firebaseapp.com",
-            projectId: "monthly-cup",
-            storageBucket: "monthly-cup.firebasestorage.app",
-            messagingSenderId: "82527508810",
-            appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
-        };
-
         const DISCORD_CLIENT_ID = '1483592495215673407';
-        const DISCORD_REDIRECT_URI = 'https://skypi11.github.io/trackmania-cup-manager/trackmania-cup.html';
+        const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';
 
         // Capture Discord OAuth token from URL hash (before any redirect)
         let pendingDiscordToken = null;
@@ -1616,13 +1607,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             history.replaceState(null, '', window.location.pathname + (_state ? '?' + _state : window.location.search));
         }
 
-        const app = initializeApp(firebaseConfig);
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'),
             isTokenAutoRefreshEnabled: true
         });
-        const db = getFirestore(app);
-        const auth = getAuth(app);
 
         // Cup configuration from URL parameter
         const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
@@ -1694,7 +1682,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             // Overlay URL
             const overlayContainer = document.getElementById('overlayUrlsContainer');
             if (overlayContainer) {
-                const baseUrl = 'https://skypi11.github.io/trackmania-cup-manager/overlay.html';
+                const baseUrl = window.location.origin + '/trackmania/overlay-quals.html';
                 const overlayUrl = `${baseUrl}?cup=${cupId}`;
                 overlayContainer.innerHTML = `
                     <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px">
@@ -1981,7 +1969,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             container.innerHTML = `
                 <div class="home-hero">
-                    <img src="Springs Esport.png" class="home-hero-logo" alt="Springs Esport">
+                    <img src="../assets/springs-logo.png" class="home-hero-logo" alt="Springs Esport">
                     <div class="home-hero-title">${siteConfig.siteName}</div>
                     <div class="home-hero-sub">${siteConfig.siteSubtitle}</div>
                     ${featuredHtml}
@@ -3622,7 +3610,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;z-index:1">
                         <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.18);font-weight:700">${siteConfig.siteName}</span>
-                        <img src="Springs Esport.png" style="height:18px;opacity:0.22">
+                        <img src="../assets/springs-logo.png" style="height:18px;opacity:0.22">
                     </div>
                 </div>
                 <div class="player-profile-stats" style="margin-bottom:20px">
@@ -3831,7 +3819,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const img = new Image();
                 img.onload = () => resolve(img);
                 img.onerror = () => resolve(null);
-                img.src = 'Springs Esport.png';
+                img.src = '../assets/springs-logo.png';
             });
 
             const W = 620, H = 360;
@@ -4049,7 +4037,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const img = new Image();
                 img.onload = () => resolve(img);
                 img.onerror = () => resolve(null);
-                img.src = 'Springs Esport.png';
+                img.src = '../assets/springs-logo.png';
             });
 
             const W = 680, H = 400;

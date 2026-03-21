@@ -161,27 +161,15 @@
 </div>
 
 <div id="logo">
-  <img src="Springs Esport.png" alt="Springs" onerror="this.style.display='none'">
+  <img src="../assets/springs-logo.png" alt="Springs" onerror="this.style.display='none'">
 </div>
 
 <div id="players-strip" style="display:none"></div>
 <div id="waiting">En attente des résultats de finale…</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
-    authDomain: "monthly-cup.firebaseapp.com",
-    projectId: "monthly-cup",
-    storageBucket: "monthly-cup.firebasestorage.app",
-    messagingSenderId: "82527508810",
-    appId: "1:82527508810:web:ca14ebfdeffb24d09889b3"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db, pName } from '../shared/firebase-config.js';
+import { collection, onSnapshot, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const params = new URLSearchParams(window.location.search);
 const cupId = params.get('cup') || 'monthly';
@@ -194,7 +182,6 @@ const cupFilter = item => (item.cupId || 'monthly') === cupId;
 const partSnap = await getDocs(collection(db, 'participants'));
 partSnap.forEach(d => { participants[d.id] = d.data(); });
 
-function pName(p) { return p?.pseudoTM || p?.pseudo || p?.name || '?'; }
 
 async function findEdition() {
     if (forceEditionId) return forceEditionId;
