@@ -480,7 +480,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <button class="btn btn-secondary btn-sm" onclick="navigate('myteam')">Gérer →</button>
       </div>
 
-      <div id="home-noteam" class="card" style="display:none;text-align:center;padding:32px">
+      <div id="home-noteam" class="card" style="text-align:center;padding:32px">
         <p style="color:var(--muted);margin-bottom:16px;font-size:0.875rem">Tu n'es dans aucune équipe. Rejoins une équipe existante ou crée la tienne.</p>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="navigate('teams')">Voir les équipes</button>
@@ -1046,6 +1046,7 @@ async function bootApp() {
     document.getElementById('season-banner').style.display = '';
   }
 
+  updateHomeBanner();
   navigate('home');
 }
 
