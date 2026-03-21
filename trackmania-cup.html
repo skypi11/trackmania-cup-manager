@@ -1894,7 +1894,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             const totalEditions = data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
             const totalPlayers = data.participants.length;
-            const totalParticipations = new Set(data.results.filter(r => r.phase === 'qualification').map(r => `${r.playerId}_${r.editionId}`)).size;
+            const totalParticipations = new Set(data.results.filter(r => r.phase === 'qualification' || r.phase === 'inscription').map(r => `${r.playerId}_${r.editionId}`)).size;
 
             const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
 
