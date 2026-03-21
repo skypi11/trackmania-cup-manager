@@ -573,9 +573,16 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <button class="filter-btn" data-mpool="A">Pool A</button>
         <button class="filter-btn" data-mpool="B">Pool B</button>
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="filter-btn active" data-matchview="matches" id="btn-view-matches">Matchs</button>
+        <button class="filter-btn" data-matchview="dispos" id="btn-view-dispos">📋 Disponibilités des équipes</button>
+      </div>
+
       <div id="matches-list">
         <div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>Le calendrier n'a pas encore été généré.</p></div>
       </div>
+
+      <div id="dispos-public-list" style="display:none"></div>
     </section>
 
     <!-- MY TEAM -->
@@ -588,6 +595,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <div class="filters" style="margin-bottom:20px">
         <button class="filter-btn active" data-mytab="roster">Roster</button>
         <button class="filter-btn" data-mytab="mymatches">Mes matchs</button>
+        <button class="filter-btn" data-mytab="dispos">Disponibilités</button>
       </div>
 
       <!-- MES MATCHS -->
@@ -596,6 +604,21 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <div id="myteam-matches-upcoming"><p style="color:var(--muted);font-size:0.83rem">Aucun match à venir.</p></div>
         <div class="section-divider" style="margin-top:20px">Matchs passés</div>
         <div id="myteam-matches-past"><p style="color:var(--muted);font-size:0.83rem">Aucun match joué.</p></div>
+      </div>
+
+      <!-- DISPONIBILITÉS -->
+      <div id="myteam-dispos" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <p style="font-size:0.83rem;color:var(--muted)">Indique les créneaux où ton équipe est disponible chaque semaine. Le système détecte automatiquement les créneaux communs avec vos adversaires.</p>
+        </div>
+        <div class="filters" id="dispo-week-filters" style="margin-bottom:16px">
+          <button class="filter-btn active" data-dispoweek="1">S1</button>
+          <button class="filter-btn" data-dispoweek="2">S2</button>
+          <button class="filter-btn" data-dispoweek="3">S3</button>
+          <button class="filter-btn" data-dispoweek="4">S4</button>
+          <button class="filter-btn" data-dispoweek="5">S5</button>
+        </div>
+        <div id="dispo-content"></div>
       </div>
 
       <div id="myteam-fondateur" style="display:none">
@@ -922,34 +945,34 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   </div>
 </div>
 
-<!-- Proposer créneaux -->
+<!-- Proposer un créneau commun -->
 <div class="modal-overlay hidden" id="modal-propose-slots">
-  <div class="modal modal-lg">
+  <div class="modal">
     <button class="modal-close" data-close="modal-propose-slots">✕</button>
-    <h2>Proposer des créneaux</h2>
+    <h2>Proposer un créneau</h2>
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="ps-match-name">—</strong></p>
+    <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px">Créneaux en commun avec l'adversaire :</p>
     <div id="ps-slots-list"></div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
-      <input type="datetime-local" id="slot-datetime-input" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:0.85rem">
-      <button class="btn btn-secondary btn-sm" id="btn-add-slot">+ Ajouter</button>
-    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" data-close="modal-propose-slots">Annuler</button>
-      <button class="btn btn-primary" id="btn-save-slots">Enregistrer les créneaux</button>
+      <button class="btn btn-primary" id="btn-save-slots">Proposer ce créneau</button>
     </div>
   </div>
 </div>
 
-<!-- Choisir un créneau -->
+<!-- Confirmer le créneau proposé (autre manager) -->
 <div class="modal-overlay hidden" id="modal-pick-slot">
   <div class="modal">
     <button class="modal-close" data-close="modal-pick-slot">✕</button>
-    <h2>Choisir un créneau</h2>
+    <h2>Confirmer le créneau</h2>
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="pick-match-name">—</strong></p>
-    <div id="pick-slots-list"></div>
+    <div style="background:rgba(0,129,255,0.08);border:1px solid rgba(0,129,255,0.2);border-radius:10px;padding:16px;text-align:center;margin-bottom:16px">
+      <div style="font-size:1.1rem;font-weight:800" id="pick-slot-display">—</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">Créneau proposé</div>
+    </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-close="modal-pick-slot">Annuler</button>
-      <button class="btn btn-primary" id="btn-confirm-slot">Confirmer ce créneau</button>
+      <button class="btn btn-secondary" data-close="modal-pick-slot">Refuser</button>
+      <button class="btn btn-primary" id="btn-confirm-slot">Confirmer ✓</button>
     </div>
   </div>
 </div>
@@ -1060,7 +1083,9 @@ let allMatches = [];
 let allAvailabilities = [];
 let matchWeekFilter = 'all';
 let matchPoolFilter = 'all';
+let matchViewTab = 'matches';
 let myTabFilter = 'roster';
+let dispoWeekFilter = 1;
 let currentMatchForAction = null;
 let selectedSlot = null;
 let pendingSlotsData = [];
@@ -1153,6 +1178,28 @@ document.querySelectorAll('[data-mytab]').forEach(btn => {
     btn.classList.add('active');
     myTabFilter = btn.dataset.mytab;
     switchMyTeamTab();
+  });
+});
+
+// Dispo week filters
+document.querySelectorAll('[data-dispoweek]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-dispoweek]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    dispoWeekFilter = parseInt(btn.dataset.dispoweek);
+    renderDispoTab();
+  });
+});
+
+// Match view toggle (matchs / dispos publiques)
+document.querySelectorAll('[data-matchview]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-matchview]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    matchViewTab = btn.dataset.matchview;
+    document.getElementById('matches-list').style.display = matchViewTab === 'matches' ? '' : 'none';
+    document.getElementById('dispos-public-list').style.display = matchViewTab === 'dispos' ? '' : 'none';
+    if (matchViewTab === 'dispos') renderPublicDispos();
   });
 });
 
@@ -1969,24 +2016,48 @@ function renderMatchCard(m) {
 
   // Actions
   const isMgr = isManagerOf(m.homeTeamId) || isManagerOf(m.awayTeamId);
-  const canPropose    = isManagerOf(m.homeTeamId) && m.status === 'scheduled';
-  const canPick       = isManagerOf(m.awayTeamId) && m.status === 'pending_schedule';
+  const iAmMgrHome    = isManagerOf(m.homeTeamId);
+  const iAmMgrAway    = isManagerOf(m.awayTeamId);
   // Manager saisit le score (celui qui n'a pas encore saisi)
   const canEnterScore = isMgr && m.status === 'confirmed';
   // L'autre manager confirme ou conteste
   const scorerIsHome  = m.scoredByTeam === m.homeTeamId;
-  const iAmScorer     = (scorerIsHome && isManagerOf(m.homeTeamId)) || (!scorerIsHome && isManagerOf(m.awayTeamId));
+  const iAmScorer     = (scorerIsHome && iAmMgrHome) || (!scorerIsHome && iAmMgrAway);
   const canReact      = isMgr && m.status === 'pending_confirm' && !iAmScorer;
   // Admin peut toujours forcer le score et valider les litiges
   const isDisputed    = m.status === 'disputed';
 
+  // Disponibilités — créneaux communs
+  const commonSlots   = (m.status === 'scheduled') ? getCommonSlots(m) : [];
+  const canConfirmSlot = isMgr && m.status === 'pending_schedule' && m.proposedSlot && m.proposedByTeam !== (iAmMgrHome ? m.homeTeamId : m.awayTeamId);
+
+  let availInfo = '';
+  if (m.status === 'scheduled' && isMgr) {
+    if (commonSlots.length > 0) {
+      const slotBtns = commonSlots.map(s =>
+        `<button class="btn btn-sm" style="background:rgba(0,217,54,0.12);color:var(--green);border:1px solid rgba(0,217,54,0.3);padding:2px 10px" onclick="proposeCommonSlot('${m.id}','${s}')">${fmtSlot(s)}</button>`
+      ).join('');
+      availInfo = `<div style="margin-top:8px;font-size:0.78rem"><span style="color:var(--green);font-weight:700">✓ ${commonSlots.length} créneau(x) en commun :</span> <span style="display:inline-flex;gap:4px;flex-wrap:wrap;margin-top:4px">${slotBtns}</span></div>`;
+    } else {
+      const homeAv = getTeamAvailability(m.homeTeamId, m.week);
+      const awayAv = getTeamAvailability(m.awayTeamId, m.week);
+      if (!homeAv || !awayAv) {
+        availInfo = `<div style="margin-top:6px;font-size:0.75rem;color:var(--muted)">⏳ En attente des disponibilités des deux équipes.</div>`;
+      } else {
+        availInfo = `<div style="margin-top:6px;font-size:0.75rem;color:var(--muted)">❌ Aucun créneau en commun — coordonnez-vous sur Discord.</div>`;
+      }
+    }
+  }
+  if (m.status === 'pending_schedule' && m.proposedSlot) {
+    const proposerTeam = allTeams.find(t => t.id === m.proposedByTeam);
+    availInfo = `<div style="margin-top:8px;padding:8px 12px;background:rgba(255,184,0,0.08);border-radius:8px;font-size:0.8rem">⏳ Créneau proposé par ${proposerTeam?.name || '?'} : <strong>${fmtSlot(m.proposedSlot)}</strong>${canConfirmSlot ? ` <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="confirmProposedSlot('${m.id}')">Confirmer ✓</button>` : ' — en attente de confirmation adverse'}</div>`;
+  }
+
   let actions = '';
-  if (canPropose)    actions += `<button class="btn btn-primary btn-sm" onclick="openProposeSlots('${m.id}')">Proposer créneaux</button>`;
-  if (canPick)       actions += `<button class="btn btn-primary btn-sm" onclick="openPickSlot('${m.id}')">Choisir créneau</button>`;
   if (canEnterScore) actions += `<button class="btn btn-primary btn-sm" onclick="openManagerScore('${m.id}')">Saisir le score</button>`;
   if (canReact)      actions += `<button class="btn btn-primary btn-sm" onclick="openConfirmScore('${m.id}')">Confirmer / Contester</button>`;
   if (isAdmin) {
-    if (!isPlayed && !m.status === 'forfeit') actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Score (admin)</button>`;
+    if (!isPlayed && m.status !== 'forfeit') actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Score (admin)</button>`;
     if (isPlayed) actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterStats('${m.id}')">Stats</button>`;
     if (m.status === 'pending_confirm' || isDisputed) actions += `<button class="btn btn-secondary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>`;
     if (isDisputed) actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Corriger score</button>`;
@@ -2008,6 +2079,7 @@ function renderMatchCard(m) {
       ${m.status === 'disputed' ? `<span style="color:var(--red);font-weight:700">⚠️ Score contesté — arbitrage admin en cours</span>` : ''}
       ${actions ? `<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${actions}</div>` : ''}
     </div>
+    ${availInfo}
   </div>`;
 }
 
@@ -2025,15 +2097,19 @@ function renderMatchesList() {
   list.innerHTML = matches.map(renderMatchCard).join('');
 }
 
-// ── MY TEAM — onglet matchs ────────────────────────────────────────────
+// ── MY TEAM — onglets ──────────────────────────────────────────────────
 
 function switchMyTeamTab() {
-  const isRoster = myTabFilter === 'roster';
+  const isRoster  = myTabFilter === 'roster';
+  const isMatches = myTabFilter === 'mymatches';
+  const isDispos  = myTabFilter === 'dispos';
   const isFondMgr = ['fondateur','manager'].includes(myRole);
-  document.getElementById('myteam-matches').style.display  = isRoster ? 'none' : '';
   document.getElementById('myteam-fondateur').style.display = isRoster && isFondMgr ? '' : 'none';
-  document.getElementById('myteam-player').style.display   = isRoster && !isFondMgr ? '' : 'none';
-  if (!isRoster) renderMyMatches();
+  document.getElementById('myteam-player').style.display    = isRoster && !isFondMgr ? '' : 'none';
+  document.getElementById('myteam-matches').style.display   = isMatches ? '' : 'none';
+  document.getElementById('myteam-dispos').style.display    = isDispos ? '' : 'none';
+  if (isMatches) renderMyMatches();
+  if (isDispos) renderDispoTab();
 }
 
 function renderMyMatches() {
@@ -2041,7 +2117,6 @@ function renderMyMatches() {
   const mine = allMatches.filter(m => m.homeTeamId === myTeam.id || m.awayTeamId === myTeam.id);
   const upcoming = mine.filter(m => !['played','forfeit'].includes(m.status));
   const past = mine.filter(m => ['played','forfeit'].includes(m.status));
-
   document.getElementById('myteam-matches-upcoming').innerHTML =
     upcoming.length ? upcoming.sort((a,b) => a.week - b.week).map(renderMatchCard).join('') :
     `<p style="color:var(--muted);font-size:0.83rem">Aucun match à venir.</p>`;
@@ -2050,15 +2125,88 @@ function renderMyMatches() {
     `<p style="color:var(--muted);font-size:0.83rem">Aucun match joué.</p>`;
 }
 
-// ── MODAL : Proposer créneaux ──────────────────────────────────────────
+// ── DISPONIBILITÉS ─────────────────────────────────────────────────────
 
-window.openProposeSlots = function(matchId) {
-  currentMatchForAction = allMatches.find(m => m.id === matchId);
-  if (!currentMatchForAction) return;
-  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
-  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
-  document.getElementById('ps-match-name').textContent = `${ht?.name} vs ${at?.name} (S${currentMatchForAction.week})`;
-  pendingSlotsData = [];
+function getTeamAvailability(teamId, week) {
+  return allAvailabilities.find(a => a.teamId === teamId && a.week === week);
+}
+
+function getCommonSlots(match) {
+  const homeAv = getTeamAvailability(match.homeTeamId, match.week);
+  const awayAv = getTeamAvailability(match.awayTeamId, match.week);
+  if (!homeAv?.slots || !awayAv?.slots) return [];
+  return homeAv.slots.filter(s => awayAv.slots.includes(s));
+}
+
+function fmtSlot(s) {
+  return new Date(s).toLocaleString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function renderDispoTab() {
+  if (!myTeam) return;
+  const week = dispoWeekFilter;
+  const myAv = getTeamAvailability(myTeam.id, week);
+  const mySlots = myAv?.slots || [];
+
+  // Matchs de cette semaine
+  const weekMatches = allMatches.filter(m =>
+    m.week === week && (m.homeTeamId === myTeam.id || m.awayTeamId === myTeam.id)
+  );
+
+  const isMgr = ['fondateur','manager'].includes(myRole);
+
+  document.getElementById('dispo-content').innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:0.9rem;font-weight:800">Nos disponibilités — Semaine ${week}</h3>
+        ${isMgr ? `<button class="btn btn-primary btn-sm" onclick="openEditDispos(${week})">✏️ Modifier</button>` : ''}
+      </div>
+      ${mySlots.length === 0
+        ? `<p style="color:var(--muted);font-size:0.83rem">${isMgr ? 'Aucun créneau saisi. Clique sur Modifier pour ajouter vos disponibilités.' : 'Aucun créneau saisi pour cette semaine.'}</p>`
+        : `<div style="display:flex;flex-wrap:wrap;gap:6px">${mySlots.map(s => `<span class="tag tag-green">📅 ${fmtSlot(s)}</span>`).join('')}</div>`
+      }
+    </div>
+
+    ${weekMatches.length === 0 ? '' : weekMatches.map(m => {
+      const opponent = allTeams.find(t => t.id === (m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId));
+      const common = getCommonSlots(m);
+      const oppAv = getTeamAvailability(opponent?.id, week);
+      const oppSlots = oppAv?.slots || [];
+      return `<div class="card" style="margin-bottom:12px">
+        <div style="font-size:0.75rem;color:var(--muted);font-weight:700;margin-bottom:8px">Match S${m.week} vs ${opponent?.name || '?'}</div>
+        ${['confirmed','played','forfeit'].includes(m.status)
+          ? `<span class="tag tag-green">✓ Match planifié le ${fmtDate(m.scheduledAt)}</span>`
+          : common.length > 0
+            ? `<div style="margin-bottom:10px"><p style="font-size:0.8rem;font-weight:700;color:var(--green);margin-bottom:8px">✓ ${common.length} créneau(x) en commun :</p>
+               <div style="display:flex;flex-wrap:wrap;gap:6px">
+                 ${common.map(s => `<button class="btn btn-sm" style="background:rgba(0,217,54,0.1);color:var(--green);border:1px solid rgba(0,217,54,0.3)" onclick="proposeCommonSlot('${m.id}','${s}')">${fmtSlot(s)} — Proposer</button>`).join('')}
+               </div></div>`
+            : `<p style="font-size:0.8rem;color:var(--muted)">
+                ${oppSlots.length === 0 ? `⏳ ${opponent?.name} n'a pas encore saisi ses dispos.` : `❌ Aucun créneau en commun avec ${opponent?.name}. Coordonnez-vous sur Discord.`}
+               </p>`
+        }
+        ${m.status === 'pending_schedule' && m.proposedSlot
+          ? `<div style="margin-top:8px;padding:10px;background:rgba(255,184,0,0.08);border-radius:8px;font-size:0.82rem">
+              ⏳ Créneau proposé : <strong>${fmtSlot(m.proposedSlot)}</strong>
+              ${isManagerOf(m.homeTeamId === myTeam.id ? m.awayTeamId : m.homeTeamId) && m.proposedByTeam !== myTeam.id
+                ? `<button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="confirmProposedSlot('${m.id}')">Confirmer ✓</button>`
+                : ' (en attente de l\'adversaire)'
+              }
+             </div>` : ''
+        }
+      </div>`;
+    }).join('')}
+  `;
+}
+
+// ── MODAL : Modifier disponibilités ───────────────────────────────────
+
+window.openEditDispos = function(week) {
+  if (!myTeam) return;
+  const myAv = getTeamAvailability(myTeam.id, week);
+  pendingSlotsData = [...(myAv?.slots || [])];
+  dispoWeekFilter = week;
+  document.getElementById('ps-match-name').textContent = `Semaine ${week} — ${myTeam.name}`;
   renderPendingSlots();
   openModal('modal-propose-slots');
 };
@@ -2066,10 +2214,10 @@ window.openProposeSlots = function(matchId) {
 function renderPendingSlots() {
   const el = document.getElementById('ps-slots-list');
   el.innerHTML = pendingSlotsData.length === 0
-    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun créneau ajouté.</p>`
-    : pendingSlotsData.map((s, i) =>
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun créneau. Ajoute vos disponibilités ci-dessous.</p>`
+    : pendingSlotsData.sort().map((s, i) =>
         `<div class="slot-item">
-          <span style="flex:1">📅 ${new Date(s).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+          <span style="flex:1">📅 ${fmtSlot(s)}</span>
           <button class="btn btn-danger btn-sm" onclick="removeSlot(${i})">✕</button>
         </div>`
       ).join('');
@@ -2078,8 +2226,9 @@ function renderPendingSlots() {
 document.getElementById('btn-add-slot').addEventListener('click', () => {
   const input = document.getElementById('slot-datetime-input');
   if (!input.value) { toast('Sélectionne une date et heure.', false); return; }
-  if (pendingSlotsData.includes(input.value)) { toast('Ce créneau est déjà dans la liste.', false); return; }
-  pendingSlotsData.push(input.value);
+  const normalized = input.value.slice(0,16); // YYYY-MM-DDTHH:MM
+  if (pendingSlotsData.includes(normalized)) { toast('Ce créneau est déjà dans la liste.', false); return; }
+  pendingSlotsData.push(normalized);
   input.value = '';
   renderPendingSlots();
 });
@@ -2087,59 +2236,97 @@ document.getElementById('btn-add-slot').addEventListener('click', () => {
 window.removeSlot = function(i) { pendingSlotsData.splice(i, 1); renderPendingSlots(); };
 
 document.getElementById('btn-save-slots').addEventListener('click', async () => {
-  if (!currentMatchForAction || pendingSlotsData.length === 0) { toast('Ajoute au moins un créneau.', false); return; }
-  const teamId = currentMatchForAction.homeTeamId;
-  const existing = allAvailabilities.find(a => a.matchId === currentMatchForAction.id && a.teamId === teamId);
+  if (!myTeam) return;
+  const week = dispoWeekFilter;
+  const existing = getTeamAvailability(myTeam.id, week);
   if (existing) {
     await updateDoc(doc(db, 'rl_availability', existing.id), { slots: pendingSlotsData, updatedAt: serverTimestamp() });
   } else {
     await addDoc(collection(db, 'rl_availability'), {
-      matchId: currentMatchForAction.id, teamId, slots: pendingSlotsData, createdAt: serverTimestamp()
+      teamId: myTeam.id, week, seasonId: activeSeason?.id || null,
+      slots: pendingSlotsData, createdAt: serverTimestamp()
     });
   }
-  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), { status: 'pending_schedule' });
-  toast('Créneaux envoyés à l\'équipe adverse !');
+  toast('Disponibilités enregistrées !');
   closeModal('modal-propose-slots');
+  renderDispoTab();
 });
 
-// ── MODAL : Choisir un créneau ─────────────────────────────────────────
+// ── Proposer / Confirmer un créneau commun ─────────────────────────────
 
-window.openPickSlot = async function(matchId) {
+window.proposeCommonSlot = async function(matchId, slot) {
   currentMatchForAction = allMatches.find(m => m.id === matchId);
   if (!currentMatchForAction) return;
   const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
   const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  await updateDoc(doc(db, 'rl_matches', matchId), {
+    status: 'pending_schedule',
+    proposedSlot: slot,
+    proposedByTeam: myTeam?.id || null
+  });
+  toast(`Créneau du ${fmtSlot(slot)} proposé à ${ht?.id === myTeam?.id ? at?.name : ht?.name} !`);
+  renderDispoTab();
+};
+
+window.confirmProposedSlot = async function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction?.proposedSlot) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
   document.getElementById('pick-match-name').textContent = `${ht?.name} vs ${at?.name} (S${currentMatchForAction.week})`;
-  selectedSlot = null;
-
-  const av = allAvailabilities.find(a => a.matchId === matchId && a.teamId === currentMatchForAction.homeTeamId);
-  const slots = av?.slots || [];
-
-  document.getElementById('pick-slots-list').innerHTML = slots.length === 0
-    ? `<p style="color:var(--muted);font-size:0.83rem">L'équipe adverse n'a pas encore proposé de créneaux.</p>`
-    : slots.map(s =>
-        `<div class="slot-item" onclick="selectPickSlot(this,'${s}')">
-          📅 ${new Date(s).toLocaleString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
-        </div>`
-      ).join('');
+  document.getElementById('pick-slot-display').textContent = `📅 ${fmtSlot(currentMatchForAction.proposedSlot)}`;
+  selectedSlot = currentMatchForAction.proposedSlot;
   openModal('modal-pick-slot');
 };
 
-window.selectPickSlot = function(el, slot) {
-  document.querySelectorAll('#pick-slots-list .slot-item').forEach(e => e.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedSlot = slot;
-};
-
 document.getElementById('btn-confirm-slot').addEventListener('click', async () => {
-  if (!selectedSlot || !currentMatchForAction) { toast('Sélectionne un créneau.', false); return; }
+  if (!selectedSlot || !currentMatchForAction) return;
   await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), {
     status: 'confirmed',
-    scheduledAt: new Date(selectedSlot)
+    scheduledAt: new Date(selectedSlot),
+    proposedSlot: null
   });
-  toast('Créneau confirmé ! Le match est planifié.');
+  toast('Match planifié ! ✓');
   closeModal('modal-pick-slot');
+  renderDispoTab();
 });
+
+// ── Vue publique disponibilités (section Matchs) ───────────────────────
+
+function renderPublicDispos() {
+  const week = parseInt(matchWeekFilter) || 1;
+  const el = document.getElementById('dispos-public-list');
+
+  const teams = [...allTeams].sort((a,b) => {
+    const po = t => t.pool === 'A' ? 0 : t.pool === 'B' ? 1 : 2;
+    return po(a) - po(b) || a.name.localeCompare(b.name);
+  });
+
+  if (teams.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>Aucune équipe</h3><p>Aucune équipe inscrite.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <p style="font-size:0.83rem;color:var(--muted)">Disponibilités pour la <strong style="color:var(--text)">Semaine ${matchWeekFilter === 'all' ? '— (sélectionne une semaine)' : matchWeekFilter}</strong></p>
+    </div>
+    ${matchWeekFilter === 'all' ? `<p style="color:var(--muted);font-size:0.83rem">Sélectionne une semaine dans les filtres ci-dessus pour voir les disponibilités.</p>` :
+      teams.map(t => {
+        const av = getTeamAvailability(t.id, parseInt(matchWeekFilter));
+        const slots = av?.slots || [];
+        return `<div class="card" style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:${slots.length ? '10px' : '0'}">
+            <span style="font-size:0.9rem;font-weight:800;flex:1">${t.name}</span>
+            <span class="tag tag-${t.pool === 'A' ? 'blue' : t.pool === 'B' ? 'orange' : 'muted'}">${t.pool ? `Pool ${t.pool}` : '—'}</span>
+            ${slots.length ? `<span class="tag tag-green">${slots.length} créneau${slots.length > 1 ? 'x' : ''}</span>` : `<span class="tag tag-muted">Pas de dispo</span>`}
+          </div>
+          ${slots.length ? `<div style="display:flex;flex-wrap:wrap;gap:5px">${slots.sort().map(s => `<span class="tag tag-muted" style="font-size:0.72rem">📅 ${fmtSlot(s)}</span>`).join('')}</div>` : ''}
+        </div>`;
+      }).join('')
+    }
+  `;
+}
 
 // ── MODAL : Saisir score (manager) ────────────────────────────────────
 
