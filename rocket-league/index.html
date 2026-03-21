@@ -645,6 +645,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <p>Gestion de la Springs League Series</p>
       </div>
 
+      <!-- Zone de test -->
+      <div class="card" style="margin-bottom:20px;border-color:rgba(123,47,190,0.3);background:rgba(123,47,190,0.05)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="font-size:0.9rem;font-weight:800">🧪 Données de test</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm" style="background:rgba(123,47,190,0.2);color:#a855f7;border:1px solid rgba(123,47,190,0.3)" id="btn-seed-data">Générer équipes factices</button>
+            <button class="btn btn-danger btn-sm" id="btn-clear-test-data">Tout effacer</button>
+          </div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted)">Crée des équipes et joueurs factices pour tester le calendrier et le flux des matchs. Le bouton "Tout effacer" supprime uniquement les données marquées <code>test:true</code>.</p>
+      </div>
+
       <div class="admin-grid">
 
         <!-- Saison -->
@@ -1836,6 +1848,82 @@ window.rejectTransfer = async function(trId) {
   toast('Transfert refusé.');
   loadAdminSection();
 };
+
+// ── DONNÉES DE TEST ────────────────────────────────────────────────────
+
+const TEST_TEAMS = [
+  { name: 'Alpha Squad',    tag: 'ALP', pool: 'A' },
+  { name: 'Beta Force',     tag: 'BTA', pool: 'A' },
+  { name: 'Gamma Strike',   tag: 'GAM', pool: 'A' },
+  { name: 'Delta Hawks',    tag: 'DLT', pool: 'A' },
+  { name: 'Echo Ravens',    tag: 'ECH', pool: 'B' },
+  { name: 'Foxtrot Kings',  tag: 'FOX', pool: 'B' },
+  { name: 'Golf Tigers',    tag: 'GLF', pool: 'B' },
+  { name: 'Hotel Wolves',   tag: 'HTL', pool: 'B' },
+];
+
+document.getElementById('btn-seed-data').addEventListener('click', async () => {
+  if (!confirm(`Créer ${TEST_TEAMS.length} équipes factices avec leurs joueurs ?`)) return;
+
+  const btn = document.getElementById('btn-seed-data');
+  btn.disabled = true; btn.textContent = 'Génération…';
+
+  try {
+    for (const t of TEST_TEAMS) {
+      // Créer l'équipe
+      const teamRef = await addDoc(collection(db, 'rl_teams'), {
+        name: t.name, tag: t.tag, pool: t.pool,
+        logo: null, desc: 'Équipe de test',
+        test: true, createdAt: serverTimestamp()
+      });
+
+      // Créer 3 joueurs fictifs + les ajouter au roster
+      for (let i = 1; i <= 3; i++) {
+        const fakeId = `test_${teamRef.id}_p${i}`;
+        await setDoc(doc(db, 'participants', fakeId), {
+          epicId: `${t.tag}_Player${i}`,
+          pseudo: `${t.tag} Player ${i}`,
+          test: true, uid: fakeId
+        });
+        await addDoc(collection(db, 'rl_roster'), {
+          teamId: teamRef.id, playerId: fakeId,
+          role: i === 1 ? 'fondateur' : 'joueur',
+          status: 'active', test: true, joinedAt: serverTimestamp()
+        });
+      }
+    }
+    toast(`${TEST_TEAMS.length} équipes factices créées !`);
+  } catch (e) {
+    toast('Erreur : ' + e.message, false);
+  }
+  btn.disabled = false; btn.textContent = 'Générer équipes factices';
+});
+
+document.getElementById('btn-clear-test-data').addEventListener('click', async () => {
+  if (!confirm('Effacer toutes les données de test (équipes, joueurs, rosters, matchs marqués test:true) ?')) return;
+
+  const btn = document.getElementById('btn-clear-test-data');
+  btn.disabled = true; btn.textContent = 'Suppression…';
+
+  try {
+    const [teams, rosters, parts, matches] = await Promise.all([
+      getDocs(query(collection(db, 'rl_teams'),    where('test', '==', true))),
+      getDocs(query(collection(db, 'rl_roster'),   where('test', '==', true))),
+      getDocs(query(collection(db, 'participants'), where('test', '==', true))),
+      getDocs(query(collection(db, 'rl_matches'),  where('test', '==', true))),
+    ]);
+    await Promise.all([
+      ...teams.docs.map(d => deleteDoc(d.ref)),
+      ...rosters.docs.map(d => deleteDoc(d.ref)),
+      ...parts.docs.map(d => deleteDoc(d.ref)),
+      ...matches.docs.map(d => deleteDoc(d.ref)),
+    ]);
+    toast('Données de test supprimées.');
+  } catch (e) {
+    toast('Erreur : ' + e.message, false);
+  }
+  btn.disabled = false; btn.textContent = 'Tout effacer';
+});
 
 // ── MATCHES ────────────────────────────────────────────────────────────
 
