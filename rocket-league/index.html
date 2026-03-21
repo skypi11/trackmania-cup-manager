@@ -929,8 +929,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <h2>Proposer des créneaux</h2>
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="ps-match-name">—</strong></p>
     <div id="ps-slots-list"></div>
-    <button class="btn btn-secondary btn-sm" style="margin-top:8px" id="btn-add-slot">+ Ajouter un créneau</button>
-    <input type="datetime-local" id="slot-datetime-input" style="position:fixed;opacity:0;pointer-events:none">
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <input type="datetime-local" id="slot-datetime-input" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:0.85rem">
+      <button class="btn btn-secondary btn-sm" id="btn-add-slot">+ Ajouter</button>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" data-close="modal-propose-slots">Annuler</button>
       <button class="btn btn-primary" id="btn-save-slots">Enregistrer les créneaux</button>
@@ -2075,11 +2077,11 @@ function renderPendingSlots() {
 
 document.getElementById('btn-add-slot').addEventListener('click', () => {
   const input = document.getElementById('slot-datetime-input');
+  if (!input.value) { toast('Sélectionne une date et heure.', false); return; }
+  if (pendingSlotsData.includes(input.value)) { toast('Ce créneau est déjà dans la liste.', false); return; }
+  pendingSlotsData.push(input.value);
   input.value = '';
-  input.click();
-  input.onchange = () => {
-    if (input.value) { pendingSlotsData.push(input.value); renderPendingSlots(); }
-  };
+  renderPendingSlots();
 });
 
 window.removeSlot = function(i) { pendingSlotsData.splice(i, 1); renderPendingSlots(); };
