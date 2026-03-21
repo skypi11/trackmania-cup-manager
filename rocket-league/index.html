@@ -362,6 +362,35 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 /* Back link */
 .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 0.8rem; margin-bottom: 24px; }
 .back-link:hover { color: var(--text); }
+
+/* ── MATCHES ─────────────────────────────────── */
+.match-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 8px;
+}
+.match-card-teams {
+  display: flex; align-items: center; gap: 12px;
+  justify-content: space-between; margin-bottom: 10px;
+}
+.match-team { flex: 1; font-weight: 800; font-size: 0.9rem; }
+.match-team.right { text-align: right; }
+.match-score {
+  display: flex; gap: 6px; align-items: center;
+  font-size: 1.3rem; font-weight: 900; min-width: 72px; justify-content: center;
+}
+.match-score .sep { color: var(--muted); font-size: 0.9rem; }
+.match-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); }
+
+/* Slot picker */
+.slot-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+  margin-bottom: 6px;
+}
+.slot-item:hover { border-color: var(--accent); }
+.slot-item.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,129,255,0.08); }
 </style>
 </head>
 <body>
@@ -431,6 +460,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="nav-item active" data-section="home"><span class="icon">🏠</span> Accueil</button>
     <button class="nav-item" data-section="teams"><span class="icon">🛡️</span> Équipes</button>
     <button class="nav-item" data-section="players"><span class="icon">👥</span> Joueurs</button>
+    <button class="nav-item" data-section="matches"><span class="icon">📅</span> Matchs</button>
     <button class="nav-item hidden" id="nav-myteam" data-section="myteam"><span class="icon">⚡</span> Mon équipe</button>
 
     <div class="sidebar-section">Admin</div>
@@ -523,11 +553,48 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <div id="players-list"></div>
     </section>
 
+    <!-- MATCHES -->
+    <section id="sec-matches" class="section">
+      <div class="page-header">
+        <h1>Calendrier</h1>
+        <p>Matchs de la Springs League Series par semaine et par pool</p>
+      </div>
+      <div class="filters" id="match-week-filters">
+        <button class="filter-btn active" data-week="all">Toutes les semaines</button>
+        <button class="filter-btn" data-week="1">Semaine 1</button>
+        <button class="filter-btn" data-week="2">Semaine 2</button>
+        <button class="filter-btn" data-week="3">Semaine 3</button>
+        <button class="filter-btn" data-week="4">Semaine 4</button>
+        <button class="filter-btn" data-week="5">Semaine 5</button>
+      </div>
+      <div class="filters" style="margin-top:-8px" id="match-pool-filters">
+        <button class="filter-btn active" data-mpool="all">Pool A + B</button>
+        <button class="filter-btn" data-mpool="A">Pool A</button>
+        <button class="filter-btn" data-mpool="B">Pool B</button>
+      </div>
+      <div id="matches-list">
+        <div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>Le calendrier n'a pas encore été généré.</p></div>
+      </div>
+    </section>
+
     <!-- MY TEAM -->
     <section id="sec-myteam" class="section">
       <div class="page-header" id="myteam-header">
         <h1 id="myteam-title">Mon équipe</h1>
         <p id="myteam-subtitle">—</p>
+      </div>
+
+      <div class="filters" style="margin-bottom:20px">
+        <button class="filter-btn active" data-mytab="roster">Roster</button>
+        <button class="filter-btn" data-mytab="mymatches">Mes matchs</button>
+      </div>
+
+      <!-- MES MATCHS -->
+      <div id="myteam-matches" style="display:none">
+        <div class="section-divider">Prochains matchs</div>
+        <div id="myteam-matches-upcoming"><p style="color:var(--muted);font-size:0.83rem">Aucun match à venir.</p></div>
+        <div class="section-divider" style="margin-top:20px">Matchs passés</div>
+        <div id="myteam-matches-past"><p style="color:var(--muted);font-size:0.83rem">Aucun match joué.</p></div>
       </div>
 
       <div id="myteam-fondateur" style="display:none">
@@ -621,6 +688,28 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <div id="admin-transfers-list">
             <p style="color:var(--muted);font-size:0.83rem">Aucun transfert en attente.</p>
           </div>
+        </div>
+
+        <!-- Calendrier -->
+        <div class="card" style="grid-column:1/-1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3 style="font-size:0.9rem;font-weight:800">📅 Calendrier des matchs</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-A">Générer Pool A</button>
+              <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-B">Générer Pool B</button>
+              <button class="btn btn-danger btn-sm" id="btn-clear-schedule">Effacer tout</button>
+            </div>
+          </div>
+          <div id="admin-schedule-info"><p style="color:var(--muted);font-size:0.83rem">Générez le calendrier round-robin une fois les pools définies.</p></div>
+        </div>
+
+        <!-- Scores à valider -->
+        <div class="card" style="grid-column:1/-1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3 style="font-size:0.9rem;font-weight:800">⚡ Scores en attente</h3>
+            <span id="scores-badge" style="background:var(--red);color:#fff;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px;display:none">0</span>
+          </div>
+          <div id="admin-pending-scores"><p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p></div>
         </div>
 
       </div>
@@ -820,6 +909,110 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   </div>
 </div>
 
+<!-- Proposer créneaux -->
+<div class="modal-overlay hidden" id="modal-propose-slots">
+  <div class="modal modal-lg">
+    <button class="modal-close" data-close="modal-propose-slots">✕</button>
+    <h2>Proposer des créneaux</h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="ps-match-name">—</strong></p>
+    <div id="ps-slots-list"></div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px" id="btn-add-slot">+ Ajouter un créneau</button>
+    <input type="datetime-local" id="slot-datetime-input" style="position:fixed;opacity:0;pointer-events:none">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-propose-slots">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-slots">Enregistrer les créneaux</button>
+    </div>
+  </div>
+</div>
+
+<!-- Choisir un créneau -->
+<div class="modal-overlay hidden" id="modal-pick-slot">
+  <div class="modal">
+    <button class="modal-close" data-close="modal-pick-slot">✕</button>
+    <h2>Choisir un créneau</h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="pick-match-name">—</strong></p>
+    <div id="pick-slots-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-pick-slot">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirm-slot">Confirmer ce créneau</button>
+    </div>
+  </div>
+</div>
+
+<!-- Entrer le score (admin) -->
+<div class="modal-overlay hidden" id="modal-enter-score">
+  <div class="modal">
+    <button class="modal-close" data-close="modal-enter-score">✕</button>
+    <h2>Saisir le score</h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px" id="es-match-name">—</p>
+    <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:20px">
+      <div class="form-group" style="flex:1;margin:0">
+        <label id="es-home-label">Domicile</label>
+        <input type="number" id="es-home-score" min="0" max="7" value="0" style="text-align:center;font-size:1.5rem;font-weight:900">
+      </div>
+      <div style="font-size:1.3rem;font-weight:900;color:var(--muted);padding-bottom:10px">:</div>
+      <div class="form-group" style="flex:1;margin:0">
+        <label id="es-away-label">Extérieur</label>
+        <input type="number" id="es-away-score" min="0" max="7" value="0" style="text-align:center;font-size:1.5rem;font-weight:900">
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="es-forfeit"> Forfait (4-0)
+      </label>
+    </div>
+    <div class="form-group" id="es-forfeit-team-wrap" style="display:none">
+      <label>Équipe forfait</label>
+      <select id="es-forfeit-team">
+        <option value="home" id="es-forfeit-home-opt">Équipe domicile</option>
+        <option value="away" id="es-forfeit-away-opt">Équipe extérieur</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-enter-score">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-score">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmer le score (manager) -->
+<div class="modal-overlay hidden" id="modal-confirm-score">
+  <div class="modal">
+    <button class="modal-close" data-close="modal-confirm-score">✕</button>
+    <h2>Confirmer le résultat</h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px" id="csc-match-desc">—</p>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:2.4rem;font-weight:900;letter-spacing:-2px" id="csc-score-display">— : —</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-confirm-score">Annuler</button>
+      <button class="btn btn-primary" id="btn-do-confirm-score">Confirmer ce résultat</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats joueurs (admin) -->
+<div class="modal-overlay hidden" id="modal-enter-stats">
+  <div class="modal modal-lg">
+    <button class="modal-close" data-close="modal-enter-stats">✕</button>
+    <h2>Statistiques joueurs</h2>
+    <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px" id="stats-match-name">—</p>
+    <div style="display:grid;grid-template-columns:1fr repeat(5,56px);gap:6px;margin-bottom:8px">
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-transform:uppercase">Joueur</span>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-align:center">Buts</span>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-align:center">Passes</span>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-align:center">Saves</span>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-align:center">Tirs</span>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--muted);text-align:center">MVP</span>
+    </div>
+    <div id="stats-players-form"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-enter-stats">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-stats">Enregistrer les stats</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -847,6 +1040,14 @@ let activeSeason = null;
 let selectedTeamForPool = null;
 let selectedInvitePlayer = null;
 let teamOfInvite = null;
+let allMatches = [];
+let allAvailabilities = [];
+let matchWeekFilter = 'all';
+let matchPoolFilter = 'all';
+let myTabFilter = 'roster';
+let currentMatchForAction = null;
+let selectedSlot = null;
+let pendingSlotsData = [];
 
 // En RL on affiche en priorité l'Epic ID (pseudo in-game), jamais le vrai nom Google
 const pName = p => p?.pseudoTM || p?.epicId || p?.pseudo || '?';
@@ -881,6 +1082,7 @@ function navigate(section) {
   document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
   if (section === 'teams') loadTeamsSection();
   if (section === 'players') loadPlayersSection();
+  if (section === 'matches') renderMatchesList();
   if (section === 'myteam') loadMyTeamSection();
   if (section === 'admin') loadAdminSection();
 }
@@ -905,6 +1107,36 @@ document.querySelectorAll('[data-pfilter]').forEach(btn => {
     document.querySelectorAll('[data-pfilter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderPlayersList(btn.dataset.pfilter);
+  });
+});
+
+// Match week filters
+document.querySelectorAll('[data-week]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-week]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    matchWeekFilter = btn.dataset.week;
+    renderMatchesList();
+  });
+});
+
+// Match pool filters
+document.querySelectorAll('[data-mpool]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mpool]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    matchPoolFilter = btn.dataset.mpool;
+    renderMatchesList();
+  });
+});
+
+// My team tabs
+document.querySelectorAll('[data-mytab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mytab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    myTabFilter = btn.dataset.mytab;
+    switchMyTeamTab();
   });
 });
 
@@ -1029,6 +1261,18 @@ async function bootApp() {
     updateSidebarRole();
     updateHomeBanner();
     updateHomeStats();
+  });
+
+  // Live matches listener
+  onSnapshot(collection(db, 'rl_matches'), snap => {
+    allMatches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (document.getElementById('sec-matches').classList.contains('active')) renderMatchesList();
+    if (document.getElementById('sec-myteam').classList.contains('active') && myTabFilter === 'mymatches') renderMyMatches();
+    updateAdminScoresBadge();
+  });
+
+  onSnapshot(collection(db, 'rl_availability'), snap => {
+    allAvailabilities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   });
 
   // Pending transfers badge (admin only)
@@ -1591,6 +1835,443 @@ window.rejectTransfer = async function(trId) {
   await updateDoc(doc(db, 'rl_transfers', trId), { status: 'rejected', resolvedAt: serverTimestamp() });
   toast('Transfert refusé.');
   loadAdminSection();
+};
+
+// ── MATCHES ────────────────────────────────────────────────────────────
+
+function isManagerOf(teamId) {
+  if (!myTeam) return false;
+  return myTeam.id === teamId && ['fondateur', 'manager'].includes(myRole);
+}
+
+function fmtDate(val) {
+  if (!val) return 'Créneau à fixer';
+  const d = val.toDate ? val.toDate() : new Date(val);
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderMatchCard(m) {
+  const homeTeam = allTeams.find(t => t.id === m.homeTeamId);
+  const awayTeam = allTeams.find(t => t.id === m.awayTeamId);
+  const statusMap = {
+    scheduled:        { label: 'À planifier',     cls: 'tag-muted' },
+    pending_schedule: { label: 'Créneau à fixer',  cls: 'tag-gold' },
+    confirmed:        { label: 'Confirmé',          cls: 'tag-blue' },
+    pending_confirm:  { label: 'À confirmer',       cls: 'tag-orange' },
+    played:           { label: 'Joué',              cls: 'tag-green' },
+    forfeit:          { label: 'Forfait',           cls: 'tag-red' }
+  };
+  const st = statusMap[m.status] || { label: m.status, cls: 'tag-muted' };
+  const isPlayed = ['played','forfeit'].includes(m.status);
+  const homeScore = isPlayed ? (m.homeScore ?? '—') : '—';
+  const awayScore = isPlayed ? (m.awayScore ?? '—') : '—';
+
+  // Actions
+  const canPropose = isManagerOf(m.homeTeamId) && m.status === 'scheduled';
+  const canPick    = isManagerOf(m.awayTeamId) && m.status === 'pending_schedule';
+  const canConfirm = (isManagerOf(m.homeTeamId) || isManagerOf(m.awayTeamId)) && m.status === 'pending_confirm';
+  // Check if already confirmed by my side
+  const alreadyConfirmed = (isManagerOf(m.homeTeamId) && m.homeConfirmed) || (isManagerOf(m.awayTeamId) && m.awayConfirmed);
+
+  let actions = '';
+  if (canPropose) actions += `<button class="btn btn-primary btn-sm" onclick="openProposeSlots('${m.id}')">Proposer créneaux</button>`;
+  if (canPick)    actions += `<button class="btn btn-primary btn-sm" onclick="openPickSlot('${m.id}')">Choisir créneau</button>`;
+  if (canConfirm && !alreadyConfirmed) actions += `<button class="btn btn-primary btn-sm" onclick="openConfirmScore('${m.id}')">Confirmer score</button>`;
+  if (isAdmin) {
+    actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Score</button>`;
+    if (isPlayed) actions += `<button class="btn btn-secondary btn-sm" onclick="openEnterStats('${m.id}')">Stats</button>`;
+    if (m.status === 'pending_confirm') actions += `<button class="btn btn-secondary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>`;
+  }
+
+  return `<div class="match-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:0.7rem;color:var(--muted);font-weight:700">S${m.week} · Pool ${m.pool}</span>
+      <span class="tag ${st.cls}">${st.label}</span>
+    </div>
+    <div class="match-card-teams">
+      <div class="match-team">${homeTeam?.name || '?'} <span style="color:var(--muted);font-size:0.72rem;font-weight:400">[${homeTeam?.tag || '?'}]</span></div>
+      <div class="match-score"><span>${homeScore}</span><span class="sep">:</span><span>${awayScore}</span></div>
+      <div class="match-team right"><span style="color:var(--muted);font-size:0.72rem;font-weight:400">[${awayTeam?.tag || '?'}]</span> ${awayTeam?.name || '?'}</div>
+    </div>
+    <div class="match-meta">
+      <span>📅 ${fmtDate(m.scheduledAt)}</span>
+      ${m.status === 'pending_confirm' ? `<span style="color:var(--gold)">En attente : ${m.homeConfirmed ? '✅' : '⏳'} ${homeTeam?.tag} / ${m.awayConfirmed ? '✅' : '⏳'} ${awayTeam?.tag}</span>` : ''}
+      ${actions ? `<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${actions}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderMatchesList() {
+  const list = document.getElementById('matches-list');
+  let matches = [...allMatches];
+  if (matchWeekFilter !== 'all') matches = matches.filter(m => String(m.week) === matchWeekFilter);
+  if (matchPoolFilter !== 'all') matches = matches.filter(m => m.pool === matchPoolFilter);
+  matches.sort((a, b) => (a.week - b.week) || String(a.pool).localeCompare(String(b.pool)));
+
+  if (matches.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>Le calendrier n'a pas encore été généré, ou aucun match pour ces filtres.</p></div>`;
+    return;
+  }
+  list.innerHTML = matches.map(renderMatchCard).join('');
+}
+
+// ── MY TEAM — onglet matchs ────────────────────────────────────────────
+
+function switchMyTeamTab() {
+  const isRoster = myTabFilter === 'roster';
+  const isFondMgr = ['fondateur','manager'].includes(myRole);
+  document.getElementById('myteam-matches').style.display  = isRoster ? 'none' : '';
+  document.getElementById('myteam-fondateur').style.display = isRoster && isFondMgr ? '' : 'none';
+  document.getElementById('myteam-player').style.display   = isRoster && !isFondMgr ? '' : 'none';
+  if (!isRoster) renderMyMatches();
+}
+
+function renderMyMatches() {
+  if (!myTeam) return;
+  const mine = allMatches.filter(m => m.homeTeamId === myTeam.id || m.awayTeamId === myTeam.id);
+  const upcoming = mine.filter(m => !['played','forfeit'].includes(m.status));
+  const past = mine.filter(m => ['played','forfeit'].includes(m.status));
+
+  document.getElementById('myteam-matches-upcoming').innerHTML =
+    upcoming.length ? upcoming.sort((a,b) => a.week - b.week).map(renderMatchCard).join('') :
+    `<p style="color:var(--muted);font-size:0.83rem">Aucun match à venir.</p>`;
+  document.getElementById('myteam-matches-past').innerHTML =
+    past.length ? past.sort((a,b) => b.week - a.week).map(renderMatchCard).join('') :
+    `<p style="color:var(--muted);font-size:0.83rem">Aucun match joué.</p>`;
+}
+
+// ── MODAL : Proposer créneaux ──────────────────────────────────────────
+
+window.openProposeSlots = function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  document.getElementById('ps-match-name').textContent = `${ht?.name} vs ${at?.name} (S${currentMatchForAction.week})`;
+  pendingSlotsData = [];
+  renderPendingSlots();
+  openModal('modal-propose-slots');
+};
+
+function renderPendingSlots() {
+  const el = document.getElementById('ps-slots-list');
+  el.innerHTML = pendingSlotsData.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun créneau ajouté.</p>`
+    : pendingSlotsData.map((s, i) =>
+        `<div class="slot-item">
+          <span style="flex:1">📅 ${new Date(s).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+          <button class="btn btn-danger btn-sm" onclick="removeSlot(${i})">✕</button>
+        </div>`
+      ).join('');
+}
+
+document.getElementById('btn-add-slot').addEventListener('click', () => {
+  const input = document.getElementById('slot-datetime-input');
+  input.value = '';
+  input.click();
+  input.onchange = () => {
+    if (input.value) { pendingSlotsData.push(input.value); renderPendingSlots(); }
+  };
+});
+
+window.removeSlot = function(i) { pendingSlotsData.splice(i, 1); renderPendingSlots(); };
+
+document.getElementById('btn-save-slots').addEventListener('click', async () => {
+  if (!currentMatchForAction || pendingSlotsData.length === 0) { toast('Ajoute au moins un créneau.', false); return; }
+  const teamId = currentMatchForAction.homeTeamId;
+  const existing = allAvailabilities.find(a => a.matchId === currentMatchForAction.id && a.teamId === teamId);
+  if (existing) {
+    await updateDoc(doc(db, 'rl_availability', existing.id), { slots: pendingSlotsData, updatedAt: serverTimestamp() });
+  } else {
+    await addDoc(collection(db, 'rl_availability'), {
+      matchId: currentMatchForAction.id, teamId, slots: pendingSlotsData, createdAt: serverTimestamp()
+    });
+  }
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), { status: 'pending_schedule' });
+  toast('Créneaux envoyés à l\'équipe adverse !');
+  closeModal('modal-propose-slots');
+});
+
+// ── MODAL : Choisir un créneau ─────────────────────────────────────────
+
+window.openPickSlot = async function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  document.getElementById('pick-match-name').textContent = `${ht?.name} vs ${at?.name} (S${currentMatchForAction.week})`;
+  selectedSlot = null;
+
+  const av = allAvailabilities.find(a => a.matchId === matchId && a.teamId === currentMatchForAction.homeTeamId);
+  const slots = av?.slots || [];
+
+  document.getElementById('pick-slots-list').innerHTML = slots.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">L'équipe adverse n'a pas encore proposé de créneaux.</p>`
+    : slots.map(s =>
+        `<div class="slot-item" onclick="selectPickSlot(this,'${s}')">
+          📅 ${new Date(s).toLocaleString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+        </div>`
+      ).join('');
+  openModal('modal-pick-slot');
+};
+
+window.selectPickSlot = function(el, slot) {
+  document.querySelectorAll('#pick-slots-list .slot-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = slot;
+};
+
+document.getElementById('btn-confirm-slot').addEventListener('click', async () => {
+  if (!selectedSlot || !currentMatchForAction) { toast('Sélectionne un créneau.', false); return; }
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), {
+    status: 'confirmed',
+    scheduledAt: new Date(selectedSlot)
+  });
+  toast('Créneau confirmé ! Le match est planifié.');
+  closeModal('modal-pick-slot');
+});
+
+// ── MODAL : Saisir score (admin) ───────────────────────────────────────
+
+window.openEnterScore = function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  document.getElementById('es-match-name').textContent = `${ht?.name} vs ${at?.name} · S${currentMatchForAction.week} Pool ${currentMatchForAction.pool}`;
+  document.getElementById('es-home-label').textContent = ht?.name || 'Domicile';
+  document.getElementById('es-away-label').textContent = at?.name || 'Extérieur';
+  document.getElementById('es-home-score').value = currentMatchForAction.homeScore ?? 0;
+  document.getElementById('es-away-score').value = currentMatchForAction.awayScore ?? 0;
+  document.getElementById('es-forfeit').checked = false;
+  document.getElementById('es-forfeit-team-wrap').style.display = 'none';
+  document.getElementById('es-forfeit-home-opt').textContent = ht?.name || 'Domicile';
+  document.getElementById('es-forfeit-away-opt').textContent = at?.name || 'Extérieur';
+  openModal('modal-enter-score');
+};
+
+document.getElementById('es-forfeit').addEventListener('change', function() {
+  document.getElementById('es-forfeit-team-wrap').style.display = this.checked ? '' : 'none';
+});
+
+document.getElementById('btn-save-score').addEventListener('click', async () => {
+  if (!currentMatchForAction) return;
+  const isForfeit = document.getElementById('es-forfeit').checked;
+  const forfeitSide = document.getElementById('es-forfeit-team').value;
+  let update;
+  if (isForfeit) {
+    const forfeitTeamId = forfeitSide === 'home' ? currentMatchForAction.homeTeamId : currentMatchForAction.awayTeamId;
+    update = {
+      status: 'forfeit', forfeit: true, forfeitTeamId,
+      homeScore: forfeitSide === 'home' ? 0 : 4,
+      awayScore: forfeitSide === 'away' ? 0 : 4,
+      adminConfirmed: true, homeConfirmed: true, awayConfirmed: true,
+      playedAt: serverTimestamp()
+    };
+  } else {
+    update = {
+      homeScore: parseInt(document.getElementById('es-home-score').value) || 0,
+      awayScore: parseInt(document.getElementById('es-away-score').value) || 0,
+      status: 'pending_confirm',
+      adminConfirmed: true, homeConfirmed: false, awayConfirmed: false
+    };
+  }
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), update);
+  toast(isForfeit ? 'Forfait enregistré !' : 'Score enregistré — managers doivent confirmer.');
+  closeModal('modal-enter-score');
+});
+
+// ── MODAL : Confirmer score (manager) ──────────────────────────────────
+
+window.openConfirmScore = function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  document.getElementById('csc-match-desc').textContent = `${ht?.name} vs ${at?.name} · S${currentMatchForAction.week}`;
+  document.getElementById('csc-score-display').textContent = `${currentMatchForAction.homeScore} : ${currentMatchForAction.awayScore}`;
+  openModal('modal-confirm-score');
+};
+
+document.getElementById('btn-do-confirm-score').addEventListener('click', async () => {
+  if (!currentMatchForAction) return;
+  const isHome = isManagerOf(currentMatchForAction.homeTeamId);
+  const field = isHome ? 'homeConfirmed' : 'awayConfirmed';
+  const otherConfirmed = isHome ? currentMatchForAction.awayConfirmed : currentMatchForAction.homeConfirmed;
+  const update = { [field]: true };
+  if (otherConfirmed) { update.status = 'played'; update.playedAt = serverTimestamp(); }
+  await updateDoc(doc(db, 'rl_matches', currentMatchForAction.id), update);
+  toast(otherConfirmed ? 'Match validé des deux côtés !' : 'Confirmation enregistrée, en attente de l\'autre manager.');
+  closeModal('modal-confirm-score');
+});
+
+// ── MODAL : Stats joueurs (admin) ──────────────────────────────────────
+
+window.openEnterStats = async function(matchId) {
+  currentMatchForAction = allMatches.find(m => m.id === matchId);
+  if (!currentMatchForAction) return;
+  const ht = allTeams.find(t => t.id === currentMatchForAction.homeTeamId);
+  const at = allTeams.find(t => t.id === currentMatchForAction.awayTeamId);
+  document.getElementById('stats-match-name').textContent = `${ht?.name} vs ${at?.name} · S${currentMatchForAction.week} — Score : ${currentMatchForAction.homeScore}:${currentMatchForAction.awayScore}`;
+
+  const existingSnap = await getDocs(query(collection(db, 'rl_stats'), where('matchId', '==', matchId)));
+  const existing = {};
+  existingSnap.forEach(d => { existing[d.data().playerId] = { docId: d.id, ...d.data() }; });
+
+  function teamRows(teamId, teamName) {
+    const roster = allRosters.filter(r => r.teamId === teamId && r.status === 'active' && ['joueur','remplacant','capitaine','fondateur','manager'].includes(r.role));
+    if (roster.length === 0) return `<p style="color:var(--muted);font-size:0.83rem;margin-bottom:8px">Aucun joueur dans le roster de ${teamName}.</p>`;
+    return `<div style="font-size:0.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin:12px 0 6px">${teamName}</div>` +
+      roster.map(r => {
+        const p = allParticipants[r.playerId];
+        const s = existing[r.playerId] || {};
+        return `<div style="display:grid;grid-template-columns:1fr repeat(5,56px);gap:6px;align-items:center;margin-bottom:6px">
+          <span style="font-size:0.83rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pName(p)}</span>
+          <input type="number" min="0" max="20" data-pid="${r.playerId}" data-team="${teamId}" data-field="goals"   value="${s.goals??0}"   class="si" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px;color:var(--text);text-align:center;font-size:0.85rem">
+          <input type="number" min="0" max="20" data-pid="${r.playerId}" data-team="${teamId}" data-field="assists" value="${s.assists??0}" class="si" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px;color:var(--text);text-align:center;font-size:0.85rem">
+          <input type="number" min="0" max="20" data-pid="${r.playerId}" data-team="${teamId}" data-field="saves"   value="${s.saves??0}"   class="si" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px;color:var(--text);text-align:center;font-size:0.85rem">
+          <input type="number" min="0" max="20" data-pid="${r.playerId}" data-team="${teamId}" data-field="shots"   value="${s.shots??0}"   class="si" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px;color:var(--text);text-align:center;font-size:0.85rem">
+          <input type="checkbox" data-pid="${r.playerId}" data-team="${teamId}" data-field="mvp" ${s.mvp?'checked':''} class="si" style="width:18px;height:18px;cursor:pointer;margin:0 auto;display:block">
+        </div>`;
+      }).join('');
+  }
+
+  document.getElementById('stats-players-form').innerHTML =
+    teamRows(currentMatchForAction.homeTeamId, ht?.name || '?') +
+    `<div style="border-top:1px solid var(--border);margin:12px 0"></div>` +
+    teamRows(currentMatchForAction.awayTeamId, at?.name || '?');
+
+  openModal('modal-enter-stats');
+};
+
+document.getElementById('btn-save-stats').addEventListener('click', async () => {
+  if (!currentMatchForAction) return;
+  const inputs = document.querySelectorAll('#stats-players-form .si');
+  const byPlayer = {};
+  inputs.forEach(inp => {
+    const { pid, team, field } = inp.dataset;
+    if (!byPlayer[pid]) byPlayer[pid] = { playerId: pid, teamId: team, matchId: currentMatchForAction.id, seasonId: activeSeason?.id || null };
+    byPlayer[pid][field] = inp.type === 'checkbox' ? inp.checked : (parseInt(inp.value) || 0);
+  });
+
+  const existingSnap = await getDocs(query(collection(db, 'rl_stats'), where('matchId', '==', currentMatchForAction.id)));
+  const existingDocs = {};
+  existingSnap.forEach(d => { existingDocs[d.data().playerId] = d.id; });
+
+  await Promise.all(Object.entries(byPlayer).map(([pid, stats]) =>
+    existingDocs[pid]
+      ? updateDoc(doc(db, 'rl_stats', existingDocs[pid]), { ...stats, updatedAt: serverTimestamp() })
+      : addDoc(collection(db, 'rl_stats'), { ...stats, createdAt: serverTimestamp() })
+  ));
+  toast('Stats enregistrées !');
+  closeModal('modal-enter-stats');
+});
+
+// ── ADMIN : Génération calendrier ──────────────────────────────────────
+
+function updateAdminScoresBadge() {
+  const badge = document.getElementById('scores-badge');
+  if (!badge || !isAdmin) return;
+  const count = allMatches.filter(m => m.status === 'pending_confirm').length;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? '' : 'none';
+}
+
+window.adminValidateScore = async function(matchId) {
+  await updateDoc(doc(db, 'rl_matches', matchId), { status: 'played', adminConfirmed: true, playedAt: serverTimestamp() });
+  toast('Match validé !');
+  loadAdminSection();
+};
+
+document.getElementById('btn-gen-schedule-A').addEventListener('click', () => generateSchedule('A'));
+document.getElementById('btn-gen-schedule-B').addEventListener('click', () => generateSchedule('B'));
+document.getElementById('btn-clear-schedule').addEventListener('click', async () => {
+  if (!activeSeason || !confirm('Effacer TOUS les matchs de cette saison ?')) return;
+  const snap = await getDocs(query(collection(db, 'rl_matches'), where('seasonId', '==', activeSeason.id)));
+  await Promise.all(snap.docs.map(d => deleteDoc(doc(db, 'rl_matches', d.id))));
+  toast('Calendrier effacé.');
+});
+
+async function generateSchedule(pool) {
+  if (!activeSeason) { toast('Aucune saison active.', false); return; }
+  const poolTeams = allTeams.filter(t => t.pool === pool);
+  if (poolTeams.length < 2) { toast(`Pas assez d'équipes en Pool ${pool}.`, false); return; }
+  if (!confirm(`Générer le calendrier round-robin pour la Pool ${pool} (${poolTeams.length} équipes) ?\nCela écrasera les matchs existants de ce pool.`)) return;
+
+  // Supprimer matchs existants du pool
+  const existingSnap = await getDocs(query(collection(db, 'rl_matches'),
+    where('seasonId', '==', activeSeason.id), where('pool', '==', pool)));
+  await Promise.all(existingSnap.docs.map(d => deleteDoc(doc(db, 'rl_matches', d.id))));
+
+  // Circle method round-robin
+  const ids = poolTeams.map(t => t.id);
+  const list = [...ids];
+  if (list.length % 2 !== 0) list.push(null); // bye si impair
+  const n = list.length;
+  const rounds = [];
+
+  for (let r = 0; r < n - 1; r++) {
+    const round = [];
+    for (let i = 0; i < n / 2; i++) {
+      const home = list[i], away = list[n - 1 - i];
+      if (home && away) round.push(r % 2 === 0 ? [home, away] : [away, home]);
+    }
+    rounds.push(round);
+    // Rotation : fix list[0], faire tourner le reste
+    list.splice(1, 0, list.pop());
+  }
+
+  // 3 rounds par semaine → 5 semaines
+  const writes = [];
+  rounds.forEach((round, idx) => {
+    const week = Math.floor(idx / 3) + 1;
+    round.forEach(([homeId, awayId]) => {
+      writes.push(addDoc(collection(db, 'rl_matches'), {
+        seasonId: activeSeason.id, pool, week,
+        homeTeamId: homeId, awayTeamId: awayId,
+        status: 'scheduled',
+        homeScore: null, awayScore: null,
+        homeConfirmed: false, awayConfirmed: false, adminConfirmed: false,
+        forfeit: false, forfeitTeamId: null, scheduledAt: null,
+        createdAt: serverTimestamp()
+      }));
+    });
+  });
+
+  await Promise.all(writes);
+  const total = rounds.reduce((s, r) => s + r.length, 0);
+  toast(`Calendrier Pool ${pool} généré ! (${total} matchs sur ${Math.min(rounds.length, 15)} rounds)`);
+  loadAdminSection();
+}
+
+// Scores en attente dans loadAdminSection — ajout à la fin de la fonction existante
+const _origLoadAdmin = loadAdminSection;
+loadAdminSection = async function() {
+  await _origLoadAdmin();
+  // Scores en attente
+  const pending = allMatches.filter(m => m.status === 'pending_confirm');
+  const badge = document.getElementById('scores-badge');
+  if (badge) { badge.textContent = pending.length; badge.style.display = pending.length > 0 ? '' : 'none'; }
+  document.getElementById('admin-pending-scores').innerHTML = pending.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p>`
+    : pending.map(m => {
+        const ht = allTeams.find(t => t.id === m.homeTeamId);
+        const at = allTeams.find(t => t.id === m.awayTeamId);
+        return `<div class="app-item">
+          <div class="app-info">
+            <h4>${ht?.name || '?'} ${m.homeScore} : ${m.awayScore} ${at?.name || '?'}</h4>
+            <p>Pool ${m.pool} · S${m.week} · ${m.homeConfirmed ? '✅' : '⏳'} ${ht?.tag} / ${m.awayConfirmed ? '✅' : '⏳'} ${at?.tag}</p>
+          </div>
+          <div class="app-actions">
+            <button class="btn btn-primary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Modifier</button>
+          </div>
+        </div>`;
+      }).join('');
+  // Résumé calendrier
+  const byPool = { A: allMatches.filter(m => m.pool === 'A').length, B: allMatches.filter(m => m.pool === 'B').length };
+  document.getElementById('admin-schedule-info').innerHTML =
+    `<p style="font-size:0.83rem;color:var(--muted)">Pool A : <strong style="color:var(--text)">${byPool.A} matchs</strong> · Pool B : <strong style="color:var(--text)">${byPool.B} matchs</strong></p>`;
 };
 </script>
 </body>
