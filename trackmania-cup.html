@@ -4754,10 +4754,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const rows = data.participants.map(p => {
                 const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
                 const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
-                if (qRes.length === 0 && fRes.length === 0) return null;
+                const iRes = data.results.filter(r => r.playerId === p.id && r.phase === 'inscription');
+                if (qRes.length === 0 && fRes.length === 0 && iRes.length === 0) return null;
+                const participEditions = new Set([...qRes, ...iRes].map(r => r.editionId)).size;
                 return {
                     p,
-                    quals: new Set(qRes.map(r => r.editionId)).size,
+                    quals: participEditions,
                     finals: fRes.length,
                     points: fRes.reduce((sum, r) => sum + getPoints(r.position), 0),
                     wins: fRes.filter(r => r.position === 1).length,
