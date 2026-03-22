@@ -1392,6 +1392,8 @@ function toast(msg, ok = true) {
 
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+window.openModal = openModal;
+window.closeModal = closeModal;
 
 // Close buttons
 document.querySelectorAll('[data-close]').forEach(btn => {
@@ -1595,13 +1597,16 @@ async function bootApp() {
   const adminSnap = await getDoc(doc(db, 'admins', currentUser.uid));
   isAdmin = adminSnap.exists();
 
-  // Load all participants
-  const partSnap = await getDocs(collection(db, 'participants'));
-  partSnap.forEach(d => {
-    const data = { id: d.id, ...d.data() };
-    allParticipants[d.id] = data;
-    // Indexer aussi par userId pour les anciens docs (ID aléatoire avant migration)
-    if (data.userId && data.userId !== d.id) allParticipants[data.userId] = data;
+  // Load all participants (live listener)
+  onSnapshot(collection(db, 'participants'), snap => {
+    snap.forEach(d => {
+      const data = { id: d.id, ...d.data() };
+      allParticipants[d.id] = data;
+      if (data.userId && data.userId !== d.id) allParticipants[data.userId] = data;
+    });
+    if (document.getElementById('sec-admin')?.classList.contains('active')) {
+      renderAdminPlayersList();
+    }
   });
 
   // Load competitions (all statuses, live)
@@ -3542,11 +3547,19 @@ window.adminFilterPlayers = function(q) {
 function renderAdminPlayersList() {
   const el = document.getElementById('admin-all-players-list');
   if (!el) return;
-  const all = Object.values(allParticipants).filter(p => p.epicId || p.pseudo);
+  try {
+  // Dédupliquer : un participant peut être indexé par docId ET userId
+  const seen = new Set();
+  const all = Object.values(allParticipants).filter(p => {
+    if (!p || !p.id) return false;
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true; // montrer tous les participants
+  });
   const filtered = _adminPlayerFilter
     ? all.filter(p => (p.epicId||'').toLowerCase().includes(_adminPlayerFilter) || (p.pseudo||'').toLowerCase().includes(_adminPlayerFilter) || (p.discord||'').toLowerCase().includes(_adminPlayerFilter))
     : all;
-  if (filtered.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur trouvé.</p>`; return; }
+  if (filtered.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur enregistré.</p>`; return; }
   el.innerHTML = filtered.map(p => {
     const roster = allRosters.find(r => r.playerId === p.id && r.status === 'active');
     const team   = roster ? allTeams.find(t => t.id === roster.teamId) : null;
@@ -3564,6 +3577,10 @@ function renderAdminPlayersList() {
       <button class="btn btn-secondary btn-sm" onclick="adminOpenEditPlayer('${p.id || p.userId}')">✏️</button>
     </div>`;
   }).join('');
+  } catch(err) {
+    el.innerHTML = `<p style="color:var(--red);font-size:0.83rem">Erreur chargement joueurs : ${err.message}</p>`;
+    console.error('renderAdminPlayersList error:', err);
+  }
 }
 
 window.adminOpenEditPlayer = function(playerId) {
