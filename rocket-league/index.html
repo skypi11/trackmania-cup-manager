@@ -2098,14 +2098,31 @@ async function loadMyTeamSection() {
 
   // Statut des demandes de modification d'équipe (fondateur/manager seulement)
   if (isFondateurOrManager) {
-    const pendingEditReq = allTeamEditRequests.find(r => r.teamId === myTeam.id && r.status === 'pending');
+    // Trouver la demande la plus récente (pending en priorité, sinon dernière resolved)
+    const myEditReqs = allTeamEditRequests.filter(r => r.teamId === myTeam.id);
+    const pendingReq   = myEditReqs.find(r => r.status === 'pending');
+    const approvedReq  = !pendingReq && myEditReqs.find(r => r.status === 'approved');
+    const rejectedReq  = !pendingReq && !approvedReq && myEditReqs.find(r => r.status === 'rejected');
+    const activeReq    = pendingReq || approvedReq || rejectedReq;
+
     const existingEditBanner = document.getElementById('team-edit-request-banner');
     if (existingEditBanner) existingEditBanner.remove();
-    if (pendingEditReq) {
+
+    if (activeReq) {
       const banner = document.createElement('div');
       banner.id = 'team-edit-request-banner';
-      banner.style.cssText = 'background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem';
-      banner.innerHTML = `<strong style="color:var(--gold)">⏳ Demande de modification en attente</strong><br><span style="color:var(--muted)">Un admin va examiner tes modifications avant de les appliquer.</span>`;
+      if (activeReq.status === 'pending') {
+        banner.style.cssText = 'background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem';
+        banner.innerHTML = `<strong style="color:var(--gold)">⏳ Demande de modification en attente</strong><br><span style="color:var(--muted)">Un admin va examiner tes modifications avant de les appliquer.</span>`;
+      } else if (activeReq.status === 'approved') {
+        banner.style.cssText = 'background:rgba(0,217,54,0.08);border:1px solid rgba(0,217,54,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;display:flex;align-items:center;justify-content:space-between;gap:10px';
+        banner.innerHTML = `<div><strong style="color:var(--green)">✅ Modifications appliquées</strong><br><span style="color:var(--muted)">Tes changements ont été validés et appliqués par un admin.</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="dismissEditRequestBanner('${activeReq.id}')">OK</button>`;
+      } else if (activeReq.status === 'rejected') {
+        banner.style.cssText = 'background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;display:flex;align-items:center;justify-content:space-between;gap:10px';
+        banner.innerHTML = `<div><strong style="color:var(--red)">❌ Demande refusée</strong><br><span style="color:var(--muted)">Ta demande de modification a été refusée par un admin.</span></div>
+          <button class="btn btn-secondary btn-sm" onclick="dismissEditRequestBanner('${activeReq.id}')">OK</button>`;
+      }
       document.getElementById('myteam-status-banner').after(banner);
     }
   }
@@ -2317,6 +2334,12 @@ window.rejectTeamEditRequest = async function(reqId) {
   await updateDoc(doc(db, 'rl_team_edit_requests', reqId), { status: 'rejected', reviewedAt: serverTimestamp() });
   toast('Demande refusée.');
   loadAdminSection();
+};
+
+window.dismissEditRequestBanner = async function(reqId) {
+  // Supprime le doc (résolu + vu par l'utilisateur → plus utile)
+  await deleteDoc(doc(db, 'rl_team_edit_requests', reqId)).catch(() => {});
+  document.getElementById('team-edit-request-banner')?.remove();
 };
 
 window.approveTeam = async function(teamId) {
