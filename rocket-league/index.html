@@ -1343,7 +1343,6 @@ let activeCompetition = null;
 let allCompetitions = [];
 let selectedTeamForPool = null;
 let selectedInvitePlayer = null;
-let teamOfInvite = null;
 let allMatches = [];
 let allAvailabilities = [];
 let allRegistrations = [];
@@ -1357,7 +1356,7 @@ let selectedSlot = null;
 let pendingSlotsData = [];
 
 // En RL on affiche en priorité l'Epic ID (pseudo in-game), jamais le vrai nom Google
-const pName = p => p?.pseudoTM || p?.epicId || p?.pseudo || '?';
+const pName = p => p?.epicId || p?.pseudoTM || p?.pseudo || '?';
 
 // ── UTILS ──────────────────────────────────────────────────────────────
 function toast(msg, ok = true) {
@@ -1574,7 +1573,12 @@ async function bootApp() {
 
   // Load all participants
   const partSnap = await getDocs(collection(db, 'participants'));
-  partSnap.forEach(d => { allParticipants[d.id] = { id: d.id, ...d.data() }; });
+  partSnap.forEach(d => {
+    const data = { id: d.id, ...d.data() };
+    allParticipants[d.id] = data;
+    // Indexer aussi par userId pour les anciens docs (ID aléatoire avant migration)
+    if (data.userId && data.userId !== d.id) allParticipants[data.userId] = data;
+  });
 
   // Load competitions (all statuses, live)
   const compSnap = await getDocs(collection(db, 'rl_competitions'));
@@ -1632,6 +1636,8 @@ async function bootApp() {
   onSnapshot(collection(db, 'rl_registrations'), snap => {
     allRegistrations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (document.getElementById('sec-admin').classList.contains('active')) loadAdminSection();
+    if (document.getElementById('sec-competitions').classList.contains('active')) loadCompetitionsSection();
+    if (document.getElementById('sec-myteam').classList.contains('active')) loadMyTeamSection();
   });
 
   // Live matches listener
@@ -1990,8 +1996,20 @@ window.openRegisterToCompetition = async function() {
   if (!myTeam || myTeam.status !== 'approved') return;
   const comps = allCompetitions.filter(c => ['upcoming','registration'].includes(c.status));
   if (comps.length === 0) { toast('Aucune compétition ouverte aux inscriptions.', false); return; }
-  // Si une seule compétition disponible, on propose directement
-  const comp = comps.length === 1 ? comps[0] : comps.find(c => c.type === 'league') || comps[0];
+
+  let comp;
+  if (comps.length === 1) {
+    comp = comps[0];
+  } else {
+    // Plusieurs compétitions ouvertes : demander à l'utilisateur de choisir
+    const choices = comps.map((c, i) => `${i + 1}. ${c.name} (${c.type === 'league' ? 'Ligue' : 'Tournoi'})`).join('\n');
+    const choiceStr = prompt(`Choisissez une compétition :\n${choices}\n\nEntrez le numéro :`);
+    if (choiceStr === null) return;
+    const idx = parseInt(choiceStr) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= comps.length) { toast('Choix invalide.', false); return; }
+    comp = comps[idx];
+  }
+
   const alreadyReg = allRegistrations.find(r => r.teamId === myTeam.id && r.competitionId === comp.id);
   if (alreadyReg) {
     const labels = { pending: 'en attente de validation', approved: 'acceptée', rejected: 'refusée' };
@@ -2044,15 +2062,18 @@ window.openTeamReview = function(teamId) {
   const t = allTeams.find(t => t.id === teamId);
   if (!t) return;
   const members = allRosters.filter(r => r.teamId === teamId && r.status === 'active');
-  const founder = t.founderId ? allParticipants[t.founderId] : null;
+  // founderId peut être absent sur les vieilles équipes — fallback sur createdBy
+  const founderId = t.founderId || t.createdBy || null;
+  const founder = founderId ? allParticipants[founderId] : null;
   const manager = t.managerId ? allParticipants[t.managerId] : null;
 
-  const roleLabel = { capitaine: 'Capitaine', titulaire: 'Titulaire', sub: 'Sub', coach: 'Coach' };
+  const roleLabel = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant', capitaine: 'Capitaine' };
 
   const memberRow = (r) => {
     const p = allParticipants[r.playerId] || {};
     const name = pName(p);
-    const discord = p.discordUsername ? `<span style="color:#5865F2">💬 ${p.discordUsername}</span>` : '';
+    const discordTag = p.discord || p.discordUsername;
+    const discord = discordTag ? `<span style="color:#5865F2">💬 ${discordTag}</span>` : '';
     const tracker = p.trackerRL ? `<a href="${p.trackerRL}" target="_blank" style="color:var(--rl-blue);font-size:0.72rem">🔗 Tracker</a>` : '<span style="color:var(--muted);font-size:0.72rem">Pas de tracker</span>';
     const epic    = p.epicId ? `<span style="color:var(--muted);font-size:0.72rem">Epic: ${p.epicId}</span>` : '';
     const country = p.country ? `<span style="font-size:0.75rem">${p.country}</span>` : '';
@@ -2069,7 +2090,8 @@ window.openTeamReview = function(teamId) {
 
   const extraRow = (label, p) => {
     if (!p) return '';
-    const discord = p.discordUsername ? `<span style="color:#5865F2">💬 ${p.discordUsername}</span>` : '';
+    const discordTag = p.discord || p.discordUsername;
+    const discord = discordTag ? `<span style="color:#5865F2">💬 ${discordTag}</span>` : '';
     const tracker = p.trackerRL ? `<a href="${p.trackerRL}" target="_blank" style="color:var(--rl-blue);font-size:0.72rem">🔗 Tracker</a>` : '';
     return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
       <div style="min-width:80px"><span class="tag" style="font-size:0.65rem;background:rgba(255,184,0,0.15);color:var(--gold);border-color:rgba(255,184,0,0.3)">${label}</span></div>
@@ -2089,9 +2111,13 @@ window.openTeamReview = function(teamId) {
         <div style="color:var(--muted);font-size:0.85rem">[${t.tag}]${t.desc ? ` — ${t.desc}` : ''}</div>
       </div>
     </div>
-    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">Hors roster</div>
-    ${extraRow('Fondateur', founder)}
-    ${founder?.id !== manager?.id ? extraRow('Manager', manager) : ''}
+    ${(() => {
+      // N'afficher en "Hors roster" que les personnes absentes du roster
+      const inRosterIds = new Set(members.map(r => r.playerId));
+      const founderRow = (founder && !inRosterIds.has(founderId)) ? extraRow('Fondateur', founder) : '';
+      const managerRow = (manager && t.managerId !== founderId && !inRosterIds.has(t.managerId)) ? extraRow('Manager', manager) : '';
+      return (founderRow || managerRow) ? `<div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px">Hors roster</div>${founderRow}${managerRow}` : '';
+    })()}
     <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 6px">Roster (${members.length})</div>
     ${members.length === 0
       ? `<p style="color:var(--muted);font-size:0.83rem">Aucun membre dans le roster.</p>`
@@ -2455,6 +2481,9 @@ window.setCompStatus = async function(compId, status) {
 window.deleteComp = async function(compId) {
   const c = allCompetitions.find(c => c.id === compId);
   if (!confirm(`Supprimer "${c?.name}" ?`)) return;
+  // Nettoyer les inscriptions orphelines
+  const regs = allRegistrations.filter(r => r.competitionId === compId);
+  await Promise.all(regs.map(r => deleteDoc(doc(db, 'rl_registrations', r.id))));
   await deleteDoc(doc(db, 'rl_competitions', compId));
   closeModal('modal-manage-comp');
   toast('Compétition supprimée.');
@@ -2512,8 +2541,6 @@ function loadCompetitionsSection() {
 }
 
 // Legacy stubs (plus utilisés)
-window.toggleSeasonStatus = function() {};
-window.deleteSeason = function() {};
 
 // Create season
 // ── Season form — dynamic logic ────────────────────────────────────────
