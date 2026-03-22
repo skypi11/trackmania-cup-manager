@@ -1606,11 +1606,23 @@ async function bootApp() {
 
   // Load all participants (live listener)
   onSnapshot(collection(db, 'participants'), snap => {
-    snap.forEach(d => {
-      const data = { id: d.id, ...d.data() };
-      allParticipants[d.id] = data;
-      if (data.userId && data.userId !== d.id) allParticipants[data.userId] = data;
+    // 1ère passe : indexer tous les docs par leur docId
+    const byDocId = {};
+    snap.forEach(d => { byDocId[d.id] = { id: d.id, ...d.data() }; });
+
+    // 2ème passe : construire allParticipants en fusionnant anciens/nouveaux docs
+    // Un joueur peut avoir un ancien doc (ID aléatoire, sans epicId) ET un nouveau doc
+    // (ID = uid, avec epicId). On fusionne pour que l'ancien ID donne aussi les bonnes données.
+    Object.values(byDocId).forEach(data => {
+      const uid = data.userId;
+      // Si le doc a un userId différent de son propre docId, il existe peut-être un doc uid
+      const uidDoc = (uid && uid !== data.id) ? byDocId[uid] : null;
+      // Merger : les champs du doc uid-based écrasent l'ancien (epicId, trackerRL, etc.)
+      const effective = uidDoc ? { ...data, ...uidDoc, id: data.id } : data;
+      allParticipants[data.id] = effective;
+      if (uid && uid !== data.id) allParticipants[uid] = effective;
     });
+
     if (document.getElementById('sec-admin')?.classList.contains('active')) {
       renderAdminPlayersList();
     }
