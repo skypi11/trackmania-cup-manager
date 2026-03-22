@@ -473,6 +473,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="nav-item" data-section="competitions"><span class="icon">🏆</span> Compétitions</button>
     <button class="nav-item" data-section="matches"><span class="icon">📅</span> Matchs</button>
     <button class="nav-item" data-section="standings"><span class="icon">📊</span> Classements</button>
+    <button class="nav-item hidden" id="nav-structure" data-section="structure"><span class="icon">🏛️</span> Ma structure</button>
     <button class="nav-item hidden" id="nav-myteam" data-section="myteam"><span class="icon">⚡</span> Mon équipe</button>
 
     <div class="sidebar-section hidden" id="nav-admin-label">Admin</div>
@@ -522,14 +523,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           <h3 id="home-myteam-name">Mon équipe</h3>
           <p id="home-myteam-role">Rôle : —</p>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="navigate('myteam')">Gérer →</button>
+        <button class="btn btn-secondary btn-sm" id="home-banner-btn" onclick="navigate('myteam')">Gérer →</button>
       </div>
 
       <div id="home-noteam" class="card" style="text-align:center;padding:32px">
         <p style="color:var(--muted);margin-bottom:16px;font-size:0.875rem">Tu n'es dans aucune équipe. Rejoins une équipe existante ou crée la tienne.</p>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="navigate('teams')">Voir les équipes</button>
-          <button class="btn btn-secondary" id="btn-create-team-home">Créer une équipe</button>
+          <button class="btn btn-secondary" id="btn-create-team-home">Créer ma structure</button>
         </div>
       </div>
     </section>
@@ -681,6 +682,53 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
     </section>
 
+    <!-- MA STRUCTURE -->
+    <section id="sec-structure" class="section">
+      <div class="page-header" id="structure-page-header">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div id="structure-logo-wrap" style="flex-shrink:0"></div>
+          <div>
+            <h1 id="structure-name-display">Ma structure</h1>
+            <p id="structure-desc-display" style="color:var(--muted);font-size:0.85rem;margin-top:2px"></p>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('modal-edit-structure')">✏️ Modifier</button>
+          <button class="btn btn-primary btn-sm" onclick="openCreateTeamForStructure()">+ Équipe</button>
+        </div>
+      </div>
+
+      <div class="filters" style="margin-bottom:20px">
+        <button class="filter-btn active" data-structab="teams">Équipes</button>
+        <button class="filter-btn" data-structab="players">Joueurs sous contrat</button>
+        <button class="filter-btn" data-structab="cofounders">Co-fondateurs</button>
+      </div>
+
+      <div id="structure-tab-teams">
+        <div id="structure-teams-list"><p style="color:var(--muted)">Aucune équipe.</p></div>
+      </div>
+
+      <div id="structure-tab-players" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <p style="font-size:0.83rem;color:var(--muted)">Joueurs sous contrat avec la structure (sans équipe active).</p>
+          <button class="btn btn-secondary btn-sm" onclick="openAddStructureMember()">+ Inviter</button>
+        </div>
+        <div id="structure-players-list"><p style="color:var(--muted);font-size:0.83rem">Aucun joueur sous contrat.</p></div>
+        <div style="margin-top:20px">
+          <div class="section-divider">Demandes en attente</div>
+          <div id="structure-member-requests"><p style="color:var(--muted);font-size:0.83rem">Aucune demande.</p></div>
+        </div>
+      </div>
+
+      <div id="structure-tab-cofounders" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <p style="font-size:0.83rem;color:var(--muted)">Co-fondateurs avec les mêmes droits sur toutes les équipes.</p>
+          <button class="btn btn-secondary btn-sm" onclick="openAddCoFounder()">+ Ajouter</button>
+        </div>
+        <div id="structure-cofounders-list"></div>
+      </div>
+    </section>
+
     <!-- ADMIN -->
     <section id="sec-admin" class="section">
       <div class="page-header">
@@ -770,6 +818,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           </div>
         </div>
         <div id="admin-schedule-info"><p style="color:var(--muted);font-size:0.83rem">Générez le calendrier round-robin une fois les pools définies.</p></div>
+      </div>
+
+      <!-- ── SECTION : Structures ── -->
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px">Structures</div>
+      <div class="card" style="margin-bottom:20px">
+        <div id="admin-structures-list"><p style="color:var(--muted);font-size:0.83rem">Chargement…</p></div>
       </div>
 
       <!-- ── SECTION : Gestion ── -->
@@ -1415,6 +1469,82 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   </div>
 </div>
 
+<!-- Créer une structure -->
+<div class="modal-overlay hidden" id="modal-create-structure">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" data-close="modal-create-structure">✕</button>
+    <h2>Créer ma structure</h2>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px">Une structure regroupe vos équipes et joueurs sous contrat.</p>
+    <form id="create-structure-form">
+      <div class="form-group">
+        <label>Nom de la structure <span style="color:var(--red)">*</span></label>
+        <input type="text" id="cstr-name" required maxlength="50" placeholder="Ex: Springs E-Sport">
+      </div>
+      <div class="form-group">
+        <label>Logo (URL)</label>
+        <input type="url" id="cstr-logo" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="cstr-desc" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;resize:vertical" placeholder="Présentation de votre structure..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+        <button type="button" class="btn btn-secondary" data-close="modal-create-structure">Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer la structure</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Éditer une structure -->
+<div class="modal-overlay hidden" id="modal-edit-structure">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" data-close="modal-edit-structure">✕</button>
+    <h2>Modifier la structure</h2>
+    <div class="form-group">
+      <label>Nom</label>
+      <input type="text" id="estr-name" maxlength="50">
+    </div>
+    <div class="form-group">
+      <label>Logo (URL)</label>
+      <input type="url" id="estr-logo" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="estr-desc" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-secondary" data-close="modal-edit-structure">Annuler</button>
+      <button class="btn btn-primary" onclick="saveStructureEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ajouter co-fondateur -->
+<div class="modal-overlay hidden" id="modal-add-cofounder">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" data-close="modal-add-cofounder">✕</button>
+    <h2>Ajouter un co-fondateur</h2>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px">Le co-fondateur aura les mêmes droits que toi sur toutes les équipes de la structure.</p>
+    <div class="form-group">
+      <label>Epic ID du joueur</label>
+      <input type="text" id="cofounder-search" placeholder="Epic ID exact..." oninput="searchCoFounder(this.value)">
+    </div>
+    <div id="cofounder-search-results" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" data-close="modal-add-cofounder">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gérer une équipe depuis la structure -->
+<div class="modal-overlay hidden" id="modal-structure-team-detail">
+  <div class="modal" style="max-width:620px;max-height:85vh;overflow-y:auto">
+    <button class="modal-close" data-close="modal-structure-team-detail">✕</button>
+    <div id="structure-team-detail-content"></div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -1446,6 +1576,12 @@ let allMatches = [];
 let allAvailabilities = [];
 let allRegistrations = [];
 let allTeamEditRequests = [];   // demandes de modif d'équipe (admin : toutes pending / user : les siennes)
+let allStructures = [];         // toutes les structures
+let myStructure = null;         // structure du fondateur connecté
+let myManagedTeams = [];        // équipes de la structure
+let myStructureMembers = [];    // membres sous contrat dans la structure
+let structureTabFilter = 'teams';
+let selectedStructureTeamId = null;
 let matchWeekFilter = 'all';
 let matchPoolFilter = 'all';
 let matchViewTab = 'matches';
@@ -1505,6 +1641,7 @@ function navigate(section) {
   if (section === 'matches') renderMatchesList();
   if (section === 'standings') loadStandingsSection();
   if (section === 'myteam') loadMyTeamSection();
+  if (section === 'structure') loadStructureSection();
   if (section === 'admin') loadAdminSection();
 }
 window.navigate = navigate;
@@ -1532,6 +1669,16 @@ document.querySelectorAll('[data-pfilter]').forEach(btn => {
 });
 
 // Match week/pool filters sont générés dynamiquement dans renderMatchesList()
+
+// Structure tabs
+document.querySelectorAll('[data-structab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-structab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    structureTabFilter = btn.dataset.structab;
+    switchStructureTab();
+  });
+});
 
 // My team tabs
 document.querySelectorAll('[data-mytab]').forEach(btn => {
@@ -1716,11 +1863,38 @@ async function bootApp() {
   });
 
   // Live listeners
+  onSnapshot(collection(db, 'rl_structures'), snap => {
+    allStructures = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    myStructure = allStructures.find(s => s.founderIds?.includes(currentUser.uid)) || null;
+    if (myStructure) {
+      myManagedTeams = allTeams.filter(t => t.structureId === myStructure.id);
+      myRole = 'fondateur';
+    } else {
+      myManagedTeams = [];
+      if (!myRoster) myRole = null;
+    }
+    updateSidebarRole();
+    updateHomeBanner();
+    if (document.getElementById('sec-structure')?.classList.contains('active')) loadStructureSection();
+    if (document.getElementById('sec-admin')?.classList.contains('active')) renderAdminStructures();
+  });
+
+  onSnapshot(collection(db, 'rl_structure_members'), snap => {
+    myStructureMembers = myStructure
+      ? snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.structureId === myStructure.id)
+      : [];
+    if (document.getElementById('sec-structure')?.classList.contains('active')) loadStructureSection();
+  });
+
   onSnapshot(collection(db, 'rl_teams'), snap => {
     allTeams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Mettre à jour myTeam si le statut a changé
-    if (myRoster) {
+    // Mettre à jour myTeam si manager/joueur
+    if (myRoster && myRoster.role !== 'fondateur') {
       myTeam = allTeams.find(t => t.id === myRoster.teamId) || myTeam;
+    }
+    // Mettre à jour myManagedTeams si fondateur
+    if (myStructure) {
+      myManagedTeams = allTeams.filter(t => t.structureId === myStructure.id);
     }
     updateSidebarRole();
     updateHomeBanner();
@@ -1731,6 +1905,9 @@ async function bootApp() {
     if (document.getElementById('sec-myteam').classList.contains('active')) {
       loadMyTeamSection();
     }
+    if (document.getElementById('sec-structure').classList.contains('active')) {
+      loadStructureSection();
+    }
     if (document.getElementById('sec-admin').classList.contains('active')) {
       loadAdminSection();
     }
@@ -1738,13 +1915,21 @@ async function bootApp() {
 
   onSnapshot(collection(db, 'rl_roster'), snap => {
     allRosters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Find my roster entry
-    myRoster = allRosters.find(r => r.playerId === currentUser.uid && r.status === 'active');
-    if (myRoster) {
-      myTeam = allTeams.find(t => t.id === myRoster.teamId);
-      myRole = myRoster.role;
+    // Fondateur : pas dans le roster → détecté via myStructure
+    if (myStructure) {
+      // Fondateur — myTeam reste null (pas de roster personnel)
+      myTeam = null;
     } else {
-      myTeam = null; myRole = null;
+      myRoster = allRosters.find(r => r.playerId === currentUser.uid && r.status === 'active');
+      if (myRoster && myRoster.role !== 'fondateur') {
+        myTeam = allTeams.find(t => t.id === myRoster.teamId);
+        myRole = myRoster.role;
+      } else if (myRoster?.role === 'fondateur') {
+        // Ancien roster fondateur (compat) — ignorer, géré via structure
+        myTeam = null; myRole = 'fondateur';
+      } else {
+        myTeam = null; myRole = null;
+      }
     }
     updateSidebarRole();
     updateHomeBanner();
@@ -1813,13 +1998,23 @@ async function bootApp() {
 }
 
 function updateSidebarRole() {
-  const navMyteam = document.getElementById('nav-myteam');
-  const roleLabels = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant', capitaine: 'Capitaine', sub: 'Sub' };
-  if (myTeam) {
+  const navMyteam   = document.getElementById('nav-myteam');
+  const navStructure = document.getElementById('nav-structure');
+  const roleLabels  = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant', capitaine: 'Capitaine', sub: 'Sub' };
+
+  if (myStructure) {
+    // Fondateur — affiche Ma structure, cache Mon équipe
+    navStructure.classList.remove('hidden');
+    navMyteam.classList.add('hidden');
+    document.getElementById('user-role-label').textContent = `${myStructure.name} · Fondateur`;
+  } else if (myTeam) {
+    // Manager / joueur — affiche Mon équipe, cache Ma structure
     navMyteam.classList.remove('hidden');
+    navStructure.classList.add('hidden');
     document.getElementById('user-role-label').textContent = `${myTeam.name} · ${roleLabels[myRole] || myRole}`;
   } else {
     navMyteam.classList.add('hidden');
+    navStructure.classList.add('hidden');
     document.getElementById('user-role-label').textContent = isAdmin ? 'Admin' : 'Agent libre';
   }
 }
@@ -1827,12 +2022,23 @@ function updateSidebarRole() {
 function updateHomeBanner() {
   const banner = document.getElementById('home-myteam-banner');
   const noteam = document.getElementById('home-noteam');
-  if (myTeam) {
+  const bannerBtn = document.getElementById('home-banner-btn');
+
+  if (myStructure) {
+    // Fondateur — affiche le récap de la structure
+    document.getElementById('home-myteam-name').textContent = myStructure.name;
+    document.getElementById('home-myteam-role').textContent =
+      `${myManagedTeams.length} équipe(s) · Fondateur`;
+    if (bannerBtn) { bannerBtn.textContent = 'Ma structure →'; bannerBtn.onclick = () => navigate('structure'); }
+    banner.style.display = '';
+    noteam.style.display = 'none';
+  } else if (myTeam) {
     const statusLabels = { draft: '✏️ Brouillon', pending: '⏳ En attente de validation', approved: '✅ Approuvée', rejected: '❌ Rejetée' };
     const statusColors = { draft: 'var(--muted)', pending: 'var(--gold)', approved: 'var(--green)', rejected: 'var(--red)' };
     const st = myTeam.status || 'draft';
     document.getElementById('home-myteam-name').textContent = myTeam.name;
     document.getElementById('home-myteam-role').innerHTML = `Rôle : ${myRole || '—'} · ${allRosters.filter(r => r.teamId === myTeam.id && r.status === 'active').length} membres &nbsp;<span style="color:${statusColors[st]};font-weight:700">${statusLabels[st] || st}</span>`;
+    if (bannerBtn) { bannerBtn.textContent = 'Gérer →'; bannerBtn.onclick = () => navigate('myteam'); }
     banner.style.display = '';
     noteam.style.display = 'none';
   } else {
@@ -1951,8 +2157,50 @@ async function applyToTeam(teamId, teamName) {
   closeModal('modal-team-detail');
 }
 
-// Create team (fondateur must be assigned by admin after creation)
-document.getElementById('btn-create-team-home').addEventListener('click', () => openModal('modal-create-team'));
+// Bouton "Créer ma structure" sur la home
+document.getElementById('btn-create-team-home').addEventListener('click', () => {
+  if (myStructure) {
+    // A déjà une structure → créer une équipe
+    openCreateTeamForStructure();
+  } else {
+    // Pas de structure → créer la structure d'abord
+    document.getElementById('cstr-name').value = '';
+    document.getElementById('cstr-logo').value = '';
+    document.getElementById('cstr-desc').value = '';
+    openModal('modal-create-structure');
+  }
+});
+
+// Créer une structure
+document.getElementById('create-structure-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('cstr-name').value.trim();
+  if (!name) return;
+  const logo = document.getElementById('cstr-logo').value.trim();
+  const desc = document.getElementById('cstr-desc').value.trim();
+  try {
+    await addDoc(collection(db, 'rl_structures'), {
+      name, logo: logo || null, desc: desc || null,
+      founderIds: [currentUser.uid],
+      createdBy: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+    toast(`Structure "${name}" créée !`);
+    closeModal('modal-create-structure');
+    e.target.reset();
+  } catch(err) { toast('Erreur : ' + err.message, false); }
+});
+
+// Créer une équipe dans la structure (via Ma structure ou home)
+window.openCreateTeamForStructure = function() {
+  if (!myStructure) { toast('Créez d\'abord votre structure.', false); return; }
+  document.getElementById('ct-name').value = '';
+  document.getElementById('ct-tag').value = '';
+  document.getElementById('ct-logo').value = '';
+  document.getElementById('ct-desc').value = '';
+  openModal('modal-create-team');
+};
+
 document.getElementById('create-team-form').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('ct-name').value.trim();
@@ -1960,25 +2208,302 @@ document.getElementById('create-team-form').addEventListener('submit', async e =
   const logo = document.getElementById('ct-logo').value.trim();
   const desc = document.getElementById('ct-desc').value.trim();
   if (!name || !tag) return;
+  if (!myStructure) { toast('Vous devez avoir une structure pour créer une équipe.', false); return; }
 
-  const teamRef = await addDoc(collection(db, 'rl_teams'), {
+  await addDoc(collection(db, 'rl_teams'), {
     name, tag, logo: logo || null, desc: desc || null,
-    pool: null,
-    status: 'draft',
+    pool: null, status: 'draft',
+    structureId: myStructure.id,
     founderId: currentUser.uid,
     createdBy: currentUser.uid,
     createdAt: serverTimestamp()
-  });
-  // Auto-add creator as fondateur in roster
-  await addDoc(collection(db, 'rl_roster'), {
-    teamId: teamRef.id, playerId: currentUser.uid,
-    role: 'fondateur', status: 'active',
-    joinedAt: serverTimestamp()
   });
   toast(`Équipe "${name}" créée ! Elle doit être validée par un admin.`);
   closeModal('modal-create-team');
   e.target.reset();
 });
+
+// ── STRUCTURE SECTION ──────────────────────────────────────────────────
+
+function loadStructureSection() {
+  if (!myStructure) return;
+
+  // Header
+  const logoWrap = document.getElementById('structure-logo-wrap');
+  logoWrap.innerHTML = myStructure.logo
+    ? `<img src="${myStructure.logo}" style="width:48px;height:48px;border-radius:10px;object-fit:cover" onerror="this.style.display='none'">`
+    : `<div style="width:48px;height:48px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.6rem">🏛️</div>`;
+  document.getElementById('structure-name-display').textContent = myStructure.name;
+  document.getElementById('structure-desc-display').textContent = myStructure.desc || '';
+
+  switchStructureTab();
+}
+
+function switchStructureTab() {
+  document.getElementById('structure-tab-teams').style.display     = structureTabFilter === 'teams'      ? '' : 'none';
+  document.getElementById('structure-tab-players').style.display   = structureTabFilter === 'players'    ? '' : 'none';
+  document.getElementById('structure-tab-cofounders').style.display = structureTabFilter === 'cofounders' ? '' : 'none';
+
+  if (structureTabFilter === 'teams')      renderStructureTeams();
+  if (structureTabFilter === 'players')    renderStructurePlayers();
+  if (structureTabFilter === 'cofounders') renderStructureCofounders();
+}
+
+function renderStructureTeams() {
+  const el = document.getElementById('structure-teams-list');
+  if (myManagedTeams.length === 0) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:24px"><p style="color:var(--muted)">Aucune équipe dans cette structure.</p><button class="btn btn-primary btn-sm" onclick="openCreateTeamForStructure()" style="margin-top:12px">+ Créer une équipe</button></div>`;
+    return;
+  }
+  const statusLabels = { draft:'✏️ Brouillon', pending:'⏳ En attente', approved:'✅ Approuvée', rejected:'❌ Rejetée' };
+  const statusColors = { draft:'var(--muted)', pending:'var(--gold)', approved:'var(--green)', rejected:'var(--red)' };
+  el.innerHTML = myManagedTeams.map(t => {
+    const roster = allRosters.filter(r => r.teamId === t.id && r.status === 'active');
+    const myReg = allRegistrations.find(r => r.teamId === t.id && r.status === 'approved');
+    const st = t.status || 'draft';
+    return `<div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${t.logo ? `<img src="${t.logo}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:44px;height:44px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🛡️</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800">${t.name} <span style="color:var(--muted);font-weight:400;font-size:0.78rem">[${t.tag}]</span></div>
+          <div style="font-size:0.75rem;margin-top:2px">
+            <span style="color:${statusColors[st]};font-weight:700">${statusLabels[st] || st}</span>
+            ${t.pool ? `<span style="color:var(--muted)"> · Pool ${t.pool}</span>` : ''}
+            <span style="color:var(--muted)"> · ${roster.length} joueur(s)</span>
+            ${myReg ? `<span style="color:var(--green)"> · Inscrite</span>` : ''}
+          </div>
+          ${t.desc ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px">${t.desc}</div>` : ''}
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openStructureTeamDetail('${t.id}')">Gérer →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStructurePlayers() {
+  const active = myStructureMembers.filter(m => m.status === 'active');
+  const pending = myStructureMembers.filter(m => m.status === 'pending');
+
+  const el = document.getElementById('structure-players-list');
+  if (active.length === 0) {
+    el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur sous contrat.</p>`;
+  } else {
+    el.innerHTML = active.map(m => {
+      const p = allParticipants[m.playerId] || Object.values(allParticipants).find(x => x.userId === m.playerId);
+      const countryFlag = { FR:'🇫🇷', BE:'🇧🇪', CH:'🇨🇭', CA:'🇨🇦', LU:'🇱🇺' }[p?.country] || '';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:700;cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${m.playerId}')">${countryFlag} ${pName(p)}</div>
+          <div style="font-size:0.72rem;color:var(--muted)">${p?.epicId ? `Epic: ${p.epicId}` : '—'}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="removeStructureMember('${m.id}','${pName(p)}')">Retirer</button>
+      </div>`;
+    }).join('');
+  }
+
+  const reqEl = document.getElementById('structure-member-requests');
+  if (pending.length === 0) {
+    reqEl.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucune demande.</p>`;
+  } else {
+    reqEl.innerHTML = pending.map(m => {
+      const p = allParticipants[m.playerId] || Object.values(allParticipants).find(x => x.userId === m.playerId);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;font-weight:700">${pName(p)}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="acceptStructureMember('${m.id}')">✓ Accepter</button>
+          <button class="btn btn-danger btn-sm" onclick="removeStructureMember('${m.id}','${pName(p)}')">✗</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderStructureCofounders() {
+  const el = document.getElementById('structure-cofounders-list');
+  const ids = myStructure?.founderIds || [];
+  el.innerHTML = ids.map(uid => {
+    const p = allParticipants[uid] || Object.values(allParticipants).find(x => x.userId === uid);
+    const isMe = uid === currentUser.uid;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div style="font-weight:700">${pName(p) || uid} ${isMe ? '<span style="font-size:0.72rem;color:var(--muted)">(vous)</span>' : ''}</div></div>
+      ${!isMe ? `<button class="btn btn-danger btn-sm" onclick="removeCoFounder('${uid}')">Retirer</button>` : ''}
+    </div>`;
+  }).join('') || `<p style="color:var(--muted);font-size:0.83rem">Aucun co-fondateur.</p>`;
+}
+
+window.openStructureTeamDetail = function(teamId) {
+  const t = allTeams.find(t => t.id === teamId);
+  if (!t) return;
+  selectedStructureTeamId = teamId;
+  const roster = allRosters.filter(r => r.teamId === teamId && r.status === 'active');
+  const myReg = allRegistrations.find(r => r.teamId === teamId);
+  const roleLabels = { fondateur:'👑 Fondateur', manager:'📋 Manager', capitaine:'🎯 Capitaine', titulaire:'⚡ Titulaire', sub:'🔄 Sub', coach:'🎮 Coach', joueur:'⚡ Joueur', remplacant:'🔄 Remplaçant' };
+  const statusLabels = { draft:'Brouillon', pending:'En attente', approved:'Approuvée', rejected:'Rejetée' };
+  const statusColors = { draft:'var(--muted)', pending:'var(--gold)', approved:'var(--green)', rejected:'var(--red)' };
+  const st = t.status || 'draft';
+
+  const recentMatches = allMatches
+    .filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId)
+    .sort((a,b) => (b.week||0) - (a.week||0)).slice(0, 5);
+
+  document.getElementById('structure-team-detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      ${t.logo ? `<img src="${t.logo}" style="width:52px;height:52px;border-radius:10px;object-fit:cover">` : `<div style="width:52px;height:52px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.8rem">🛡️</div>`}
+      <div>
+        <h2 style="margin:0;font-size:1.1rem">${t.name} <span style="color:var(--muted);font-weight:400;font-size:0.82rem">[${t.tag}]</span></h2>
+        <div style="font-size:0.78rem;margin-top:4px"><span style="color:${statusColors[st]};font-weight:700">${statusLabels[st]}</span>${t.pool ? ` · Pool ${t.pool}` : ''}${myReg ? ` · <span style="color:var(--green)">${{pending:'Inscription en attente', approved:'Inscrite', rejected:'Inscription refusée'}[myReg.status]||''}</span>` : ''}</div>
+      </div>
+    </div>
+
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px">Roster (${roster.length})</div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.83rem;margin-bottom:20px">
+      <thead><tr style="color:var(--muted);font-size:0.68rem;font-weight:800;text-transform:uppercase">
+        <th style="text-align:left;padding:4px 8px">Joueur</th><th style="text-align:left;padding:4px 8px">Rôle</th>
+        <th style="text-align:left;padding:4px 8px">Epic ID</th><th style="text-align:left;padding:4px 8px"></th>
+      </tr></thead>
+      <tbody>${roster.map(r => {
+        const p = allParticipants[r.playerId] || Object.values(allParticipants).find(x => x.userId === r.playerId);
+        return `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:7px 8px;font-weight:700;cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${r.playerId}')">${pName(p)}</td>
+          <td style="padding:7px 8px;color:var(--muted);font-size:0.78rem">${roleLabels[r.role]||r.role}</td>
+          <td style="padding:7px 8px;font-size:0.75rem;color:var(--muted)">${p?.epicId||'—'}</td>
+          <td style="padding:7px 8px"><button class="btn btn-danger btn-sm" onclick="removeFromTeamAsFounder('${r.id}','${pName(p)}','${teamId}')">Retirer</button></td>
+        </tr>`;
+      }).join('')||`<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:12px">Aucun membre</td></tr>`}</tbody>
+    </table>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button class="btn btn-secondary btn-sm" onclick="openInviteForTeam('${teamId}')">+ Inviter un joueur</button>
+      <button class="btn btn-secondary btn-sm" onclick="adminOpenEditTeam('${teamId}')">✏️ Modifier</button>
+    </div>
+
+    ${recentMatches.length > 0 ? `
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px">Derniers matchs</div>
+    ${recentMatches.map(m => {
+      const ht = allTeams.find(x => x.id === m.homeTeamId);
+      const at = allTeams.find(x => x.id === m.awayTeamId);
+      const isHome = m.homeTeamId === teamId;
+      const result = m.status === 'played' ? (isHome ? (m.homeScore > m.awayScore ? '✅' : '❌') : (m.awayScore > m.homeScore ? '✅' : '❌')) : '⏳';
+      return `<div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:0.82rem;display:flex;align-items:center;gap:8px">
+        ${result} <span style="flex:1">${ht?.name||'?'} <strong>${m.homeScore??'—'}:${m.awayScore??'—'}</strong> ${at?.name||'?'}</span>
+        <span style="color:var(--muted);font-size:0.72rem">S${m.week}</span>
+      </div>`;
+    }).join('')}` : ''}`;
+
+  openModal('modal-structure-team-detail');
+};
+
+window.removeFromTeamAsFounder = async function(rosterId, playerName, teamId) {
+  if (!confirm(`Retirer ${playerName} de l'équipe ?`)) return;
+  await updateDoc(doc(db, 'rl_roster', rosterId), { status: 'inactive', removedAt: serverTimestamp() });
+  toast(`${playerName} retiré.`);
+  openStructureTeamDetail(teamId); // refresh
+};
+
+window.openInviteForTeam = function(teamId) {
+  // Réutilise la logique d'invite existante mais pour une équipe spécifique
+  selectedStructureTeamId = teamId;
+  closeModal('modal-structure-team-detail');
+  openModal('modal-invite');
+};
+
+// Modifier structure
+window.saveStructureEdit = async function() {
+  if (!myStructure) return;
+  const name = document.getElementById('estr-name').value.trim();
+  if (!name) { toast('Nom requis.', false); return; }
+  await updateDoc(doc(db, 'rl_structures', myStructure.id), {
+    name,
+    logo: document.getElementById('estr-logo').value.trim() || null,
+    desc: document.getElementById('estr-desc').value.trim() || null,
+    updatedAt: serverTimestamp()
+  });
+  toast('Structure mise à jour ✓');
+  closeModal('modal-edit-structure');
+};
+
+// Ouvrir modale modifier structure
+document.getElementById('modal-edit-structure').addEventListener('click', e => {
+  if (e.target.closest('[data-close]') || e.target.id === 'modal-edit-structure') return;
+});
+document.querySelector('[data-close="modal-edit-structure"]')?.addEventListener('click', () => closeModal('modal-edit-structure'));
+
+window.openEditStructure = function() {
+  if (!myStructure) return;
+  document.getElementById('estr-name').value = myStructure.name || '';
+  document.getElementById('estr-logo').value = myStructure.logo || '';
+  document.getElementById('estr-desc').value = myStructure.desc || '';
+  openModal('modal-edit-structure');
+};
+
+// Co-fondateurs
+window.searchCoFounder = function(q) {
+  const el = document.getElementById('cofounder-search-results');
+  if (!q || q.length < 2) { el.innerHTML = ''; return; }
+  const results = uniqueParticipants(p => p.epicId && p.epicId.toLowerCase().includes(q.toLowerCase()));
+  if (results.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur trouvé.</p>`; return; }
+  el.innerHTML = results.slice(0, 5).map(p => {
+    const uid = p.userId || p.id;
+    const alreadyFounder = myStructure?.founderIds?.includes(uid);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px">
+      <div style="flex:1"><div style="font-weight:700">${pName(p)}</div><div style="font-size:0.72rem;color:var(--muted)">${p.epicId}</div></div>
+      ${alreadyFounder ? `<span style="color:var(--muted);font-size:0.78rem">Déjà fondateur</span>` : `<button class="btn btn-primary btn-sm" onclick="addCoFounder('${uid}')">Ajouter</button>`}
+    </div>`;
+  }).join('');
+};
+
+window.addCoFounder = async function(uid) {
+  if (!myStructure) return;
+  await updateDoc(doc(db, 'rl_structures', myStructure.id), { founderIds: arrayUnion(uid) });
+  toast('Co-fondateur ajouté ✓');
+  closeModal('modal-add-cofounder');
+};
+
+window.removeCoFounder = async function(uid) {
+  if (!myStructure || uid === currentUser.uid) { toast('Vous ne pouvez pas vous retirer vous-même.', false); return; }
+  if (!confirm('Retirer ce co-fondateur ?')) return;
+  await updateDoc(doc(db, 'rl_structures', myStructure.id), { founderIds: arrayRemove(uid) });
+  toast('Co-fondateur retiré.');
+};
+
+window.openAddCoFounder = function() {
+  document.getElementById('cofounder-search').value = '';
+  document.getElementById('cofounder-search-results').innerHTML = '';
+  openModal('modal-add-cofounder');
+};
+
+// Membres structure
+window.openAddStructureMember = function() {
+  // Pour l'instant : invite par Epic ID — simplifié
+  const epicId = prompt('Epic ID du joueur à inviter :');
+  if (!epicId) return;
+  const p = uniqueParticipants().find(x => x.epicId?.toLowerCase() === epicId.toLowerCase());
+  if (!p) { toast('Joueur introuvable.', false); return; }
+  const uid = p.userId || p.id;
+  addStructureMemberInvite(uid);
+};
+
+async function addStructureMemberInvite(uid) {
+  if (!myStructure) return;
+  const already = myStructureMembers.find(m => m.playerId === uid);
+  if (already) { toast('Ce joueur est déjà dans la structure.', false); return; }
+  await addDoc(collection(db, 'rl_structure_members'), {
+    structureId: myStructure.id, playerId: uid,
+    status: 'active', joinedAt: serverTimestamp(), invitedBy: currentUser.uid
+  });
+  toast('Joueur ajouté à la structure ✓');
+}
+
+window.acceptStructureMember = async function(memberId) {
+  await updateDoc(doc(db, 'rl_structure_members', memberId), { status: 'active' });
+  toast('Joueur accepté ✓');
+};
+
+window.removeStructureMember = async function(memberId, name) {
+  if (!confirm(`Retirer ${name} de la structure ?`)) return;
+  await deleteDoc(doc(db, 'rl_structure_members', memberId));
+  toast(`${name} retiré de la structure.`);
+};
 
 // ── PLAYERS SECTION ────────────────────────────────────────────────────
 function loadPlayersSection() {
@@ -2690,6 +3215,9 @@ async function loadAdminSection() {
           </div>
         </div>`;
       }).join('');
+
+  // Structures
+  renderAdminStructures();
 
   // Gestion des équipes
   renderAdminTeamsList();
@@ -3877,6 +4405,36 @@ async function generateSchedule(pool) {
   toast(`Calendrier Pool ${pool} généré ! (${total} matchs sur ${Math.min(rounds.length, 15)} rounds)`);
   loadAdminSection();
 }
+
+// ── ADMIN : Structures ──────────────────────────────────────────────────
+
+function renderAdminStructures() {
+  const el = document.getElementById('admin-structures-list');
+  if (!el) return;
+  if (allStructures.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucune structure.</p>`; return; }
+  el.innerHTML = allStructures.map(s => {
+    const teams = allTeams.filter(t => t.structureId === s.id);
+    const founders = (s.founderIds || []).map(uid => {
+      const p = allParticipants[uid] || Object.values(allParticipants).find(x => x.userId === uid);
+      return pName(p) || uid;
+    }).join(', ');
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      ${s.logo ? `<img src="${s.logo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">` : `<div style="width:36px;height:36px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0">🏛️</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:0.88rem">${s.name}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${teams.length} équipe(s) · Fondateur(s) : ${founders}</div>
+        ${s.desc ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px">${s.desc}</div>` : ''}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="adminDeleteStructure('${s.id}','${s.name.replace(/'/g,"\\'")}')">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+window.adminDeleteStructure = async function(structureId, name) {
+  if (!confirm(`Supprimer la structure "${name}" ? Les équipes associées ne seront PAS supprimées.`)) return;
+  await deleteDoc(doc(db, 'rl_structures', structureId));
+  toast('Structure supprimée.');
+};
 
 // ── ADMIN : Gestion des équipes ─────────────────────────────────────────
 
