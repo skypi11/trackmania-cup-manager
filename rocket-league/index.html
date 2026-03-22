@@ -1445,6 +1445,7 @@ let selectedInvitePlayer = null;
 let allMatches = [];
 let allAvailabilities = [];
 let allRegistrations = [];
+let allTeamEditRequests = [];   // demandes de modif d'équipe (admin : toutes pending / user : les siennes)
 let matchWeekFilter = 'all';
 let matchPoolFilter = 'all';
 let matchViewTab = 'matches';
@@ -1771,6 +1772,21 @@ async function bootApp() {
     allAvailabilities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   });
 
+  // Demandes de modif d'équipe — admin : toutes les pending / user : les siennes
+  if (isAdmin) {
+    onSnapshot(query(collection(db, 'rl_team_edit_requests'), where('status', '==', 'pending')), snap => {
+      allTeamEditRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const badge = document.getElementById('team-edit-badge');
+      if (badge) { badge.textContent = allTeamEditRequests.length; badge.style.display = allTeamEditRequests.length > 0 ? '' : 'none'; }
+      if (document.getElementById('sec-admin')?.classList.contains('active')) loadAdminSection();
+    });
+  } else {
+    onSnapshot(query(collection(db, 'rl_team_edit_requests'), where('requestedBy', '==', currentUser.uid)), snap => {
+      allTeamEditRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (document.getElementById('sec-myteam')?.classList.contains('active')) loadMyTeamSection();
+    });
+  }
+
   // Pending transfers badge (admin only)
   if (isAdmin) {
     document.getElementById('nav-admin').classList.remove('hidden');
@@ -2082,12 +2098,7 @@ async function loadMyTeamSection() {
 
   // Statut des demandes de modification d'équipe (fondateur/manager seulement)
   if (isFondateurOrManager) {
-    const editReqSnap = await getDocs(query(
-      collection(db, 'rl_team_edit_requests'),
-      where('teamId', '==', myTeam.id),
-      where('status', '==', 'pending')
-    )).catch(() => null);
-    const pendingEditReq = editReqSnap?.docs?.[0];
+    const pendingEditReq = allTeamEditRequests.find(r => r.teamId === myTeam.id && r.status === 'pending');
     const existingEditBanner = document.getElementById('team-edit-request-banner');
     if (existingEditBanner) existingEditBanner.remove();
     if (pendingEditReq) {
@@ -2291,10 +2302,8 @@ window.openPlayerProfile = function(playerId) {
 };
 
 window.applyTeamEditRequest = async function(reqId) {
-  const snap = await getDocs(query(collection(db, 'rl_team_edit_requests'), where('status', '==', 'pending')));
-  const reqDoc = snap.docs.find(d => d.id === reqId);
-  if (!reqDoc) { toast('Demande introuvable.', false); return; }
-  const req = { id: reqDoc.id, ...reqDoc.data() };
+  const req = allTeamEditRequests.find(r => r.id === reqId);
+  if (!req) { toast('Demande introuvable.', false); return; }
   try {
     const updates = { ...req.changes, updatedAt: serverTimestamp() };
     await updateDoc(doc(db, 'rl_teams', req.teamId), updates);
@@ -2619,9 +2628,8 @@ async function loadAdminSection() {
         </div>`;
       }).join('');
 
-  // Demandes de modification d'équipe
-  const editReqSnap = await getDocs(query(collection(db, 'rl_team_edit_requests'), where('status', '==', 'pending')));
-  const editReqs = editReqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Demandes de modification d'équipe (depuis le cache onSnapshot)
+  const editReqs = allTeamEditRequests;
   const editBadge = document.getElementById('team-edit-badge');
   if (editBadge) { editBadge.textContent = editReqs.length; editBadge.style.display = editReqs.length > 0 ? '' : 'none'; }
   document.getElementById('admin-team-edit-requests').innerHTML = editReqs.length === 0
