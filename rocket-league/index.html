@@ -1232,15 +1232,27 @@ onAuthStateChanged(auth, async user => {
   currentUser = user;
   document.getElementById('auth-screen').classList.add('hidden');
 
-  // Load participant profile
+  // Load participant profile (fallback migration ancien système addDoc)
+  let profileData = null;
   const pSnap = await getDoc(doc(db, 'participants', user.uid));
-  if (!pSnap.exists() || !pSnap.data().epicId) {
+  if (pSnap.exists()) {
+    profileData = pSnap.data();
+  } else {
+    const oldSnap = await getDocs(query(collection(db, 'rl_roster'), where('playerId', '==', user.uid)));
+    // Cherche par champ userId dans participants
+    const oldPart = await getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)));
+    if (!oldPart.empty) {
+      profileData = oldPart.docs[0].data();
+      await setDoc(doc(db, 'participants', user.uid), profileData, { merge: true });
+    }
+  }
+  if (!profileData || !profileData.epicId) {
     // Need profile setup
     document.getElementById('profile-overlay').classList.remove('hidden');
     document.getElementById('app').classList.add('hidden');
     return;
   }
-  currentProfile = { id: user.uid, ...pSnap.data() };
+  currentProfile = { id: user.uid, ...profileData };
 
   await bootApp();
 });

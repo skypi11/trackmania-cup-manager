@@ -862,10 +862,10 @@
 
         // Check if player has a profile
         try {
-            const partSnap = await getDoc(doc(db, 'participants', user.uid));
-            if (partSnap.exists()) {
+            const partData = await loadParticipant(user.uid);
+            if (partData) {
                 hasProfile = true;
-                activatePlayerUI(partSnap.data().pseudo || user.displayName || 'Joueur');
+                activatePlayerUI(partData.pseudo || user.displayName || 'Joueur');
                 closeAccount();
             } else {
                 // Première connexion Google : demander le pseudo
@@ -881,6 +881,20 @@
             closeAccount();
         }
     });
+
+    // Charge le profil : essaie d'abord par UID (nouveau), puis par champ userId (ancien) avec migration auto
+    async function loadParticipant(uid) {
+        const directSnap = await getDoc(doc(db, 'participants', uid));
+        if (directSnap.exists()) return directSnap.data();
+        // Fallback ancien système (addDoc avec ID aléatoire)
+        const q = query(collection(db, 'participants'), where('userId', '==', uid));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        const data = snap.docs[0].data();
+        // Migration automatique vers le nouveau doc UID
+        await setDoc(doc(db, 'participants', uid), data, { merge: true });
+        return data;
+    }
 
     function activateAdminUI() {
         activateAnyUserUI();
@@ -1011,9 +1025,8 @@
 
     function loadProfileView() {
         if (!currentUser) return;
-        getDoc(doc(db, 'participants', currentUser.uid)).then(snap => {
-            if (!snap.exists()) return;
-            const d = snap.data();
+        loadParticipant(currentUser.uid).then(d => {
+            if (!d) return;
             document.getElementById('profTeam').value    = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
