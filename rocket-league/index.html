@@ -182,6 +182,11 @@ body {
 .form-group select option { background: var(--bg3); }
 .form-group textarea { resize: vertical; min-height: 80px; }
 .form-group small { color: var(--muted); font-size: 0.72rem; margin-top: 4px; display: block; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.season-section-title { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; }
+.cs-fmt-btn, .cs-leg-btn { padding: 8px 16px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.cs-fmt-btn.active, .cs-leg-btn.active { border-color: var(--rl-blue); background: rgba(0,129,255,0.15); color: var(--rl-blue); }
 
 .tag {
   display: inline-flex; align-items: center; gap: 4px;
@@ -872,37 +877,179 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 <!-- Create Season -->
 <div class="modal-overlay hidden" id="modal-create-season">
-  <div class="modal">
+  <div class="modal" style="max-width:640px;max-height:90vh;overflow-y:auto">
     <button class="modal-close" data-close="modal-create-season">✕</button>
     <h2>Nouvelle saison</h2>
     <form id="create-season-form">
-      <div class="form-group">
-        <label>Nom de la saison</label>
-        <input type="text" id="cs-name" placeholder="Saison 1 — 2026" required>
+
+      <!-- ── 1. Infos générales ── -->
+      <div class="season-section-title">📋 Infos générales</div>
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Nom de la saison</label>
+          <input type="text" id="cs-name" placeholder="Saison 1 — 2026" required>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Statut initial</label>
+          <select id="cs-status">
+            <option value="upcoming">À venir</option>
+            <option value="registration">Inscriptions</option>
+            <option value="active">En cours</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label>Description</label>
         <input type="text" id="cs-desc" placeholder="Springs League Series 2026">
       </div>
-      <div class="form-group">
-        <label>Date de début</label>
-        <input type="date" id="cs-start">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Inscriptions ouvertes le</label>
+          <input type="date" id="cs-reg-open">
+        </div>
+        <div class="form-group">
+          <label>Inscriptions fermées le</label>
+          <input type="date" id="cs-reg-close">
+        </div>
       </div>
+
+      <!-- ── 2. Format ── -->
+      <div class="season-section-title" style="margin-top:20px">🏆 Format de la phase de groupes</div>
       <div class="form-group">
-        <label>Date de fin estimée</label>
-        <input type="date" id="cs-end">
+        <label>Type de compétition</label>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap" id="cs-format-btns">
+          <button type="button" class="cs-fmt-btn active" data-fmt="round_robin">Round Robin</button>
+          <button type="button" class="cs-fmt-btn" data-fmt="swiss">Rounds Swiss</button>
+          <button type="button" class="cs-fmt-btn" data-fmt="none">Aucune (finale directe)</button>
+        </div>
+        <input type="hidden" id="cs-format" value="round_robin">
       </div>
-      <div class="form-group">
-        <label>Statut</label>
-        <select id="cs-status">
-          <option value="upcoming">À venir</option>
-          <option value="active">En cours</option>
-          <option value="finished">Terminée</option>
-        </select>
+      <div id="cs-rr-options">
+        <div class="form-group">
+          <label>Aller / Aller-Retour</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button type="button" class="cs-leg-btn active" data-legs="1">Aller simple</button>
+            <button type="button" class="cs-leg-btn" data-legs="2">Aller-Retour</button>
+          </div>
+          <input type="hidden" id="cs-legs" value="1">
+        </div>
       </div>
-      <div class="modal-actions">
+      <div id="cs-swiss-options" style="display:none">
+        <div class="form-group">
+          <label>Nombre de rounds Swiss</label>
+          <input type="number" id="cs-swiss-rounds" value="5" min="3" max="10">
+        </div>
+      </div>
+
+      <!-- ── 3. Structure ── -->
+      <div class="season-section-title" style="margin-top:20px">⚙️ Structure</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de poules</label>
+          <input type="number" id="cs-pools" value="2" min="1" max="8" oninput="csUpdateCalc()">
+        </div>
+        <div class="form-group">
+          <label>Équipes par poule</label>
+          <input type="number" id="cs-teams-per-pool" value="16" min="2" max="64" oninput="csUpdateCalc()">
+        </div>
+        <div class="form-group">
+          <label>Format des matchs</label>
+          <select id="cs-match-format">
+            <option value="BO3">BO3</option>
+            <option value="BO5" selected>BO5</option>
+            <option value="BO7">BO7</option>
+            <option value="BO1">BO1</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:rgba(0,129,255,0.07);border:1px solid rgba(0,129,255,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:var(--muted);margin-bottom:4px" id="cs-calc-info">
+        Total : <strong id="cs-calc-total">32</strong> équipes — <strong id="cs-calc-matches">240</strong> matchs par équipe (RR aller simple)
+      </div>
+
+      <!-- ── 4. Calendrier ── -->
+      <div class="season-section-title" style="margin-top:20px">📅 Calendrier</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre de semaines</label>
+          <input type="number" id="cs-weeks" value="5" min="1" max="20" oninput="csGenerateWeekDates()">
+        </div>
+        <div class="form-group">
+          <label>Matchs par semaine</label>
+          <input type="number" id="cs-mpw" value="3" min="1" max="10">
+        </div>
+      </div>
+      <div id="cs-week-dates" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+
+      <!-- ── 5. Finale / LAN ── -->
+      <div class="season-section-title" style="margin-top:20px">🎮 Finale / LAN</div>
+      <div class="form-row" style="align-items:center">
+        <div class="form-group" style="flex:0 0 auto">
+          <label>Phase finale</label>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+            <input type="checkbox" id="cs-has-finale" onchange="csToggleFinale()" checked>
+            <span style="font-size:0.85rem">Activer une phase finale</span>
+          </label>
+        </div>
+      </div>
+      <div id="cs-finale-options">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Qualifiés par poule</label>
+            <input type="number" id="cs-qualify" value="8" min="1" max="32">
+          </div>
+          <div class="form-group">
+            <label>Format finale</label>
+            <select id="cs-finale-format">
+              <option value="double_elim">Double élimination</option>
+              <option value="single_elim">Simple élimination</option>
+              <option value="swiss">Rounds Swiss</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Format matchs finale</label>
+            <select id="cs-finale-match-format">
+              <option value="BO5">BO5</option>
+              <option value="BO7" selected>BO7</option>
+              <option value="BO3">BO3</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date début finale</label>
+            <input type="date" id="cs-lan-start">
+          </div>
+          <div class="form-group">
+            <label>Date fin finale</label>
+            <input type="date" id="cs-lan-end">
+          </div>
+          <div class="form-group">
+            <label>Lieu (optionnel)</label>
+            <input type="text" id="cs-lan-location" placeholder="Paris, online…">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 6. Dotation ── -->
+      <div class="season-section-title" style="margin-top:20px">💰 Dotation (€)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>🥇 1er</label>
+          <input type="number" id="cs-prize-1" value="800" min="0">
+        </div>
+        <div class="form-group">
+          <label>🥈 2ème</label>
+          <input type="number" id="cs-prize-2" value="500" min="0">
+        </div>
+        <div class="form-group">
+          <label>🥉 3ème</label>
+          <input type="number" id="cs-prize-3" value="300" min="0">
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:24px">
         <button type="button" class="btn btn-secondary" data-close="modal-create-season">Annuler</button>
-        <button type="submit" class="btn btn-primary">Créer</button>
+        <button type="submit" class="btn btn-primary">Créer la saison</button>
       </div>
     </form>
   </div>
@@ -1833,24 +1980,118 @@ window.deleteSeason = async function() {
 };
 
 // Create season
-document.getElementById('btn-create-season').addEventListener('click', () => openModal('modal-create-season'));
+// ── Season form — dynamic logic ────────────────────────────────────────
+document.getElementById('btn-create-season').addEventListener('click', () => {
+  csGenerateWeekDates();
+  csUpdateCalc();
+  openModal('modal-create-season');
+});
+
+// Format buttons
+document.querySelectorAll('.cs-fmt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cs-fmt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cs-format').value = btn.dataset.fmt;
+    document.getElementById('cs-rr-options').style.display  = btn.dataset.fmt === 'round_robin' ? '' : 'none';
+    document.getElementById('cs-swiss-options').style.display = btn.dataset.fmt === 'swiss' ? '' : 'none';
+    csUpdateCalc();
+  });
+});
+
+// Legs buttons
+document.querySelectorAll('.cs-leg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cs-leg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cs-legs').value = btn.dataset.legs;
+    csUpdateCalc();
+  });
+});
+
+window.csToggleFinale = function() {
+  document.getElementById('cs-finale-options').style.display =
+    document.getElementById('cs-has-finale').checked ? '' : 'none';
+};
+
+window.csUpdateCalc = function() {
+  const pools = parseInt(document.getElementById('cs-pools').value) || 1;
+  const tpp   = parseInt(document.getElementById('cs-teams-per-pool').value) || 0;
+  const legs  = parseInt(document.getElementById('cs-legs').value) || 1;
+  const fmt   = document.getElementById('cs-format').value;
+  const total = pools * tpp;
+  let matchesPerTeam = 0;
+  if (fmt === 'round_robin') matchesPerTeam = (tpp - 1) * legs;
+  else if (fmt === 'swiss')  matchesPerTeam = parseInt(document.getElementById('cs-swiss-rounds')?.value) || 0;
+  const totalMatches = fmt !== 'none' ? Math.floor(total * matchesPerTeam / 2) : 0;
+  document.getElementById('cs-calc-total').textContent = total;
+  document.getElementById('cs-calc-matches').textContent = totalMatches;
+  const fmtLabel = fmt === 'round_robin' ? `RR ${legs === 2 ? 'aller-retour' : 'aller simple'}` : fmt === 'swiss' ? 'Swiss' : 'Finale directe';
+  document.getElementById('cs-calc-info').innerHTML =
+    `Total : <strong>${total}</strong> équipes — <strong>${totalMatches}</strong> matchs au total (${fmtLabel})`;
+};
+
+window.csGenerateWeekDates = function() {
+  const n = parseInt(document.getElementById('cs-weeks').value) || 5;
+  const container = document.getElementById('cs-week-dates');
+  container.innerHTML = '';
+  for (let w = 1; w <= n; w++) {
+    container.innerHTML += `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:0.75rem;font-weight:700;color:var(--muted);min-width:60px">Sem. ${w}</span>
+        <input type="date" id="cs-w${w}-start" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem" placeholder="Début">
+        <span style="color:var(--muted);font-size:0.8rem">→</span>
+        <input type="date" id="cs-w${w}-end" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem" placeholder="Fin">
+      </div>`;
+  }
+};
+
 document.getElementById('create-season-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const ref = await addDoc(collection(db, 'rl_seasons'), {
-    name: document.getElementById('cs-name').value.trim(),
-    desc: document.getElementById('cs-desc').value.trim(),
-    startDate: document.getElementById('cs-start').value || null,
-    endDate: document.getElementById('cs-end').value || null,
-    status: document.getElementById('cs-status').value,
+  const weeks = parseInt(document.getElementById('cs-weeks').value) || 5;
+  const weekDates = [];
+  for (let w = 1; w <= weeks; w++) {
+    weekDates.push({
+      week: w,
+      start: document.getElementById(`cs-w${w}-start`)?.value || null,
+      end:   document.getElementById(`cs-w${w}-end`)?.value || null
+    });
+  }
+  const data = {
+    name:             document.getElementById('cs-name').value.trim(),
+    desc:             document.getElementById('cs-desc').value.trim(),
+    status:           document.getElementById('cs-status').value,
+    registrationOpen: document.getElementById('cs-reg-open').value || null,
+    registrationClose:document.getElementById('cs-reg-close').value || null,
+    groupFormat:      document.getElementById('cs-format').value,
+    legs:             parseInt(document.getElementById('cs-legs').value) || 1,
+    swissRounds:      parseInt(document.getElementById('cs-swiss-rounds')?.value) || null,
+    pools:            parseInt(document.getElementById('cs-pools').value) || 1,
+    teamsPerPool:     parseInt(document.getElementById('cs-teams-per-pool').value) || 0,
+    matchFormat:      document.getElementById('cs-match-format').value,
+    weeks,
+    matchesPerWeek:   parseInt(document.getElementById('cs-mpw').value) || 3,
+    weekDates,
+    hasFinale:        document.getElementById('cs-has-finale').checked,
+    qualifyPerPool:   parseInt(document.getElementById('cs-qualify').value) || 0,
+    finaleFormat:     document.getElementById('cs-finale-format').value,
+    finaleMatchFormat:document.getElementById('cs-finale-match-format').value,
+    lanStart:         document.getElementById('cs-lan-start').value || null,
+    lanEnd:           document.getElementById('cs-lan-end').value || null,
+    lanLocation:      document.getElementById('cs-lan-location').value.trim() || null,
+    prizePool: {
+      first:  parseInt(document.getElementById('cs-prize-1').value) || 0,
+      second: parseInt(document.getElementById('cs-prize-2').value) || 0,
+      third:  parseInt(document.getElementById('cs-prize-3').value) || 0,
+    },
     createdAt: serverTimestamp()
-  });
-  activeSeason = { id: ref.id, name: document.getElementById('cs-name').value.trim(), desc: document.getElementById('cs-desc').value.trim(), status: document.getElementById('cs-status').value };
-  document.getElementById('season-name').textContent = activeSeason.name;
-  document.getElementById('season-desc').textContent = activeSeason.desc;
-  document.getElementById('season-banner').style.display = '';
+  };
+  const ref = await addDoc(collection(db, 'rl_seasons'), data);
+  activeSeason = { id: ref.id, ...data };
   toast('Saison créée !');
   closeModal('modal-create-season');
   e.target.reset();
+  csGenerateWeekDates();
   loadAdminSection();
 });
 
