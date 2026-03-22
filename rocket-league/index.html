@@ -1387,6 +1387,15 @@ let pendingSlotsData = [];
 
 // En RL on affiche en priorité l'Epic ID (pseudo in-game), jamais le vrai nom Google
 const pName = p => p?.epicId || p?.pseudoTM || p?.pseudo || '?';
+// Retourne la liste dédupliquée des participants (évite les doublons dus au double-indexage)
+function uniqueParticipants(filterFn) {
+  const seen = new Set();
+  return Object.values(allParticipants).filter(p => {
+    if (!p || !p.id || seen.has(p.id)) return false;
+    seen.add(p.id);
+    return filterFn ? filterFn(p) : true;
+  });
+}
 
 // ── UTILS ──────────────────────────────────────────────────────────────
 function toast(msg, ok = true) {
@@ -1901,7 +1910,7 @@ function loadPlayersSection() {
 function renderPlayersList(filter) {
   const list = document.getElementById('players-list');
   const inTeamIds = new Set(allRosters.filter(r => r.status === 'active').map(r => r.playerId));
-  const players = Object.values(allParticipants).filter(p => p.epicId);
+  const players = uniqueParticipants(p => p.epicId);
 
   let filtered = players;
   if (filter === 'free') filtered = players.filter(p => !inTeamIds.has(p.id));
@@ -2220,7 +2229,7 @@ document.getElementById('invite-search').addEventListener('input', function() {
   const q = this.value.toLowerCase().trim();
   if (!q) { document.getElementById('invite-results').innerHTML = ''; return; }
   const inTeamIds = new Set(allRosters.filter(r => r.teamId === myTeam?.id && r.status === 'active').map(r => r.playerId));
-  const freeAgents = Object.values(allParticipants).filter(p => p.epicId && !allRosters.find(r => r.playerId === p.id && r.status === 'active'));
+  const freeAgents = uniqueParticipants(p => p.epicId && !allRosters.find(r => r.playerId === p.id && r.status === 'active'));
   const matches = freeAgents.filter(p => pName(p).toLowerCase().includes(q) || (p.epicId || '').toLowerCase().includes(q));
   document.getElementById('invite-results').innerHTML = matches.slice(0, 8).map(p =>
     `<div style="padding:10px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;border:1px solid var(--border);margin-bottom:4px;background:var(--bg3)" onclick="selectInvitePlayer('${p.id}','${pName(p).replace(/'/g,"\\'")}')">
@@ -3565,14 +3574,7 @@ function renderAdminPlayersList() {
   const el = document.getElementById('admin-all-players-list');
   if (!el) return;
   try {
-  // Dédupliquer + filtrer joueurs RL uniquement (epicId requis)
-  const seen = new Set();
-  const all = Object.values(allParticipants).filter(p => {
-    if (!p || !p.id) return false;
-    if (seen.has(p.id)) return false;
-    seen.add(p.id);
-    return !!p.epicId; // RL uniquement (les joueurs TM n'ont pas d'epicId)
-  });
+  const all = uniqueParticipants(p => !!p.epicId);
   const filtered = _adminPlayerFilter
     ? all.filter(p => (p.epicId||'').toLowerCase().includes(_adminPlayerFilter) || (p.pseudo||'').toLowerCase().includes(_adminPlayerFilter) || (p.discord||'').toLowerCase().includes(_adminPlayerFilter))
     : all;
