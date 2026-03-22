@@ -2098,11 +2098,12 @@ async function loadMyTeamSection() {
 
   // Statut des demandes de modification d'équipe (fondateur/manager seulement)
   if (isFondateurOrManager) {
-    // Trouver la demande la plus récente (pending en priorité, sinon la plus récente résolue)
+    // Trouver la demande la plus récente (pending en priorité, sinon la plus récente résolue non dismissée)
+    const dismissed  = JSON.parse(localStorage.getItem('dismissedEditReqs') || '[]');
     const myEditReqs = allTeamEditRequests.filter(r => r.teamId === myTeam.id);
     const pendingReq = myEditReqs.find(r => r.status === 'pending');
     const resolved   = myEditReqs
-      .filter(r => r.status !== 'pending')
+      .filter(r => r.status !== 'pending' && !dismissed.includes(r.id))
       .sort((a, b) => (b.reviewedAt?.seconds || 0) - (a.reviewedAt?.seconds || 0));
     const activeReq  = pendingReq || resolved[0] || null;
 
@@ -2121,7 +2122,7 @@ async function loadMyTeamSection() {
           <button class="btn btn-secondary btn-sm" onclick="dismissEditRequestBanner('${activeReq.id}')">OK</button>`;
       } else if (activeReq.status === 'rejected') {
         banner.style.cssText = 'background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;display:flex;align-items:center;justify-content:space-between;gap:10px';
-        banner.innerHTML = `<div><strong style="color:var(--red)">❌ Demande refusée</strong><br><span style="color:var(--muted)">Ta demande de modification a été refusée par un admin.</span></div>
+        banner.innerHTML = `<div><strong style="color:var(--red)">❌ Demande refusée</strong><br><span style="color:var(--muted)">Ta demande de modification a été refusée par un admin.</span>${activeReq.rejectReason ? `<br><span style="color:var(--red);font-size:0.78rem">Motif : ${activeReq.rejectReason}</span>` : ''}</div>
           <button class="btn btn-secondary btn-sm" onclick="dismissEditRequestBanner('${activeReq.id}')">OK</button>`;
       }
       document.getElementById('myteam-status-banner').after(banner);
@@ -2332,14 +2333,21 @@ window.applyTeamEditRequest = async function(reqId) {
 };
 
 window.rejectTeamEditRequest = async function(reqId) {
-  await updateDoc(doc(db, 'rl_team_edit_requests', reqId), { status: 'rejected', reviewedAt: serverTimestamp() });
+  const reason = prompt('Motif du refus (optionnel) :');
+  if (reason === null) return; // annulé
+  await updateDoc(doc(db, 'rl_team_edit_requests', reqId), {
+    status: 'rejected',
+    rejectReason: reason.trim() || null,
+    reviewedAt: serverTimestamp()
+  });
   toast('Demande refusée.');
   loadAdminSection();
 };
 
-window.dismissEditRequestBanner = async function(reqId) {
-  // Supprime le doc (résolu + vu par l'utilisateur → plus utile)
-  await deleteDoc(doc(db, 'rl_team_edit_requests', reqId)).catch(() => {});
+window.dismissEditRequestBanner = function(reqId) {
+  // Marque comme vu localement (non-admin ne peut pas supprimer)
+  const dismissed = JSON.parse(localStorage.getItem('dismissedEditReqs') || '[]');
+  if (!dismissed.includes(reqId)) { dismissed.push(reqId); localStorage.setItem('dismissedEditReqs', JSON.stringify(dismissed)); }
   document.getElementById('team-edit-request-banner')?.remove();
 };
 
