@@ -1568,9 +1568,21 @@ async function bootApp() {
   // Live listeners
   onSnapshot(collection(db, 'rl_teams'), snap => {
     allTeams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Mettre à jour myTeam si le statut a changé
+    if (myRoster) {
+      myTeam = allTeams.find(t => t.id === myRoster.teamId) || myTeam;
+    }
+    updateSidebarRole();
+    updateHomeBanner();
     updateHomeStats();
     if (document.getElementById('sec-teams').classList.contains('active')) {
       renderTeamsGrid(document.querySelector('[data-pool].active')?.dataset.pool || 'all');
+    }
+    if (document.getElementById('sec-myteam').classList.contains('active')) {
+      loadMyTeamSection();
+    }
+    if (document.getElementById('sec-admin').classList.contains('active')) {
+      loadAdminSection();
     }
   });
 
