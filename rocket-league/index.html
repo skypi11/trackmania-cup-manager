@@ -2037,7 +2037,7 @@ async function loadMyTeamSection() {
   const statusColors = { draft: 'var(--muted)', pending: 'var(--gold)', approved: 'var(--green)', rejected: 'var(--red)' };
   const st = myTeam.status || 'draft';
   const statusBadge = `<span style="font-size:0.75rem;color:${statusColors[st]};font-weight:700;margin-left:8px">${statusLabels[st] || st}</span>`;
-  document.getElementById('myteam-subtitle').innerHTML = `[${myTeam.tag}]${myTeam.pool ? ` · Pool ${myTeam.pool}` : ''} ${statusBadge}`;
+  document.getElementById('myteam-subtitle').innerHTML = `[${myTeam.tag}]${myTeam.pool ? ` · Pool ${myTeam.pool}` : ''} ${statusBadge}${myTeam.desc ? `<br><span style="font-size:0.8rem;color:var(--muted);font-weight:400">${myTeam.desc}</span>` : ''}`;
 
   // Bouton inscription compétition (équipe approuvée + fondateur/manager)
   const pageHeader = document.getElementById('myteam-header');
@@ -2098,12 +2098,13 @@ async function loadMyTeamSection() {
 
   // Statut des demandes de modification d'équipe (fondateur/manager seulement)
   if (isFondateurOrManager) {
-    // Trouver la demande la plus récente (pending en priorité, sinon dernière resolved)
+    // Trouver la demande la plus récente (pending en priorité, sinon la plus récente résolue)
     const myEditReqs = allTeamEditRequests.filter(r => r.teamId === myTeam.id);
-    const pendingReq   = myEditReqs.find(r => r.status === 'pending');
-    const approvedReq  = !pendingReq && myEditReqs.find(r => r.status === 'approved');
-    const rejectedReq  = !pendingReq && !approvedReq && myEditReqs.find(r => r.status === 'rejected');
-    const activeReq    = pendingReq || approvedReq || rejectedReq;
+    const pendingReq = myEditReqs.find(r => r.status === 'pending');
+    const resolved   = myEditReqs
+      .filter(r => r.status !== 'pending')
+      .sort((a, b) => (b.reviewedAt?.seconds || 0) - (a.reviewedAt?.seconds || 0));
+    const activeReq  = pendingReq || resolved[0] || null;
 
     const existingEditBanner = document.getElementById('team-edit-request-banner');
     if (existingEditBanner) existingEditBanner.remove();
