@@ -1189,11 +1189,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="modal-close" data-close="modal-propose-slots">✕</button>
     <h2>Proposer un créneau</h2>
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Match : <strong id="ps-match-name">—</strong></p>
-    <p style="font-size:0.8rem;font-weight:700;margin-bottom:8px">Créneaux en commun avec l'adversaire :</p>
-    <div id="ps-slots-list"></div>
+    <div class="form-group">
+      <label>Date et heure</label>
+      <div style="display:flex;gap:8px">
+        <input type="datetime-local" id="slot-datetime-input" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.88rem">
+        <button class="btn btn-secondary" id="btn-add-slot">+ Ajouter</button>
+      </div>
+    </div>
+    <div id="ps-slots-list" style="margin-bottom:12px"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" data-close="modal-propose-slots">Annuler</button>
-      <button class="btn btn-primary" id="btn-save-slots">Proposer ce créneau</button>
+      <button class="btn btn-primary" id="btn-save-slots">Envoyer les créneaux</button>
     </div>
   </div>
 </div>
@@ -3547,18 +3553,18 @@ function renderAdminPlayersList() {
   const el = document.getElementById('admin-all-players-list');
   if (!el) return;
   try {
-  // Dédupliquer : un participant peut être indexé par docId ET userId
+  // Dédupliquer + filtrer joueurs RL uniquement (epicId requis)
   const seen = new Set();
   const all = Object.values(allParticipants).filter(p => {
     if (!p || !p.id) return false;
     if (seen.has(p.id)) return false;
     seen.add(p.id);
-    return true; // montrer tous les participants
+    return !!p.epicId; // RL uniquement (les joueurs TM n'ont pas d'epicId)
   });
   const filtered = _adminPlayerFilter
     ? all.filter(p => (p.epicId||'').toLowerCase().includes(_adminPlayerFilter) || (p.pseudo||'').toLowerCase().includes(_adminPlayerFilter) || (p.discord||'').toLowerCase().includes(_adminPlayerFilter))
     : all;
-  if (filtered.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur enregistré.</p>`; return; }
+  if (filtered.length === 0) { el.innerHTML = `<p style="color:var(--muted);font-size:0.83rem">Aucun joueur RL enregistré.</p>`; return; }
   el.innerHTML = filtered.map(p => {
     const roster = allRosters.find(r => r.playerId === p.id && r.status === 'active');
     const team   = roster ? allTeams.find(t => t.id === roster.teamId) : null;
