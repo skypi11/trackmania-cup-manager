@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+.hidden { display: none !important; }
 
 :root {
   --bg: #0d0d0f;
@@ -467,7 +468,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="nav-item" data-section="matches"><span class="icon">📅</span> Matchs</button>
     <button class="nav-item hidden" id="nav-myteam" data-section="myteam"><span class="icon">⚡</span> Mon équipe</button>
 
-    <div class="sidebar-section">Admin</div>
+    <div class="sidebar-section hidden" id="nav-admin-label">Admin</div>
     <button class="nav-item hidden" id="nav-admin" data-section="admin"><span class="icon">⚙️</span> Administration <span class="badge hidden" id="admin-badge">0</span></button>
 
     <div class="sidebar-bottom">
@@ -1358,6 +1359,7 @@ async function bootApp() {
   // Pending transfers badge (admin only)
   if (isAdmin) {
     document.getElementById('nav-admin').classList.remove('hidden');
+    document.getElementById('nav-admin-label').classList.remove('hidden');
     onSnapshot(query(collection(db, 'rl_transfers'), where('status', '==', 'pending')), snap => {
       const count = snap.size;
       const badge = document.getElementById('admin-badge');
