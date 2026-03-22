@@ -862,10 +862,10 @@
 
         // Check if player has a profile
         try {
-            const partSnap = await getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)));
-            if (!partSnap.empty) {
+            const partSnap = await getDoc(doc(db, 'participants', user.uid));
+            if (partSnap.exists()) {
                 hasProfile = true;
-                activatePlayerUI(partSnap.docs[0].data().pseudo);
+                activatePlayerUI(partSnap.data().pseudo || user.displayName || 'Joueur');
                 closeAccount();
             } else {
                 // Première connexion Google : demander le pseudo
@@ -987,10 +987,10 @@
             const createdAt = new Date().toISOString();
             const pseudoTM = games.includes('trackmania') ? pseudo : '';
             const pseudoRL = games.includes('rocket-league') ? pseudo : '';
-            await addDoc(collection(db, 'participants'), {
+            await setDoc(doc(db, 'participants', uid), {
                 pseudo, pseudoTM, pseudoRL, team, games,
                 email: currentUser.email, userId: uid, createdAt
-            });
+            }, { merge: true });
             hasProfile = true;
             activatePlayerUI(pseudo);
             closeAccount();
@@ -1011,9 +1011,9 @@
 
     function loadProfileView() {
         if (!currentUser) return;
-        getDocs(query(collection(db, 'participants'), where('userId', '==', currentUser.uid))).then(snap => {
-            if (snap.empty) return;
-            const d = snap.docs[0].data();
+        getDoc(doc(db, 'participants', currentUser.uid)).then(snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
             document.getElementById('profTeam').value    = d.team   || '';
             document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
@@ -1038,13 +1038,8 @@
         btn.disabled = true; btn.textContent = 'Enregistrement...';
 
         try {
-            const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
-            const snap = await getDocs(q);
-            if (snap.empty) {
-                await addDoc(collection(db, 'participants'), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid, createdAt: new Date().toISOString() });
-            } else {
-                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, pseudoTM, pseudoRL, team, games })));
-            }
+            const docRef = doc(db, 'participants', currentUser.uid);
+            await setDoc(docRef, { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid }, { merge: true });
 
             activatePlayerUI(pseudo || currentUser.displayName);
 

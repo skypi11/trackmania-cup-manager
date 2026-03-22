@@ -1267,6 +1267,7 @@ document.getElementById('profile-form').addEventListener('submit', async e => {
       discord: discord || null,
       country: country || null,
       uid: currentUser.uid,
+      userId: currentUser.uid,
       pseudo: existing.pseudo || currentUser.displayName || epicId,
       photoURL: currentUser.photoURL || null,
       updatedAt: serverTimestamp()
