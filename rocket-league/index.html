@@ -936,11 +936,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">Équipe : <strong id="ap-teamname">—</strong></p>
     <div class="form-group">
       <label>Pool</label>
-      <select id="ap-pool">
-        <option value="">— Aucun —</option>
-        <option value="A">Pool A</option>
-        <option value="B">Pool B</option>
-      </select>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button type="button" class="pool-btn" data-pool="A" onclick="selectPool('A')" style="flex:1;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--text);font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.2s">Pool A</button>
+        <button type="button" class="pool-btn" data-pool="B" onclick="selectPool('B')" style="flex:1;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--text);font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.2s">Pool B</button>
+        <button type="button" class="pool-btn" data-pool="" onclick="selectPool('')" style="flex:1;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--muted);font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s">Aucun</button>
+      </div>
     </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-secondary" data-close="modal-assign-pool">Annuler</button>
@@ -1854,20 +1854,31 @@ document.getElementById('create-season-form').addEventListener('submit', async e
   loadAdminSection();
 });
 
+let selectedPool = null;
+
+window.selectPool = function(pool) {
+  selectedPool = pool;
+  document.querySelectorAll('.pool-btn').forEach(btn => {
+    const active = btn.dataset.pool === pool;
+    btn.style.borderColor = active ? 'var(--rl-blue)' : 'rgba(255,255,255,0.1)';
+    btn.style.background = active ? 'rgba(0,129,255,0.15)' : 'rgba(255,255,255,0.04)';
+    btn.style.color = active ? 'var(--rl-blue)' : (btn.dataset.pool === '' ? 'var(--muted)' : 'var(--text)');
+  });
+};
+
 // Assign pool
 window.openAssignPool = function(teamId, teamName) {
   selectedTeamForPool = teamId;
   document.getElementById('ap-teamname').textContent = teamName;
   const team = allTeams.find(t => t.id === teamId);
-  document.getElementById('ap-pool').value = team?.pool || '';
+  selectPool(team?.pool || '');
   openModal('modal-assign-pool');
 };
 
 document.getElementById('btn-confirm-pool').addEventListener('click', async () => {
   if (!selectedTeamForPool) return;
-  const pool = document.getElementById('ap-pool').value || null;
-  await updateDoc(doc(db, 'rl_teams', selectedTeamForPool), { pool });
-  toast(`Pool ${pool ? `"${pool}"` : 'retirée'} !`);
+  await updateDoc(doc(db, 'rl_teams', selectedTeamForPool), { pool: selectedPool || null });
+  toast(`Pool ${selectedPool ? `"${selectedPool}"` : 'retirée'} !`);
   closeModal('modal-assign-pool');
   loadAdminSection();
 });
