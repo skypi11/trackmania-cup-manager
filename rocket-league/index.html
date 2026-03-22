@@ -800,6 +800,37 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 <!-- ── MODALS ── -->
 
+<!-- Register to competition -->
+<div class="modal-overlay hidden" id="modal-register-competition">
+  <div class="modal" style="max-width:580px">
+    <button class="modal-close" data-close="modal-register-competition">✕</button>
+    <h2 id="reg-comp-name">—</h2>
+    <p style="color:var(--muted);font-size:0.83rem;margin-bottom:20px" id="reg-comp-desc"></p>
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px">Votre équipe</div>
+    <div id="reg-team-recap" style="margin-bottom:20px"></div>
+    <div id="reg-rules-section" class="hidden" style="margin-bottom:20px">
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">Règlement</div>
+      <div id="reg-rules-content" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:14px;font-size:0.82rem;color:var(--text);max-height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.6"></div>
+      <label style="display:flex;align-items:center;gap:10px;margin-top:12px;cursor:pointer;font-size:0.85rem;padding:10px;background:rgba(0,129,255,0.06);border:1px solid rgba(0,129,255,0.2);border-radius:8px">
+        <input type="checkbox" id="reg-rules-accept" style="width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)">
+        <span>J'ai lu et j'accepte le règlement de la compétition</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" data-close="modal-register-competition">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirm-register">Inscrire mon équipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Player profile (read-only) -->
+<div class="modal-overlay hidden" id="modal-player-profile">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" data-close="modal-player-profile">✕</button>
+    <div id="player-profile-content"></div>
+  </div>
+</div>
+
 <!-- Create Team -->
 <div class="modal-overlay hidden" id="modal-create-team">
   <div class="modal">
@@ -962,8 +993,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         </div>
       </div>
       <div class="form-group">
-        <label>Description</label>
+        <label>Description courte</label>
         <input type="text" id="cs-desc" placeholder="Springs League Series 2026">
+      </div>
+      <div class="form-group">
+        <label>Règlement <span style="color:var(--muted);font-weight:400;font-size:0.78rem">(les équipes devront l'accepter pour s'inscrire)</span></label>
+        <textarea id="cs-rules" rows="6" placeholder="Format, règles, sanctions, dates importantes…" style="resize:vertical"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1912,7 +1947,7 @@ function renderPlayersList(filter) {
     return `<div class="player-row">
       <div style="font-size:1.2rem">${countryFlag}</div>
       <div style="flex:1">
-        <div class="player-row-name">${pName(p)}</div>
+        <div class="player-row-name" style="cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${p.id}')">${pName(p)}</div>
         <div class="player-row-role">${team ? `${roleLabels[roster.role] || ''} ${team.name}` : '<span class="tag tag-green" style="font-size:0.65rem">Agent libre</span>'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
@@ -1985,7 +2020,7 @@ async function loadMyTeamSection() {
     const removeBtn = isFondateurOrManager && r.playerId !== currentUser.uid
       ? `<button class="btn btn-danger btn-sm" onclick="removeFromTeam('${r.id}','${pName(p)}')">Retirer</button>`
       : '';
-    return `<tr><td><strong>${pName(p)}</strong></td><td>${roleLabels[r.role] || r.role}</td><td style="font-size:0.78rem;color:var(--muted)">${p?.epicId || '—'}</td><td>${trackerLink}</td><td>${removeBtn}</td></tr>`;
+    return `<tr><td><strong style="cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${r.playerId}')">${pName(p)}</strong></td><td>${roleLabels[r.role] || r.role}</td><td style="font-size:0.78rem;color:var(--muted)">${p?.epicId || '—'}</td><td>${trackerLink}</td><td>${removeBtn}</td></tr>`;
   });
   document.getElementById('roster-tbody').innerHTML = rosterRows.join('') || `<tr><td colspan="5" style="color:var(--muted);text-align:center">Aucun membre</td></tr>`;
 
@@ -1993,7 +2028,7 @@ async function loadMyTeamSection() {
   document.getElementById('roster-tbody-player').innerHTML = teamRoster.map(r => {
     const p = allParticipants[r.playerId];
     const trackerLink = p?.trackerRL ? `<a href="${p.trackerRL}" target="_blank" class="player-tracker">Tracker</a>` : '—';
-    return `<tr><td><strong>${pName(p)}</strong></td><td>${roleLabels[r.role] || r.role}</td><td>${trackerLink}</td></tr>`;
+    return `<tr><td><strong style="cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${r.playerId}')">${pName(p)}</strong></td><td>${roleLabels[r.role] || r.role}</td><td>${trackerLink}</td></tr>`;
   }).join('');
 
   // Applications (fondateur/manager only)
@@ -2032,38 +2067,85 @@ window.submitTeamForValidation = async function() {
 };
 
 // ── Registrations ──────────────────────────────────────────────────────
-window.openRegisterToCompetition = async function() {
+window.openRegisterToCompetition = function(compId) {
   if (!myTeam || myTeam.status !== 'approved') return;
-  const comps = allCompetitions.filter(c => ['upcoming','registration'].includes(c.status));
-  if (comps.length === 0) { toast('Aucune compétition ouverte aux inscriptions.', false); return; }
 
+  // Trouver la compétition cible
   let comp;
-  if (comps.length === 1) {
-    comp = comps[0];
+  if (compId) {
+    comp = allCompetitions.find(c => c.id === compId);
   } else {
-    // Plusieurs compétitions ouvertes : demander à l'utilisateur de choisir
-    const choices = comps.map((c, i) => `${i + 1}. ${c.name} (${c.type === 'league' ? 'Ligue' : 'Tournoi'})`).join('\n');
-    const choiceStr = prompt(`Choisissez une compétition :\n${choices}\n\nEntrez le numéro :`);
-    if (choiceStr === null) return;
-    const idx = parseInt(choiceStr) - 1;
-    if (isNaN(idx) || idx < 0 || idx >= comps.length) { toast('Choix invalide.', false); return; }
-    comp = comps[idx];
+    const comps = allCompetitions.filter(c => ['upcoming','registration'].includes(c.status));
+    if (comps.length === 0) { toast('Aucune compétition ouverte aux inscriptions.', false); return; }
+    comp = comps[0];
   }
+  if (!comp) { toast('Compétition introuvable.', false); return; }
 
   const alreadyReg = allRegistrations.find(r => r.teamId === myTeam.id && r.competitionId === comp.id);
-  if (alreadyReg) {
-    const labels = { pending: 'en attente de validation', approved: 'acceptée', rejected: 'refusée' };
-    toast(`Inscription déjà ${labels[alreadyReg.status] || alreadyReg.status} pour "${comp.name}".`, alreadyReg.status === 'approved');
-    return;
+  if (alreadyReg?.status === 'approved') { toast('Votre équipe est déjà inscrite.', true); return; }
+  if (alreadyReg?.status === 'pending') { toast('Inscription déjà en attente de validation.', false); return; }
+  // status === 'rejected' → on autorise la re-soumission
+
+  // Remplir la modale
+  document.getElementById('reg-comp-name').textContent = comp.name;
+  document.getElementById('reg-comp-desc').textContent = comp.desc || '';
+
+  // Récap de l'équipe
+  const members = allRosters.filter(r => r.teamId === myTeam.id && r.status === 'active');
+  const roleLabels = { fondateur:'👑 Fondateur', manager:'📋 Manager', capitaine:'🎯 Capitaine', titulaire:'⚡ Titulaire', sub:'🔄 Sub', coach:'🎮 Coach', joueur:'⚡ Joueur', remplacant:'🔄 Remplaçant' };
+  document.getElementById('reg-team-recap').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:10px">
+      ${myTeam.logo ? `<img src="${myTeam.logo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">` : `<div style="width:40px;height:40px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.5rem">🛡️</div>`}
+      <div><div style="font-weight:800">${myTeam.name} <span style="color:var(--muted);font-weight:400;font-size:0.78rem">[${myTeam.tag}]</span></div>
+      <div style="font-size:0.75rem;color:var(--muted)">${members.length} membre(s) dans le roster</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+      <tr style="color:var(--muted);font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px">
+        <th style="text-align:left;padding:4px 8px">Joueur</th><th style="text-align:left;padding:4px 8px">Rôle</th>
+        <th style="text-align:left;padding:4px 8px">Epic ID</th><th style="text-align:left;padding:4px 8px">Tracker</th>
+      </tr>
+      ${members.map(r => {
+        const p = allParticipants[r.playerId] || Object.values(allParticipants).find(x => x.userId === r.playerId);
+        return `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:6px 8px;font-weight:700">${pName(p)}</td>
+          <td style="padding:6px 8px;color:var(--muted);font-size:0.78rem">${roleLabels[r.role] || r.role}</td>
+          <td style="padding:6px 8px;font-size:0.75rem;color:var(--muted)">${p?.epicId || '—'}</td>
+          <td style="padding:6px 8px">${p?.trackerRL ? `<a href="${p.trackerRL}" target="_blank" style="color:var(--accent);font-size:0.75rem">Tracker</a>` : '—'}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+    ${alreadyReg?.status === 'rejected' ? `<div style="margin-top:10px;padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;font-size:0.8rem;color:var(--red)">⚠️ Inscription précédente refusée${alreadyReg.rejectReason ? ` : "${alreadyReg.rejectReason}"` : ''}. Vous pouvez re-soumettre.</div>` : ''}`;
+
+  // Règlement
+  const rulesSection = document.getElementById('reg-rules-section');
+  const rulesAccept = document.getElementById('reg-rules-accept');
+  rulesAccept.checked = false;
+  if (comp.rules) {
+    rulesSection.classList.remove('hidden');
+    document.getElementById('reg-rules-content').textContent = comp.rules;
+  } else {
+    rulesSection.classList.add('hidden');
   }
-  const msg = prompt(`Inscription à "${comp.name}"\nMessage pour l'admin (optionnel) :`);
-  if (msg === null) return;
-  await addDoc(collection(db, 'rl_registrations'), {
-    competitionId: comp.id, teamId: myTeam.id,
-    message: msg || null, status: 'pending',
-    requestedAt: serverTimestamp()
-  });
-  toast('Demande d\'inscription envoyée !');
+
+  // Bouton confirmer
+  document.getElementById('btn-confirm-register').onclick = async function() {
+    if (comp.rules && !rulesAccept.checked) { toast('Veuillez accepter le règlement.', false); return; }
+    this.disabled = true;
+    try {
+      if (alreadyReg?.status === 'rejected') {
+        await deleteDoc(doc(db, 'rl_registrations', alreadyReg.id));
+      }
+      await addDoc(collection(db, 'rl_registrations'), {
+        competitionId: comp.id, teamId: myTeam.id,
+        status: 'pending', requestedAt: serverTimestamp()
+      });
+      toast('Demande d\'inscription envoyée !');
+      closeModal('modal-register-competition');
+    } catch(e) { toast('Erreur : ' + e.message, false); }
+    this.disabled = false;
+  };
+
+  openModal('modal-register-competition');
 };
 
 window.approveRegistration = async function(regId) {
@@ -2080,6 +2162,43 @@ window.rejectRegistration = async function(regId) {
   await updateDoc(doc(db, 'rl_registrations', regId), { status: 'rejected', rejectReason: reason || '', reviewedAt: serverTimestamp() });
   toast('Inscription refusée.');
   loadAdminSection();
+};
+
+window.openPlayerProfile = function(playerId) {
+  const p = allParticipants[playerId] || Object.values(allParticipants).find(x => x.userId === playerId);
+  if (!p) return;
+  const roster = allRosters.find(r => (r.playerId === p.id || r.playerId === p.userId) && r.status === 'active');
+  const team = roster ? allTeams.find(t => t.id === roster.teamId) : null;
+  const roleLabels = { fondateur:'👑 Fondateur', manager:'📋 Manager', capitaine:'🎯 Capitaine', titulaire:'⚡ Titulaire', sub:'🔄 Sub', coach:'🎮 Coach', joueur:'⚡ Joueur', remplacant:'🔄 Remplaçant' };
+  const countryFlag = { FR:'🇫🇷', BE:'🇧🇪', CH:'🇨🇭', CA:'🇨🇦', LU:'🇱🇺' }[p.country] || '';
+  document.getElementById('player-profile-content').innerHTML = `
+    <h3 style="margin:0 0 16px;font-size:1.1rem;font-weight:800">${countryFlag} ${pName(p)}</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:0.88rem">
+      ${team ? `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg3);border-radius:8px">
+        ${team.logo ? `<img src="${team.logo}" style="width:28px;height:28px;border-radius:6px;object-fit:cover">` : '🛡️'}
+        <div><div style="font-weight:700">${team.name} <span style="color:var(--muted);font-size:0.78rem">[${team.tag}]</span></div>
+        <div style="font-size:0.75rem;color:var(--muted)">${roleLabels[roster.role] || roster.role}</div></div>
+      </div>` : `<div style="color:var(--green);font-size:0.82rem;font-weight:700">Agent libre</div>`}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px">
+          <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Epic ID</div>
+          <div style="font-weight:600">${p.epicId || '—'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px">
+          <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Pays</div>
+          <div style="font-weight:600">${p.country || '—'}</div>
+        </div>
+      </div>
+      ${p.trackerRL ? `<div style="background:var(--bg3);border-radius:8px;padding:10px">
+        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Tracker</div>
+        <a href="${p.trackerRL}" target="_blank" style="color:var(--accent);font-size:0.82rem;word-break:break-all">${p.trackerRL}</a>
+      </div>` : ''}
+      ${p.discordUsername ? `<div style="background:var(--bg3);border-radius:8px;padding:10px">
+        <div style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Discord</div>
+        <div style="font-weight:600">${p.discordUsername}</div>
+      </div>` : ''}
+    </div>`;
+  openModal('modal-player-profile');
 };
 
 window.approveTeam = async function(teamId) {
@@ -2579,6 +2698,7 @@ function loadCompetitionsSection() {
     el.innerHTML = `<p style="color:var(--muted)">Aucune compétition en cours.</p>`;
     return;
   }
+  const canRegister = myTeam?.status === 'approved' && ['fondateur','manager'].includes(myRole);
   el.innerHTML = visible.map(c => {
     const regs = allRegistrations.filter(r => r.competitionId === c.id && r.status === 'approved');
     const typeCls = 'tag-blue';
@@ -2592,6 +2712,20 @@ function loadCompetitionsSection() {
           return t ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border-radius:6px;padding:4px 8px;font-size:0.78rem;font-weight:700">
             ${t.logo?`<img src="${t.logo}" style="width:14px;height:14px;border-radius:2px;object-fit:cover">`:'🛡️'} ${t.name}</span>` : '';
         }).join('');
+
+    // Bouton S'inscrire
+    let regBtnHtml = '';
+    if (canRegister && ['registration','upcoming'].includes(c.status)) {
+      const myReg = allRegistrations.find(r => r.teamId === myTeam.id && r.competitionId === c.id);
+      if (!myReg || myReg.status === 'rejected') {
+        regBtnHtml = `<button class="btn btn-primary btn-sm" onclick="openRegisterToCompetition('${c.id}')" style="margin-top:12px">+ S'inscrire</button>`;
+      } else if (myReg.status === 'pending') {
+        regBtnHtml = `<span style="margin-top:12px;display:inline-block;font-size:0.78rem;color:var(--gold);font-weight:700">⏳ Inscription en attente</span>`;
+      } else if (myReg.status === 'approved') {
+        regBtnHtml = `<span style="margin-top:12px;display:inline-block;font-size:0.78rem;color:var(--green);font-weight:700">✅ Inscrit</span>`;
+      }
+    }
+
     return `<div class="card">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
         <span class="tag ${typeCls}" style="font-size:0.65rem">${typeLabel}</span>
@@ -2601,6 +2735,7 @@ function loadCompetitionsSection() {
       ${c.desc?`<p style="color:var(--muted);font-size:0.82rem;margin:2px 0 0">${c.desc}</p>`:''}
       <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 6px">Équipes (${regs.length})</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0">${teamChips}</div>
+      ${regBtnHtml}
     </div>`;
   }).join('');
 }
@@ -2690,6 +2825,7 @@ document.getElementById('create-season-form').addEventListener('submit', async e
     type:             'league',
     name:             document.getElementById('cs-name').value.trim(),
     desc:             document.getElementById('cs-desc').value.trim(),
+    rules:            document.getElementById('cs-rules').value.trim() || null,
     status:           document.getElementById('cs-status').value,
     registrationOpen: document.getElementById('cs-reg-open').value || null,
     registrationClose:document.getElementById('cs-reg-close').value || null,
@@ -3619,7 +3755,7 @@ function renderAdminPlayersList() {
     const roleLabels = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant' };
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:0.85rem">${pName(p)} <span style="color:var(--muted);font-weight:400;font-size:0.72rem">${p.country || ''}</span></div>
+        <div style="font-weight:700;font-size:0.85rem"><span style="cursor:pointer;text-decoration:underline dotted" onclick="openPlayerProfile('${p.id}')">${pName(p)}</span> <span style="color:var(--muted);font-weight:400;font-size:0.72rem">${p.country || ''}</span></div>
         <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">
           ${p.epicId ? `Epic: ${p.epicId}` : '—'}
           ${p.discord ? ` · 💬 ${p.discord}` : ''}
