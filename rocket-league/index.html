@@ -472,6 +472,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="nav-item" data-section="players"><span class="icon">👥</span> Joueurs</button>
     <button class="nav-item" data-section="competitions"><span class="icon">🏆</span> Compétitions</button>
     <button class="nav-item" data-section="matches"><span class="icon">📅</span> Matchs</button>
+    <button class="nav-item" data-section="standings"><span class="icon">📊</span> Classements</button>
     <button class="nav-item hidden" id="nav-myteam" data-section="myteam"><span class="icon">⚡</span> Mon équipe</button>
 
     <div class="sidebar-section hidden" id="nav-admin-label">Admin</div>
@@ -604,6 +605,15 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     </section>
 
     <!-- MY TEAM -->
+    <!-- ── CLASSEMENTS ── -->
+    <section id="sec-standings" class="section">
+      <div class="page-header">
+        <h1>Classements</h1>
+        <p>Springs League Series — résultats par pool</p>
+      </div>
+      <div id="standings-content" style="display:flex;flex-direction:column;gap:28px;margin-top:8px"></div>
+    </section>
+
     <section id="sec-myteam" class="section">
       <div class="page-header" id="myteam-header">
         <h1 id="myteam-title">Mon équipe</h1>
@@ -1391,6 +1401,7 @@ function navigate(section) {
   if (section === 'teams') loadTeamsSection();
   if (section === 'players') loadPlayersSection();
   if (section === 'matches') renderMatchesList();
+  if (section === 'standings') loadStandingsSection();
   if (section === 'myteam') loadMyTeamSection();
   if (section === 'admin') loadAdminSection();
 }
@@ -1644,6 +1655,7 @@ async function bootApp() {
   onSnapshot(collection(db, 'rl_matches'), snap => {
     allMatches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (document.getElementById('sec-matches').classList.contains('active')) renderMatchesList();
+    if (document.getElementById('sec-standings').classList.contains('active')) loadStandingsSection();
     if (document.getElementById('sec-myteam').classList.contains('active') && myTabFilter === 'mymatches') renderMyMatches();
     updateAdminScoresBadge();
   });
@@ -2501,6 +2513,133 @@ window.generateBracket = async function(compId) {
   openManageComp(compId);
 };
 
+// ── CLASSEMENTS ────────────────────────────────────────────────────────
+
+function computeStandings(pool, competitionId) {
+  const poolTeams = allTeams.filter(t => t.pool === pool && t.status === 'approved');
+  const played = allMatches.filter(m =>
+    m.competitionId === competitionId &&
+    m.pool === pool &&
+    ['played', 'forfeit'].includes(m.status)
+  );
+
+  const stats = {};
+  poolTeams.forEach(t => {
+    stats[t.id] = { teamId: t.id, mj: 0, v: 0, d: 0, pts: 0, bp: 0, bc: 0 };
+  });
+
+  played.forEach(m => {
+    const hs = m.homeScore ?? 0;
+    const as = m.awayScore ?? 0;
+    if (stats[m.homeTeamId]) {
+      stats[m.homeTeamId].mj++;
+      stats[m.homeTeamId].bp += hs;
+      stats[m.homeTeamId].bc += as;
+      if (hs > as) { stats[m.homeTeamId].v++; stats[m.homeTeamId].pts++; }
+      else stats[m.homeTeamId].d++;
+    }
+    if (stats[m.awayTeamId]) {
+      stats[m.awayTeamId].mj++;
+      stats[m.awayTeamId].bp += as;
+      stats[m.awayTeamId].bc += hs;
+      if (as > hs) { stats[m.awayTeamId].v++; stats[m.awayTeamId].pts++; }
+      else stats[m.awayTeamId].d++;
+    }
+  });
+
+  return Object.values(stats).sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    // Départage : différence de jeux (BO wins)
+    return (b.bp - b.bc) - (a.bp - a.bc);
+  });
+}
+
+function renderPoolTable(pool, rows) {
+  if (rows.length === 0) return '';
+  const matchesTotal = allMatches.filter(m =>
+    m.pool === pool && ['played','forfeit'].includes(m.status)
+  ).length;
+
+  return `
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--rl-blue)">Pool ${pool}</span>
+        <span style="font-size:0.72rem;color:var(--muted)">${matchesTotal} match(s) joué(s)</span>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border2);color:var(--muted);font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">
+              <th style="padding:9px 14px;text-align:left">#</th>
+              <th style="padding:9px 14px;text-align:left">Équipe</th>
+              <th style="padding:9px 8px;text-align:center" title="Matchs joués">MJ</th>
+              <th style="padding:9px 8px;text-align:center" title="Victoires">V</th>
+              <th style="padding:9px 8px;text-align:center" title="Défaites">D</th>
+              <th style="padding:9px 8px;text-align:center" title="Jeux pour">JP</th>
+              <th style="padding:9px 8px;text-align:center" title="Jeux contre">JC</th>
+              <th style="padding:9px 8px;text-align:center" title="Différence">+/-</th>
+              <th style="padding:9px 14px;text-align:center" title="Points">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => {
+              const t = allTeams.find(t => t.id === r.teamId);
+              const isLan = i < 8;
+              const diff = r.bp - r.bc;
+              const isMyTeam = myTeam && r.teamId === myTeam.id;
+              return `<tr style="border-bottom:1px solid var(--border);${isMyTeam ? 'background:rgba(0,129,255,0.06)' : (isLan && r.mj > 0 ? 'background:rgba(0,217,54,0.02)' : '')}">
+                <td style="padding:10px 14px;font-weight:800;color:${isLan && r.mj > 0 ? 'var(--green)' : 'var(--muted)'};font-size:0.85rem">${i + 1}</td>
+                <td style="padding:10px 14px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    ${t?.logo ? `<img src="${t.logo}" style="width:22px;height:22px;border-radius:4px;object-fit:cover" onerror="this.style.display='none'">` : ''}
+                    <strong style="${isMyTeam ? 'color:var(--rl-blue)' : ''}">${t?.name || '?'}</strong>
+                    <span style="color:var(--muted);font-size:0.7rem">[${t?.tag || '?'}]</span>
+                    ${isLan && r.mj > 0 ? '<span style="font-size:0.6rem;background:rgba(0,217,54,0.15);color:var(--green);border-radius:4px;padding:1px 5px;font-weight:700">LAN</span>' : ''}
+                  </div>
+                </td>
+                <td style="padding:10px 8px;text-align:center;color:var(--muted)">${r.mj}</td>
+                <td style="padding:10px 8px;text-align:center;color:var(--green);font-weight:700">${r.v}</td>
+                <td style="padding:10px 8px;text-align:center;color:var(--red)">${r.d}</td>
+                <td style="padding:10px 8px;text-align:center">${r.bp}</td>
+                <td style="padding:10px 8px;text-align:center">${r.bc}</td>
+                <td style="padding:10px 8px;text-align:center;font-weight:700;color:${diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--muted)'}">${diff > 0 ? '+' : ''}${diff}</td>
+                <td style="padding:10px 14px;text-align:center;font-weight:900;font-size:0.95rem">${r.pts}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function loadStandingsSection() {
+  const el = document.getElementById('standings-content');
+  if (!el) return;
+
+  const league = allCompetitions.find(c => c.type === 'league' && ['active', 'registration', 'upcoming'].includes(c.status));
+  if (!league) {
+    el.innerHTML = `<div class="card"><p style="color:var(--muted)">Aucune ligue en cours.</p></div>`;
+    return;
+  }
+
+  const pools = ['A', 'B'];
+  const sections = pools.map(pool => renderPoolTable(pool, computeStandings(pool, league.id))).filter(Boolean);
+
+  if (sections.length === 0) {
+    el.innerHTML = `<div class="card">
+      <p style="color:var(--muted)">Aucune équipe assignée à une pool pour l'instant.</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">
+      <strong style="color:var(--text)">${league.name}</strong> — Top 8 de chaque pool se qualifient pour la LAN
+    </div>
+    ${sections.join('')}`;
+}
+
+// ───────────────────────────────────────────────────────────────────────
 function loadCompetitionsSection() {
   const el = document.getElementById('competitions-list');
   if (!el) return;
@@ -3415,8 +3554,8 @@ document.getElementById('btn-clear-schedule').addEventListener('click', async ()
 
 async function generateSchedule(pool) {
   if (!activeCompetition) { toast('Aucune saison active.', false); return; }
-  const poolTeams = allTeams.filter(t => t.pool === pool);
-  if (poolTeams.length < 2) { toast(`Pas assez d'équipes en Pool ${pool}.`, false); return; }
+  const poolTeams = allTeams.filter(t => t.pool === pool && t.status === 'approved');
+  if (poolTeams.length < 2) { toast(`Pas assez d'équipes approuvées en Pool ${pool}.`, false); return; }
   if (!confirm(`Générer le calendrier round-robin pour la Pool ${pool} (${poolTeams.length} équipes) ?\nCela écrasera les matchs existants de ce pool.`)) return;
 
   // Supprimer matchs existants du pool
