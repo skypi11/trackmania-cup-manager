@@ -470,6 +470,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <button class="nav-item active" data-section="home"><span class="icon">🏠</span> Accueil</button>
     <button class="nav-item" data-section="teams"><span class="icon">🛡️</span> Équipes</button>
     <button class="nav-item" data-section="players"><span class="icon">👥</span> Joueurs</button>
+    <button class="nav-item" data-section="competitions"><span class="icon">🏆</span> Compétitions</button>
     <button class="nav-item" data-section="matches"><span class="icon">📅</span> Matchs</button>
     <button class="nav-item hidden" id="nav-myteam" data-section="myteam"><span class="icon">⚡</span> Mon équipe</button>
 
@@ -564,6 +565,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     </section>
 
     <!-- MATCHES -->
+    <section id="sec-competitions" class="section">
+      <div class="page-header">
+        <h1>Compétitions</h1>
+        <p>Ligues et tournois Springs E-Sport</p>
+      </div>
+      <div id="competitions-list" style="display:flex;flex-direction:column;gap:20px;margin-top:8px"></div>
+    </section>
+
     <section id="sec-matches" class="section">
       <div class="page-header">
         <h1>Calendrier</h1>
@@ -694,14 +703,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
       <div class="admin-grid">
 
-        <!-- Saison -->
-        <div class="card">
+        <!-- Compétitions -->
+        <div class="card" style="grid-column:1/-1">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">🏆 Saison</h3>
-            <button class="btn btn-primary btn-sm" id="btn-create-season">+ Nouvelle saison</button>
+            <h3 style="font-size:0.9rem;font-weight:800">🏆 Compétitions</h3>
+            <button class="btn btn-primary btn-sm" id="btn-create-season">+ Nouvelle</button>
           </div>
-          <div id="admin-season-info">
-            <p style="color:var(--muted);font-size:0.83rem">Aucune saison active.</p>
+          <div id="admin-competitions-list">
+            <p style="color:var(--muted);font-size:0.83rem">Aucune compétition.</p>
           </div>
         </div>
 
@@ -1144,6 +1153,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 </div>
 
 <!-- Assign Fondateur -->
+<!-- Manage Competition Modal -->
+<div class="modal-overlay hidden" id="modal-manage-comp">
+  <div class="modal" style="max-width:720px;max-height:90vh;overflow-y:auto">
+    <button class="modal-close" data-close="modal-manage-comp">✕</button>
+    <div id="manage-comp-content"></div>
+  </div>
+</div>
+
 <!-- Team Review Modal -->
 <div class="modal-overlay hidden" id="modal-team-review">
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto">
@@ -1371,6 +1388,7 @@ function navigate(section) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById(`sec-${section}`).classList.add('active');
   document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
+  if (section === 'competitions') loadCompetitionsSection();
   if (section === 'teams') loadTeamsSection();
   if (section === 'players') loadPlayersSection();
   if (section === 'matches') renderMatchesList();
@@ -1558,12 +1576,21 @@ async function bootApp() {
   const partSnap = await getDocs(collection(db, 'participants'));
   partSnap.forEach(d => { allParticipants[d.id] = { id: d.id, ...d.data() }; });
 
-  // Load competitions
-  const compSnap = await getDocs(query(collection(db, 'rl_competitions'), where('status', 'in', ['active', 'upcoming', 'registration'])));
+  // Load competitions (all statuses, live)
+  const compSnap = await getDocs(collection(db, 'rl_competitions'));
   allCompetitions = compSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  // activeCompetition = la ligue principale active (type league)
-  activeCompetition = allCompetitions.find(c => c.type === 'league' && ['active','upcoming','registration'].includes(c.status))
-    || allCompetitions[0] || null;
+  activeCompetition = allCompetitions.find(c => c.type === 'league' && c.status === 'active')
+    || allCompetitions.find(c => c.status === 'active') || allCompetitions[0] || null;
+
+  // Live competitions listener
+  onSnapshot(collection(db, 'rl_competitions'), snap => {
+    allCompetitions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    activeCompetition = allCompetitions.find(c => c.type === 'league' && c.status === 'active')
+      || allCompetitions.find(c => c.status === 'active') || allCompetitions[0] || null;
+    updateHomeStats();
+    if (document.getElementById('sec-competitions').classList.contains('active')) loadCompetitionsSection();
+    if (document.getElementById('sec-admin').classList.contains('active')) loadAdminSection();
+  });
 
   // Live listeners
   onSnapshot(collection(db, 'rl_teams'), snap => {
@@ -2181,18 +2208,28 @@ document.getElementById('btn-leave-team').addEventListener('click', async () => 
 // ── ADMIN SECTION ──────────────────────────────────────────────────────
 async function loadAdminSection() {
   if (!isAdmin) { navigate('home'); return; }
-  // Season
-  if (activeCompetition) {
-    const statusLabels = { active: 'En cours', upcoming: 'À venir', finished: 'Terminée' };
-    document.getElementById('admin-season-info').innerHTML = `
-      <p style="font-size:0.9rem;font-weight:800;margin-bottom:4px">${activeCompetition.name}</p>
-      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">${activeCompetition.desc || ''}</p>
-      <span class="tag tag-${activeCompetition.status === 'active' ? 'green' : 'gold'}">${statusLabels[activeCompetition.status] || activeCompetition.status}</span>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary btn-sm" onclick="toggleSeasonStatus()">Changer statut</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteSeason()">Supprimer</button>
-      </div>`;
-  }
+  // All competitions
+  const statusLabels = { active: 'En cours', upcoming: 'À venir', registration: 'Inscriptions', finished: 'Terminée' };
+  const statusCls    = { active: 'tag-green', upcoming: 'tag-gold', registration: 'tag-blue', finished: 'tag-muted' };
+  document.getElementById('admin-competitions-list').innerHTML = allCompetitions.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucune compétition créée.</p>`
+    : [...allCompetitions].sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map(c => {
+        const typeBadge = c.type === 'league'
+          ? `<span class="tag tag-blue" style="font-size:0.65rem">Ligue</span>`
+          : `<span class="tag tag-orange" style="font-size:0.65rem">Tournoi</span>`;
+        const regs = allRegistrations.filter(r => r.competitionId === c.id && r.status === 'approved');
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:0.88rem">${c.name}</div>
+            <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">
+              ${typeBadge}
+              <span class="tag ${statusCls[c.status]||'tag-muted'}" style="font-size:0.65rem">${statusLabels[c.status]||c.status}</span>
+              <span style="font-size:0.72rem;color:var(--muted)">${regs.length} équipe(s)</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openManageComp('${c.id}')">Gérer →</button>
+        </div>`;
+      }).join('');
 
   // Équipes en attente de validation
   const pendingTeams = allTeams.filter(t => t.status === 'pending');
@@ -2301,25 +2338,182 @@ async function loadAdminSection() {
       }).join('');
 }
 
-window.toggleSeasonStatus = async function() {
-  if (!activeCompetition) return;
-  const statuses = ['upcoming', 'active', 'finished'];
-  const next = statuses[(statuses.indexOf(activeCompetition.status) + 1) % statuses.length];
-  await updateDoc(doc(db, 'rl_competitions', activeCompetition.id), { status: next });
-  activeCompetition.status = next;
-  toast(`Saison passée en "${next}"`);
-  loadAdminSection();
+// ── Competition management ──────────────────────────────────────────────────
+
+function renderBracketHTML(bracketData) {
+  if (!bracketData?.rounds?.length) return '<p style="color:var(--muted);font-size:0.83rem">Aucun bracket.</p>';
+  const total = bracketData.rounds.length;
+  const roundLabel = r => {
+    const fromEnd = total - r;
+    if (fromEnd === 0) return 'Finale';
+    if (fromEnd === 1) return 'Demi-finales';
+    if (fromEnd === 2) return 'Quarts de finale';
+    return `Tour ${r}`;
+  };
+  const tName = id => {
+    if (!id) return `<em style="color:var(--muted)">BYE</em>`;
+    const t = allTeams.find(t => t.id === id);
+    return t ? t.name : '?';
+  };
+  return bracketData.rounds.map(round => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--rl-blue);margin-bottom:6px">${roundLabel(round.round)}</div>
+      ${round.matches.map(m => {
+        const homeWon = m.winner && m.winner === m.home;
+        const awayWon = m.winner && m.winner === m.away;
+        return `<div style="display:grid;grid-template-columns:1fr 48px 1fr;gap:4px;align-items:center;background:var(--bg2);border-radius:8px;padding:8px 12px;border:1px solid var(--border);margin-bottom:4px">
+          <span style="font-weight:${homeWon?'800':'400'};color:${homeWon?'var(--green)':m.home?'var(--text)':'var(--muted)'}">${homeWon?'🏆 ':''}${tName(m.home)}</span>
+          <span style="text-align:center;font-size:0.72rem;font-weight:800;color:var(--muted)">${m.homeScore!==null?`${m.homeScore}–${m.awayScore}`:'vs'}</span>
+          <span style="text-align:right;font-weight:${awayWon?'800':'400'};color:${awayWon?'var(--green)':m.away?'var(--text)':'var(--muted)'}">${tName(m.away)}${awayWon?' 🏆':''}</span>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function buildBracket(teams) {
+  const n = teams.length;
+  const size = Math.pow(2, Math.ceil(Math.log2(Math.max(n, 2))));
+  const seeded = [...teams, ...Array(size - n).fill(null)];
+  const rounds = [];
+  // Round 1 : seeding standard (1 vs size, 2 vs size-1, ...)
+  const r1 = [];
+  for (let i = 0; i < size / 2; i++) {
+    const home = seeded[i], away = seeded[size - 1 - i];
+    r1.push({ id: `r1m${i+1}`, home, away, homeScore: null, awayScore: null,
+      winner: home && !away ? home : (!home && away ? away : null) });
+  }
+  rounds.push({ round: 1, matches: r1 });
+  // Rounds suivants (stubs vides)
+  let prev = r1.length;
+  for (let r = 2; prev > 1; r++) {
+    const matches = [];
+    for (let i = 0; i < prev / 2; i++) {
+      matches.push({ id: `r${r}m${i+1}`, home: null, away: null, homeScore: null, awayScore: null, winner: null });
+    }
+    rounds.push({ round: r, matches });
+    prev = matches.length;
+  }
+  return { seededTeams: teams, rounds, type: 'single_elim', generatedAt: new Date().toISOString() };
+}
+
+window.openManageComp = function(compId) {
+  const c = allCompetitions.find(c => c.id === compId);
+  if (!c) return;
+  const regs = allRegistrations.filter(r => r.competitionId === compId);
+  const approved = regs.filter(r => r.status === 'approved');
+  const pending  = regs.filter(r => r.status === 'pending');
+  const typeBadge = c.type === 'league'
+    ? `<span class="tag tag-blue">Ligue</span>`
+    : `<span class="tag tag-orange">Tournoi</span>`;
+  const statuses = ['upcoming','registration','active','finished'];
+  const sLabels  = { upcoming:'🕐 À venir', registration:'📝 Inscriptions', active:'▶️ En cours', finished:'✅ Terminée' };
+  const teamRows = approved.map(r => {
+    const t = allTeams.find(t => t.id === r.teamId);
+    return t ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2)">
+      ${t.logo?`<img src="${t.logo}" style="width:24px;height:24px;border-radius:4px;object-fit:cover">`:`<span>🛡️</span>`}
+      <span style="font-weight:700;font-size:0.85rem">${t.name}</span>
+      <span style="color:var(--muted);font-size:0.75rem">[${t.tag}]</span>
+    </div>` : '';
+  }).join('') || `<p style="color:var(--muted);font-size:0.83rem">Aucune équipe inscrite.</p>`;
+  const bracketSection = c.type === 'tournament' ? `
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:16px 0 8px">Bracket</div>
+    ${c.bracketData
+      ? renderBracketHTML(c.bracketData)
+      : `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <p style="color:var(--muted);font-size:0.83rem;margin:0">Aucun bracket généré.</p>
+          ${approved.length >= 2
+            ? `<button class="btn btn-primary btn-sm" onclick="generateBracket('${compId}')">⚡ Générer le bracket</button>`
+            : `<span style="color:var(--muted);font-size:0.75rem">Minimum 2 équipes inscrites requises.</span>`}
+        </div>`}` : '';
+  document.getElementById('manage-comp-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">${typeBadge}<h2 style="margin:0">${c.name}</h2></div>
+    ${c.desc?`<p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px">${c.desc}</p>`:''}
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Statut</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+      ${statuses.map(s=>`<button class="btn btn-sm ${c.status===s?'btn-primary':'btn-secondary'}" onclick="setCompStatus('${compId}','${s}')">${sLabels[s]}</button>`).join('')}
+    </div>
+    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">
+      Équipes inscrites (${approved.length})${pending.length>0?` <span style="color:var(--gold)">· ${pending.length} en attente</span>`:''}
+    </div>
+    ${teamRows}
+    ${bracketSection}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+      <button class="btn btn-danger btn-sm" onclick="deleteComp('${compId}')">🗑️ Supprimer</button>
+      <button class="btn btn-secondary" data-close="modal-manage-comp">Fermer</button>
+    </div>`;
+  openModal('modal-manage-comp');
 };
 
-window.deleteSeason = async function() {
-  if (!activeCompetition) return;
-  if (!confirm(`Supprimer la saison "${activeCompetition.name}" ?`)) return;
-  await deleteDoc(doc(db, 'rl_competitions', activeCompetition.id));
-  activeCompetition = null;
-  document.getElementById('season-banner').style.display = 'none';
-  toast('Saison supprimée.');
-  loadAdminSection();
+window.setCompStatus = async function(compId, status) {
+  await updateDoc(doc(db, 'rl_competitions', compId), { status });
+  const c = allCompetitions.find(c => c.id === compId);
+  if (c) c.status = status;
+  toast(`Statut → "${status}"`);
+  openManageComp(compId);
 };
+
+window.deleteComp = async function(compId) {
+  const c = allCompetitions.find(c => c.id === compId);
+  if (!confirm(`Supprimer "${c?.name}" ?`)) return;
+  await deleteDoc(doc(db, 'rl_competitions', compId));
+  closeModal('modal-manage-comp');
+  toast('Compétition supprimée.');
+};
+
+window.generateBracket = async function(compId) {
+  const c = allCompetitions.find(c => c.id === compId);
+  if (!c) return;
+  const teams = allRegistrations.filter(r => r.competitionId === compId && r.status === 'approved').map(r => r.teamId);
+  if (teams.length < 2) { toast('Pas assez d\'équipes.', false); return; }
+  const bracketData = buildBracket(teams);
+  await updateDoc(doc(db, 'rl_competitions', compId), { bracketData });
+  c.bracketData = bracketData;
+  toast('Bracket généré !');
+  openManageComp(compId);
+};
+
+function loadCompetitionsSection() {
+  const el = document.getElementById('competitions-list');
+  if (!el) return;
+  const visible = allCompetitions.filter(c => ['active','upcoming','registration'].includes(c.status));
+  if (visible.length === 0) {
+    el.innerHTML = `<p style="color:var(--muted)">Aucune compétition en cours.</p>`;
+    return;
+  }
+  el.innerHTML = visible.map(c => {
+    const regs = allRegistrations.filter(r => r.competitionId === c.id && r.status === 'approved');
+    const typeCls = c.type === 'league' ? 'tag-blue' : 'tag-orange';
+    const typeLabel = c.type === 'league' ? 'Ligue' : 'Tournoi';
+    const sLabel = { active:'En cours', upcoming:'À venir', registration:'Inscriptions ouvertes' }[c.status];
+    const sCls   = { active:'tag-green', upcoming:'tag-gold', registration:'tag-blue' }[c.status];
+    const hasBracket = c.bracketData?.rounds?.length > 0;
+    const dateInfo = c.type === 'tournament' && c.tournamentDate
+      ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:4px">📅 ${c.tournamentDate}${c.tournamentTime?' à '+c.tournamentTime:''}</div>` : '';
+    const teamChips = regs.length === 0
+      ? `<span style="color:var(--muted);font-size:0.82rem">Aucune équipe inscrite.</span>`
+      : regs.map(r => {
+          const t = allTeams.find(t => t.id === r.teamId);
+          return t ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border-radius:6px;padding:4px 8px;font-size:0.78rem;font-weight:700">
+            ${t.logo?`<img src="${t.logo}" style="width:14px;height:14px;border-radius:2px;object-fit:cover">`:'🛡️'} ${t.name}</span>` : '';
+        }).join('');
+    return `<div class="card">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <span class="tag ${typeCls}" style="font-size:0.65rem">${typeLabel}</span>
+        <span class="tag ${sCls}" style="font-size:0.65rem">${sLabel}</span>
+      </div>
+      <h2 style="margin:0 0 2px;font-size:1.05rem">${c.name}</h2>
+      ${c.desc?`<p style="color:var(--muted);font-size:0.82rem;margin:2px 0 0">${c.desc}</p>`:''}
+      ${dateInfo}
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 6px">Équipes (${regs.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${hasBracket?'14px':'0'}">${teamChips}</div>
+      ${hasBracket?`<div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;margin-top:4px">Bracket</div>${renderBracketHTML(c.bracketData)}`:''}
+    </div>`;
+  }).join('');
+}
+
+// Legacy stubs (plus utilisés)
+window.toggleSeasonStatus = function() {};
+window.deleteSeason = function() {};
 
 // Create season
 // ── Season form — dynamic logic ────────────────────────────────────────
