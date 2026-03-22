@@ -601,6 +601,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <p id="myteam-subtitle">—</p>
       </div>
 
+      <div id="myteam-status-banner" style="display:none"></div>
+
       <div class="filters" style="margin-bottom:20px">
         <button class="filter-btn active" data-mytab="roster">Roster</button>
         <button class="filter-btn" data-mytab="mymatches">Mes matchs</button>
@@ -703,6 +705,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           </div>
         </div>
 
+        <!-- Équipes en attente de validation -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3 style="font-size:0.9rem;font-weight:800">✅ Validation des équipes</h3>
+            <span class="badge" id="pending-teams-badge" style="display:none"></span>
+          </div>
+          <div id="admin-pending-teams">
+            <p style="color:var(--muted);font-size:0.83rem">Aucune équipe en attente.</p>
+          </div>
+        </div>
+
         <!-- Équipes & pools -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -721,6 +734,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           </div>
           <div id="admin-fondateurs-list">
             <p style="color:var(--muted);font-size:0.83rem">Chargement…</p>
+          </div>
+        </div>
+
+        <!-- Inscriptions compétitions -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h3 style="font-size:0.9rem;font-weight:800">📋 Inscriptions aux compétitions</h3>
+            <span class="badge" id="registrations-badge" style="display:none"></span>
+          </div>
+          <div id="admin-registrations-list">
+            <p style="color:var(--muted);font-size:0.83rem">Aucune inscription en attente.</p>
           </div>
         </div>
 
@@ -879,14 +903,28 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 <div class="modal-overlay hidden" id="modal-create-season">
   <div class="modal" style="max-width:640px;max-height:90vh;overflow-y:auto">
     <button class="modal-close" data-close="modal-create-season">✕</button>
-    <h2>Nouvelle saison</h2>
+    <h2 id="cs-modal-title">Nouvelle compétition</h2>
     <form id="create-season-form">
+
+      <!-- ── 0. Type de compétition ── -->
+      <div class="form-group">
+        <label>Type</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button type="button" class="cs-type-btn active" data-type="league" onclick="csSelectType('league')" style="flex:1;padding:14px;border-radius:10px;border:2px solid var(--rl-blue);background:rgba(0,129,255,0.15);color:var(--rl-blue);font-weight:800;cursor:pointer;transition:all 0.2s">
+            🏆 Ligue<br><span style="font-size:0.72rem;font-weight:400;opacity:0.8">Saison longue, poules, calendrier</span>
+          </button>
+          <button type="button" class="cs-type-btn" data-type="tournament" onclick="csSelectType('tournament')" style="flex:1;padding:14px;border-radius:10px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:var(--muted);font-weight:800;cursor:pointer;transition:all 0.2s">
+            ⚡ Tournoi<br><span style="font-size:0.72rem;font-weight:400;opacity:0.8">Événement ponctuel, une soirée</span>
+          </button>
+        </div>
+        <input type="hidden" id="cs-type" value="league">
+      </div>
 
       <!-- ── 1. Infos générales ── -->
       <div class="season-section-title">📋 Infos générales</div>
       <div class="form-row">
         <div class="form-group" style="flex:2">
-          <label>Nom de la saison</label>
+          <label>Nom</label>
           <input type="text" id="cs-name" placeholder="Saison 1 — 2026" required>
         </div>
         <div class="form-group" style="flex:1">
@@ -942,7 +980,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
 
       <!-- ── 3. Structure ── -->
-      <div class="season-section-title" style="margin-top:20px">⚙️ Structure</div>
+      <div class="season-section-title" style="margin-top:20px" id="cs-section-structure">⚙️ Structure</div>
       <div class="form-row">
         <div class="form-group">
           <label>Nombre de poules</label>
@@ -967,7 +1005,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
 
       <!-- ── 4. Calendrier ── -->
-      <div class="season-section-title" style="margin-top:20px">📅 Calendrier</div>
+      <div class="season-section-title" style="margin-top:20px" id="cs-section-calendar">📅 Calendrier</div>
       <div class="form-row">
         <div class="form-group">
           <label>Nombre de semaines</label>
@@ -1226,12 +1264,14 @@ let isAdmin = false;
 let allTeams = [];
 let allParticipants = {};
 let allRosters = [];         // all rl_roster docs
-let activeSeason = null;
+let activeCompetition = null;
+let allCompetitions = [];
 let selectedTeamForPool = null;
 let selectedInvitePlayer = null;
 let teamOfInvite = null;
 let allMatches = [];
 let allAvailabilities = [];
+let allRegistrations = [];
 let matchWeekFilter = 'all';
 let matchPoolFilter = 'all';
 let matchViewTab = 'matches';
@@ -1460,12 +1500,12 @@ async function bootApp() {
   const partSnap = await getDocs(collection(db, 'participants'));
   partSnap.forEach(d => { allParticipants[d.id] = { id: d.id, ...d.data() }; });
 
-  // Load active season
-  const seasonSnap = await getDocs(query(collection(db, 'rl_seasons'), where('status', 'in', ['active', 'upcoming'])));
-  if (!seasonSnap.empty) {
-    const d = seasonSnap.docs[0];
-    activeSeason = { id: d.id, ...d.data() };
-  }
+  // Load competitions
+  const compSnap = await getDocs(query(collection(db, 'rl_competitions'), where('status', 'in', ['active', 'upcoming', 'registration'])));
+  allCompetitions = compSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // activeCompetition = la ligue principale active (type league)
+  activeCompetition = allCompetitions.find(c => c.type === 'league' && ['active','upcoming','registration'].includes(c.status))
+    || allCompetitions[0] || null;
 
   // Live listeners
   onSnapshot(collection(db, 'rl_teams'), snap => {
@@ -1489,6 +1529,12 @@ async function bootApp() {
     updateSidebarRole();
     updateHomeBanner();
     updateHomeStats();
+  });
+
+  // Live registrations listener
+  onSnapshot(collection(db, 'rl_registrations'), snap => {
+    allRegistrations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (document.getElementById('sec-admin').classList.contains('active')) loadAdminSection();
   });
 
   // Live matches listener
@@ -1516,11 +1562,11 @@ async function bootApp() {
   }
 
   // Season banner
-  if (activeSeason) {
-    document.getElementById('season-name').textContent = activeSeason.name;
-    document.getElementById('season-desc').textContent = activeSeason.desc || 'Springs League Series';
-    document.getElementById('season-status-tag').textContent = activeSeason.status === 'active' ? 'En cours' : 'À venir';
-    document.getElementById('season-status-tag').className = `tag ${activeSeason.status === 'active' ? 'tag-green' : 'tag-gold'}`;
+  if (activeCompetition) {
+    document.getElementById('season-name').textContent = activeCompetition.name;
+    document.getElementById('season-desc').textContent = activeCompetition.desc || 'Springs League Series';
+    document.getElementById('season-status-tag').textContent = activeCompetition.status === 'active' ? 'En cours' : 'À venir';
+    document.getElementById('season-status-tag').className = `tag ${activeCompetition.status === 'active' ? 'tag-green' : 'tag-gold'}`;
     document.getElementById('season-banner').style.display = '';
   }
 
@@ -1542,8 +1588,11 @@ function updateHomeBanner() {
   const banner = document.getElementById('home-myteam-banner');
   const noteam = document.getElementById('home-noteam');
   if (myTeam) {
+    const statusLabels = { draft: '✏️ Brouillon', pending: '⏳ En attente de validation', approved: '✅ Approuvée', rejected: '❌ Rejetée' };
+    const statusColors = { draft: 'var(--muted)', pending: 'var(--gold)', approved: 'var(--green)', rejected: 'var(--red)' };
+    const st = myTeam.status || 'draft';
     document.getElementById('home-myteam-name').textContent = myTeam.name;
-    document.getElementById('home-myteam-role').textContent = `Rôle : ${myRole || '—'} · ${allRosters.filter(r => r.teamId === myTeam.id && r.status === 'active').length} membres`;
+    document.getElementById('home-myteam-role').innerHTML = `Rôle : ${myRole || '—'} · ${allRosters.filter(r => r.teamId === myTeam.id && r.status === 'active').length} membres &nbsp;<span style="color:${statusColors[st]};font-weight:700">${statusLabels[st] || st}</span>`;
     banner.style.display = '';
     noteam.style.display = 'none';
   } else {
@@ -1568,7 +1617,8 @@ function loadTeamsSection() {
 
 function renderTeamsGrid(poolFilter) {
   const grid = document.getElementById('teams-grid');
-  let teams = [...allTeams];
+  // Publiquement : seulement les équipes approuvées. Admin voit tout.
+  let teams = isAdmin ? [...allTeams] : allTeams.filter(t => t.status === 'approved');
   if (poolFilter === 'A') teams = teams.filter(t => t.pool === 'A');
   else if (poolFilter === 'B') teams = teams.filter(t => t.pool === 'B');
   else if (poolFilter === 'none') teams = teams.filter(t => !t.pool);
@@ -1674,6 +1724,7 @@ document.getElementById('create-team-form').addEventListener('submit', async e =
   const teamRef = await addDoc(collection(db, 'rl_teams'), {
     name, tag, logo: logo || null, desc: desc || null,
     pool: null,
+    status: 'draft',
     createdBy: currentUser.uid,
     createdAt: serverTimestamp()
   });
@@ -1734,7 +1785,47 @@ async function loadMyTeamSection() {
   if (!myTeam || !myRoster) { navigate('home'); return; }
 
   document.getElementById('myteam-title').textContent = myTeam.name;
-  document.getElementById('myteam-subtitle').textContent = `[${myTeam.tag}]${myTeam.pool ? ` · Pool ${myTeam.pool}` : ''}`;
+  const statusLabels = { draft: '✏️ Brouillon', pending: '⏳ En attente de validation', approved: '✅ Approuvée', rejected: '❌ Rejetée' };
+  const statusColors = { draft: 'var(--muted)', pending: 'var(--gold)', approved: 'var(--green)', rejected: 'var(--red)' };
+  const st = myTeam.status || 'draft';
+  const statusBadge = `<span style="font-size:0.75rem;color:${statusColors[st]};font-weight:700;margin-left:8px">${statusLabels[st] || st}</span>`;
+  document.getElementById('myteam-subtitle').innerHTML = `[${myTeam.tag}]${myTeam.pool ? ` · Pool ${myTeam.pool}` : ''} ${statusBadge}`;
+
+  // Bouton inscription compétition (équipe approuvée + fondateur/manager)
+  const pageHeader = document.getElementById('myteam-header');
+  const existingRegBtn = document.getElementById('btn-register-competition');
+  if (existingRegBtn) existingRegBtn.remove();
+  if (st === 'approved' && ['fondateur','manager'].includes(myRole)) {
+    const myReg = allRegistrations.find(r => r.teamId === myTeam.id);
+    const regLabel = myReg ? { pending: '⏳ Inscription en attente', approved: '✅ Inscrit', rejected: '❌ Inscription refusée' }[myReg.status] : '+ S\'inscrire à une compétition';
+    const regBtn = document.createElement('button');
+    regBtn.id = 'btn-register-competition';
+    regBtn.className = `btn btn-sm ${myReg?.status === 'approved' ? 'btn-secondary' : 'btn-primary'}`;
+    regBtn.textContent = regLabel;
+    regBtn.onclick = () => window.openRegisterToCompetition();
+    regBtn.disabled = myReg?.status === 'approved';
+    pageHeader.appendChild(regBtn);
+  }
+
+  // Bandeau statut équipe (draft/pending → inviter à soumettre, rejected → motif)
+  const statusBanner = document.getElementById('myteam-status-banner');
+  if (statusBanner) {
+    if (st === 'draft' && ['fondateur','manager'].includes(myRole)) {
+      statusBanner.style.display = '';
+      statusBanner.innerHTML = `<div style="background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div><strong style="color:var(--gold)">Équipe en brouillon</strong><br><span style="font-size:0.8rem;color:var(--muted)">Constituez votre roster puis soumettez votre équipe pour validation admin.</span></div>
+        <button class="btn btn-primary btn-sm" onclick="submitTeamForValidation()">Soumettre ✓</button>
+      </div>`;
+    } else if (st === 'pending') {
+      statusBanner.style.display = '';
+      statusBanner.innerHTML = `<div style="background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;padding:12px 16px;margin-bottom:16px"><strong style="color:var(--gold)">⏳ Validation en cours</strong><br><span style="font-size:0.8rem;color:var(--muted)">Votre équipe est en attente de validation par un administrateur.</span></div>`;
+    } else if (st === 'rejected') {
+      statusBanner.style.display = '';
+      statusBanner.innerHTML = `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px 16px;margin-bottom:16px"><strong style="color:var(--red)">❌ Équipe rejetée</strong>${myTeam.rejectReason ? `<br><span style="font-size:0.8rem;color:var(--muted)">Motif : ${myTeam.rejectReason}</span>` : ''}<br><span style="font-size:0.8rem;color:var(--muted)">Corrigez les problèmes puis re-soumettez.</span>${['fondateur','manager'].includes(myRole) ? `<div style="margin-top:8px"><button class="btn btn-primary btn-sm" onclick="submitTeamForValidation()">Re-soumettre ✓</button></div>` : ''}</div>`;
+    } else {
+      statusBanner.style.display = 'none';
+    }
+  }
 
   const isFondateurOrManager = ['fondateur', 'manager'].includes(myRole);
 
@@ -1787,6 +1878,68 @@ async function loadMyTeamSection() {
     }
   }
 }
+
+// ── Team approval workflow ──────────────────────────────────────────────
+window.submitTeamForValidation = async function() {
+  if (!myTeam) return;
+  await updateDoc(doc(db, 'rl_teams', myTeam.id), { status: 'pending' });
+  myTeam.status = 'pending';
+  toast('Équipe soumise pour validation ! Un admin va l\'examiner.');
+  loadMyTeamSection();
+};
+
+// ── Registrations ──────────────────────────────────────────────────────
+window.openRegisterToCompetition = async function() {
+  if (!myTeam || myTeam.status !== 'approved') return;
+  const comps = allCompetitions.filter(c => ['upcoming','registration'].includes(c.status));
+  if (comps.length === 0) { toast('Aucune compétition ouverte aux inscriptions.', false); return; }
+  // Si une seule compétition disponible, on propose directement
+  const comp = comps.length === 1 ? comps[0] : comps.find(c => c.type === 'league') || comps[0];
+  const alreadyReg = allRegistrations.find(r => r.teamId === myTeam.id && r.competitionId === comp.id);
+  if (alreadyReg) {
+    const labels = { pending: 'en attente de validation', approved: 'acceptée', rejected: 'refusée' };
+    toast(`Inscription déjà ${labels[alreadyReg.status] || alreadyReg.status} pour "${comp.name}".`, alreadyReg.status === 'approved');
+    return;
+  }
+  const msg = prompt(`Inscription à "${comp.name}"\nMessage pour l'admin (optionnel) :`);
+  if (msg === null) return;
+  await addDoc(collection(db, 'rl_registrations'), {
+    competitionId: comp.id, teamId: myTeam.id,
+    message: msg || null, status: 'pending',
+    requestedAt: serverTimestamp()
+  });
+  toast('Demande d\'inscription envoyée !');
+};
+
+window.approveRegistration = async function(regId) {
+  const reg = allRegistrations.find(r => r.id === regId);
+  if (!reg) return;
+  await updateDoc(doc(db, 'rl_registrations', regId), { status: 'approved', reviewedAt: serverTimestamp() });
+  toast('Inscription acceptée ✓');
+  loadAdminSection();
+};
+
+window.rejectRegistration = async function(regId) {
+  const reason = prompt('Motif du refus :');
+  if (reason === null) return;
+  await updateDoc(doc(db, 'rl_registrations', regId), { status: 'rejected', rejectReason: reason || '', reviewedAt: serverTimestamp() });
+  toast('Inscription refusée.');
+  loadAdminSection();
+};
+
+window.approveTeam = async function(teamId) {
+  await updateDoc(doc(db, 'rl_teams', teamId), { status: 'approved', rejectReason: null });
+  toast('Équipe approuvée ✓');
+  loadAdminSection();
+};
+
+window.rejectTeam = async function(teamId) {
+  const reason = prompt('Motif du rejet (visible par l\'équipe) :');
+  if (reason === null) return;
+  await updateDoc(doc(db, 'rl_teams', teamId), { status: 'rejected', rejectReason: reason || '' });
+  toast('Équipe rejetée.');
+  loadAdminSection();
+};
 
 window.removeFromTeam = async function(rosterId, playerName) {
   if (!confirm(`Retirer ${playerName} de l'équipe ?`)) return;
@@ -1893,17 +2046,46 @@ document.getElementById('btn-leave-team').addEventListener('click', async () => 
 async function loadAdminSection() {
   if (!isAdmin) { navigate('home'); return; }
   // Season
-  if (activeSeason) {
+  if (activeCompetition) {
     const statusLabels = { active: 'En cours', upcoming: 'À venir', finished: 'Terminée' };
     document.getElementById('admin-season-info').innerHTML = `
-      <p style="font-size:0.9rem;font-weight:800;margin-bottom:4px">${activeSeason.name}</p>
-      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">${activeSeason.desc || ''}</p>
-      <span class="tag tag-${activeSeason.status === 'active' ? 'green' : 'gold'}">${statusLabels[activeSeason.status] || activeSeason.status}</span>
+      <p style="font-size:0.9rem;font-weight:800;margin-bottom:4px">${activeCompetition.name}</p>
+      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">${activeCompetition.desc || ''}</p>
+      <span class="tag tag-${activeCompetition.status === 'active' ? 'green' : 'gold'}">${statusLabels[activeCompetition.status] || activeCompetition.status}</span>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="toggleSeasonStatus()">Changer statut</button>
         <button class="btn btn-danger btn-sm" onclick="deleteSeason()">Supprimer</button>
       </div>`;
   }
+
+  // Équipes en attente de validation
+  const pendingTeams = allTeams.filter(t => t.status === 'pending');
+  const pendingBadge = document.getElementById('pending-teams-badge');
+  if (pendingBadge) {
+    pendingBadge.textContent = pendingTeams.length;
+    pendingBadge.style.display = pendingTeams.length > 0 ? '' : 'none';
+  }
+  document.getElementById('admin-pending-teams').innerHTML = pendingTeams.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucune équipe en attente.</p>`
+    : pendingTeams.map(t => {
+        const members = allRosters.filter(r => r.teamId === t.id && r.status === 'active');
+        const memberNames = members.map(r => pName(allParticipants[r.playerId])).join(', ') || '—';
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div>
+              <span style="font-weight:800">${t.name}</span>
+              <span style="color:var(--muted);font-size:0.78rem;margin-left:6px">[${t.tag}]</span>
+              ${t.logo ? `<span style="font-size:0.72rem;color:var(--rl-blue);margin-left:6px">🖼️ Logo</span>` : ''}
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm" onclick="approveTeam('${t.id}')">✓ Approuver</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectTeam('${t.id}')">✗ Rejeter</button>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted)">${members.length} membre(s) : ${memberNames}</div>
+          ${t.desc ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px">📝 ${t.desc}</div>` : ''}
+        </div>`;
+      }).join('');
 
   // Pools — triées : Pool A, Pool B, sans pool
   const poolOrder = t => t.pool === 'A' ? 0 : t.pool === 'B' ? 1 : 2;
@@ -1936,6 +2118,32 @@ async function loadAdminSection() {
         </div>`;
       }).join('');
 
+  // Inscriptions en attente
+  const pendingRegs = allRegistrations.filter(r => r.status === 'pending');
+  const regBadge = document.getElementById('registrations-badge');
+  if (regBadge) { regBadge.textContent = pendingRegs.length; regBadge.style.display = pendingRegs.length > 0 ? '' : 'none'; }
+  document.getElementById('admin-registrations-list').innerHTML = pendingRegs.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucune inscription en attente.</p>`
+    : pendingRegs.map(reg => {
+        const team = allTeams.find(t => t.id === reg.teamId);
+        const comp = allCompetitions.find(c => c.id === reg.competitionId);
+        const members = allRosters.filter(r => r.teamId === reg.teamId && r.status === 'active');
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div>
+              <span style="font-weight:800">${team?.name || '?'}</span>
+              <span style="color:var(--muted);font-size:0.78rem;margin-left:6px">→ ${comp?.name || '?'}</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm" onclick="approveRegistration('${reg.id}')">✓ Accepter</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectRegistration('${reg.id}')">✗ Refuser</button>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted)">${members.length} joueur(s) dans le roster</div>
+          ${reg.message ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:2px">💬 ${reg.message}</div>` : ''}
+        </div>`;
+      }).join('');
+
   // Transfers
   const transferSnap = await getDocs(query(collection(db, 'rl_transfers'), where('status', '==', 'pending')));
   const transfers = transferSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1960,20 +2168,20 @@ async function loadAdminSection() {
 }
 
 window.toggleSeasonStatus = async function() {
-  if (!activeSeason) return;
+  if (!activeCompetition) return;
   const statuses = ['upcoming', 'active', 'finished'];
-  const next = statuses[(statuses.indexOf(activeSeason.status) + 1) % statuses.length];
-  await updateDoc(doc(db, 'rl_seasons', activeSeason.id), { status: next });
-  activeSeason.status = next;
+  const next = statuses[(statuses.indexOf(activeCompetition.status) + 1) % statuses.length];
+  await updateDoc(doc(db, 'rl_competitions', activeCompetition.id), { status: next });
+  activeCompetition.status = next;
   toast(`Saison passée en "${next}"`);
   loadAdminSection();
 };
 
 window.deleteSeason = async function() {
-  if (!activeSeason) return;
-  if (!confirm(`Supprimer la saison "${activeSeason.name}" ?`)) return;
-  await deleteDoc(doc(db, 'rl_seasons', activeSeason.id));
-  activeSeason = null;
+  if (!activeCompetition) return;
+  if (!confirm(`Supprimer la saison "${activeCompetition.name}" ?`)) return;
+  await deleteDoc(doc(db, 'rl_competitions', activeCompetition.id));
+  activeCompetition = null;
   document.getElementById('season-banner').style.display = 'none';
   toast('Saison supprimée.');
   loadAdminSection();
@@ -2008,6 +2216,34 @@ document.querySelectorAll('.cs-leg-btn').forEach(btn => {
     csUpdateCalc();
   });
 });
+
+window.csSelectType = function(type) {
+  document.getElementById('cs-type').value = type;
+  document.querySelectorAll('.cs-type-btn').forEach(btn => {
+    const active = btn.dataset.type === type;
+    btn.style.borderColor  = active ? 'var(--rl-blue)' : 'rgba(255,255,255,0.1)';
+    btn.style.background   = active ? 'rgba(0,129,255,0.15)' : 'rgba(255,255,255,0.04)';
+    btn.style.color        = active ? 'var(--rl-blue)' : 'var(--muted)';
+  });
+  // Pour un tournoi : simplifier le formulaire
+  const isLeague = type === 'league';
+  document.getElementById('cs-rr-options').style.display     = isLeague ? '' : 'none';
+  document.getElementById('cs-swiss-options').style.display  = 'none';
+  document.getElementById('cs-section-structure').style.display = isLeague ? '' : 'none';
+  document.querySelectorAll('#cs-section-structure ~ *').forEach(el => {
+    if (el.id === 'cs-section-calendar') el.style.display = isLeague ? '' : 'none';
+  });
+  const calEl = document.getElementById('cs-section-calendar');
+  if (calEl) {
+    let el = calEl.nextElementSibling;
+    while (el && !el.id?.startsWith('cs-section-')) {
+      el.style.display = isLeague ? '' : 'none';
+      el = el.nextElementSibling;
+    }
+  }
+  // Changer le placeholder du nom
+  document.getElementById('cs-name').placeholder = isLeague ? 'Saison 1 — 2026' : 'Tournoi Printemps 2026';
+};
 
 window.csToggleFinale = function() {
   document.getElementById('cs-finale-options').style.display =
@@ -2058,6 +2294,7 @@ document.getElementById('create-season-form').addEventListener('submit', async e
     });
   }
   const data = {
+    type:             document.getElementById('cs-type').value,
     name:             document.getElementById('cs-name').value.trim(),
     desc:             document.getElementById('cs-desc').value.trim(),
     status:           document.getElementById('cs-status').value,
@@ -2086,8 +2323,8 @@ document.getElementById('create-season-form').addEventListener('submit', async e
     },
     createdAt: serverTimestamp()
   };
-  const ref = await addDoc(collection(db, 'rl_seasons'), data);
-  activeSeason = { id: ref.id, ...data };
+  const ref = await addDoc(collection(db, 'rl_competitions'), data);
+  activeCompetition = { id: ref.id, ...data };
   toast('Saison créée !');
   closeModal('modal-create-season');
   e.target.reset();
@@ -2205,6 +2442,7 @@ document.getElementById('btn-seed-data').addEventListener('click', async () => {
       const teamRef = await addDoc(collection(db, 'rl_teams'), {
         name: t.name, tag: t.tag, pool: t.pool,
         logo: null, desc: 'Équipe de test',
+        status: 'approved',
         test: true, createdAt: serverTimestamp()
       });
 
@@ -2515,7 +2753,7 @@ document.getElementById('btn-save-slots').addEventListener('click', async () => 
     await updateDoc(doc(db, 'rl_availability', existing.id), { slots: pendingSlotsData, updatedAt: serverTimestamp() });
   } else {
     await addDoc(collection(db, 'rl_availability'), {
-      teamId: myTeam.id, week, seasonId: activeSeason?.id || null,
+      teamId: myTeam.id, week, competitionId: activeCompetition?.id || null,
       slots: pendingSlotsData, createdAt: serverTimestamp()
     });
   }
@@ -2742,7 +2980,7 @@ document.getElementById('btn-save-stats').addEventListener('click', async () => 
   const byPlayer = {};
   inputs.forEach(inp => {
     const { pid, team, field } = inp.dataset;
-    if (!byPlayer[pid]) byPlayer[pid] = { playerId: pid, teamId: team, matchId: currentMatchForAction.id, seasonId: activeSeason?.id || null };
+    if (!byPlayer[pid]) byPlayer[pid] = { playerId: pid, teamId: team, matchId: currentMatchForAction.id, competitionId: activeCompetition?.id || null };
     byPlayer[pid][field] = inp.type === 'checkbox' ? inp.checked : (parseInt(inp.value) || 0);
   });
 
@@ -2778,21 +3016,21 @@ window.adminValidateScore = async function(matchId) {
 document.getElementById('btn-gen-schedule-A').addEventListener('click', () => generateSchedule('A'));
 document.getElementById('btn-gen-schedule-B').addEventListener('click', () => generateSchedule('B'));
 document.getElementById('btn-clear-schedule').addEventListener('click', async () => {
-  if (!activeSeason || !confirm('Effacer TOUS les matchs de cette saison ?')) return;
-  const snap = await getDocs(query(collection(db, 'rl_matches'), where('seasonId', '==', activeSeason.id)));
+  if (!activeCompetition || !confirm('Effacer TOUS les matchs de cette saison ?')) return;
+  const snap = await getDocs(query(collection(db, 'rl_matches'), where('competitionId', '==', activeCompetition.id)));
   await Promise.all(snap.docs.map(d => deleteDoc(doc(db, 'rl_matches', d.id))));
   toast('Calendrier effacé.');
 });
 
 async function generateSchedule(pool) {
-  if (!activeSeason) { toast('Aucune saison active.', false); return; }
+  if (!activeCompetition) { toast('Aucune saison active.', false); return; }
   const poolTeams = allTeams.filter(t => t.pool === pool);
   if (poolTeams.length < 2) { toast(`Pas assez d'équipes en Pool ${pool}.`, false); return; }
   if (!confirm(`Générer le calendrier round-robin pour la Pool ${pool} (${poolTeams.length} équipes) ?\nCela écrasera les matchs existants de ce pool.`)) return;
 
   // Supprimer matchs existants du pool
   const existingSnap = await getDocs(query(collection(db, 'rl_matches'),
-    where('seasonId', '==', activeSeason.id), where('pool', '==', pool)));
+    where('competitionId', '==', activeCompetition.id), where('pool', '==', pool)));
   await Promise.all(existingSnap.docs.map(d => deleteDoc(doc(db, 'rl_matches', d.id))));
 
   // Circle method round-robin
@@ -2819,7 +3057,7 @@ async function generateSchedule(pool) {
     const week = Math.floor(idx / 3) + 1;
     round.forEach(([homeId, awayId]) => {
       writes.push(addDoc(collection(db, 'rl_matches'), {
-        seasonId: activeSeason.id, pool, week,
+        competitionId: activeCompetition.id, pool, week,
         homeTeamId: homeId, awayTeamId: awayId,
         status: 'scheduled',
         homeScore: null, awayScore: null,
