@@ -167,25 +167,27 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 
 ## Roadmap
 
-### Prochaine session — Review complète RL avant tout
-Faire une review systématique de toute l'app RL pour identifier ce qui est cassé/incomplet avant d'ajouter des features.
+### État actuel RL (mars 2026)
+- ✅ Auth + profils joueurs (epicId, tracker, discord, pays)
+- ✅ Création/validation équipe (draft → pending → approved/rejected)
+- ✅ Inscription à une ligue (admin approve/reject)
+- ✅ Création de ligue (formulaire : format RR/Swiss, semaines, dates)
+- ✅ Génération calendrier round-robin par pool (admin)
+- ✅ Classements temps réel (V/D/pts/diff, top 8 → LAN badge)
+- ✅ Saisie scores (manager + confirmation adverse + override admin)
+- ✅ Administration : édition équipes/joueurs, forfait, reset match, gestion joueurs
+- ❌ Bracket LAN (top 8 pool A + top 8 pool B → 16 équipes)
+- ❌ Mercato (transferts inter-équipes)
+- ❌ Discord webhooks
 
-### Bugs connus RL (à corriger en priorité)
-- [ ] **Bracket scores** : pas d'UI pour saisir les scores des matchs du bracket, pas d'avancement automatique des gagnants au tour suivant
-- [ ] **Double élimination** : sélectionnable dans le formulaire mais `buildBracket()` génère toujours un simple élim — à implémenter
-- [ ] **Inscription compétition** : `openRegisterToCompetition()` choisit automatiquement la première compétition, pas de sélecteur si plusieurs ouvertes
-- [ ] **Section Compétitions live** : le listener `rl_registrations` n'appelle pas `loadCompetitionsSection()` → pas de mise à jour temps réel
-- [ ] **`founderId` manquant** : les équipes créées ont `createdBy` mais pas `founderId` → section "Hors roster" vide dans la modal de review
-- [ ] **deleteComp** : ne supprime pas les `rl_registrations` associées (orphelins Firestore)
-- [ ] **Modal openManageComp** : pas de live binding, nécessite de rouvrir pour voir les changements
+### Décisions d'architecture
+- **Ligue uniquement** — tournois supprimés, code propre centré sur la ligue
+- Collection `rl_competitions` (type toujours `'league'`)
 
-### Planifié
-- [ ] RL : génération automatique calendrier matchs (round-robin par poule)
-- [ ] RL : classements ligue (victoires, différence de buts)
-- [ ] RL : saisie stats par match (buts, passes, saves, MVP)
-- [ ] RL : mercato (transferts entre équipes, validation admin)
-- [ ] RL : Discord notifications webhook
-- [ ] RL : brackets LAN (Ronde Suisse + Double Élim visuel)
+### Planifié (ordre priorité)
+- [ ] RL : Bracket LAN (double élim, génération + saisie scores + avancement auto)
+- [ ] RL : Mercato (transferts inter-équipes, validation admin)
+- [ ] RL : Discord webhook notifications
 - [ ] TM : Système de prédictions
 - [ ] Domaine custom (Namecheap/Porkbun → Vercel)
 - [ ] OAuth Epic Games (portail dev Epic)
