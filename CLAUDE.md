@@ -166,15 +166,26 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - Webhook RL : channel dédié à créer/configurer
 
 ## Roadmap
-### En cours / priorité
-- [ ] Vercel login (throttle App Check 24h — attendre)
-- [ ] Section Rocket League — Phase 1 : profils, équipes, roster, agents libres
+
+### Prochaine session — Review complète RL avant tout
+Faire une review systématique de toute l'app RL pour identifier ce qui est cassé/incomplet avant d'ajouter des features.
+
+### Bugs connus RL (à corriger en priorité)
+- [ ] **Bracket scores** : pas d'UI pour saisir les scores des matchs du bracket, pas d'avancement automatique des gagnants au tour suivant
+- [ ] **Double élimination** : sélectionnable dans le formulaire mais `buildBracket()` génère toujours un simple élim — à implémenter
+- [ ] **Inscription compétition** : `openRegisterToCompetition()` choisit automatiquement la première compétition, pas de sélecteur si plusieurs ouvertes
+- [ ] **Section Compétitions live** : le listener `rl_registrations` n'appelle pas `loadCompetitionsSection()` → pas de mise à jour temps réel
+- [ ] **`founderId` manquant** : les équipes créées ont `createdBy` mais pas `founderId` → section "Hors roster" vide dans la modal de review
+- [ ] **deleteComp** : ne supprime pas les `rl_registrations` associées (orphelins Firestore)
+- [ ] **Modal openManageComp** : pas de live binding, nécessite de rouvrir pour voir les changements
 
 ### Planifié
-- [ ] RL Phase 2 : calendrier matchs, créneaux, résultats, stats
-- [ ] RL Phase 3 : classements, égalités
-- [ ] RL Phase 4 : brackets LAN visuels (Ronde Suisse + Double Élim)
-- [ ] RL Phase 5 : Discord notifications, mercato, candidatures
+- [ ] RL : génération automatique calendrier matchs (round-robin par poule)
+- [ ] RL : classements ligue (victoires, différence de buts)
+- [ ] RL : saisie stats par match (buts, passes, saves, MVP)
+- [ ] RL : mercato (transferts entre équipes, validation admin)
+- [ ] RL : Discord notifications webhook
+- [ ] RL : brackets LAN (Ronde Suisse + Double Élim visuel)
 - [ ] TM : Système de prédictions
 - [ ] Domaine custom (Namecheap/Porkbun → Vercel)
 - [ ] OAuth Epic Games (portail dev Epic)
