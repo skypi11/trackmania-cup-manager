@@ -725,6 +725,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           </div>
         </div>
 
+        <!-- Demandes de modification d'équipe -->
+        <div class="card" style="margin:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:0.85rem;font-weight:800">✏️ Modifs équipe</h3>
+            <span class="badge" id="team-edit-badge" style="background:var(--gold);color:#000;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px;display:none">0</span>
+          </div>
+          <div id="admin-team-edit-requests">
+            <p style="color:var(--muted);font-size:0.83rem">Aucune demande en attente.</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- ── SECTION : Scores en attente ── -->
@@ -884,6 +895,41 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <div style="display:none" id="invite-selected-wrap">
       <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px">Joueur sélectionné : <strong id="invite-selected-name">—</strong></p>
       <button class="btn btn-primary" id="btn-send-invite">Envoyer l'invitation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Request Team Edit (non-admin) -->
+<div class="modal-overlay hidden" id="modal-request-team-edit">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" data-close="modal-request-team-edit">✕</button>
+    <h2>Demande de modification</h2>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px">Les changements seront soumis à un admin qui les appliquera après validation.</p>
+    <div class="form-group">
+      <label>Nom de l'équipe</label>
+      <input type="text" id="req-et-name" maxlength="40" required>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>Tag <span style="color:var(--muted);font-size:0.75rem">(max 5)</span></label>
+        <input type="text" id="req-et-tag" maxlength="5" required style="text-transform:uppercase">
+      </div>
+      <div class="form-group" style="flex:2">
+        <label>Logo (URL)</label>
+        <input type="url" id="req-et-logo" placeholder="https://...">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="req-et-desc" maxlength="80">
+    </div>
+    <div class="form-group">
+      <label>Message pour l'admin <span style="color:var(--muted);font-size:0.75rem">(optionnel)</span></label>
+      <textarea id="req-et-message" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;resize:vertical" placeholder="Raison du changement..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-secondary" data-close="modal-request-team-edit">Annuler</button>
+      <button class="btn btn-primary" onclick="submitTeamEditRequest()">Envoyer la demande</button>
     </div>
   </div>
 </div>
@@ -2201,6 +2247,26 @@ window.openPlayerProfile = function(playerId) {
   openModal('modal-player-profile');
 };
 
+window.applyTeamEditRequest = async function(reqId) {
+  const snap = await getDocs(query(collection(db, 'rl_team_edit_requests'), where('status', '==', 'pending')));
+  const reqDoc = snap.docs.find(d => d.id === reqId);
+  if (!reqDoc) { toast('Demande introuvable.', false); return; }
+  const req = { id: reqDoc.id, ...reqDoc.data() };
+  try {
+    const updates = { ...req.changes, updatedAt: serverTimestamp() };
+    await updateDoc(doc(db, 'rl_teams', req.teamId), updates);
+    await updateDoc(doc(db, 'rl_team_edit_requests', reqId), { status: 'approved', reviewedAt: serverTimestamp() });
+    toast('Modification appliquée ✓');
+    loadAdminSection();
+  } catch(e) { toast('Erreur : ' + e.message, false); }
+};
+
+window.rejectTeamEditRequest = async function(reqId) {
+  await updateDoc(doc(db, 'rl_team_edit_requests', reqId), { status: 'rejected', reviewedAt: serverTimestamp() });
+  toast('Demande refusée.');
+  loadAdminSection();
+};
+
 window.approveTeam = async function(teamId) {
   await updateDoc(doc(db, 'rl_teams', teamId), { status: 'approved', rejectReason: null });
   toast('Équipe approuvée ✓');
@@ -2360,10 +2426,47 @@ document.getElementById('btn-send-invite').addEventListener('click', async () =>
   loadMyTeamSection();
 });
 
-// Edit team (manager uses admin modal, restricted fields)
+// Edit team — admin : modale complète / non-admin : demande de modification
 document.getElementById('btn-edit-team').addEventListener('click', () => {
-  if (myTeam) window.adminOpenEditTeam(myTeam.id);
+  if (!myTeam) return;
+  if (isAdmin) {
+    window.adminOpenEditTeam(myTeam.id);
+  } else {
+    // Pré-remplir avec les valeurs actuelles
+    document.getElementById('req-et-name').value  = myTeam.name  || '';
+    document.getElementById('req-et-tag').value   = myTeam.tag   || '';
+    document.getElementById('req-et-logo').value  = myTeam.logo  || '';
+    document.getElementById('req-et-desc').value  = myTeam.desc  || '';
+    document.getElementById('req-et-message').value = '';
+    openModal('modal-request-team-edit');
+  }
 });
+
+window.submitTeamEditRequest = async function() {
+  if (!myTeam) return;
+  const name = document.getElementById('req-et-name').value.trim();
+  const tag  = document.getElementById('req-et-tag').value.trim().toUpperCase();
+  if (!name || !tag) { toast('Nom et tag requis.', false); return; }
+  const changes = { name, tag };
+  const logo = document.getElementById('req-et-logo').value.trim();
+  const desc = document.getElementById('req-et-desc').value.trim();
+  if (logo) changes.logo = logo;
+  if (desc) changes.desc = desc;
+  const message = document.getElementById('req-et-message').value.trim();
+  try {
+    await addDoc(collection(db, 'rl_team_edit_requests'), {
+      teamId: myTeam.id,
+      teamName: myTeam.name,
+      requestedBy: currentUser.uid,
+      changes,
+      message: message || null,
+      status: 'pending',
+      requestedAt: serverTimestamp()
+    });
+    toast('Demande envoyée ! Un admin va l\'examiner.');
+    closeModal('modal-request-team-edit');
+  } catch(e) { toast('Erreur : ' + e.message, false); }
+};
 
 // Leave team
 document.getElementById('btn-leave-team').addEventListener('click', async () => {
@@ -2469,6 +2572,38 @@ async function loadAdminSection() {
           <div class="app-actions">
             <button class="btn btn-primary btn-sm" onclick="approveTransfer('${tr.id}')">Approuver</button>
             <button class="btn btn-danger btn-sm" onclick="rejectTransfer('${tr.id}')">Refuser</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  // Demandes de modification d'équipe
+  const editReqSnap = await getDocs(query(collection(db, 'rl_team_edit_requests'), where('status', '==', 'pending')));
+  const editReqs = editReqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const editBadge = document.getElementById('team-edit-badge');
+  if (editBadge) { editBadge.textContent = editReqs.length; editBadge.style.display = editReqs.length > 0 ? '' : 'none'; }
+  document.getElementById('admin-team-edit-requests').innerHTML = editReqs.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucune demande en attente.</p>`
+    : editReqs.map(req => {
+        const team = allTeams.find(t => t.id === req.teamId);
+        const requester = allParticipants[req.requestedBy];
+        const c = req.changes || {};
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:800;font-size:0.85rem">${team?.name || req.teamName || '?'}</div>
+              <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Par ${pName(requester) || req.requestedBy}</div>
+              <div style="font-size:0.78rem;margin-top:6px;display:flex;flex-direction:column;gap:2px">
+                ${c.name && c.name !== team?.name ? `<div>Nom : <span style="color:var(--text);font-weight:600">${c.name}</span> <span style="color:var(--muted)">(était : ${team?.name})</span></div>` : ''}
+                ${c.tag  && c.tag  !== team?.tag  ? `<div>Tag : <span style="color:var(--text);font-weight:600">${c.tag}</span> <span style="color:var(--muted)">(était : ${team?.tag})</span></div>` : ''}
+                ${c.logo ? `<div>Logo : <a href="${c.logo}" target="_blank" style="color:var(--accent);font-size:0.72rem">${c.logo.substring(0,40)}…</a></div>` : ''}
+                ${c.desc && c.desc !== team?.desc ? `<div>Desc : <em style="color:var(--muted)">${c.desc}</em></div>` : ''}
+                ${req.message ? `<div style="margin-top:4px;color:var(--muted)">💬 ${req.message}</div>` : ''}
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+              <button class="btn btn-primary btn-sm" onclick="applyTeamEditRequest('${req.id}')">✓ Appliquer</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectTeamEditRequest('${req.id}')">✗</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -2716,7 +2851,7 @@ function loadCompetitionsSection() {
     // Bouton S'inscrire
     let regBtnHtml = '';
     if (canRegister && ['registration','upcoming'].includes(c.status)) {
-      const myReg = allRegistrations.find(r => r.teamId === myTeam.id && r.competitionId === c.id);
+      const myReg = allRegistrations.find(r => r.teamId === myTeam.id && (r.competitionId === c.id || !r.competitionId));
       if (!myReg || myReg.status === 'rejected') {
         regBtnHtml = `<button class="btn btn-primary btn-sm" onclick="openRegisterToCompetition('${c.id}')" style="margin-top:12px">+ S'inscrire</button>`;
       } else if (myReg.status === 'pending') {
