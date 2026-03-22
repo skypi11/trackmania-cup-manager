@@ -614,7 +614,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <div class="filters" style="margin-bottom:20px">
         <button class="filter-btn active" data-mytab="roster">Roster</button>
         <button class="filter-btn" data-mytab="mymatches">Mes matchs</button>
-        <button class="filter-btn" data-mytab="dispos">Disponibilités</button>
+        <button class="filter-btn hidden" id="tab-btn-dispos" data-mytab="dispos">Disponibilités</button>
       </div>
 
       <!-- MES MATCHS -->
@@ -2064,6 +2064,41 @@ async function loadMyTeamSection() {
   document.getElementById('myteam-fondateur').style.display = isFondateurOrManager ? '' : 'none';
   document.getElementById('myteam-player').style.display = isFondateurOrManager ? 'none' : '';
 
+  // Onglet Disponibilités : visible seulement si équipe inscrite à une compétition active
+  const myReg = allRegistrations.find(r => r.teamId === myTeam.id && r.status === 'approved');
+  const tabDispos = document.getElementById('tab-btn-dispos');
+  if (tabDispos) {
+    if (myReg) {
+      tabDispos.classList.remove('hidden');
+    } else {
+      tabDispos.classList.add('hidden');
+      // Si l'onglet actif est dispos mais qu'on n'est plus inscrit, revenir sur roster
+      if (myTabFilter === 'dispos') {
+        myTabFilter = 'roster';
+        document.querySelectorAll('[data-mytab]').forEach(b => b.classList.toggle('active', b.dataset.mytab === 'roster'));
+      }
+    }
+  }
+
+  // Statut des demandes de modification d'équipe (fondateur/manager seulement)
+  if (isFondateurOrManager) {
+    const editReqSnap = await getDocs(query(
+      collection(db, 'rl_team_edit_requests'),
+      where('teamId', '==', myTeam.id),
+      where('status', '==', 'pending')
+    )).catch(() => null);
+    const pendingEditReq = editReqSnap?.docs?.[0];
+    const existingEditBanner = document.getElementById('team-edit-request-banner');
+    if (existingEditBanner) existingEditBanner.remove();
+    if (pendingEditReq) {
+      const banner = document.createElement('div');
+      banner.id = 'team-edit-request-banner';
+      banner.style.cssText = 'background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem';
+      banner.innerHTML = `<strong style="color:var(--gold)">⏳ Demande de modification en attente</strong><br><span style="color:var(--muted)">Un admin va examiner tes modifications avant de les appliquer.</span>`;
+      document.getElementById('myteam-status-banner').after(banner);
+    }
+  }
+
   const teamRoster = allRosters.filter(r => r.teamId === myTeam.id && r.status === 'active');
   const roleLabels = { fondateur: '👑 Fondateur', manager: '📋 Manager', coach: '🎮 Coach', joueur: '⚡ Joueur', remplacant: '🔄 Remplaçant' };
   document.getElementById('roster-count').textContent = `${teamRoster.length}/9`;
@@ -3344,9 +3379,11 @@ function switchMyTeamTab() {
   document.getElementById('myteam-fondateur').style.display = isRoster && isFondMgr ? '' : 'none';
   document.getElementById('myteam-player').style.display    = isRoster && !isFondMgr ? '' : 'none';
   document.getElementById('myteam-matches').style.display   = isMatches ? '' : 'none';
-  document.getElementById('myteam-dispos').style.display    = isDispos ? '' : 'none';
+  // Dispos seulement si inscrit
+  const isRegistered = allRegistrations.some(r => r.teamId === myTeam?.id && r.status === 'approved');
+  document.getElementById('myteam-dispos').style.display    = isDispos && isRegistered ? '' : 'none';
   if (isMatches) renderMyMatches();
-  if (isDispos) renderDispoTab();
+  if (isDispos && isRegistered) renderDispoTab();
 }
 
 function renderMyMatches() {
