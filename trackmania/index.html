@@ -609,7 +609,8 @@
         try {
             const partSnap = await getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)));
             if (!partSnap.empty) {
-                const pseudo = partSnap.docs[0].data().pseudo;
+                const d = partSnap.docs[0].data();
+                const pseudo = d.pseudoTM || d.pseudo || d.name || user.displayName || '';
                 document.body.classList.remove('guest-mode');
                 document.getElementById('accountBtn').textContent = `👤 ${pseudo}`;
                 document.getElementById('accountBtn').className = 'account-btn player-active';

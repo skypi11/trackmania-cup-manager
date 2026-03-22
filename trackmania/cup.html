@@ -1626,8 +1626,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         document.getElementById('cupSubtitle').textContent = `Springs E-Sport · ${CUP.label}`;
         document.getElementById('authCupName').textContent = CUP.name;
 
-        // Helper: get player display name (handles both 'pseudo' and 'name' fields)
-        const pName = p => p.pseudo || p.name || 'Inconnu';
+        // Helper: get player display name — priority: pseudoTM > pseudo > name (backward compat)
+        const pName = p => p?.pseudoTM || p?.pseudo || p?.name || '?';
         // Cup filter: backward compat — existing docs without cupId are treated as 'monthly'
         const cupFilter = item => (item.cupId || 'monthly') === cupId;
 
@@ -2291,7 +2291,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         window.openCreateProfile = () => {
-            const gameLabel = CUP.id === 'mania' ? '(Rocket League)' : '(Trackmania)';
+            const gameLabel = cupId === 'mania' ? '(Mania)' : '(Trackmania)';
             document.getElementById('newProfileGameLabel').textContent = gameLabel;
             document.getElementById('newProfilePseudo').value = '';
             document.getElementById('newProfileTeam').value = '';
@@ -2356,7 +2356,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const team = document.getElementById('editPlayerTeam').value.trim();
             const duplicate = data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
             if (duplicate) { alert('Ce pseudo est déjà utilisé !'); return; }
-            await updateDoc(doc(db, 'participants', id), { name, team: team || 'Sans équipe' });
+            await updateDoc(doc(db, 'participants', id), { pseudoTM: name, name, team: team || 'Sans équipe' });
             closeEditParticipant();
         });
 
@@ -3472,8 +3472,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
         window.cancelInscription = async (resultId, editionId) => {
             if (!confirm('Annuler votre inscription à cette édition ?')) return;
-            await deleteDoc(doc(db, 'results', resultId));
-            openEditionDetail(editionId);
+            try {
+                await deleteDoc(doc(db, 'results', resultId));
+                openEditionDetail(editionId);
+            } catch (err) {
+                console.error('cancelInscription:', err);
+                alert('Impossible d\'annuler l\'inscription. Contactez un administrateur.');
+            }
         };
 
         window.registerForEdition = async (editionId) => {
