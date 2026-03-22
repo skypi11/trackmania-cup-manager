@@ -1375,6 +1375,7 @@ let matchViewTab = 'matches';
 let myTabFilter = 'roster';
 let dispoWeekFilter = 1;
 let currentMatchForAction = null;
+let _adminPlayerFilter = '';
 let selectedSlot = null;
 let pendingSlotsData = [];
 
@@ -3492,7 +3493,7 @@ function renderAdminTeamsList() {
 
 window.adminOpenEditTeam = function(teamId) {
   const t = allTeams.find(t => t.id === teamId);
-  if (!t) return;
+  if (!t) { toast('Équipe introuvable (id: ' + teamId + ')', false); return; }
   document.getElementById('et-team-id').value = teamId;
   document.getElementById('et-name').value = t.name || '';
   document.getElementById('et-tag').value = t.tag || '';
@@ -3536,8 +3537,6 @@ window.adminDeleteTeam = async function(teamId) {
 };
 
 // ── ADMIN : Gestion des joueurs ─────────────────────────────────────────
-
-let _adminPlayerFilter = '';
 
 window.adminFilterPlayers = function(q) {
   _adminPlayerFilter = q.toLowerCase();
