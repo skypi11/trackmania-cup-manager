@@ -579,20 +579,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <h1>Calendrier</h1>
         <p>Matchs de la Springs League Series par semaine et par pool</p>
       </div>
-      <div class="filters" id="match-week-filters">
-        <button class="filter-btn active" data-week="all">Toutes les semaines</button>
-        <button class="filter-btn" data-week="1">Semaine 1</button>
-        <button class="filter-btn" data-week="2">Semaine 2</button>
-        <button class="filter-btn" data-week="3">Semaine 3</button>
-        <button class="filter-btn" data-week="4">Semaine 4</button>
-        <button class="filter-btn" data-week="5">Semaine 5</button>
-      </div>
-      <div class="filters" style="margin-top:-8px" id="match-pool-filters">
-        <button class="filter-btn active" data-mpool="all">Pool A + B</button>
-        <button class="filter-btn" data-mpool="A">Pool A</button>
-        <button class="filter-btn" data-mpool="B">Pool B</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div class="filters hidden" id="match-week-filters"></div>
+      <div class="filters hidden" style="margin-top:-8px" id="match-pool-filters"></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px" id="match-view-toggle" class="hidden">
         <button class="filter-btn active" data-matchview="matches" id="btn-view-matches">Matchs</button>
         <button class="filter-btn" data-matchview="dispos" id="btn-view-dispos">📋 Disponibilités des équipes</button>
       </div>
@@ -1460,25 +1449,7 @@ document.querySelectorAll('[data-pfilter]').forEach(btn => {
   });
 });
 
-// Match week filters
-document.querySelectorAll('[data-week]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-week]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    matchWeekFilter = btn.dataset.week;
-    renderMatchesList();
-  });
-});
-
-// Match pool filters
-document.querySelectorAll('[data-mpool]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-mpool]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    matchPoolFilter = btn.dataset.mpool;
-    renderMatchesList();
-  });
-});
+// Match week/pool filters sont générés dynamiquement dans renderMatchesList()
 
 // My team tabs
 document.querySelectorAll('[data-mytab]').forEach(btn => {
@@ -3018,13 +2989,67 @@ function renderMatchCard(m) {
 
 function renderMatchesList() {
   const list = document.getElementById('matches-list');
+  const weekFilters = document.getElementById('match-week-filters');
+  const poolFilters = document.getElementById('match-pool-filters');
+  const viewToggle  = document.getElementById('match-view-toggle');
+
+  // Pas de compétition ou pas de matchs
+  if (!activeCompetition || allMatches.length === 0) {
+    weekFilters.classList.add('hidden');
+    poolFilters.classList.add('hidden');
+    viewToggle.classList.add('hidden');
+    const msg = !activeCompetition
+      ? 'Aucune compétition créée.'
+      : 'Le calendrier n\'a pas encore été généré.';
+    list.innerHTML = `<div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>${msg}</p></div>`;
+    return;
+  }
+
+  // Générer les filtres dynamiquement selon la compétition
+  const weeks = activeCompetition.weeks || 5;
+  const pools = [...new Set(allMatches.map(m => m.pool))].filter(Boolean).sort();
+  const hasMultiplePools = pools.length > 1;
+
+  weekFilters.classList.remove('hidden');
+  weekFilters.innerHTML = `<button class="filter-btn ${matchWeekFilter === 'all' ? 'active' : ''}" data-week="all">Toutes les semaines</button>`
+    + Array.from({length: weeks}, (_, i) => i + 1).map(w =>
+        `<button class="filter-btn ${matchWeekFilter === String(w) ? 'active' : ''}" data-week="${w}">Semaine ${w}</button>`
+      ).join('');
+
+  if (hasMultiplePools) {
+    poolFilters.classList.remove('hidden');
+    poolFilters.innerHTML = `<button class="filter-btn ${matchPoolFilter === 'all' ? 'active' : ''}" data-mpool="all">Toutes les pools</button>`
+      + pools.map(p => `<button class="filter-btn ${matchPoolFilter === p ? 'active' : ''}" data-mpool="${p}">Pool ${p}</button>`).join('');
+  } else {
+    poolFilters.classList.add('hidden');
+  }
+
+  viewToggle.classList.remove('hidden');
+
+  // Réattacher les handlers des filtres semaine/pool
+  weekFilters.querySelectorAll('[data-week]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      matchWeekFilter = btn.dataset.week;
+      weekFilters.querySelectorAll('[data-week]').forEach(b => b.classList.toggle('active', b === btn));
+      renderMatchesList();
+    });
+  });
+  poolFilters.querySelectorAll('[data-mpool]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      matchPoolFilter = btn.dataset.mpool;
+      poolFilters.querySelectorAll('[data-mpool]').forEach(b => b.classList.toggle('active', b === btn));
+      renderMatchesList();
+    });
+  });
+
+  // Appliquer les filtres
   let matches = [...allMatches];
   if (matchWeekFilter !== 'all') matches = matches.filter(m => String(m.week) === matchWeekFilter);
   if (matchPoolFilter !== 'all') matches = matches.filter(m => m.pool === matchPoolFilter);
   matches.sort((a, b) => (a.week - b.week) || String(a.pool).localeCompare(String(b.pool)));
 
   if (matches.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>Le calendrier n'a pas encore été généré, ou aucun match pour ces filtres.</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="icon">📅</div><h3>Aucun match</h3><p>Aucun match pour ces filtres.</p></div>`;
     return;
   }
   list.innerHTML = matches.map(renderMatchCard).join('');
