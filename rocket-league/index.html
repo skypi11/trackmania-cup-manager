@@ -1615,21 +1615,28 @@ async function bootApp() {
 
   // Load all participants (live listener)
   onSnapshot(collection(db, 'participants'), snap => {
-    // 1ère passe : indexer tous les docs par leur docId
     const byDocId = {};
     snap.forEach(d => { byDocId[d.id] = { id: d.id, ...d.data() }; });
 
-    // 2ème passe : construire allParticipants en fusionnant anciens/nouveaux docs
-    // Un joueur peut avoir un ancien doc (ID aléatoire, sans epicId) ET un nouveau doc
-    // (ID = uid, avec epicId). On fusionne pour que l'ancien ID donne aussi les bonnes données.
+    // Séparer docs uid-based (modernes) des anciens docs (ID aléatoire)
+    const uidDocs = {}, oldDocs = [];
     Object.values(byDocId).forEach(data => {
+      if (!data.userId || data.userId === data.id) uidDocs[data.id] = data;
+      else oldDocs.push(data);
+    });
+
+    // Construire allParticipants de façon déterministe :
+    // 1) Ajouter les docs uid-based
+    Object.values(uidDocs).forEach(data => { allParticipants[data.id] = data; });
+    // 2) Pour chaque ancien doc, fusionner avec le doc uid-based si dispo,
+    //    puis faire pointer les DEUX clés (ancienId + uid) vers l'objet fusionné
+    oldDocs.forEach(data => {
       const uid = data.userId;
-      // Si le doc a un userId différent de son propre docId, il existe peut-être un doc uid
-      const uidDoc = (uid && uid !== data.id) ? byDocId[uid] : null;
-      // Merger : les champs du doc uid-based écrasent l'ancien (epicId, trackerRL, etc.)
+      const uidDoc = uidDocs[uid];
+      // uid-based écrase les champs de l'ancien, mais on garde id=ancienId pour la dédup
       const effective = uidDoc ? { ...data, ...uidDoc, id: data.id } : data;
       allParticipants[data.id] = effective;
-      if (uid && uid !== data.id) allParticipants[uid] = effective;
+      allParticipants[uid] = effective; // uid pointe vers le même objet fusionné
     });
 
     if (document.getElementById('sec-admin')?.classList.contains('active')) {
@@ -1911,10 +1918,12 @@ function renderPlayersList(filter) {
   const list = document.getElementById('players-list');
   const inTeamIds = new Set(allRosters.filter(r => r.status === 'active').map(r => r.playerId));
   const players = uniqueParticipants(p => p.epicId);
+  // Un joueur peut être référencé dans le roster par son ancien docId OU son uid
+  const isInTeam = p => inTeamIds.has(p.id) || inTeamIds.has(p.userId);
 
   let filtered = players;
-  if (filter === 'free') filtered = players.filter(p => !inTeamIds.has(p.id));
-  if (filter === 'team') filtered = players.filter(p => inTeamIds.has(p.id));
+  if (filter === 'free') filtered = players.filter(p => !isInTeam(p));
+  if (filter === 'team') filtered = players.filter(p => isInTeam(p));
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="icon">👥</div><h3>Aucun joueur</h3><p>Aucun joueur dans cette catégorie.</p></div>`;
@@ -2000,7 +2009,7 @@ async function loadMyTeamSection() {
   document.getElementById('roster-count').textContent = `${teamRoster.length}/9`;
 
   const rosterRows = teamRoster.map(r => {
-    const p = allParticipants[r.playerId];
+    const p = allParticipants[r.playerId] || Object.values(allParticipants).find(x => x.userId === r.playerId);
     const trackerLink = p?.trackerRL ? `<a href="${p.trackerRL}" target="_blank" class="player-tracker">Tracker</a>` : '—';
     const removeBtn = isFondateurOrManager && r.playerId !== currentUser.uid
       ? `<button class="btn btn-danger btn-sm" onclick="removeFromTeam('${r.id}','${pName(p)}')">Retirer</button>`
@@ -2229,7 +2238,7 @@ document.getElementById('invite-search').addEventListener('input', function() {
   const q = this.value.toLowerCase().trim();
   if (!q) { document.getElementById('invite-results').innerHTML = ''; return; }
   const inTeamIds = new Set(allRosters.filter(r => r.teamId === myTeam?.id && r.status === 'active').map(r => r.playerId));
-  const freeAgents = uniqueParticipants(p => p.epicId && !allRosters.find(r => r.playerId === p.id && r.status === 'active'));
+  const freeAgents = uniqueParticipants(p => p.epicId && !allRosters.find(r => (r.playerId === p.id || r.playerId === p.userId) && r.status === 'active'));
   const matches = freeAgents.filter(p => pName(p).toLowerCase().includes(q) || (p.epicId || '').toLowerCase().includes(q));
   document.getElementById('invite-results').innerHTML = matches.slice(0, 8).map(p =>
     `<div style="padding:10px 12px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;border:1px solid var(--border);margin-bottom:4px;background:var(--bg3)" onclick="selectInvitePlayer('${p.id}','${pName(p).replace(/'/g,"\\'")}')">
