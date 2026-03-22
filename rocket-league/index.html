@@ -1797,11 +1797,13 @@ async function bootApp() {
 }
 
 function updateSidebarRole() {
+  const navMyteam = document.getElementById('nav-myteam');
+  const roleLabels = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant', capitaine: 'Capitaine', sub: 'Sub' };
   if (myTeam) {
-    document.getElementById('nav-myteam').classList.remove('hidden');
-    const roleLabels = { fondateur: 'Fondateur', manager: 'Manager', coach: 'Coach', joueur: 'Joueur', remplacant: 'Remplaçant' };
+    navMyteam.classList.remove('hidden');
     document.getElementById('user-role-label').textContent = `${myTeam.name} · ${roleLabels[myRole] || myRole}`;
   } else {
+    navMyteam.classList.add('hidden');
     document.getElementById('user-role-label').textContent = isAdmin ? 'Admin' : 'Agent libre';
   }
 }
@@ -1947,16 +1949,17 @@ document.getElementById('create-team-form').addEventListener('submit', async e =
     name, tag, logo: logo || null, desc: desc || null,
     pool: null,
     status: 'draft',
+    founderId: currentUser.uid,
     createdBy: currentUser.uid,
     createdAt: serverTimestamp()
   });
-  // Auto-add creator as fondateur
+  // Auto-add creator as fondateur in roster
   await addDoc(collection(db, 'rl_roster'), {
     teamId: teamRef.id, playerId: currentUser.uid,
     role: 'fondateur', status: 'active',
     joinedAt: serverTimestamp()
   });
-  toast(`Équipe "${name}" créée ! Un admin doit t'assigner officiellement.`);
+  toast(`Équipe "${name}" créée ! Elle doit être validée par un admin.`);
   closeModal('modal-create-team');
   e.target.reset();
 });
@@ -2006,7 +2009,12 @@ function renderPlayersList(filter) {
 
 // ── MY TEAM SECTION ────────────────────────────────────────────────────
 async function loadMyTeamSection() {
-  if (!myTeam || !myRoster) { navigate('home'); return; }
+  if (!myTeam || !myRoster) {
+    // Données pas encore chargées — afficher un placeholder plutôt que rebondir
+    document.getElementById('myteam-title').textContent = 'Mon équipe';
+    document.getElementById('myteam-subtitle').textContent = 'Chargement…';
+    return;
+  }
 
   document.getElementById('myteam-title').textContent = myTeam.name;
   const statusLabels = { draft: '✏️ Brouillon', pending: '⏳ En attente de validation', approved: '✅ Approuvée', rejected: '❌ Rejetée' };
