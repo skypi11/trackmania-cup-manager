@@ -699,35 +699,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         <p>Gestion de la Springs League Series</p>
       </div>
 
-      <!-- Zone de test -->
-      <div class="card" style="margin-bottom:20px;border-color:rgba(123,47,190,0.3);background:rgba(123,47,190,0.05)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <h3 style="font-size:0.9rem;font-weight:800">🧪 Données de test</h3>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-sm" style="background:rgba(123,47,190,0.2);color:#a855f7;border:1px solid rgba(123,47,190,0.3)" id="btn-seed-data">Générer équipes factices</button>
-            <button class="btn btn-danger btn-sm" id="btn-clear-test-data">Tout effacer</button>
-          </div>
-        </div>
-        <p style="font-size:0.78rem;color:var(--muted)">Crée des équipes et joueurs factices pour tester le calendrier et le flux des matchs. Le bouton "Tout effacer" supprime uniquement les données marquées <code>test:true</code>.</p>
-      </div>
-
-      <div class="admin-grid">
-
-        <!-- Compétitions -->
-        <div class="card" style="grid-column:1/-1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">🏆 Compétitions</h3>
-            <button class="btn btn-primary btn-sm" id="btn-create-season">+ Nouvelle</button>
-          </div>
-          <div id="admin-competitions-list">
-            <p style="color:var(--muted);font-size:0.83rem">Aucune compétition.</p>
-          </div>
-        </div>
+      <!-- ── SECTION : Actions en attente ── -->
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px">Actions requises</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px">
 
         <!-- Équipes en attente de validation -->
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">✅ Validation des équipes</h3>
+        <div class="card" style="margin:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:0.85rem;font-weight:800">✅ Validation équipes</h3>
             <span class="badge" id="pending-teams-badge" style="display:none"></span>
           </div>
           <div id="admin-pending-teams">
@@ -735,18 +714,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
           </div>
         </div>
 
-        <!-- Gestion des équipes -->
-        <div class="card" style="grid-column:1/-1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">🛡️ Gestion des équipes</h3>
-          </div>
-          <div id="admin-all-teams-list"><p style="color:var(--muted);font-size:0.83rem">Chargement…</p></div>
-        </div>
-
         <!-- Inscriptions compétitions -->
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">📋 Inscriptions aux compétitions</h3>
+        <div class="card" style="margin:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:0.85rem;font-weight:800">📋 Inscriptions</h3>
             <span class="badge" id="registrations-badge" style="display:none"></span>
           </div>
           <div id="admin-registrations-list">
@@ -755,48 +726,84 @@ tr:hover td { background: rgba(255,255,255,0.02); }
         </div>
 
         <!-- Transferts -->
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">🔄 Transferts en attente</h3>
-            <span class="badge" id="transfer-badge" style="background:var(--red);color:#fff;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px">0</span>
+        <div class="card" style="margin:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:0.85rem;font-weight:800">🔄 Transferts</h3>
+            <span class="badge" id="transfer-badge" style="background:var(--red);color:#fff;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px;display:none">0</span>
           </div>
           <div id="admin-transfers-list">
             <p style="color:var(--muted);font-size:0.83rem">Aucun transfert en attente.</p>
           </div>
         </div>
 
-        <!-- Gestion des joueurs -->
-        <div class="card" style="grid-column:1/-1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">👥 Gestion des joueurs</h3>
-            <input type="text" id="admin-player-search" placeholder="Rechercher…" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-size:0.8rem;width:180px" oninput="adminFilterPlayers(this.value)">
-          </div>
-          <div id="admin-all-players-list"><p style="color:var(--muted);font-size:0.83rem">Chargement…</p></div>
-        </div>
-
-        <!-- Calendrier -->
-        <div class="card" style="grid-column:1/-1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">📅 Calendrier des matchs</h3>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-A">Générer Pool A</button>
-              <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-B">Générer Pool B</button>
-              <button class="btn btn-danger btn-sm" id="btn-clear-schedule">Effacer tout</button>
-            </div>
-          </div>
-          <div id="admin-schedule-info"><p style="color:var(--muted);font-size:0.83rem">Générez le calendrier round-robin une fois les pools définies.</p></div>
-        </div>
-
-        <!-- Scores à valider -->
-        <div class="card" style="grid-column:1/-1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <h3 style="font-size:0.9rem;font-weight:800">⚡ Scores en attente</h3>
-            <span id="scores-badge" style="background:var(--red);color:#fff;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px;display:none">0</span>
-          </div>
-          <div id="admin-pending-scores"><p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p></div>
-        </div>
-
       </div>
+
+      <!-- ── SECTION : Scores en attente ── -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:0.85rem;font-weight:800">⚡ Scores en attente de validation</h3>
+          <span id="scores-badge" style="background:var(--red);color:#fff;border-radius:10px;font-size:0.65rem;font-weight:800;padding:2px 8px;display:none">0</span>
+        </div>
+        <div id="admin-pending-scores"><p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p></div>
+      </div>
+
+      <!-- ── SECTION : Compétitions ── -->
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px">Compétitions & Calendrier</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:0.85rem;font-weight:800">🏆 Compétitions</h3>
+          <button class="btn btn-primary btn-sm" id="btn-create-season">+ Nouvelle</button>
+        </div>
+        <div id="admin-competitions-list">
+          <p style="color:var(--muted);font-size:0.83rem">Aucune compétition.</p>
+        </div>
+      </div>
+
+      <!-- ── SECTION : Calendrier ── -->
+      <div class="card" style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:0.85rem;font-weight:800">📅 Calendrier des matchs</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-A">Générer Pool A</button>
+            <button class="btn btn-secondary btn-sm" id="btn-gen-schedule-B">Générer Pool B</button>
+            <button class="btn btn-danger btn-sm" id="btn-clear-schedule">Effacer tout</button>
+          </div>
+        </div>
+        <div id="admin-schedule-info"><p style="color:var(--muted);font-size:0.83rem">Générez le calendrier round-robin une fois les pools définies.</p></div>
+      </div>
+
+      <!-- ── SECTION : Gestion ── -->
+      <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px">Gestion globale</div>
+
+      <!-- Gestion des équipes -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:0.85rem;font-weight:800">🛡️ Toutes les équipes</h3>
+        </div>
+        <div id="admin-all-teams-list"><p style="color:var(--muted);font-size:0.83rem">Chargement…</p></div>
+      </div>
+
+      <!-- Gestion des joueurs -->
+      <div class="card" style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:0.85rem;font-weight:800">👥 Tous les joueurs</h3>
+          <input type="text" id="admin-player-search" placeholder="Rechercher…" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-size:0.8rem;width:180px" oninput="adminFilterPlayers(this.value)">
+        </div>
+        <div id="admin-all-players-list"><p style="color:var(--muted);font-size:0.83rem">Chargement…</p></div>
+      </div>
+
+      <!-- ── SECTION : Test ── -->
+      <div class="card" style="border-color:rgba(123,47,190,0.3);background:rgba(123,47,190,0.05)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="font-size:0.85rem;font-weight:800">🧪 Données de test</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm" style="background:rgba(123,47,190,0.2);color:#a855f7;border:1px solid rgba(123,47,190,0.3)" id="btn-seed-data">Générer équipes factices</button>
+            <button class="btn btn-danger btn-sm" id="btn-clear-test-data">Tout effacer</button>
+          </div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted)">Crée des équipes et joueurs factices pour tester le calendrier et le flux des matchs. "Tout effacer" supprime uniquement les données marquées <code>test:true</code>.</p>
+      </div>
+
     </section>
 
   </main>
@@ -2314,7 +2321,8 @@ async function loadAdminSection() {
   // Transfers
   const transferSnap = await getDocs(query(collection(db, 'rl_transfers'), where('status', '==', 'pending')));
   const transfers = transferSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  document.getElementById('transfer-badge').textContent = transfers.length;
+  const trBadge = document.getElementById('transfer-badge');
+  if (trBadge) { trBadge.textContent = transfers.length; trBadge.style.display = transfers.length > 0 ? '' : 'none'; }
   document.getElementById('admin-transfers-list').innerHTML = transfers.length === 0
     ? `<p style="color:var(--muted);font-size:0.83rem">Aucun transfert en attente.</p>`
     : transfers.map(tr => {
@@ -2332,6 +2340,39 @@ async function loadAdminSection() {
           </div>
         </div>`;
       }).join('');
+
+  // Gestion des équipes
+  renderAdminTeamsList();
+
+  // Gestion des joueurs
+  renderAdminPlayersList();
+
+  // Scores en attente
+  const pending = allMatches.filter(m => m.status === 'pending_confirm' || m.status === 'disputed');
+  const scoresBadge = document.getElementById('scores-badge');
+  if (scoresBadge) { scoresBadge.textContent = pending.length; scoresBadge.style.display = pending.length > 0 ? '' : 'none'; }
+  document.getElementById('admin-pending-scores').innerHTML = pending.length === 0
+    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p>`
+    : pending.map(m => {
+        const ht = allTeams.find(t => t.id === m.homeTeamId);
+        const at = allTeams.find(t => t.id === m.awayTeamId);
+        const isDisputed = m.status === 'disputed';
+        return `<div class="app-item" style="${isDisputed ? 'border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)' : ''}">
+          <div class="app-info">
+            <h4>${isDisputed ? '⚠️ ' : ''}${ht?.name || '?'} ${m.homeScore} : ${m.awayScore} ${at?.name || '?'}</h4>
+            <p>Pool ${m.pool} · S${m.week} · ${isDisputed ? '<span style="color:var(--red);font-weight:700">Score contesté par l\'équipe adverse</span>' : 'En attente de confirmation'}</p>
+          </div>
+          <div class="app-actions">
+            <button class="btn btn-primary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Corriger</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  // Résumé calendrier
+  const byPool = { A: allMatches.filter(m => m.pool === 'A').length, B: allMatches.filter(m => m.pool === 'B').length };
+  document.getElementById('admin-schedule-info').innerHTML =
+    `<p style="font-size:0.83rem;color:var(--muted)">Pool A : <strong style="color:var(--text)">${byPool.A} matchs</strong> · Pool B : <strong style="color:var(--text)">${byPool.B} matchs</strong></p>`;
 }
 
 // ── Competition management ──────────────────────────────────────────────────
@@ -3605,38 +3646,6 @@ window.adminResetMatch = async function(matchId) {
   toast('Match réinitialisé.');
 };
 
-// Scores en attente dans loadAdminSection — ajout à la fin de la fonction existante
-const _origLoadAdmin = loadAdminSection;
-loadAdminSection = async function() {
-  await _origLoadAdmin();
-  renderAdminTeamsList();
-  renderAdminPlayersList();
-  // Scores en attente
-  const pending = allMatches.filter(m => m.status === 'pending_confirm' || m.status === 'disputed');
-  const badge = document.getElementById('scores-badge');
-  if (badge) { badge.textContent = pending.length; badge.style.display = pending.length > 0 ? '' : 'none'; }
-  document.getElementById('admin-pending-scores').innerHTML = pending.length === 0
-    ? `<p style="color:var(--muted);font-size:0.83rem">Aucun score en attente.</p>`
-    : pending.map(m => {
-        const ht = allTeams.find(t => t.id === m.homeTeamId);
-        const at = allTeams.find(t => t.id === m.awayTeamId);
-        const isDisputed = m.status === 'disputed';
-        return `<div class="app-item" style="${isDisputed ? 'border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)' : ''}">
-          <div class="app-info">
-            <h4>${isDisputed ? '⚠️ ' : ''}${ht?.name || '?'} ${m.homeScore} : ${m.awayScore} ${at?.name || '?'}</h4>
-            <p>Pool ${m.pool} · S${m.week} · ${isDisputed ? '<span style="color:var(--red);font-weight:700">Score contesté par l\'équipe adverse</span>' : 'En attente de confirmation'}</p>
-          </div>
-          <div class="app-actions">
-            <button class="btn btn-primary btn-sm" onclick="adminValidateScore('${m.id}')">Valider</button>
-            <button class="btn btn-secondary btn-sm" onclick="openEnterScore('${m.id}')">Corriger</button>
-          </div>
-        </div>`;
-      }).join('');
-  // Résumé calendrier
-  const byPool = { A: allMatches.filter(m => m.pool === 'A').length, B: allMatches.filter(m => m.pool === 'B').length };
-  document.getElementById('admin-schedule-info').innerHTML =
-    `<p style="font-size:0.83rem;color:var(--muted)">Pool A : <strong style="color:var(--text)">${byPool.A} matchs</strong> · Pool B : <strong style="color:var(--text)">${byPool.B} matchs</strong></p>`;
-};
 </script>
 </body>
 </html>
