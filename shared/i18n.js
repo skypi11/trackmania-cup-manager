@@ -676,7 +676,7 @@ export const setLang = (lang) => {
   });
   // Update toggle buttons
   document.querySelectorAll('.lang-toggle').forEach(btn => {
-    btn.textContent = _lang === 'fr' ? 'EN' : 'FR';
+    btn.textContent = _lang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
     btn.title = _lang === 'fr' ? 'Switch to English' : 'Passer en français';
   });
 };
