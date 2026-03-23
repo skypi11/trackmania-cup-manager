@@ -334,6 +334,141 @@ const translations = {
 
     // ── Export ────────────────────────────────────────────────────────────
     'export.csv.header':      'Position,Joueur,Équipe,Points,Finales,Victoires,Podiums',
+
+    // ── Messages généraux (suite) ─────────────────────────────────────────
+    'msg.copy.link':          '📋 Copier le lien',
+    'msg.copied.link':        '✅ Copié !',
+    'msg.loading':            'Chargement...',
+    'msg.online':             'En ligne',
+    'msg.you':                '✓ vous',
+
+    // ── Common buttons ────────────────────────────────────────────────────
+    'common.create':          'Créer',
+    'common.add':             'Ajouter',
+    'common.save':            'Enregistrer',
+    'common.cancel':          'Annuler',
+    'common.close':           'Fermer',
+    'common.send':            'Envoyer',
+    'common.later':           'Plus tard',
+    'common.sort':            'Tri :',
+    'common.sort.newest':     'Plus récentes',
+    'common.sort.oldest':     'Plus anciennes',
+    'common.back.editions':   '← Retour aux éditions',
+
+    // ── Éditions (suite) ──────────────────────────────────────────────────
+    'editions.create':        '➕ Créer une édition',
+    'editions.filter.all':    'Toutes',
+
+    // ── Countdown ─────────────────────────────────────────────────────────
+    'countdown.days':         'Dans {n} jour(s)',
+    'countdown.hours':        'Dans {n}h{m}',
+    'countdown.minutes':      'Dans {n} min',
+
+    // ── Form labels ───────────────────────────────────────────────────────
+    'form.name':              'Nom *',
+    'form.date':              'Date *',
+    'form.time':              'Heure',
+    'form.club':              'Club',
+    'form.club.ph':           'Ex: Springs Esport',
+    'form.salon':             'Salon',
+    'form.salon.ph':          'Ex: Monthly Cup #3',
+    'form.password':          'Mot de passe du salon',
+    'form.password.ph':       'Ex: 1234',
+    'form.season':            'Saison',
+    'form.description':       'Description',
+    'form.description.opt':   'Description (optionnel)',
+    'form.description.ph':    'Infos supplémentaires...',
+    'form.youtube':           'VOD YouTube (URL)',
+    'form.youtube.opt':       'VOD YouTube (optionnel)',
+    'form.maps.tmx':          '🗺️ IDs TMX des maps (optionnel)',
+    'form.map.label':         'Map {n} — URL ou ID TMX',
+    'form.map.name':          'Nom',
+    'form.status':            'Statut',
+    'form.pseudo':            'Pseudo *',
+    'form.team':              'Équipe',
+    'form.team.opt':          'Équipe (optionnel)',
+    'form.team.ph':           'Ex: Team Rocket',
+    'form.message':           'Message',
+
+    // ── Auth banner ───────────────────────────────────────────────────────
+    'auth.required':          'Connexion requise',
+    'auth.register.cta':      'Connectez-vous pour vous inscrire aux éditions de la',
+
+    // ── Discord (suite) ───────────────────────────────────────────────────
+    'discord.banner.title':   'Lie ton compte Discord pour recevoir les rappels de la cup !',
+    'discord.banner.desc':    'Les joueurs qui ont lié Discord reçoivent une mention avant chaque édition.',
+    'discord.prompt.title':   'Lie ton compte Discord !',
+    'discord.prompt.desc':    'Pour recevoir une mention personnelle avant chaque édition de la Springs Monthly Cup, lie ton compte Discord maintenant.',
+    'discord.link.account':   'Lier mon compte Discord',
+
+    // ── Profile creation ──────────────────────────────────────────────────
+    'profile.create.title':   '👤 Créer mon profil joueur',
+    'profile.welcome':        'Bienvenue ! Renseignez vos informations pour participer aux compétitions Springs E-Sport.',
+    'profile.ingame.label':   'Pseudo en jeu',
+    'profile.ingame.ph':      'Votre pseudo en jeu',
+    'profile.ingame.hint':    'Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.',
+    'profile.cancel':         'Annuler',
+
+    // ── Rankings (suite) ──────────────────────────────────────────────────
+    'rankings.general':       '📊 Classement général',
+    'rankings.export.csv':    '⬇️ Export CSV',
+    'rankings.top10':         '📈 Points — Top 10',
+
+    // ── Maps ──────────────────────────────────────────────────────────────
+    'maps.played':            '🗺️ Maps jouées',
+
+    // ── Participants ──────────────────────────────────────────────────────
+    'participants.add':       '➕ Ajouter un joueur',
+    'participants.registered':'👥 Joueurs inscrits',
+    'participants.pseudo':    'Pseudo *',
+    'participants.team.opt':  'Équipe (optionnel)',
+
+    // ── Stats (suite) ─────────────────────────────────────────────────────
+    'stats.players.count':    'Joueurs ayant participé',
+    'stats.editions.count':   'Éditions terminées',
+    'stats.quals.count':      'Qualifications enregistrées',
+    'stats.finals.count':     'Entrées en finale',
+    'stats.by.player':        '📈 Statistiques par joueur',
+
+    // ── Admin (suite) ─────────────────────────────────────────────────────
+    'admin.customization':    '🎨 Personnalisation du site',
+    'admin.general':          'Général',
+    'admin.comp.name':        'Nom de la compétition',
+    'admin.subtitle':         'Sous-titre (sidebar & accueil)',
+    'admin.copyright':        'Copyright (footer)',
+    'admin.twitch.section':   'Twitch',
+    'admin.twitch.channel':   'Nom de la chaîne Twitch',
+    'admin.social':           'Réseaux sociaux',
+    'admin.youtube':          'YouTube',
+    'admin.instagram':        'Instagram',
+    'admin.twitter':          'X / Twitter',
+    'admin.tiktok':           'TikTok',
+    'admin.twitch.url':       'Twitch (URL directe)',
+    'admin.discord.invite':   "Discord (lien d'invitation)",
+    'admin.save.btn':         '💾 Enregistrer',
+    'admin.saved.btn':        '✅ Sauvegardé !',
+    'admin.tools':            '🛠️ Outils Admin',
+    'admin.obs.overlay':      'Stream Overlay (OBS)',
+    'admin.obs.instr':        'Ajouter une source <strong>Navigateur</strong> dans OBS : largeur <strong>1920</strong>, hauteur <strong>1080</strong>, arrière-plan transparent.',
+    'admin.notify.discord':   'Notification Discord',
+    'admin.edit.player':      '✏️ Modifier le joueur',
+    'admin.edit.edition':     "✏️ Modifier l'édition",
+    'admin.logout':           '🔓 Déconnexion',
+
+    // ── Predictions ───────────────────────────────────────────────────────
+    'predictions.login':      'Connecte-toi pour prédire !',
+    'predictions.select':     'Sélectionne au moins un finaliste !',
+    'predictions.must.reg':   'Tu dois être inscrit comme joueur pour prédire.',
+    'predictions.saved':      'Prédiction enregistrée ✅',
+    'predictions.no.finals':  'Aucun résultat de finale pour calculer les scores.',
+    'predictions.calc':       'Scores calculés pour {n} prédiction(s) ✅',
+    'export.no.finals':       'Aucun résultat de finale à exporter.',
+
+    // ── Detail (suite) ────────────────────────────────────────────────────
+    'detail.status.label':    'Statut :',
+    'detail.club.label':      '🏛️ Club :',
+    'detail.salon.label':     '🎮 Salon :',
+    'detail.reg.num':         '#',
   },
 
   en: {
@@ -669,6 +804,141 @@ const translations = {
 
     // ── Export ────────────────────────────────────────────────────────────
     'export.csv.header':      'Position,Player,Team,Points,Finals,Wins,Podiums',
+
+    // ── Messages généraux (suite) ─────────────────────────────────────────
+    'msg.copy.link':          '📋 Copy link',
+    'msg.copied.link':        '✅ Copied!',
+    'msg.loading':            'Loading...',
+    'msg.online':             'Online',
+    'msg.you':                '✓ you',
+
+    // ── Common buttons ────────────────────────────────────────────────────
+    'common.create':          'Create',
+    'common.add':             'Add',
+    'common.save':            'Save',
+    'common.cancel':          'Cancel',
+    'common.close':           'Close',
+    'common.send':            'Send',
+    'common.later':           'Later',
+    'common.sort':            'Sort:',
+    'common.sort.newest':     'Newest',
+    'common.sort.oldest':     'Oldest',
+    'common.back.editions':   '← Back to editions',
+
+    // ── Éditions (suite) ──────────────────────────────────────────────────
+    'editions.create':        '➕ Create an edition',
+    'editions.filter.all':    'All',
+
+    // ── Countdown ─────────────────────────────────────────────────────────
+    'countdown.days':         'In {n} day(s)',
+    'countdown.hours':        'In {n}h{m}',
+    'countdown.minutes':      'In {n} min',
+
+    // ── Form labels ───────────────────────────────────────────────────────
+    'form.name':              'Name *',
+    'form.date':              'Date *',
+    'form.time':              'Time',
+    'form.club':              'Club',
+    'form.club.ph':           'Ex: Springs Esport',
+    'form.salon':             'Room',
+    'form.salon.ph':          'Ex: Monthly Cup #3',
+    'form.password':          'Room password',
+    'form.password.ph':       'Ex: 1234',
+    'form.season':            'Season',
+    'form.description':       'Description',
+    'form.description.opt':   'Description (optional)',
+    'form.description.ph':    'Additional info...',
+    'form.youtube':           'YouTube VOD (URL)',
+    'form.youtube.opt':       'YouTube VOD (optional)',
+    'form.maps.tmx':          '🗺️ TMX Map IDs (optional)',
+    'form.map.label':         'Map {n} — URL or TMX ID',
+    'form.map.name':          'Name',
+    'form.status':            'Status',
+    'form.pseudo':            'Nickname *',
+    'form.team':              'Team',
+    'form.team.opt':          'Team (optional)',
+    'form.team.ph':           'Ex: Team Rocket',
+    'form.message':           'Message',
+
+    // ── Auth banner ───────────────────────────────────────────────────────
+    'auth.required':          'Sign in required',
+    'auth.register.cta':      'Sign in to register for editions of',
+
+    // ── Discord (suite) ───────────────────────────────────────────────────
+    'discord.banner.title':   'Link your Discord account to get cup reminders!',
+    'discord.banner.desc':    'Players who linked Discord get mentioned before each edition.',
+    'discord.prompt.title':   'Link your Discord account!',
+    'discord.prompt.desc':    'To get a personal mention before each Springs Monthly Cup edition, link your Discord account now.',
+    'discord.link.account':   'Link my Discord account',
+
+    // ── Profile creation ──────────────────────────────────────────────────
+    'profile.create.title':   '👤 Create my player profile',
+    'profile.welcome':        'Welcome! Fill in your information to participate in Springs E-Sport competitions.',
+    'profile.ingame.label':   'In-game nickname',
+    'profile.ingame.ph':      'Your in-game nickname',
+    'profile.ingame.hint':    'If you participate in multiple Springs cups, you can have a different nickname per cup.',
+    'profile.cancel':         'Cancel',
+
+    // ── Rankings (suite) ──────────────────────────────────────────────────
+    'rankings.general':       '📊 General rankings',
+    'rankings.export.csv':    '⬇️ Export CSV',
+    'rankings.top10':         '📈 Points — Top 10',
+
+    // ── Maps ──────────────────────────────────────────────────────────────
+    'maps.played':            '🗺️ Maps played',
+
+    // ── Participants ──────────────────────────────────────────────────────
+    'participants.add':       '➕ Add a player',
+    'participants.registered':'👥 Registered players',
+    'participants.pseudo':    'Nickname *',
+    'participants.team.opt':  'Team (optional)',
+
+    // ── Stats (suite) ─────────────────────────────────────────────────────
+    'stats.players.count':    'Players who participated',
+    'stats.editions.count':   'Completed editions',
+    'stats.quals.count':      'Recorded qualifications',
+    'stats.finals.count':     'Final entries',
+    'stats.by.player':        '📈 Player statistics',
+
+    // ── Admin (suite) ─────────────────────────────────────────────────────
+    'admin.customization':    '🎨 Site customization',
+    'admin.general':          'General',
+    'admin.comp.name':        'Competition name',
+    'admin.subtitle':         'Subtitle (sidebar & home)',
+    'admin.copyright':        'Copyright (footer)',
+    'admin.twitch.section':   'Twitch',
+    'admin.twitch.channel':   'Twitch channel name',
+    'admin.social':           'Social networks',
+    'admin.youtube':          'YouTube',
+    'admin.instagram':        'Instagram',
+    'admin.twitter':          'X / Twitter',
+    'admin.tiktok':           'TikTok',
+    'admin.twitch.url':       'Twitch (direct URL)',
+    'admin.discord.invite':   'Discord (invite link)',
+    'admin.save.btn':         '💾 Save',
+    'admin.saved.btn':        '✅ Saved!',
+    'admin.tools':            '🛠️ Admin Tools',
+    'admin.obs.overlay':      'Stream Overlay (OBS)',
+    'admin.obs.instr':        'Add a <strong>Browser</strong> source in OBS: width <strong>1920</strong>, height <strong>1080</strong>, transparent background.',
+    'admin.notify.discord':   'Discord Notification',
+    'admin.edit.player':      '✏️ Edit player',
+    'admin.edit.edition':     '✏️ Edit edition',
+    'admin.logout':           '🔓 Sign out',
+
+    // ── Predictions ───────────────────────────────────────────────────────
+    'predictions.login':      'Sign in to make predictions!',
+    'predictions.select':     'Select at least one finalist!',
+    'predictions.must.reg':   'You must be registered as a player to make predictions.',
+    'predictions.saved':      'Prediction saved ✅',
+    'predictions.no.finals':  'No final results to calculate scores.',
+    'predictions.calc':       'Scores calculated for {n} prediction(s) ✅',
+    'export.no.finals':       'No final results to export.',
+
+    // ── Detail (suite) ────────────────────────────────────────────────────
+    'detail.status.label':    'Status:',
+    'detail.club.label':      '🏛️ Club:',
+    'detail.salon.label':     '🎮 Room:',
+    'detail.reg.num':         '#',
   }
 };
 

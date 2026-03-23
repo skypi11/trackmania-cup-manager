@@ -1006,7 +1006,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <p style="color: var(--color-text-secondary); font-size: 0.9rem;">Chargement...</p>
+        <p style="color: var(--color-text-secondary); font-size: 0.9rem;" data-i18n="msg.loading">Chargement...</p>
     </div>
     <div class="toast" id="toast"></div>
 
@@ -1015,11 +1015,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         <div class="auth-box">
             <button onclick="closeAuthModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,0.3);font-size:1.3rem;cursor:pointer;line-height:1" title="Fermer">✕</button>
             <div class="lock-icon">🔒</div>
-            <h2>Connexion requise</h2>
-            <p>Connectez-vous pour vous inscrire aux éditions de la <span id="authCupName">Springs Monthly Cup</span>.</p>
+            <h2 data-i18n="auth.required">Connexion requise</h2>
+            <p><span data-i18n="auth.register.cta">Connectez-vous pour vous inscrire aux éditions de la</span> <span id="authCupName">Springs Monthly Cup</span>.</p>
             <button class="btn-google" id="authGoogleBtn" onclick="authGoogleSignIn()">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
-                Se connecter avec Google
+                <span data-i18n="auth.google">Se connecter avec Google</span>
             </button>
         </div>
     </div>
@@ -1091,13 +1091,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <div class="discord-link-banner">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#7289da" style="flex-shrink:0"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
                 <div class="discord-link-banner-text">
-                    <strong>Lie ton compte Discord pour recevoir les rappels de la cup !</strong>
-                    <span>Les joueurs qui ont lié Discord reçoivent une mention avant chaque édition.</span>
+                    <strong data-i18n="discord.banner.title">Lie ton compte Discord pour recevoir les rappels de la cup !</strong>
+                    <span data-i18n="discord.banner.desc">Les joueurs qui ont lié Discord reçoivent une mention avant chaque édition.</span>
                 </div>
-                <button class="btn-discord" onclick="linkDiscord()" style="flex-shrink:0;padding:8px 16px;font-size:0.82rem">
-                    Lier Discord
+                <button class="btn-discord" onclick="linkDiscord()" style="flex-shrink:0;padding:8px 16px;font-size:0.82rem" data-i18n="discord.link.account">
+                    Lier mon compte Discord
                 </button>
-                <button class="discord-banner-close" onclick="document.getElementById('discordLinkBanner').style.display='none'" title="Fermer">✕</button>
+                <button class="discord-banner-close" onclick="document.getElementById('discordLinkBanner').style.display='none'" title="Fermer" data-i18n-title="common.close">✕</button>
             </div>
           </div>
 
@@ -1106,35 +1106,35 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <!-- EDITIONS -->
           <div class="section-panel" id="editions" style="display:none">
             <div class="card admin-only" id="createEditionCard">
-                <h2>➕ Créer une édition</h2>
+                <h2 data-i18n="editions.create">➕ Créer une édition</h2>
                 <form id="addEditionForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="editionName">Nom *</label>
+                            <label for="editionName" data-i18n="form.name">Nom *</label>
                             <input type="text" id="editionName" required placeholder="Ex: Monthly Cup #3">
                         </div>
                         <div class="form-group">
-                            <label for="editionDate">Date *</label>
+                            <label for="editionDate" data-i18n="form.date">Date *</label>
                             <input type="date" id="editionDate" required>
                         </div>
                         <div class="form-group">
-                            <label for="editionTime">Heure</label>
+                            <label for="editionTime" data-i18n="form.time">Heure</label>
                             <input type="time" id="editionTime">
                         </div>
                         <div class="form-group">
-                            <label for="editionClub">Club</label>
-                            <input type="text" id="editionClub" placeholder="Ex: Springs Esport">
+                            <label for="editionClub" data-i18n="form.club">Club</label>
+                            <input type="text" id="editionClub" data-i18n-placeholder="form.club.ph" placeholder="Ex: Springs Esport">
                         </div>
                         <div class="form-group">
-                            <label for="editionSalon">Salon</label>
-                            <input type="text" id="editionSalon" placeholder="Ex: Monthly Cup #3">
+                            <label for="editionSalon" data-i18n="form.salon">Salon</label>
+                            <input type="text" id="editionSalon" data-i18n-placeholder="form.salon.ph" placeholder="Ex: Monthly Cup #3">
                         </div>
                         <div class="form-group">
-                            <label for="editionPassword">Mot de passe du salon</label>
-                            <input type="text" id="editionPassword" placeholder="Ex: 1234">
+                            <label for="editionPassword" data-i18n="form.password">Mot de passe du salon</label>
+                            <input type="text" id="editionPassword" data-i18n-placeholder="form.password.ph" placeholder="Ex: 1234">
                         </div>
                         <div class="form-group">
-                            <label for="editionStatus">Statut initial</label>
+                            <label for="editionStatus" data-i18n="form.status">Statut initial</label>
                             <select id="editionStatus">
                                 <option value="fermee" selected>🔒 Inscriptions fermées</option>
                                 <option value="inscriptions">📋 Inscriptions ouvertes</option>
@@ -1142,20 +1142,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="editionSaison">Saison</label>
+                            <label for="editionSaison" data-i18n="form.season">Saison</label>
                             <input type="number" id="editionSaison" min="2020" max="2099" placeholder="2026">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="editionDesc">Description (optionnel)</label>
-                        <textarea id="editionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires sur l'édition..."></textarea>
+                        <label for="editionDesc" data-i18n="form.description.opt">Description (optionnel)</label>
+                        <textarea id="editionDesc" rows="2" style="resize:vertical" data-i18n-placeholder="form.description.ph" placeholder="Infos supplémentaires sur l'édition..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="editionYoutube">VOD YouTube (optionnel)</label>
+                        <label for="editionYoutube" data-i18n="form.youtube.opt">VOD YouTube (optionnel)</label>
                         <input type="url" id="editionYoutube" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
                     <details style="margin-bottom:16px">
-                        <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none">🗺️ IDs TMX des maps (optionnel)</summary>
+                        <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none" data-i18n="form.maps.tmx">🗺️ IDs TMX des maps (optionnel)</summary>
                         <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
                             <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 1 — URL ou ID TMX</label><input type="text" id="editionMap1tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap1name" placeholder="Nom de la map"></div></div>
                             <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 2 — URL ou ID TMX</label><input type="text" id="editionMap2tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap2name" placeholder="Nom de la map"></div></div>
@@ -1166,19 +1166,19 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             <div style="display:flex;gap:6px;align-items:flex-end;grid-column:1/-1"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">🏆 Map Finale — URL ou ID TMX</label><input type="text" id="editionMap7tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editionMap7name" placeholder="Nom de la map finale"></div></div>
                         </div>
                     </details>
-                    <button type="submit" class="btn btn-primary">Créer</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common.create">Créer</button>
                 </form>
             </div>
 
             <!-- Filter bar -->
             <div class="edition-filters" id="editionFilters">
-                <button class="filter-btn active" data-filter="all"   onclick="setEditionFilter('all')">Toutes</button>
-                <button class="filter-btn"         data-filter="upcoming" onclick="setEditionFilter('upcoming')">À venir</button>
-                <button class="filter-btn"         data-filter="past"     onclick="setEditionFilter('past')">Passées</button>
+                <button class="filter-btn active" data-filter="all"   onclick="setEditionFilter('all')" data-i18n="editions.filter.all">Toutes</button>
+                <button class="filter-btn"         data-filter="upcoming" onclick="setEditionFilter('upcoming')" data-i18n="editions.upcoming">À venir</button>
+                <button class="filter-btn"         data-filter="past"     onclick="setEditionFilter('past')" data-i18n="editions.past">Passées</button>
                 <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
-                    <span style="font-size:0.78rem;color:var(--color-text-secondary)">Tri :</span>
-                    <button class="filter-btn active" data-sort="desc" onclick="setEditionSort('desc')">Plus récentes</button>
-                    <button class="filter-btn"         data-sort="asc"  onclick="setEditionSort('asc')">Plus anciennes</button>
+                    <span style="font-size:0.78rem;color:var(--color-text-secondary)" data-i18n="common.sort">Tri :</span>
+                    <button class="filter-btn active" data-sort="desc" onclick="setEditionSort('desc')" data-i18n="common.sort.newest">Plus récentes</button>
+                    <button class="filter-btn"         data-sort="asc"  onclick="setEditionSort('asc')" data-i18n="common.sort.oldest">Plus anciennes</button>
                 </span>
             </div>
 
@@ -1188,8 +1188,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <!-- Edition detail panel -->
             <div class="edition-detail" id="editionDetail">
                 <div class="edition-detail-topbar">
-                    <button class="edition-detail-back" onclick="closeEditionDetail()">← Retour aux éditions</button>
-                    <button class="edition-share-btn" onclick="shareEdition()">🔗 Copier le lien</button>
+                    <button class="edition-detail-back" onclick="closeEditionDetail()" data-i18n="common.back.editions">← Retour aux éditions</button>
+                    <button class="edition-share-btn" onclick="shareEdition()" data-i18n="msg.copy.link">📋 Copier le lien</button>
                 </div>
                 <div id="editionDetailContent"></div>
             </div>
@@ -1199,14 +1199,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <div class="section-panel" id="rankings" style="display:none">
             <div class="card">
                 <h2>
-                    <span>📊 Classement général</span>
-                    <button class="btn btn-secondary btn-small" onclick="exportCSV()">⬇️ Export CSV</button>
+                    <span data-i18n="rankings.general">📊 Classement général</span>
+                    <button class="btn btn-secondary btn-small" onclick="exportCSV()" data-i18n="rankings.export.csv">⬇️ Export CSV</button>
                 </h2>
                 <div id="rankingSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
                 <div id="generalRanking"></div>
             </div>
             <div class="card">
-                <h2>📈 Points — Top 10</h2>
+                <h2 data-i18n="rankings.top10">📈 Points — Top 10</h2>
                 <div class="chart-container">
                     <canvas id="rankingChart"></canvas>
                 </div>
@@ -1216,7 +1216,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <!-- MAPS TIMELINE -->
           <div class="section-panel" id="maps" style="display:none">
             <div class="card" style="padding-bottom:8px">
-              <h2>🗺️ Maps jouées</h2>
+              <h2 data-i18n="maps.played">🗺️ Maps jouées</h2>
               <div id="mapsSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
               <div id="mapsTimeline"></div>
             </div>
@@ -1230,23 +1230,23 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <!-- JOUEURS -->
           <div class="section-panel" id="participants" style="display:none">
             <div class="card admin-only">
-                <h2>➕ Ajouter un joueur</h2>
+                <h2 data-i18n="participants.add">➕ Ajouter un joueur</h2>
                 <form id="addParticipantForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="playerName">Pseudo *</label>
+                            <label for="playerName" data-i18n="form.pseudo">Pseudo *</label>
                             <input type="text" id="playerName" required placeholder="Ex: Player123">
                         </div>
                         <div class="form-group">
-                            <label for="playerTeam">Équipe (optionnel)</label>
-                            <input type="text" id="playerTeam" placeholder="Ex: Team Rocket">
+                            <label for="playerTeam" data-i18n="form.team.opt">Équipe (optionnel)</label>
+                            <input type="text" id="playerTeam" data-i18n-placeholder="form.team.ph" placeholder="Ex: Team Rocket">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common.add">Ajouter</button>
                 </form>
             </div>
             <div class="card">
-                <h2>👥 Joueurs inscrits</h2>
+                <h2 data-i18n="participants.registered">👥 Joueurs inscrits</h2>
                 <div class="search-wrapper">
                     <span class="search-icon">🔍</span>
                     <input type="text" id="searchPlayers" data-i18n-placeholder="players.search" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
@@ -1259,19 +1259,19 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <div class="section-panel" id="stats" style="display:none">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Joueurs ayant participé</div>
+                    <div class="stat-label" data-i18n="stats.players.count">Joueurs ayant participé</div>
                     <div class="stat-value" id="totalParticipants">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Éditions terminées</div>
+                    <div class="stat-label" data-i18n="stats.editions.count">Éditions terminées</div>
                     <div class="stat-value" id="totalEditions">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Qualifications enregistrées</div>
+                    <div class="stat-label" data-i18n="stats.quals.count">Qualifications enregistrées</div>
                     <div class="stat-value" id="totalQuals">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Entrées en finale</div>
+                    <div class="stat-label" data-i18n="stats.finals.count">Entrées en finale</div>
                     <div class="stat-value" id="totalFinals">0</div>
                 </div>
             </div>
@@ -1280,7 +1280,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <div id="streaksStats"></div>
             </div>
             <div class="card">
-                <h2>📈 Statistiques par joueur</h2>
+                <h2 data-i18n="stats.by.player">📈 Statistiques par joueur</h2>
                 <div id="playerStats"></div>
             </div>
           </div>
@@ -1293,69 +1293,69 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <!-- PERSONNALISATION (admin only) -->
           <div class="section-panel admin-only" id="personnalisation" style="display:none">
             <div class="card">
-              <h2>🎨 Personnalisation du site</h2>
+              <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
               <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700">Général</p>
+                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.general">Général</p>
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="cfgSiteName">Nom de la compétition</label>
+                    <label for="cfgSiteName" data-i18n="admin.comp.name">Nom de la compétition</label>
                     <input type="text" id="cfgSiteName" placeholder="Springs Monthly Cup">
                   </div>
                   <div class="form-group">
-                    <label for="cfgSiteSubtitle">Sous-titre (sidebar &amp; accueil)</label>
+                    <label for="cfgSiteSubtitle" data-i18n="admin.subtitle">Sous-titre (sidebar &amp; accueil)</label>
                     <input type="text" id="cfgSiteSubtitle" placeholder="Springs E-Sport · Trackmania · En ligne">
                   </div>
                   <div class="form-group">
-                    <label for="cfgCopyright">Copyright (footer)</label>
+                    <label for="cfgCopyright" data-i18n="admin.copyright">Copyright (footer)</label>
                     <input type="text" id="cfgCopyright" placeholder="© 2026 Springs E-Sport">
                   </div>
                 </div>
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700">Twitch</p>
+                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.twitch.section">Twitch</p>
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="cfgTwitchChannel">Nom de la chaîne Twitch</label>
+                    <label for="cfgTwitchChannel" data-i18n="admin.twitch.channel">Nom de la chaîne Twitch</label>
                     <input type="text" id="cfgTwitchChannel" placeholder="springsesport">
                   </div>
                 </div>
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700">Réseaux sociaux</p>
+                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.social">Réseaux sociaux</p>
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="cfgYoutubeUrl">YouTube</label>
+                    <label for="cfgYoutubeUrl" data-i18n="admin.youtube">YouTube</label>
                     <input type="url" id="cfgYoutubeUrl" placeholder="https://www.youtube.com/@...">
                   </div>
                   <div class="form-group">
-                    <label for="cfgInstagramUrl">Instagram</label>
+                    <label for="cfgInstagramUrl" data-i18n="admin.instagram">Instagram</label>
                     <input type="url" id="cfgInstagramUrl" placeholder="https://www.instagram.com/...">
                   </div>
                   <div class="form-group">
-                    <label for="cfgTwitterUrl">X / Twitter</label>
+                    <label for="cfgTwitterUrl" data-i18n="admin.twitter">X / Twitter</label>
                     <input type="url" id="cfgTwitterUrl" placeholder="https://x.com/...">
                   </div>
                   <div class="form-group">
-                    <label for="cfgTiktokUrl">TikTok</label>
+                    <label for="cfgTiktokUrl" data-i18n="admin.tiktok">TikTok</label>
                     <input type="url" id="cfgTiktokUrl" placeholder="https://www.tiktok.com/@...">
                   </div>
                   <div class="form-group">
-                    <label for="cfgTwitchUrl">Twitch (URL directe)</label>
+                    <label for="cfgTwitchUrl" data-i18n="admin.twitch.url">Twitch (URL directe)</label>
                     <input type="url" id="cfgTwitchUrl" placeholder="https://www.twitch.tv/...">
                   </div>
                   <div class="form-group">
-                    <label for="cfgDiscordInviteUrl">Discord (lien d'invitation)</label>
+                    <label for="cfgDiscordInviteUrl" data-i18n="admin.discord.invite">Discord (lien d'invitation)</label>
                     <input type="url" id="cfgDiscordInviteUrl" placeholder="https://discord.gg/...">
                   </div>
                 </div>
                 <div style="margin-top:22px;display:flex;gap:14px;align-items:center">
-                  <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
-                  <span id="cfgSaveStatus" style="font-size:0.85rem;color:var(--color-success);display:none">✅ Sauvegardé !</span>
+                  <button type="submit" class="btn btn-primary" data-i18n="admin.save.btn">💾 Enregistrer</button>
+                  <span id="cfgSaveStatus" style="font-size:0.85rem;color:var(--color-success);display:none" data-i18n="admin.saved.btn">✅ Sauvegardé !</span>
                 </div>
               </form>
             </div>
 
             <!-- Outils Admin -->
             <div class="card" style="margin-top:20px">
-              <h2>🛠️ Outils Admin</h2>
-              <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700">Stream Overlay (OBS)</p>
-              <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
+              <h2 data-i18n="admin.tools">🛠️ Outils Admin</h2>
+              <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.obs.overlay">Stream Overlay (OBS)</p>
+              <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px" data-i18n-html="admin.obs.instr">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
               <div id="overlayUrlsContainer"></div>
             </div>
           </div>
@@ -1435,24 +1435,24 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <!-- CREATE PROFILE MODAL (shown on first login if no participant record) -->
     <div class="modal-overlay" id="createProfileModal">
         <div class="modal" style="max-width:460px">
-            <h2>👤 Créer mon profil joueur</h2>
-            <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px">
-                Bienvenue ! Renseignez vos informations pour participer aux compétitions <strong>Springs E-Sport</strong>.
+            <h2 data-i18n="profile.create.title">👤 Créer mon profil joueur</h2>
+            <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px" data-i18n="profile.welcome">
+                Bienvenue ! Renseignez vos informations pour participer aux compétitions Springs E-Sport.
             </p>
             <form id="createProfileForm">
                 <div class="form-group">
-                    <label for="newProfilePseudo">Pseudo en jeu <span id="newProfileGameLabel" style="color:var(--color-text-secondary);font-size:0.85rem"></span> *</label>
-                    <input type="text" id="newProfilePseudo" required placeholder="Votre pseudo en jeu" autocomplete="off">
-                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px">Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.</small>
+                    <label for="newProfilePseudo"><span data-i18n="profile.ingame.label">Pseudo en jeu</span> <span id="newProfileGameLabel" style="color:var(--color-text-secondary);font-size:0.85rem"></span> *</label>
+                    <input type="text" id="newProfilePseudo" required data-i18n-placeholder="profile.ingame.ph" placeholder="Votre pseudo en jeu" autocomplete="off">
+                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px" data-i18n="profile.ingame.hint">Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.</small>
                 </div>
                 <div class="form-group" style="margin-top:14px">
-                    <label for="newProfileTeam">Équipe (optionnel)</label>
+                    <label for="newProfileTeam" data-i18n="form.team.opt">Équipe (optionnel)</label>
                     <input type="text" id="newProfileTeam" placeholder="Ex: Team Rocket" autocomplete="off">
                 </div>
                 <div id="createProfileMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0"></div>
                 <div style="display:flex;gap:10px;margin-top:18px">
-                    <button type="submit" class="btn btn-primary" style="flex:1">✅ Créer mon profil</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateProfile()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1" data-i18n="profile.create.btn">✅ Créer mon profil</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateProfile()" data-i18n="common.cancel">Annuler</button>
                 </div>
             </form>
         </div>
@@ -1464,13 +1464,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <div class="discord-prompt-icon">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="#7289da"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
             </div>
-            <h2>Lie ton compte Discord !</h2>
-            <p>Pour recevoir une <strong style="color:#9ba8f5">mention personnelle</strong> avant chaque édition de la Springs Monthly Cup, lie ton compte Discord maintenant.<br><br>C'est rapide et tu pourras toujours le faire plus tard depuis ton profil.</p>
+            <h2 data-i18n="discord.prompt.title">Lie ton compte Discord !</h2>
+            <p data-i18n="discord.prompt.desc">Pour recevoir une mention personnelle avant chaque édition de la Springs Monthly Cup, lie ton compte Discord maintenant.</p>
             <button class="btn-discord" onclick="linkDiscord()" style="width:100%;justify-content:center;padding:13px">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                Lier mon compte Discord
+                <span data-i18n="discord.link.account">Lier mon compte Discord</span>
             </button>
-            <button class="discord-prompt-skip" onclick="dismissDiscordPrompt()">Plus tard</button>
+            <button class="discord-prompt-skip" onclick="dismissDiscordPrompt()" data-i18n="common.later">Plus tard</button>
         </div>
     </div>
 
@@ -1479,20 +1479,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         <div class="modal" style="max-width:500px">
             <h2 style="display:flex;align-items:center;gap:10px">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#7289da"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                Notification Discord
+                <span data-i18n="admin.notify.discord">Notification Discord</span>
             </h2>
             <input type="hidden" id="discordNotifyEditionId">
             <div class="form-group">
-                <label>Message</label>
+                <label data-i18n="form.message">Message</label>
                 <textarea id="discordNotifyMessage" rows="6" style="resize:vertical;font-family:monospace;font-size:0.85rem"></textarea>
             </div>
             <p id="discordNotifyHint" style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:16px"></p>
             <div style="display:flex;gap:10px">
                 <button class="btn-discord" onclick="sendDiscordNotification()" style="flex:1;justify-content:center">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                    Envoyer
+                    <span data-i18n="common.send">Envoyer</span>
                 </button>
-                <button class="btn btn-secondary" onclick="closeDiscordNotifyModal()">Annuler</button>
+                <button class="btn btn-secondary" onclick="closeDiscordNotifyModal()" data-i18n="common.cancel">Annuler</button>
             </div>
         </div>
     </div>
@@ -1500,20 +1500,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <!-- EDIT PARTICIPANT MODAL -->
     <div class="modal-overlay" id="editParticipantModal" onclick="if(event.target===this)closeEditParticipant()">
         <div class="modal">
-            <h2>✏️ Modifier le joueur</h2>
+            <h2 data-i18n="admin.edit.player">✏️ Modifier le joueur</h2>
             <form id="editParticipantForm">
                 <input type="hidden" id="editParticipantId">
                 <div class="form-group">
-                    <label for="editPlayerName">Pseudo *</label>
+                    <label for="editPlayerName" data-i18n="form.pseudo">Pseudo *</label>
                     <input type="text" id="editPlayerName" required>
                 </div>
                 <div class="form-group">
-                    <label for="editPlayerTeam">Équipe</label>
+                    <label for="editPlayerTeam" data-i18n="form.team">Équipe</label>
                     <input type="text" id="editPlayerTeam" placeholder="Sans équipe">
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px">
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditParticipant()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common.save">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditParticipant()" data-i18n="common.cancel">Annuler</button>
                 </div>
             </form>
         </div>
@@ -1522,40 +1522,40 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <!-- EDIT EDITION MODAL -->
     <div class="modal-overlay" id="editEditionModal" onclick="if(event.target===this)closeEditEdition()">
         <div class="modal" style="max-width:560px">
-            <h2>✏️ Modifier l'édition</h2>
+            <h2 data-i18n="admin.edit.edition">✏️ Modifier l'édition</h2>
             <form id="editEditionForm">
                 <input type="hidden" id="editEditionId">
                 <div class="form-group">
-                    <label for="editEditionName">Nom *</label>
+                    <label for="editEditionName" data-i18n="form.name">Nom *</label>
                     <input type="text" id="editEditionName" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEditionDate">Date *</label>
+                        <label for="editEditionDate" data-i18n="form.date">Date *</label>
                         <input type="date" id="editEditionDate" required>
                     </div>
                     <div class="form-group">
-                        <label for="editEditionTime">Heure</label>
+                        <label for="editEditionTime" data-i18n="form.time">Heure</label>
                         <input type="time" id="editEditionTime">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEditionClub">Club</label>
-                        <input type="text" id="editEditionClub" placeholder="Ex: Springs Esport">
+                        <label for="editEditionClub" data-i18n="form.club">Club</label>
+                        <input type="text" id="editEditionClub" data-i18n-placeholder="form.club.ph" placeholder="Ex: Springs Esport">
                     </div>
                     <div class="form-group">
-                        <label for="editEditionSalon">Salon</label>
-                        <input type="text" id="editEditionSalon" placeholder="Ex: Monthly Cup #3">
+                        <label for="editEditionSalon" data-i18n="form.salon">Salon</label>
+                        <input type="text" id="editEditionSalon" data-i18n-placeholder="form.salon.ph" placeholder="Ex: Monthly Cup #3">
                     </div>
                     <div class="form-group">
-                        <label for="editEditionPassword">Mot de passe du salon</label>
-                        <input type="text" id="editEditionPassword" placeholder="Ex: 1234">
+                        <label for="editEditionPassword" data-i18n="form.password">Mot de passe du salon</label>
+                        <input type="text" id="editEditionPassword" data-i18n-placeholder="form.password.ph" placeholder="Ex: 1234">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editEditionStatus">Statut</label>
+                        <label for="editEditionStatus" data-i18n="form.status">Statut</label>
                         <select id="editEditionStatus">
                             <option value="fermee">🔒 Inscriptions fermées</option>
                             <option value="inscriptions">📋 Inscriptions ouvertes</option>
@@ -1564,20 +1564,20 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="editEditionSaison">Saison</label>
+                        <label for="editEditionSaison" data-i18n="form.season">Saison</label>
                         <input type="number" id="editEditionSaison" min="2020" max="2099">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="editEditionDesc">Description</label>
+                    <label for="editEditionDesc" data-i18n="form.description">Description</label>
                     <textarea id="editEditionDesc" rows="2" style="resize:vertical" placeholder="Infos supplémentaires..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="editEditionYoutube">VOD YouTube (URL)</label>
+                    <label for="editEditionYoutube" data-i18n="form.youtube">VOD YouTube (URL)</label>
                     <input type="url" id="editEditionYoutube" placeholder="https://www.youtube.com/watch?v=...">
                 </div>
                 <details style="margin-bottom:16px">
-                    <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none">🗺️ IDs TMX des maps (optionnel)</summary>
+                    <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none" data-i18n="form.maps.tmx">🗺️ IDs TMX des maps (optionnel)</summary>
                     <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
                         <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 1 — URL ou ID TMX</label><input type="text" id="editEditionMap1tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap1name" placeholder="Nom de la map"></div></div>
                         <div style="display:flex;gap:6px;align-items:flex-end"><div class="form-group" style="margin:0;flex:0 0 110px"><label style="font-size:0.75rem">Map 2 — URL ou ID TMX</label><input type="text" id="editEditionMap2tmx" placeholder="URL ou ID (ex: 38390)"></div><div class="form-group" style="margin:0;flex:1"><label style="font-size:0.75rem">Nom</label><input type="text" id="editEditionMap2name" placeholder="Nom de la map"></div></div>
@@ -1589,8 +1589,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                 </details>
                 <div style="display:flex;gap:10px;margin-top:16px">
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditEdition()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common.save">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditEdition()" data-i18n="common.cancel">Annuler</button>
                 </div>
             </form>
         </div>
@@ -1635,7 +1635,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
         const CUP = cupId === 'mania'
             ? { name: 'Springs Mania Cup', color: '#FFB800', colorHover: '#ffc733', label: 'LAN' }
-            : { name: 'Springs Monthly Cup', color: '#00D936', colorHover: '#00ff3f', label: 'En ligne' };
+            : { name: 'Springs Monthly Cup', color: '#00D936', colorHover: '#00ff3f', label: t('msg.online') };
 
         // Apply cup colors and title
         document.documentElement.style.setProperty('--color-accent', CUP.color);
@@ -1706,7 +1706,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 overlayContainer.innerHTML = `
                     <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px">
                         <code style="flex:1;font-size:0.82rem;color:var(--color-accent);word-break:break-all">${overlayUrl}</code>
-                        <button onclick="navigator.clipboard.writeText('${overlayUrl}').then(()=>{this.textContent='✅ Copié';setTimeout(()=>this.textContent='📋 Copier',2000)})" style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--color-text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem">📋 Copier</button>
+                        <button onclick="navigator.clipboard.writeText('${overlayUrl}').then(()=>{this.textContent=t('msg.copied.link');setTimeout(()=>this.textContent=t('msg.copy.link'),2000)})" style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--color-text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem">${t('msg.copy.link')}</button>
                     </div>`;
             }
         }
@@ -2257,8 +2257,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 adminBtn.style.display  = '';
                 playerBtn.style.display = '';
                 adminBtn.classList.add('active');
-                adminBtn.textContent = '🔓 Déconnexion';
-                const pseudoAdmin = currentUserProfile?.pseudo || user.displayName || 'Mon compte';
+                adminBtn.textContent = t('admin.logout');
+                const pseudoAdmin = currentUserProfile?.pseudo || user.displayName || t('nav.account');
                 playerBtn.textContent = `👤 ${pseudoAdmin}`;
             } else {
                 document.body.classList.remove('admin-mode');
@@ -2266,7 +2266,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 playerBtn.style.display = '';
                 adminBtn.classList.remove('active');
                 const linkedPlayer = data.participants.find(p => p.userId === user.uid);
-                const pseudo = linkedPlayer ? pName(linkedPlayer) : (currentUserProfile?.pseudo || user.displayName || 'Mon compte');
+                const pseudo = linkedPlayer ? pName(linkedPlayer) : (currentUserProfile?.pseudo || user.displayName || t('nav.account'));
                 playerBtn.textContent = `👤 ${pseudo}`;
             }
             // Mark auth as resolved so loading overlay can hide
@@ -2711,9 +2711,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const days = Math.floor(diff / 86400000);
             const hours = Math.floor((diff % 86400000) / 3600000);
             const mins = Math.floor((diff % 3600000) / 60000);
-            if (days > 0) return `Dans ${days} jour${days > 1 ? 's' : ''}`;
-            if (hours > 0) return `Dans ${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
-            return `Dans ${mins} min`;
+            if (days > 0) return t('countdown.days', {n: days});
+            if (hours > 0) return t('countdown.hours', {n: hours, m: mins > 0 ? ` ${mins}min` : ''});
+            return t('countdown.minutes', {n: mins});
         }
 
         // Display editions as cards
@@ -3217,7 +3217,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         ? `<button class="btn btn-primary btn-small" onclick="setEditionStatus('${id}','${wf.next.status}')">→ ${wf.next.btn}</button>`
                         : '';
                     workflowHtml = `<div class="workflow-panel admin-only">
-                        <span class="workflow-status-label">Statut :<strong class="workflow-status-value" style="color:${wf.color}">${wf.label}</strong></span>
+                        <span class="workflow-status-label">${t('detail.status.label')}<strong class="workflow-status-value" style="color:${wf.color}">${wf.label}</strong></span>
                         ${nextBtn}
                         <button class="btn-discord-notify" onclick="openDiscordNotifyModal('${id}')">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
@@ -3247,8 +3247,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const infoItems = [];
                 infoItems.push(`<span style="color:var(--color-text-primary);font-size:1rem;font-weight:600">📅 ${dateStr}</span>`);
                 if (e.time)  infoItems.push(`<span>🕐 ${e.time}</span>`);
-                if (e.club)  infoItems.push(`<span>🏛️ Club : <strong>${e.club}</strong></span>`);
-                if (e.salon) infoItems.push(`<span>🎮 Salon : <strong>${e.salon}</strong></span>`);
+                if (e.club)  infoItems.push(`<span>${t('detail.club.label')} <strong>${e.club}</strong></span>`);
+                if (e.salon) infoItems.push(`<span>${t('detail.salon.label')} <strong>${e.salon}</strong></span>`);
                 const infoHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;font-size:0.9rem;color:var(--color-text-secondary)">${infoItems.join('')}</div>`;
 
                 // List of players registered for THIS edition (phase: 'inscription')
@@ -3293,7 +3293,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         }
                         registrantsHtml += `<tr style="${meStyle}">
                             <td style="color:var(--color-text-secondary)">${i + 1}</td>
-                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
+                            <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ` <span style="color:var(--color-accent);font-size:0.8rem">${t('msg.you')}</span>` : ''}</td>
                             <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                             ${passwordCell}
                             ${actionCell}
@@ -4322,11 +4322,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         };
 
         window.submitPrediction = async function(edId) {
-            if (!currentUser) { alert('Connecte-toi pour prédire !'); return; }
+            if (!currentUser) { alert(t('predictions.login')); return; }
             const s = predState[edId];
-            if (!s || s.finalists.size === 0) { alert('Sélectionne au moins un finaliste !'); return; }
+            if (!s || s.finalists.size === 0) { alert(t('predictions.select')); return; }
             const myPart = data.participants.find(p => p.userId === currentUser.uid);
-            if (!myPart) { alert('Tu dois être inscrit comme joueur pour prédire.'); return; }
+            if (!myPart) { alert(t('predictions.must.reg')); return; }
 
             const existing = data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id);
             const payload = {
@@ -4343,13 +4343,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             } else {
                 await addDoc(collection(db, 'predictions'), payload);
             }
-            alert('Prédiction enregistrée ✅');
+            alert(t('predictions.saved'));
         };
 
         window.calculatePredictionScores = async function(edId) {
             if (!isAdmin) return;
             const finaleRes = data.results.filter(r => r.editionId === edId && r.phase === 'finale');
-            if (finaleRes.length === 0) { alert('Aucun résultat de finale pour calculer les scores.'); return; }
+            if (finaleRes.length === 0) { alert(t('predictions.no.finals')); return; }
 
             const finalistIds = new Set(finaleRes.map(r => r.playerId));
             const top3 = [1,2,3].map(pos => finaleRes.find(r => r.position === pos)?.playerId ?? null);
@@ -4363,7 +4363,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 (pred.top3 || []).forEach((pid, i) => { if (pid && pid === top3[i]) score += 3; });
                 await updateDoc(doc(db, 'predictions', pred.id), { score, scored: true });
             }
-            alert(`Scores calculés pour ${preds.length} prédiction(s) ✅`);
+            alert(t('predictions.calc', {n: preds.length}));
         };
 
         function renderPredForm(edId) {
@@ -4880,7 +4880,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // Export CSV
         window.exportCSV = () => {
             const finales = data.results.filter(r => r.phase === 'finale');
-            if (finales.length === 0) { alert('Aucun résultat de finale à exporter.'); return; }
+            if (finales.length === 0) { alert(t('export.no.finals')); return; }
 
             const stats = {};
             data.participants.forEach(p => { stats[p.id] = { ...p, points: 0, finals: 0, wins: 0, podiums: 0 }; });
