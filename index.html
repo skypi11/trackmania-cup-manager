@@ -264,6 +264,20 @@
         .save-btn:hover { background: #16a34a; }
         body.admin-mode .save-btn { display: inline-block; }
 
+        .lang-toggle {
+            padding: 6px 12px;
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .lang-toggle:hover { border-color: var(--springs-orange); color: var(--springs-orange); }
+
         .account-btn {
             padding: 8px 16px;
             border: 1.5px solid rgba(255,255,255,0.12);
@@ -579,16 +593,17 @@
         <img src="assets/springs-logo.png" alt="Springs Esport" style="height:48px;width:auto;display:block;">
     </div>
     <div class="header-actions">
-        <button class="save-btn" id="saveBtn" onclick="saveContent()">💾 Sauvegarder</button>
-        <button class="account-btn" id="accountBtn" onclick="openAccount()">Mon compte</button>
+        <button class="save-btn" id="saveBtn" onclick="saveContent()" data-i18n="nav.admin.save">💾 Sauvegarder</button>
+        <button class="lang-toggle" onclick="toggleLang()" id="langToggleBtn" title="Switch to English">EN</button>
+        <button class="account-btn" id="accountBtn" onclick="openAccount()" data-i18n="nav.account">Mon compte</button>
     </div>
 </header>
 
-<div class="admin-hint">✏️ Cliquez sur les textes pour les modifier</div>
+<div class="admin-hint" data-i18n="nav.admin.hint">✏️ Cliquez sur les textes pour les modifier</div>
 
 <main class="hero">
     <div class="hero-title">
-        <h1><span class="editable" id="hero-title-pre" contenteditable="false">Choisissez votre</span> <span class="highlight editable" id="hero-title-hl" contenteditable="false">discipline</span></h1>
+        <h1><span class="editable" id="hero-title-pre" contenteditable="false" data-i18n="hero.pre">Choisissez votre</span> <span class="highlight editable" id="hero-title-hl" contenteditable="false" data-i18n="hero.hl">discipline</span></h1>
         <p class="hero-subtitle editable" id="hero-subtitle" contenteditable="false">Springs Monthly Cup — Résultats &amp; Classements</p>
     </div>
 
@@ -599,16 +614,16 @@
             <img src="assets/trackmania.png" alt="Trackmania">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag editable" id="tm-tag" contenteditable="false">Racing</span>
+                <span class="card-tag editable" id="tm-tag" contenteditable="false" data-i18n="tm.tag">Racing</span>
                 <h2 class="card-title">Trackmania</h2>
-                <p class="card-description editable" id="tm-description" contenteditable="false">
+                <p class="card-description editable" id="tm-description" contenteditable="false" data-i18n="tm.description">
                     Springs Monthly Cup — Compétition mensuelle Trackmania ouverte à tous.
                 </p>
                 <div class="card-event">
-                    <div class="event-label">Prochain événement</div>
+                    <div class="event-label" data-i18n="tm.event.label">Prochain événement</div>
                     <div class="event-text editable" id="tm-event" contenteditable="false">Prochainement...</div>
                 </div>
-                <div class="card-btn editable" id="tm-btn" contenteditable="false">Résultats &amp; Classements →</div>
+                <div class="card-btn editable" id="tm-btn" contenteditable="false" data-i18n="tm.btn">Résultats &amp; Classements →</div>
             </div>
         </a>
 
@@ -617,16 +632,16 @@
             <img src="assets/rl.webp" alt="Rocket League">
             <div class="card-overlay"></div>
             <div class="card-content">
-                <span class="card-tag" id="rl-tag">Football / Voiture</span>
+                <span class="card-tag" id="rl-tag" data-i18n="rl.tag">Football / Voiture</span>
                 <h2 class="card-title">Rocket League</h2>
-                <p class="card-description" id="rl-description">
+                <p class="card-description" id="rl-description" data-i18n="rl.description">
                     Springs League Series — Ligue RL bientôt disponible.
                 </p>
                 <div class="card-event">
-                    <div class="event-label">Statut</div>
-                    <div class="event-text" id="rl-event">En construction</div>
+                    <div class="event-label" data-i18n="rl.event.label">Statut</div>
+                    <div class="event-text" id="rl-event" data-i18n="rl.event.wip">En construction</div>
                 </div>
-                <div class="card-btn" id="rl-btn">Bientôt disponible</div>
+                <div class="card-btn" id="rl-btn" data-i18n="rl.btn.soon">Bientôt disponible</div>
             </div>
         </div>
 
@@ -637,15 +652,15 @@
         <div class="join-cta-inner">
             <div class="join-cta-icon">🏆</div>
             <div class="join-cta-text">
-                <h3>Rejoins la compétition</h3>
-                <p>Crée ton profil joueur pour apparaître dans les classements, suivre tes stats et t'inscrire aux prochaines éditions.</p>
+                <h3 data-i18n="cta.title">Rejoins la compétition</h3>
+                <p data-i18n="cta.desc">Crée ton profil joueur pour apparaître dans les classements, suivre tes stats et t'inscrire aux prochaines éditions.</p>
                 <div class="join-cta-steps">
-                    <div class="join-cta-step"><span>🔑</span><span>Connexion Google</span></div>
-                    <div class="join-cta-step"><span>✏️</span><span>Choix du pseudo</span></div>
-                    <div class="join-cta-step"><span>🎮</span><span>Prêt à jouer</span></div>
+                    <div class="join-cta-step"><span>🔑</span><span data-i18n="cta.step1">Connexion Google</span></div>
+                    <div class="join-cta-step"><span>✏️</span><span data-i18n="cta.step2">Choix du pseudo</span></div>
+                    <div class="join-cta-step"><span>🎮</span><span data-i18n="cta.step3">Prêt à jouer</span></div>
                 </div>
             </div>
-            <button class="join-cta-btn" onclick="openAccount()">Créer mon profil →</button>
+            <button class="join-cta-btn" onclick="openAccount()" data-i18n="cta.btn">Créer mon profil →</button>
         </div>
     </div>
 
@@ -657,35 +672,35 @@
 
         <!-- VIEW: Auth — shown when not logged in -->
         <div id="view-auth">
-            <h2 style="margin-bottom:10px">Connexion</h2>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:24px;line-height:1.6">
+            <h2 style="margin-bottom:10px" data-i18n="auth.title">Connexion</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:24px;line-height:1.6" data-i18n="auth.subtitle">
                 Connecte-toi avec Google pour apparaître dans les classements et suivre tes résultats.
             </p>
             <button class="btn-google" id="googleSignInBtn" onclick="handleGoogleSignIn()">
                 <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-                Se connecter avec Google
+                <span data-i18n="auth.google">Se connecter avec Google</span>
             </button>
             <p class="modal-error" id="googleError" style="margin-top:12px"></p>
-            <button type="button" class="btn-secondary" onclick="closeAccount()" style="width:100%;margin-top:10px">Annuler</button>
+            <button type="button" class="btn-secondary" onclick="closeAccount()" style="width:100%;margin-top:10px" data-i18n="auth.cancel">Annuler</button>
         </div>
 
         <!-- VIEW: First-time profile setup -->
         <div id="view-setup" style="display:none">
-            <h2>Complète ton profil</h2>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:20px;line-height:1.6">
+            <h2 data-i18n="profile.setup.title">Complète ton profil</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:20px;line-height:1.6" data-i18n="profile.setup.subtitle">
                 Bienvenue ! Renseigne ton pseudo de jeu pour apparaître dans les classements.
             </p>
             <form id="setupForm" onsubmit="handleSetupSave(event)">
                 <div class="form-group">
-                    <label>Pseudo in-game</label>
-                    <input type="text" id="setupPseudo" required placeholder="Ton pseudo de jeu">
+                    <label data-i18n="profile.pseudo">Pseudo in-game</label>
+                    <input type="text" id="setupPseudo" required data-i18n-placeholder="profile.pseudo.ph" placeholder="Ton pseudo de jeu">
                 </div>
                 <div class="form-group">
-                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
-                    <input type="text" id="setupTeam" placeholder="Ton équipe">
+                    <label><span data-i18n="profile.team">Équipe</span> <span style="color:rgba(255,255,255,0.3);font-weight:400" data-i18n="profile.team.optional">(optionnel)</span></label>
+                    <input type="text" id="setupTeam" data-i18n-placeholder="profile.team.ph" placeholder="Ton équipe">
                 </div>
                 <div class="form-group">
-                    <label>Je joue à</label>
+                    <label data-i18n="profile.games">Je joue à</label>
                     <div class="games-check">
                         <label class="game-check-label">
                             <input type="checkbox" id="setupGameTM" value="trackmania">
@@ -704,7 +719,7 @@
                     </div>
                 </div>
                 <div class="modal-btns">
-                    <button type="submit" class="btn-primary" id="setupSubmitBtn">Enregistrer</button>
+                    <button type="submit" class="btn-primary" id="setupSubmitBtn" data-i18n="profile.save">Enregistrer</button>
                 </div>
                 <p class="modal-error" id="setupError"></p>
             </form>
@@ -713,14 +728,14 @@
 
         <!-- VIEW: Player profile — shown when logged in as player -->
         <div id="view-profile" style="display:none">
-            <h2>Mon profil</h2>
+            <h2 data-i18n="profile.title">Mon profil</h2>
             <form id="profileForm" onsubmit="handleProfileSave(event)">
                 <div class="form-group">
-                    <label>Équipe <span style="color:rgba(255,255,255,0.3);font-weight:400">(optionnel)</span></label>
+                    <label><span data-i18n="profile.team">Équipe</span> <span style="color:rgba(255,255,255,0.3);font-weight:400" data-i18n="profile.team.optional">(optionnel)</span></label>
                     <input type="text" id="profTeam">
                 </div>
                 <div class="form-group">
-                    <label>Je joue à</label>
+                    <label data-i18n="profile.games">Je joue à</label>
                     <div class="games-check">
                         <label class="game-check-label">
                             <input type="checkbox" id="profGameTM" onchange="togglePseudoFields()">
@@ -739,42 +754,41 @@
                     </div>
                 </div>
                 <div id="profPseudoTMGroup" class="form-group" style="display:none">
-                    <label>Pseudo Trackmania</label>
-                    <input type="text" id="profPseudoTM" placeholder="Votre pseudo Trackmania">
+                    <label data-i18n="profile.pseudo.tm">Pseudo Trackmania</label>
+                    <input type="text" id="profPseudoTM" data-i18n-placeholder="profile.pseudo.tm.ph" placeholder="Votre pseudo Trackmania">
                 </div>
                 <div id="profPseudoRLGroup" class="form-group" style="display:none">
-                    <label>Pseudo Rocket League</label>
-                    <input type="text" id="profPseudoRL" placeholder="Votre pseudo Rocket League">
+                    <label data-i18n="profile.pseudo.rl">Pseudo Rocket League</label>
+                    <input type="text" id="profPseudoRL" data-i18n-placeholder="profile.pseudo.rl.ph" placeholder="Votre pseudo Rocket League">
                 </div>
                 <p class="form-note" id="profEmail"></p>
                 <div class="modal-btns">
-                    <button type="submit" class="btn-primary" id="profileSubmitBtn">Enregistrer</button>
-                    <button type="button" class="btn-secondary" style="width:auto;flex:none;margin-top:0" onclick="closeAccount()">Fermer</button>
+                    <button type="submit" class="btn-primary" id="profileSubmitBtn" data-i18n="profile.save">Enregistrer</button>
+                    <button type="button" class="btn-secondary" style="width:auto;flex:none;margin-top:0" onclick="closeAccount()" data-i18n="profile.close">Fermer</button>
                 </div>
                 <p class="modal-error" id="profileError"></p>
-                <p class="modal-success" id="profileSuccess">✅ Profil mis à jour !</p>
+                <p class="modal-success" id="profileSuccess" data-i18n="profile.saved">✅ Profil mis à jour !</p>
             </form>
             <hr class="modal-divider">
             <div class="modal-footer-row">
-                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)">Compte joueur</span>
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)" data-i18n="profile.account">Compte joueur</span>
                 <button class="btn-logout" onclick="handleLogout()">Se déconnecter</button>
             </div>
         </div>
 
         <!-- VIEW: Admin — shown when logged in as admin -->
         <div id="view-admin" style="display:none">
-            <h2>🛡️ Mode Admin</h2>
+            <h2 data-i18n="admin.title">🛡️ Mode Admin</h2>
             <div class="admin-info-box">
-                <p>Mode administrateur activé.<br>
-                Cliquez sur les textes des cartes pour les modifier, puis sauvegardez.</p>
+                <p data-i18n="admin.desc">Mode administrateur activé.<br>Cliquez sur les textes des cartes pour les modifier, puis sauvegardez.</p>
             </div>
             <div class="modal-btns" style="margin-top:0">
-                <button type="button" class="btn-primary" onclick="openAdminProfile()">👤 Mon profil joueur</button>
-                <button type="button" class="btn-secondary" style="width:auto;flex:none;margin-top:0" onclick="closeAccount()">Fermer</button>
+                <button type="button" class="btn-primary" onclick="openAdminProfile()" data-i18n="admin.player.link">👤 Mon profil joueur</button>
+                <button type="button" class="btn-secondary" style="width:auto;flex:none;margin-top:0" onclick="closeAccount()" data-i18n="profile.close">Fermer</button>
             </div>
             <hr class="modal-divider">
             <div class="modal-footer-row">
-                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)">Compte administrateur</span>
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.25)" data-i18n="admin.account">Compte administrateur</span>
                 <button class="btn-logout" onclick="handleLogout()">Se déconnecter</button>
             </div>
         </div>
@@ -793,6 +807,7 @@
         signOut, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
     import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
+    import { t, setLang, getLang, initLang } from "./shared/i18n.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
@@ -811,10 +826,69 @@
     const provider = new GoogleAuthProvider();
     let currentUser = null;
     let isAdminUser = false;
-    let hasProfile  = false; // true once user has saved their first-time profile
-    let authReady = false; // true once Firebase has determined the auth state
+    let hasProfile  = false;
+    let authReady = false;
 
     const FIELDS = ['hero-title-pre', 'hero-title-hl', 'hero-subtitle', 'tm-tag', 'tm-description', 'tm-event', 'tm-btn', 'rl-tag', 'rl-description', 'rl-event', 'rl-btn'];
+
+    // ── i18n ──────────────────────────────────────────────────────────────────
+
+    function applyI18n() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const val = t(key);
+            if (val) el.textContent = val;
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const val = t(key);
+            if (val) el.placeholder = val;
+        });
+        // Update lang toggle button
+        const lang = getLang();
+        const btn = document.getElementById('langToggleBtn');
+        if (btn) {
+            btn.textContent = lang === 'fr' ? 'EN' : 'FR';
+            btn.title = lang === 'fr' ? 'Switch to English' : 'Passer en français';
+        }
+        // Update html lang attribute
+        document.documentElement.lang = lang;
+        // Re-render dynamic content
+        renderDynamicContent();
+        // Keep editable fields in sync with admin mode (don't overwrite Firestore content)
+    }
+
+    function renderDynamicContent() {
+        // Re-render the tm-event default text if it hasn't been loaded from Firestore
+        const tmEvent = document.getElementById('tm-event');
+        if (tmEvent && tmEvent.getAttribute('data-default') === 'true') {
+            tmEvent.textContent = t('tm.event.default');
+        }
+        // Update account btn if deactivated (guest)
+        if (!currentUser) {
+            const accountBtn = document.getElementById('accountBtn');
+            if (accountBtn && !accountBtn.classList.contains('player-active') && !accountBtn.classList.contains('admin-active')) {
+                accountBtn.textContent = t('nav.account');
+            }
+        }
+        // Update save btn
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn && saveBtn.textContent !== t('msg.saved')) {
+            saveBtn.textContent = t('nav.admin.save');
+        }
+        // Update admin hint
+        const adminHint = document.querySelector('.admin-hint');
+        if (adminHint) adminHint.textContent = t('nav.admin.hint');
+    }
+
+    window.toggleLang = () => {
+        const newLang = getLang() === 'fr' ? 'en' : 'fr';
+        setLang(newLang);
+        applyI18n();
+    };
+
+    initLang();
+    applyI18n();
 
     // ── Site content ──────────────────────────────────────────────────────────
 
@@ -823,9 +897,24 @@
             const snap = await getDoc(doc(db, 'siteContent', 'hub'));
             if (snap.exists()) {
                 const d = snap.data();
-                FIELDS.forEach(id => { if (d[id]) document.getElementById(id).textContent = d[id]; });
+                FIELDS.forEach(id => {
+                    if (d[id]) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.textContent = d[id];
+                            el.removeAttribute('data-default');
+                        }
+                    }
+                });
+            } else {
+                // Mark tm-event as using default value
+                const tmEvent = document.getElementById('tm-event');
+                if (tmEvent) tmEvent.setAttribute('data-default', 'true');
             }
-        } catch(e) { /* default content shown */ }
+        } catch(e) {
+            const tmEvent = document.getElementById('tm-event');
+            if (tmEvent) tmEvent.setAttribute('data-default', 'true');
+        }
     }
     loadContent();
 
@@ -834,8 +923,8 @@
         FIELDS.forEach(id => { data[id] = document.getElementById(id).textContent.trim(); });
         await setDoc(doc(db, 'siteContent', 'hub'), data);
         const btn = document.getElementById('saveBtn');
-        btn.textContent = '✅ Sauvegardé !';
-        setTimeout(() => btn.textContent = '💾 Sauvegarder', 2000);
+        btn.textContent = t('msg.saved');
+        setTimeout(() => { btn.textContent = t('nav.admin.save'); }, 2000);
     };
 
     // ── Auth state ────────────────────────────────────────────────────────────
@@ -900,7 +989,7 @@
         activateAnyUserUI();
         document.body.classList.add('admin-mode');
         const btn = document.getElementById('accountBtn');
-        btn.textContent = '🛡️ Admin';
+        btn.textContent = t('admin.title');
         btn.className = 'account-btn admin-active';
         document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
     }
@@ -917,7 +1006,7 @@
         document.body.classList.remove('admin-mode');
         document.body.classList.add('guest-mode');
         const btn = document.getElementById('accountBtn');
-        btn.textContent = 'Mon compte';
+        btn.textContent = t('nav.account');
         btn.className = 'account-btn';
         document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
     }
@@ -969,18 +1058,18 @@
 
     window.handleGoogleSignIn = async () => {
         const btn = document.getElementById('googleSignInBtn');
-        btn.disabled = true; btn.textContent = 'Connexion...';
+        btn.disabled = true; btn.textContent = t('auth.connecting');
         try {
             await signInWithPopup(auth, provider);
             // onAuthStateChanged prend le relais
         } catch(err) {
             if (err.code !== 'auth/popup-closed-by-user') {
                 const el = document.getElementById('googleError');
-                el.textContent = 'Erreur de connexion. Réessaye.';
+                el.textContent = t('auth.error');
                 el.style.display = 'block';
             }
             btn.disabled = false;
-            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Se connecter avec Google`;
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> ${t('auth.google')}`;
         }
     };
 
@@ -1009,10 +1098,10 @@
             activatePlayerUI(pseudo);
             closeAccount();
         } catch {
-            document.getElementById('setupError').textContent = 'Erreur. Réessaye.';
+            document.getElementById('setupError').textContent = t('msg.error');
             document.getElementById('setupError').style.display = 'block';
         } finally {
-            btn.disabled = false; btn.textContent = 'Enregistrer';
+            btn.disabled = false; btn.textContent = t('profile.save');
         }
     };
 
@@ -1032,7 +1121,7 @@
             document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
             document.getElementById('profPseudoTM').value = d.pseudoTM || d.pseudo || '';
             document.getElementById('profPseudoRL').value = d.pseudoRL || '';
-            document.getElementById('profEmail').textContent = `Email : ${currentUser.email}`;
+            document.getElementById('profEmail').textContent = `${t('profile.email')} ${currentUser.email}`;
             togglePseudoFields();
         }).catch(() => {});
     }
@@ -1056,14 +1145,15 @@
 
             activatePlayerUI(pseudo || currentUser.displayName);
 
+            document.getElementById('profileSuccess').textContent = t('profile.saved');
             document.getElementById('profileSuccess').style.display = 'block';
             document.getElementById('profileError').style.display = 'none';
             setTimeout(() => closeAccount(), 1500);
         } catch {
-            document.getElementById('profileError').textContent = 'Erreur lors de la sauvegarde.';
+            document.getElementById('profileError').textContent = t('profile.error');
             document.getElementById('profileError').style.display = 'block';
         } finally {
-            btn.disabled = false; btn.textContent = 'Enregistrer';
+            btn.disabled = false; btn.textContent = t('profile.save');
         }
     };
 
