@@ -1249,7 +1249,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <h2>👥 Joueurs inscrits</h2>
                 <div class="search-wrapper">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="searchPlayers" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
+                    <input type="text" id="searchPlayers" data-i18n-placeholder="players.search" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
                 </div>
                 <div id="participantsList"></div>
             </div>
@@ -4913,6 +4913,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             displayHallOfFame();
             displayNextEditionBanner();
             if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
+            if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
         };
         window.toggleLang = () => {
             const newLang = getLang() === 'fr' ? 'en' : 'fr';

@@ -228,6 +228,12 @@ const translations = {
     'rankings.in.ranking':    'au classement',
     'rankings.not.in':        "Tu n'apparais pas encore au classement — participe à une finale !",
     'rankings.alltime':       'All-time',
+    'rankings.col.pos':       'Pos.',
+    'rankings.col.player':    'Joueur',
+    'rankings.col.team':      'Équipe',
+    'rankings.col.pts':       'Points',
+    'rankings.col.editions':  'Éditions',
+    'rankings.col.podiums':   'Podiums',
     'rankings.col.wins':      'Victoires',
     'rankings.col.best':      'Meilleur',
     'rankings.new':           'NEW',
@@ -247,6 +253,10 @@ const translations = {
 
     // ── Players ───────────────────────────────────────────────────────────
     'players.empty':          'Aucun joueur trouvé',
+    'players.search':         'Rechercher un joueur...',
+    'players.col.player':     'Joueur',
+    'players.col.team':       'Équipe',
+    'players.col.pts':        'Points',
 
     // ── Player profile ────────────────────────────────────────────────────
     'player.pts':             'Points',
@@ -552,6 +562,12 @@ const translations = {
     'rankings.in.ranking':    'in the rankings',
     'rankings.not.in':        "You don't appear in the rankings yet — join a final!",
     'rankings.alltime':       'All-time',
+    'rankings.col.pos':       'Pos.',
+    'rankings.col.player':    'Player',
+    'rankings.col.team':      'Team',
+    'rankings.col.pts':       'Points',
+    'rankings.col.editions':  'Editions',
+    'rankings.col.podiums':   'Podiums',
     'rankings.col.wins':      'Wins',
     'rankings.col.best':      'Best',
     'rankings.new':           'NEW',
@@ -571,6 +587,10 @@ const translations = {
 
     // ── Players ───────────────────────────────────────────────────────────
     'players.empty':          'No players found',
+    'players.search':         'Search for a player...',
+    'players.col.player':     'Player',
+    'players.col.team':       'Team',
+    'players.col.pts':        'Points',
 
     // ── Player profile ────────────────────────────────────────────────────
     'player.pts':             'Points',
