@@ -1609,6 +1609,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         import { t, setLang, getLang, initLang } from '../shared/i18n.js';
         import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
+
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'),
+            isTokenAutoRefreshEnabled: true
+        });
 
         const DISCORD_CLIENT_ID = '1483592495215673407';
         const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';
