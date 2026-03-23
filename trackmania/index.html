@@ -87,23 +87,18 @@
         .account-btn.player-active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.18); color: #fff; }
 
         .lang-toggle {
-            position: fixed;
-            bottom: 20px; right: 20px;
-            z-index: 999;
-            padding: 8px 14px;
+            padding: 6px 12px;
             border: 1.5px solid rgba(255,255,255,0.2);
-            border-radius: 20px;
-            background: rgba(30,30,30,0.92);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            font-size: 0.82rem;
-            font-weight: 700;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.8);
+            font-size: 0.78rem;
+            font-weight: 800;
             cursor: pointer;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             transition: all 0.2s;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         }
-        .lang-toggle:hover { border-color: var(--springs-orange); color: var(--springs-orange); transform: translateY(-2px); }
+        .lang-toggle:hover { border-color: var(--springs-orange); color: var(--springs-orange); background: rgba(255,255,255,0.1); }
 
         /* Hero */
         .hero {
@@ -384,7 +379,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:8px">
         <button class="save-btn" id="saveBtn" onclick="saveContent()" data-i18n="nav.admin.save">💾 Sauvegarder</button>
-        <button class="lang-toggle" onclick="toggleLang()" id="langToggleBtn" title="Switch to English">🇬🇧 EN</button>
+        <button class="lang-toggle" onclick="toggleLang()" id="langToggleBtn" title="Switch to English">EN</button>
         <button class="account-btn" id="accountBtn" onclick="openAccount()" data-i18n="nav.account">Mon compte</button>
     </div>
 </header>

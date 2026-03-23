@@ -352,21 +352,16 @@ body.admin-mode .admin-only { display: block; }
 
 /* Lang toggle */
 .lang-toggle {
-    position: fixed;
-    bottom: 20px; right: 20px;
-    z-index: 999;
-    padding: 8px 14px;
+    padding: 4px 10px;
     border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    background: rgba(30,30,30,0.92);
-    backdrop-filter: blur(8px);
-    color: #fff;
-    font-size: 0.82rem; font-weight: 700;
-    cursor: pointer; letter-spacing: 0.5px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    font-size: 0.72rem; font-weight: 800;
+    cursor: pointer; letter-spacing: 1px;
     transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.lang-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); transform: translateY(-2px); }
+.lang-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); background: rgba(255,255,255,0.1); }
 
 /* Badge point on sidebar player button */
 .sidebar-user-btn { position: relative; }
@@ -1032,7 +1027,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <div class="app-wrapper">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <a href="index.html" class="sidebar-back-link">← Retour</a>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <a href="index.html" class="sidebar-back-link">← Retour</a>
+            <button class="lang-toggle" onclick="window.toggleLang()" id="langToggleBtn">EN</button>
+          </div>
           <div class="sidebar-brand">
             <img src="../assets/springs-logo.png" style="height:38px">
             <div>
@@ -1065,7 +1063,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="sidebar-user-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
           <button class="sidebar-user-btn" id="playerBtn" onclick="openPlayerAccount()" style="display:none">👤 ...</button>
           <button class="sidebar-user-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
-          <button class="lang-toggle" onclick="window.toggleLang()" id="langToggleBtn" title="Switch to English">🇬🇧 EN</button>
         </div>
       </aside>
 
