@@ -1608,6 +1608,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <script type="module">
         import { app, db, auth } from '../shared/firebase-config.js';
         import { t, setLang, getLang, initLang } from '../shared/i18n.js';
+        const dateLang = () => getLang() === 'en' ? 'en-GB' : 'fr-FR';
+        const tTeam = team => (team && team !== 'Sans équipe') ? team : t('player.no.team');
         import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
         import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
@@ -1920,7 +1922,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </a>
                 </div>`;
             } else if (nextEdition) {
-                const dateStr = new Date(nextEdition.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                const dateStr = new Date(nextEdition.date).toLocaleDateString(dateLang(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                 const timeStr = nextEdition.time ? ` à ${nextEdition.time}` : '';
                 const countdown = getCountdown(nextEdition.date, nextEdition.time);
                 const isRegistered = currentPlayer && data.results.some(r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
@@ -1956,11 +1958,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
                     const player = winner ? data.participants.find(p => p.id === winner.playerId) : null;
                     if (!player) return '';
-                    const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                    const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { month: 'long', year: 'numeric' });
                     return `<div class="home-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
                         <div class="home-champion-edition">${e.name}</div>
                         <div class="home-champion-winner">🥇 ${pName(player)}</div>
-                        <div class="home-champion-meta">${dateStr}${player.team ? ' · ' + player.team : ''}</div>
+                        <div class="home-champion-meta">${dateStr}${player.team && player.team !== 'Sans équipe' ? ' · ' + player.team : ''}</div>
                     </div>`;
                 }).join('');
                 championsHtml = `<div class="home-champions">
@@ -2040,7 +2042,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             <div onclick="openPlayerProfile('${c.player.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:background 0.18s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
                                 <span style="font-size:1.4rem;width:30px;text-align:center;flex-shrink:0">${rankMedals[i]}</span>
                                 <span style="font-weight:800;flex:1">${pName(c.player)}</span>
-                                <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team || ''}</span>
+                                <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team && c.player.team !== 'Sans équipe' ? c.player.team : ''}</span>
                                 <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                                     <span class="hof-wins-badge">🏆 ${c.wins} ${t('hof.wins')}</span>
                                     <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">🎯 ${c.podiums} ${t('hof.podiums')}</span>
@@ -2135,7 +2137,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const p3 = finaleResults.find(r => r.editionId === e.id && r.position === 3);
                     const player2 = p2 ? data.participants.find(p => p.id === p2.playerId) : null;
                     const player3 = p3 ? data.participants.find(p => p.id === p3.playerId) : null;
-                    const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                    const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' });
                     return `<div class="hof-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
                         <div class="hof-trophy">🏆</div>
                         <div class="hof-info">
@@ -2505,7 +2507,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
                 html += `<tr>
                     <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</td>
-                    <td style="color:var(--color-text-secondary)">${p.team}</td>
+                    <td style="color:var(--color-text-secondary)">${tTeam(p.team)}</td>
                     <td>${quals}</td>
                     <td>${finals}</td>
                     ${del}
@@ -2559,7 +2561,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (upcoming.length === 0) { banner.style.display = 'none'; return; }
             const next = upcoming[0];
 
-            const dateStr = new Date(next.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const dateStr = new Date(next.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
             const cd = getCountdown(next.date, next.time);
 
             const statusMap = {
@@ -2763,7 +2765,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     ? t('editions.status.done')
                     : (WORKFLOW_LABELS[e.status] || t('editions.status.open'));
 
-                const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
                 const cardTime = e.time ? ` · ${e.time}` : '';
 
                 // Player badge
@@ -2924,7 +2926,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const sorted = [...history].sort((a, b) => new Date(a.at) - new Date(b.at));
             const items = sorted.map(h => {
                 const d = new Date(h.at);
-                const dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                const dateLabel = d.toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
                 const timeLabel = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                 return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--color-text-secondary)">
                     <span>${STATUS_LOG_LABELS[h.status] || h.status}</span>
@@ -2946,7 +2948,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const isPast = new Date(e.date) < today || e.status === 'terminee' || e.status === 'en_cours';
-            const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
 
             const grid = document.getElementById('editionsList');
             const detail = document.getElementById('editionDetail');
@@ -3125,7 +3127,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                     <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
                                     <div>${playerBadgesHtml(player.id)}</div>
                                     ${viesHtml}
-                                    <div class="podium-team">${player.team}</div>
+                                    <div class="podium-team">${tTeam(player.team)}</div>
                                     <div class="podium-pts">+${getPoints(r.position)} pts</div>
                                 </div>
                                 <div class="podium-block podium-block-${r.position}">${r.position}</div>
@@ -3161,7 +3163,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         html += `<tr>
                             <td><span class="badge ${badgeClass}">${r.position}</span></td>
                             <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</td>
-                            <td style="color:var(--color-text-secondary)">${player.team}</td>
+                            <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                             <td style="color:#ef4444;font-size:0.85rem">${vies}</td>
                             <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
                             ${del}
@@ -3292,7 +3294,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         registrantsHtml += `<tr style="${meStyle}">
                             <td style="color:var(--color-text-secondary)">${i + 1}</td>
                             <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ' <span style="color:var(--color-accent);font-size:0.8rem">✓ vous</span>' : ''}</td>
-                            <td style="color:var(--color-text-secondary)">${player.team}</td>
+                            <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                             ${passwordCell}
                             ${actionCell}
                         </tr>`;
@@ -3615,7 +3617,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <div class="player-card-avatar">${avatar}</div>
                         <div style="flex:1;min-width:0">
                             <div style="font-size:1.4rem;font-weight:900;letter-spacing:-0.5px;line-height:1.1">${pName(player)}</div>
-                            <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-top:3px">${player.team || 'Sans équipe'}</div>
+                            <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-top:3px">${tTeam(player.team)}</div>
                             ${wins > 0 ? `<span class="hof-wins-badge" style="display:inline-block;margin-top:7px">🏆 ${wins} ${t('hof.wins')}</span>` : ''}
                             ${badgePreviewHtml}
                         </div>
@@ -3938,7 +3940,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             // Team
             ctx.fillStyle = '#64748b';
             ctx.font = `15px Arial`;
-            ctx.fillText(player.team || 'Sans équipe', 132, 120);
+            ctx.fillText(tTeam(player.team), 132, 120);
 
             // Wins badge (text only, no emoji for reliability)
             if (wins > 0) {
@@ -4116,7 +4118,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             ctx.fillText(edition.name, W / 2, 60);
 
             // Date
-            const dateStr = new Date(edition.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const dateStr = new Date(edition.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
             ctx.fillStyle = '#64748b';
             ctx.font = `13px Arial`;
             ctx.fillText(dateStr, W / 2, 78);
@@ -4246,7 +4248,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             editions.forEach(e => {
                 const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
                 const winnerPlayer = winner ? data.participants.find(p => p.id === winner.playerId) : null;
-                const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
                 let mapsHtml = '';
                 for (let n = 1; n <= 7; n++) {
@@ -4450,7 +4452,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (upcoming.length > 0) {
                 html += '<div class="card"><h2>🔮 Prédis l\'édition suivante</h2>';
                 upcoming.forEach(e => {
-                    const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                    const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
                     const inscribedIds = new Set(data.results
                         .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
                         .map(r => r.playerId));
@@ -4494,7 +4496,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     }
 
                     const ranked = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
-                    const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '';
+                    const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' }) : '';
                     const adminCalc = isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">🔄 Recalculer</button>` : '';
                     html += `<div class="pred-edition-card">
                         <div class="pred-edition-header">
@@ -4616,7 +4618,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div style="flex:1;min-width:0">
                         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">${t('rankings.season.leader')} ${selectedRankingSeason}</div>
                         <div style="font-size:1.35rem;font-weight:900;letter-spacing:-0.5px" class="player-name-link" onclick="openPlayerProfile('${champ.player.id}')">${pName(champ.player)}</div>
-                        <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:2px">${champ.player.team || 'Sans équipe'}</div>
+                        <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:2px">${tTeam(champ.player.team)}</div>
                     </div>
                     <div style="display:flex;gap:20px;text-align:center">
                         <div><div style="font-size:1.4rem;font-weight:900;color:#fbbf24">${champ.points}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">${t('rankings.pts')}</div></div>

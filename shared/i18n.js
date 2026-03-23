@@ -253,6 +253,7 @@ const translations = {
 
     // ── Players ───────────────────────────────────────────────────────────
     'players.empty':          'Aucun joueur trouvé',
+    'player.no.team':         'Sans équipe',
     'players.search':         'Rechercher un joueur...',
     'players.col.player':     'Joueur',
     'players.col.team':       'Équipe',
@@ -587,6 +588,7 @@ const translations = {
 
     // ── Players ───────────────────────────────────────────────────────────
     'players.empty':          'No players found',
+    'player.no.team':         'No team',
     'players.search':         'Search for a player...',
     'players.col.player':     'Player',
     'players.col.team':       'Team',
