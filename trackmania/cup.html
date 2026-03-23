@@ -350,6 +350,20 @@ body.admin-mode .admin-only { display: block; }
 }
 .discord-banner-close:hover { color: rgba(255,255,255,0.5); }
 
+/* Lang toggle */
+.lang-toggle {
+    width: 100%; margin-top: 6px;
+    padding: 7px 12px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 1px;
+    transition: all 0.2s;
+}
+.lang-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
 /* Badge point on sidebar player button */
 .sidebar-user-btn { position: relative; }
 .discord-badge-dot {
@@ -1024,15 +1038,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           </div>
         </div>
         <nav class="sidebar-nav">
-          <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label">Accueil</span></button>
-          <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label">Éditions</span></button>
-          <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label">Classement</span></button>
-          <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label">Maps</span></button>
-          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label">Prédictions</span></button>
-          <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label">Joueurs</span></button>
-          <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label">Stats</span></button>
-          <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label">Hall of Fame</span></button>
-          <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label">Personnalisation</span></button>
+          <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label" data-i18n="nav.home">Accueil</span></button>
+          <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label" data-i18n="nav.editions">Éditions</span></button>
+          <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label" data-i18n="nav.rankings">Classement</span></button>
+          <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav.maps">Maps</span></button>
+          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label" data-i18n="nav.predictions">Prédictions</span></button>
+          <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label" data-i18n="nav.players">Joueurs</span></button>
+          <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav.stats">Stats</span></button>
+          <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label" data-i18n="nav.hof">Hall of Fame</span></button>
+          <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
         </nav>
         <div class="sidebar-footer">
           <a id="sidebarTwitchBtn" href="https://www.twitch.tv/springsesport" target="_blank" rel="noopener" class="sidebar-twitch-btn">
@@ -1047,6 +1061,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="sidebar-user-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
           <button class="sidebar-user-btn" id="playerBtn" onclick="openPlayerAccount()" style="display:none">👤 ...</button>
           <button class="sidebar-user-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
+          <button class="lang-toggle" onclick="window.toggleLang()" title="Switch to English">EN</button>
         </div>
       </aside>
 
@@ -1591,9 +1606,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
     <script type="module">
         import { app, db, auth } from '../shared/firebase-config.js';
+        import { t, setLang, getLang, initLang } from '../shared/i18n.js';
         import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
 
         const DISCORD_CLIENT_ID = '1483592495215673407';
         const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';
@@ -1606,11 +1621,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const _state = _hashParams.get('state') || '';
             history.replaceState(null, '', window.location.pathname + (_state ? '?' + _state : window.location.search));
         }
-
-        initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'),
-            isTokenAutoRefreshEnabled: true
-        });
 
         // Cup configuration from URL parameter
         const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
@@ -1716,7 +1726,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 if (status) { status.style.display = ''; setTimeout(() => status.style.display = 'none', 3000); }
             } catch(err) {
                 console.error('Save config error:', err);
-                showToast('⚠️ Erreur lors de la sauvegarde');
+                showToast(t('msg.save.error'));
             }
         };
 
@@ -1752,7 +1762,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const res = await fetch('https://discord.com/api/users/@me', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                if (!res.ok) { showToast('⚠️ Erreur Discord, réessaie.'); return; }
+                if (!res.ok) { showToast(t('msg.error')); return; }
                 const user = await res.json();
                 const player = data.participants.find(p => p.userId === currentUser?.uid);
                 if (player) {
@@ -1763,11 +1773,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     showToast(`✅ Discord lié : ${user.global_name || user.username}`);
                     openPlayerProfile(player.id);
                 } else {
-                    showToast('⚠️ Crée ton profil joueur d\'abord !');
+                    showToast(t('msg.error'));
                 }
             } catch(e) {
                 console.error('Discord OAuth error:', e);
-                showToast('⚠️ Erreur lors de la liaison Discord');
+                showToast(t('msg.error'));
             }
         }
 
@@ -1817,9 +1827,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         }
 
         window.unlinkDiscord = async (playerId) => {
-            if (!confirm('Délier ton compte Discord ?')) return;
+            if (!confirm(t('msg.confirm.unlink.discord'))) return;
             await updateDoc(doc(db, 'participants', playerId), { discordId: '', discordUsername: '' });
-            showToast('Discord délié.');
+            showToast(t('discord.unlinked'));
             openPlayerProfile(playerId);
         };
 
@@ -1856,17 +1866,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             try {
                 const discordSnap = await getDoc(doc(db, 'siteContent', 'discord'));
                 const webhookUrl = discordSnap.data()?.webhookUrl;
-                if (!webhookUrl) { showToast('⚠️ Webhook Discord non configuré dans Firestore !'); return; }
+                if (!webhookUrl) { showToast(t('admin.discord.nowebhook')); return; }
                 const res = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content, username: 'Springs Monthly Cup' })
                 });
-                if (res.ok) { showToast('✅ Notification envoyée sur Discord !'); closeDiscordNotifyModal(); }
-                else showToast('⚠️ Erreur lors de l\'envoi');
+                if (res.ok) { showToast(t('admin.discord.ok')); closeDiscordNotifyModal(); }
+                else showToast(t('admin.discord.error'));
             } catch(err) {
                 console.error('Discord notify error:', err);
-                showToast('⚠️ Erreur lors de l\'envoi');
+                showToast(t('admin.discord.error'));
             }
         };
 
@@ -1892,14 +1902,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 featuredHtml = `<div class="home-event-card live" onclick="showSection('editions');openEditionDetail('${liveEdition.id}')">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
                         <span class="live-dot" style="width:8px;height:8px"></span>
-                        <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#fbbf24">En direct maintenant</span>
+                        <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#fbbf24">${t('detail.live.twitch')}</span>
                     </div>
                     <div style="font-size:1.2rem;font-weight:800;margin-bottom:14px">${liveEdition.name}</div>
                     <a href="${siteConfig.twitchUrl}" target="_blank" rel="noopener"
                        onclick="event.stopPropagation()"
                        style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#9146ff,#7b2fff);color:#fff;font-weight:700;font-size:0.88rem">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
-                        Regarder sur Twitch
+                        ${t('detail.watch.twitch')}
                     </a>
                 </div>`;
             } else if (nextEdition) {
@@ -1909,12 +1919,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const isRegistered = currentPlayer && data.results.some(r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
                 let ctaHtml = '';
                 if (nextEdition.status === 'inscriptions') {
-                    if (!currentUser) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();openAuthModal()" style="margin-top:18px">🔑 Se connecter pour s'inscrire</button>`;
-                    else if (isRegistered) ctaHtml = `<div class="registered-badge" style="margin-top:16px">✓ Vous êtes inscrit</div>`;
-                    else if (currentPlayer) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')" style="margin-top:18px">S'inscrire à cette édition</button>`;
+                    if (!currentUser) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();openAuthModal()" style="margin-top:18px">${t('editions.login.to.reg')}</button>`;
+                    else if (isRegistered) ctaHtml = `<div class="registered-badge" style="margin-top:16px">${t('editions.already.reg')}</div>`;
+                    else if (currentPlayer) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')" style="margin-top:18px">${t('editions.register.btn')}</button>`;
                 }
                 featuredHtml = `<div class="home-event-card" onclick="showSection('editions');openEditionDetail('${nextEdition.id}')">
-                    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-warning);margin-bottom:12px">Prochain événement</div>
+                    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-warning);margin-bottom:12px">${t('home.next.label')}</div>
                     <div style="font-size:1.2rem;font-weight:800;margin-bottom:10px">${nextEdition.name}</div>
                     <div style="font-size:0.87rem;color:rgba(255,255,255,0.4);margin-bottom:10px">📅 ${dateStr}${timeStr}</div>
                     ${countdown ? `<span class="event-countdown-pill">⏱ ${countdown}</span>` : ''}
@@ -1923,7 +1933,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             } else {
                 featuredHtml = `<div class="home-event-card" style="text-align:center;padding:40px 24px;cursor:default">
                     <div style="font-size:2rem;margin-bottom:12px">🏁</div>
-                    <div style="color:rgba(255,255,255,0.3);font-size:0.9rem">Aucun événement à venir pour le moment</div>
+                    <div style="color:rgba(255,255,255,0.3);font-size:0.9rem">${t('home.no.event')}</div>
                 </div>`;
             }
 
@@ -1947,7 +1957,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>`;
                 }).join('');
                 championsHtml = `<div class="home-champions">
-                    <div class="home-champions-title">Derniers champions</div>
+                    <div class="home-champions-title">${t('home.champions')}</div>
                     <div class="home-champions-grid">${cards}</div>
                 </div>`;
             }
@@ -1956,15 +1966,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <div style="background:linear-gradient(135deg,rgba(0,0,0,0.18),rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:18px;margin-bottom:20px">
                     <div style="font-size:2rem;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(255,255,255,0.15))">🎮</div>
                     <div style="flex:1">
-                        <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-accent);margin-bottom:4px">Rejoins la compétition</div>
-                        <div style="font-size:0.83rem;color:var(--color-text-secondary);line-height:1.5">Connecte-toi pour apparaître dans les classements, suivre tes stats et t'inscrire aux prochaines éditions.</div>
+                        <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-accent);margin-bottom:4px">${t('cta.title')}</div>
+                        <div style="font-size:0.83rem;color:var(--color-text-secondary);line-height:1.5">${t('cta.desc')}</div>
                         <div style="display:flex;gap:16px;margin-top:8px">
-                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🔑 Connexion Google</div>
-                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">✏️ Choix du pseudo</div>
-                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🏆 Prêt à jouer</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🔑 ${t('cta.step1')}</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">✏️ ${t('cta.step2')}</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">🏆 ${t('cta.step3')}</div>
                         </div>
                     </div>
-                    <button onclick="openAuthModal()" style="flex-shrink:0;background:var(--color-accent);color:#000;border:none;border-radius:10px;padding:12px 22px;font-weight:800;font-size:0.85rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Créer mon profil →</button>
+                    <button onclick="openAuthModal()" style="flex-shrink:0;background:var(--color-accent);color:#000;border:none;border-radius:10px;padding:12px 22px;font-weight:800;font-size:0.85rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${t('cta.btn')}</button>
                 </div>` : '';
 
             container.innerHTML = `
@@ -1976,9 +1986,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </div>
                 ${guestCtaHtml}
                 <div class="home-stats">
-                    <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">Éditions</div></div>
-                    <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">Joueurs</div></div>
-                    <div class="home-stat"><div class="home-stat-value">${totalParticipations}</div><div class="home-stat-label">Participations</div></div>
+                    <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">${t('home.stat.editions')}</div></div>
+                    <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">${t('home.stat.players')}</div></div>
+                    <div class="home-stat"><div class="home-stat-value">${totalParticipations}</div><div class="home-stat-label">${t('home.stat.participations')}</div></div>
                 </div>
                 ${championsHtml}`;
         }
@@ -1994,7 +2004,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (editionsWithWinner.length === 0) {
-                container.innerHTML = `<div class="empty-state" style="margin-top:40px"><span class="empty-state-icon">🏅</span><p>Aucun champion enregistré pour le moment</p></div>`;
+                container.innerHTML = `<div class="empty-state" style="margin-top:40px"><span class="empty-state-icon">🏅</span><p>${t('hof.empty')}</p></div>`;
                 return;
             }
 
@@ -2017,7 +2027,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const topChampions = [...allStats].sort((a, b) => b.wins - a.wins || b.podiums - a.podiums).slice(0, 5).filter(c => c.wins > 0);
             const topHtml = topChampions.length > 0 ? `
                 <div class="card" style="margin-bottom:20px">
-                    <h2>🏆 Champions les plus titrés</h2>
+                    <h2>${t('hof.top.champs')}</h2>
                     <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
                         ${topChampions.map((c, i) => `
                             <div onclick="openPlayerProfile('${c.player.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:background 0.18s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
@@ -2025,9 +2035,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                                 <span style="font-weight:800;flex:1">${pName(c.player)}</span>
                                 <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team || ''}</span>
                                 <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-                                    <span class="hof-wins-badge">🏆 ${c.wins} victoire${c.wins > 1 ? 's' : ''}</span>
-                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">🎯 ${c.podiums} podiums</span>
-                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">${c.points} pts</span>
+                                    <span class="hof-wins-badge">🏆 ${c.wins} ${t('hof.wins')}</span>
+                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">🎯 ${c.podiums} ${t('hof.podiums')}</span>
+                                    <span style="font-size:0.75rem;background:rgba(255,255,255,0.06);padding:3px 9px;border-radius:20px;color:rgba(255,255,255,0.5)">${c.points} ${t('hof.pts')}</span>
                                 </div>
                             </div>`).join('')}
                     </div>
@@ -2040,25 +2050,25 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const mostPoints = [...allStats].sort((a, b) => b.points - a.points)[0];
             const recordsHtml = `
                 <div class="card" style="margin-bottom:20px">
-                    <h2>🎖️ Records</h2>
+                    <h2>${t('hof.records')}</h2>
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px">
                         ${mostPoints ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
-                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🏅 Plus de points</div>
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">${t('hof.most.pts')}</div>
                             <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostPoints.player.id}')">${pName(mostPoints.player)}</div>
-                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPoints.points} pts</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPoints.points} ${t('hof.pts')}</div>
                         </div>` : ''}
                         ${mostFinals ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
-                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🎯 Plus de finales jouées</div>
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">${t('hof.most.finals')}</div>
                             <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostFinals.player.id}')">${pName(mostFinals.player)}</div>
-                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostFinals.finals} finales</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostFinals.finals} ${t('hof.finals')}</div>
                         </div>` : ''}
                         ${mostPodiums ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
-                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">🥇 Plus de podiums</div>
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">${t('hof.most.podiums')}</div>
                             <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${mostPodiums.player.id}')">${pName(mostPodiums.player)}</div>
-                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPodiums.podiums} podiums</div>
+                            <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${mostPodiums.podiums} ${t('hof.podiums')}</div>
                         </div>` : ''}
                         ${bestWinRate ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px">
-                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">📈 Meilleur taux de victoire <span style="opacity:0.5">(min. 3 finales)</span></div>
+                            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:6px">${t('hof.best.winrate')} <span style="opacity:0.5">${t('hof.winrate.min')}</span></div>
                             <div style="font-weight:800;cursor:pointer" onclick="openPlayerProfile('${bestWinRate.player.id}')">${pName(bestWinRate.player)}</div>
                             <div style="color:var(--color-accent);font-size:1.1rem;font-weight:700;margin-top:2px">${Math.round(bestWinRate.wins / bestWinRate.finals * 100)}%</div>
                         </div>` : ''}
@@ -2069,7 +2079,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const seasons = [...new Set(editionsWithWinner.map(e => e.saison || new Date(e.date).getFullYear()))].sort((a, b) => b - a);
             const seasonChampionsHtml = seasons.length > 0 ? `
                 <div class="card" style="margin-bottom:20px">
-                    <h2>📅 Champions par saison</h2>
+                    <h2>${t('hof.seasons')}</h2>
                     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
                         ${seasons.map(year => {
                             const seasonEditions = editionsWithWinner.filter(e => (e.saison || new Date(e.date).getFullYear()) === year);
@@ -2091,14 +2101,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             return `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:12px">
                                 <span style="font-size:1.8rem;flex-shrink:0">🏆</span>
                                 <div style="flex:1">
-                                    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:rgba(251,191,36,0.7);font-weight:700;margin-bottom:2px">Saison ${year}</div>
+                                    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:rgba(251,191,36,0.7);font-weight:700;margin-bottom:2px">${t('hof.season')} ${year}</div>
                                     <div style="font-weight:800;font-size:1.05rem;cursor:pointer" onclick="openPlayerProfile('${champ.id}')">${pName(champ)}</div>
                                     ${champ.team ? `<div style="font-size:0.78rem;color:var(--color-text-secondary)">${champ.team}</div>` : ''}
                                 </div>
                                 <div style="text-align:right">
-                                    <div style="font-size:0.78rem;color:rgba(255,255,255,0.4)">${seasonEditions.length} édition${seasonEditions.length > 1 ? 's' : ''}</div>
-                                    <div style="font-weight:700;color:var(--color-accent)">${champData.points} pts</div>
-                                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${champData.wins} victoire${champData.wins > 1 ? 's' : ''}</div>
+                                    <div style="font-size:0.78rem;color:rgba(255,255,255,0.4)">${seasonEditions.length} ${t('hof.editions')}</div>
+                                    <div style="font-weight:700;color:var(--color-accent)">${champData.points} ${t('hof.pts')}</div>
+                                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${champData.wins} ${t('hof.wins')}</div>
                                 </div>
                             </div>`;
                         }).join('')}
@@ -2130,7 +2140,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>`;
                 }).join('');
                 palmaresBySeasonHtml += `<div style="margin-bottom:24px">
-                    <div style="font-size:0.82rem;text-transform:uppercase;letter-spacing:2px;color:var(--color-text-secondary);font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)">Saison ${year}</div>
+                    <div style="font-size:0.82rem;text-transform:uppercase;letter-spacing:2px;color:var(--color-text-secondary);font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06)">${t('hof.season')} ${year}</div>
                     <div class="hof-champion-grid">${cardsHtml}</div>
                 </div>`;
             });
@@ -2140,8 +2150,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 ${topHtml}
                 ${recordsHtml}
                 <div class="card">
-                    <h2>🏅 Palmarès complet</h2>
-                    ${palmaresBySeasonHtml || '<div class="empty-state"><span class="empty-state-icon">🏅</span><p>Aucun palmarès</p></div>'}
+                    <h2>${t('hof.full')}</h2>
+                    ${palmaresBySeasonHtml || `<div class="empty-state"><span class="empty-state-icon">🏅</span><p>${t('hof.empty.palmares')}</p></div>`}
                 </div>`;
         }
         window.displayHallOfFame = displayHallOfFame;
@@ -2184,13 +2194,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // Auth guard sign-in
         window.authGoogleSignIn = async () => {
             const btn = document.getElementById('authGoogleBtn');
-            btn.disabled = true; btn.textContent = 'Connexion...';
+            btn.disabled = true; btn.textContent = t('auth.connecting');
             try {
                 await signInWithPopup(auth, googleProvider);
             } catch(err) {
                 btn.disabled = false;
-                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg> Se connecter avec Google`;
-                if (err.code !== 'auth/popup-closed-by-user') alert('Erreur de connexion Google.');
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg> ${t('auth.google')}`;
+                if (err.code !== 'auth/popup-closed-by-user') alert(t('auth.error'));
             }
         };
 
@@ -2268,7 +2278,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     await signInWithPopup(auth, googleProvider);
                 } catch(err) {
                     if (err.code !== 'auth/popup-closed-by-user') {
-                        alert('Erreur de connexion Google.');
+                        alert(t('auth.error'));
                     }
                 }
             }
@@ -2276,7 +2286,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
         window.playerSignOut = async () => {
             closePlayerProfile();
-            if (confirm('Se déconnecter ?')) await signOut(auth);
+            if (confirm(t('msg.logout.confirm'))) await signOut(auth);
         };
 
         // Opens the player's own fiche joueur (with edit section)
@@ -2312,11 +2322,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (!pseudo) return;
             if (data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
                 msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
-                msg.textContent = '❌ Ce pseudo est déjà utilisé dans cette cup.';
+                msg.textContent = t('profile.exists');
                 return;
             }
             const btn = e.target.querySelector('[type="submit"]');
-            btn.disabled = true; btn.textContent = 'Création...';
+            btn.disabled = true; btn.textContent = t('profile.creating');
             try {
                 await addDoc(collection(db, 'participants'), {
                     pseudo, team, userId: currentUser.uid, cupId,
@@ -2325,15 +2335,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 });
                 closeCreateProfile();
                 document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
-                showToast('Profil créé ! Bienvenue 🎉');
+                showToast(t('profile.created'));
                 sessionStorage.removeItem('discordPromptDismissed');
                 setTimeout(() => {
                     document.getElementById('discordPromptOverlay').classList.add('open');
                 }, 700);
             } catch {
                 msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
-                msg.textContent = 'Erreur lors de la création du profil.';
-                btn.disabled = false; btn.textContent = '✅ Créer mon profil';
+                msg.textContent = t('profile.error.create');
+                btn.disabled = false; btn.textContent = t('profile.create.btn');
             }
         });
 
@@ -2355,7 +2365,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const name = document.getElementById('editPlayerName').value.trim();
             const team = document.getElementById('editPlayerTeam').value.trim();
             const duplicate = data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
-            if (duplicate) { alert('Ce pseudo est déjà utilisé !'); return; }
+            if (duplicate) { alert(t('admin.pseudo.used')); return; }
             await updateDoc(doc(db, 'participants', id), { pseudoTM: name, name, team: team || 'Sans équipe' });
             closeEditParticipant();
         });
@@ -2413,21 +2423,21 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
         // Delete functions
         window.deleteParticipant = async (id) => {
-            if (!confirm('Supprimer ce joueur et tous ses résultats ?')) return;
+            if (!confirm(t('msg.confirm.delete.player'))) return;
             for (const r of data.results.filter(r => r.playerId === id))
                 await deleteDoc(doc(db, 'results', r.id));
             await deleteDoc(doc(db, 'participants', id));
         };
 
         window.deleteEdition = async (id) => {
-            if (!confirm('Supprimer cette édition et tous ses résultats ?')) return;
+            if (!confirm(t('msg.confirm.delete.edition'))) return;
             for (const r of data.results.filter(r => r.editionId === id))
                 await deleteDoc(doc(db, 'results', r.id));
             await deleteDoc(doc(db, 'editions', id));
         };
 
         window.deleteResult = async (id) => {
-            if (!confirm('Supprimer ce résultat ?')) return;
+            if (!confirm(t('msg.confirm.delete.result'))) return;
             await deleteDoc(doc(db, 'results', id));
         };
 
@@ -2446,9 +2456,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             else if (id === 'personnalisation') applySiteConfig();
             else if (id === 'maps') displayMapsTimeline();
             else if (id === 'predictions') displayPredictions();
-            const titles = { home: 'Accueil', editions: 'Éditions', rankings: 'Classement', maps: 'Maps', predictions: 'Prédictions', participants: 'Joueurs', stats: 'Statistiques', halloffame: 'Hall of Fame', personnalisation: 'Personnalisation' };
-            const t = document.getElementById('topbarTitle');
-            if (t) t.textContent = titles[id] || '';
+            const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), personnalisation: t('nav.custom') };
+            const titleEl = document.getElementById('topbarTitle');
+            if (titleEl) titleEl.textContent = titles[id] || '';
         }
         window.showSection = showSection;
         document.querySelectorAll('.nav-item').forEach(btn => {
@@ -2461,7 +2471,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const name = document.getElementById('playerName').value.trim();
             const team = document.getElementById('playerTeam').value.trim();
             if (data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
-                alert('Ce joueur existe déjà !'); return;
+                alert(t('admin.player.exists')); return;
             }
             await addDoc(collection(db, 'participants'), { name, team: team || 'Sans équipe', cupId });
             e.target.reset();
@@ -2476,12 +2486,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 .sort((a, b) => pName(a).localeCompare(pName(b)));
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">👤</span><p>Aucun joueur trouvé</p></div>';
+                container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">👤</span><p>${t('players.empty')}</p></div>`;
                 return;
             }
 
             const adminCol = isAdmin ? '<th></th>' : '';
-            let html = `<table><thead><tr><th>Pseudo</th><th>Équipe</th><th>Participations</th><th>Finales</th>${adminCol}</tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
             filtered.forEach(p => {
                 const quals = new Set(data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
                 const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
@@ -2546,9 +2556,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const cd = getCountdown(next.date, next.time);
 
             const statusMap = {
-                fermee:       { label: '🔒 Inscriptions fermées',  color: 'var(--color-text-secondary)' },
-                inscriptions: { label: '📋 Inscriptions ouvertes', color: 'var(--springs-orange)' },
-                en_cours:     { label: '🎯 Événement en cours',    color: '#fbbf24' },
+                fermee:       { label: t('editions.status.closed'),  color: 'var(--color-text-secondary)' },
+                inscriptions: { label: t('editions.status.open'), color: 'var(--springs-orange)' },
+                en_cours:     { label: t('editions.status.live'),    color: '#fbbf24' },
             };
             const statusInfo = statusMap[next.status] || statusMap.inscriptions;
 
@@ -2562,17 +2572,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             let ctaHtml = '';
             const nStatus = next.status || 'inscriptions';
             if (nStatus === 'fermee') {
-                ctaHtml = `<span style="color:var(--color-text-secondary);font-size:0.85rem">🔒 Inscriptions bientôt ouvertes</span>`;
+                ctaHtml = `<span style="color:var(--color-text-secondary);font-size:0.85rem">${t('detail.status.soon')}</span>`;
             } else if (nStatus === 'inscriptions') {
                 if (!currentUser) {
-                    ctaHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
+                    ctaHtml = `<button class="btn btn-primary" onclick="openAuthModal()">${t('editions.login.to.reg')}</button>`;
                 } else if (alreadyRegistered) {
-                    ctaHtml = `<div class="registered-badge" style="font-size:0.85rem;padding:8px 14px">✓ Vous êtes inscrit</div>`;
+                    ctaHtml = `<div class="registered-badge" style="font-size:0.85rem;padding:8px 14px">${t('editions.already.reg')}</div>`;
                 } else if (currentPlayer) {
-                    ctaHtml = `<button class="btn btn-primary" onclick="goToEdition('${next.id}')">S'inscrire à cette édition</button>`;
+                    ctaHtml = `<button class="btn btn-primary" onclick="goToEdition('${next.id}')">${t('editions.register.btn')}</button>`;
                 }
             } else if (nStatus === 'en_cours') {
-                ctaHtml = `<span style="color:#fbbf24;font-weight:700;font-size:0.9rem">🎯 Événement en cours !</span>`;
+                ctaHtml = `<span style="color:#fbbf24;font-weight:700;font-size:0.9rem">${t('editions.status.live')}</span>`;
             }
 
             const metaItems = [`📅 ${dateStr}`];
@@ -2583,18 +2593,18 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             banner.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px">
                     <div style="flex:1;min-width:220px">
-                        <div class="next-edition-label">🏁 Prochaine édition</div>
+                        <div class="next-edition-label">${t('home.next.edition')}</div>
                         <div class="next-edition-name">${next.name}</div>
                         <div class="next-edition-meta">${metaItems.join(' &nbsp;·&nbsp; ')}</div>
                         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                             ${ctaHtml}
-                            <button class="btn btn-secondary" onclick="goToEdition('${next.id}')">Voir l'édition →</button>
+                            <button class="btn btn-secondary" onclick="goToEdition('${next.id}')">${t('editions.see.edition')}</button>
                         </div>
                     </div>
                     <div style="text-align:right;flex-shrink:0">
-                        <div style="font-size:0.68rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Compte à rebours</div>
-                        <div class="next-edition-countdown">${cd || '🔜 Bientôt'}</div>
-                        <div style="margin-top:10px;font-size:0.8rem;color:var(--color-text-secondary)">👥 ${inscritCount} inscrit${inscritCount !== 1 ? 's' : ''}</div>
+                        <div style="font-size:0.68rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">${t('editions.countdown')}</div>
+                        <div class="next-edition-countdown">${cd || t('editions.soon')}</div>
+                        <div style="margin-top:10px;font-size:0.8rem;color:var(--color-text-secondary)">👥 ${inscritCount} ${t('editions.inscribed')}</div>
                         <div style="margin-top:4px;font-size:0.8rem;font-weight:700;color:${statusInfo.color}">${statusInfo.label}</div>
                     </div>
                 </div>`;
@@ -2708,7 +2718,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }
 
             if (data.editions.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📅</span><p>Aucune édition créée</p></div>';
+                grid.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📅</span><p>${t('editions.empty')}</p></div>`;
                 return;
             }
 
@@ -2731,10 +2741,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
 
             const WORKFLOW_LABELS = {
-                fermee:       '🔒 Inscriptions fermées',
-                inscriptions: '📋 Inscriptions ouvertes',
-                en_cours:     '🎯 Événement en cours',
-                terminee:     '✅ Terminée',
+                fermee:       t('editions.status.closed'),
+                inscriptions: t('editions.status.open'),
+                en_cours:     t('editions.status.live'),
+                terminee:     t('editions.status.done'),
             };
 
             const renderEditionRow = (e, isPast) => {
@@ -2743,8 +2753,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 if (!isPast && e.status === 'en_cours') cardClass = 'en-cours';
 
                 const statusLabel = isPast
-                    ? '✅ Terminée'
-                    : (WORKFLOW_LABELS[e.status] || '📋 Inscriptions ouvertes');
+                    ? t('editions.status.done')
+                    : (WORKFLOW_LABELS[e.status] || t('editions.status.open'));
 
                 const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                 const cardTime = e.time ? ` · ${e.time}` : '';
@@ -2755,9 +2765,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     const isFinaliste = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
                     const isQualified = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
                     const isInscrit   = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
-                    if (isFinaliste)    playerBadgeHtml = `<div class="edition-card-player-badge finalist">🏆 Finaliste</div>`;
-                    else if (isQualified) playerBadgeHtml = `<div class="edition-card-player-badge qualified">🎯 Participé</div>`;
-                    else if (isInscrit)  playerBadgeHtml = `<div class="edition-card-player-badge">✓ Inscrit</div>`;
+                    if (isFinaliste)    playerBadgeHtml = `<div class="edition-card-player-badge finalist">${t('editions.finalist')}</div>`;
+                    else if (isQualified) playerBadgeHtml = `<div class="edition-card-player-badge qualified">${t('editions.participated')}</div>`;
+                    else if (isInscrit)  playerBadgeHtml = `<div class="edition-card-player-badge">${t('editions.registered')}</div>`;
                 }
 
                 const participantCount = isPast
@@ -2780,8 +2790,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             <div class="event-row-name">${e.name}</div>
                             <div class="event-row-meta">
                                 <span>📅 ${dateStr}${cardTime}</span>
-                                <span>👥 ${participantCount} participant${participantCount !== 1 ? 's' : ''}</span>
-                                ${isPast ? `<span>🏆 ${finals} finaliste${finals !== 1 ? 's' : ''}</span>` : ''}
+                                <span>👥 ${participantCount} ${t('editions.participants')}</span>
+                                ${isPast ? `<span>🏆 ${finals} ${t('editions.finalists')}</span>` : ''}
                                 ${!isPast && getCountdown(e.date, e.time) ? `<span class="event-countdown-pill">⏱ ${getCountdown(e.date, e.time)}</span>` : ''}
                             </div>
                             ${descHtml}
@@ -2789,7 +2799,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <div class="event-row-right">
                             ${liveBadgeHtml}
                             ${playerBadgeHtml}
-                            <span class="event-row-cta">Voir →</span>
+                            <span class="event-row-cta">${t('editions.see')}</span>
                             ${isAdmin ? `<div class="edition-card-admin" onclick="event.stopPropagation()">
                                 <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button>
                                 <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
@@ -2801,11 +2811,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             let html = '<div class="event-list">';
             if (upcoming.length > 0) {
-                html += `<div class="event-list-section-label">À venir</div>`;
+                html += `<div class="event-list-section-label">${t('editions.upcoming')}</div>`;
                 upcoming.forEach(e => { html += renderEditionRow(e, false); });
             }
             if (past.length > 0) {
-                html += `<div class="event-list-section-label" style="margin-top:${upcoming.length ? 24 : 0}px">Passées</div>`;
+                html += `<div class="event-list-section-label" style="margin-top:${upcoming.length ? 24 : 0}px">${t('editions.past')}</div>`;
                 past.forEach(e => { html += renderEditionRow(e, true); });
             }
             html += '</div>';
@@ -2857,7 +2867,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const hasMaps = [1,2,3,4,5,6,7].some(n => extractTmxId(mapTmxValues[n]));
             if (!hasMaps) return;
             const toast = document.createElement('div');
-            toast.textContent = '⏳ Récupération des miniatures TMX…';
+            toast.textContent = t('admin.thumbnails.fetch');
             Object.assign(toast.style, { position:'fixed', bottom:'20px', right:'20px', background:'#1e293b', color:'#f1f5f9', padding:'10px 16px', borderRadius:'10px', fontSize:'0.85rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.4)' });
             document.body.appendChild(toast);
             const thumbUpdates = {};
@@ -2871,9 +2881,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }));
             if (Object.keys(thumbUpdates).length > 0) {
                 await updateDoc(doc(db, 'editions', editionId), thumbUpdates);
-                toast.textContent = `✅ ${Object.keys(thumbUpdates).length} miniature(s) enregistrée(s)`;
+                toast.textContent = t('admin.thumbnails.ok').replace('{count}', Object.keys(thumbUpdates).length);
             } else {
-                toast.textContent = '❌ Impossible de récupérer les miniatures (réessaie plus tard)';
+                toast.textContent = t('admin.thumbnails.error');
             }
             setTimeout(() => toast.remove(), 4000);
         }
@@ -2949,47 +2959,47 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         .sort((a, b) => pName(a).localeCompare(pName(b)))
                         .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
                     html += `<div class="card">
-                        <h2>➕ Enregistrer un résultat</h2>
+                        <h2>${t('detail.add.result')}</h2>
                         <form id="detailAddResultForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Phase *</label>
+                                    <label>${t('detail.phase')}</label>
                                     <select id="detailResultPhase" required onchange="detailOnPhaseChange()">
-                                        <option value="">Phase…</option>
-                                        <option value="inscription">📋 Inscription (présent)</option>
-                                        <option value="qualification">🎯 Qualifications</option>
-                                        <option value="finale">🏆 Finale KO</option>
+                                        <option value="">${t('detail.phase.ph')}</option>
+                                        <option value="inscription">${t('detail.phase.inscription')}</option>
+                                        <option value="qualification">${t('detail.phase.quals')}</option>
+                                        <option value="finale">${t('detail.phase.finale')}</option>
                                     </select>
                                 </div>
                                 <div class="form-group" id="detailMapField" style="display:none">
-                                    <label>Map *</label>
+                                    <label>${t('detail.map')}</label>
                                     <select id="detailResultMap">
-                                        ${[1,2,3,4,5,6].map(n => `<option value="${n}">Map ${n}</option>`).join('')}
-                                        <option value="7">Map 7 (Finale)</option>
+                                        ${[1,2,3,4,5,6].map(n => `<option value="${n}">${t('detail.map.n')} ${n}</option>`).join('')}
+                                        <option value="7">${t('detail.map.finale')}</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Joueur *</label>
+                                    <label>${t('detail.player')}</label>
                                     <select id="detailResultPlayer" required onchange="detailOnPlayerChange()">
-                                        <option value="">Sélectionner un joueur</option>
+                                        <option value="">${t('detail.player.select')}</option>
                                         ${playerOptions}
                                     </select>
                                 </div>
                                 <div id="detailViesBonusInfo" style="display:none;background:rgba(239,68,68,0.1);color:#ef4444;font-size:0.82rem;padding:8px 12px;border-radius:8px;border:1px solid rgba(239,68,68,0.2)"></div>
                                 <div class="form-group" id="detailQualPosField" style="display:none">
-                                    <label>Position sur la map *</label>
+                                    <label>${t('detail.pos.map')}</label>
                                     <select id="detailResultQualPos">
-                                        <option value="1">🥇 1er qualifié</option>
-                                        <option value="2">🥈 2ème qualifié</option>
-                                        <option value="3">🥉 3ème qualifié</option>
+                                        <option value="1">${t('detail.pos.1')}</option>
+                                        <option value="2">${t('detail.pos.2')}</option>
+                                        <option value="3">${t('detail.pos.3')}</option>
                                     </select>
                                 </div>
                                 <div class="form-group" id="detailPositionField" style="display:none">
-                                    <label>Position finale *</label>
+                                    <label>${t('detail.pos.final')}</label>
                                     <input type="number" id="detailResultPosition" min="1" placeholder="Ex: 1">
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            <button type="submit" class="btn btn-primary">${t('detail.save')}</button>
                         </form>
                     </div>`;
                 }
@@ -3005,8 +3015,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const ytId = extractYoutubeId(e.youtubeUrl);
                 const vodEmbedHtml = ytId ? `
                     <div class="vod-section-label" style="justify-content:space-between;margin-bottom:0">
-                        <span>▶ VOD YouTube</span>
-                        <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${youtubeCollapsed ? '▶ Afficher' : '▼ Réduire'}</button>
+                        <span>${t('detail.vod')}</span>
+                        <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${youtubeCollapsed ? t('detail.show') : t('detail.hide')}</button>
                     </div>
                     <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="margin-top:10px${youtubeCollapsed ? ';display:none' : ''}">
                         <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
@@ -3016,9 +3026,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <div class="stream-section-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
                         <span style="display:flex;align-items:center;gap:6px">
                             <span class="live-dot" style="width:7px;height:7px"></span>
-                            EN DIRECT sur Twitch
+                            ${t('detail.live.twitch')}
                         </span>
-                        <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${twitchCollapsed ? '▶ Afficher' : '▼ Réduire'}</button>
+                        <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
                     </div>
                     <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${twitchCollapsed ? 'display:none' : ''}">
                         <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
@@ -3044,7 +3054,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                 const legacyQuals = qualResults.filter(r => !r.map);
                 if (qualResults.length > 0) {
-                    html += '<div class="phase-title">🎯 Qualifications — Phase 1</div>';
+                    html += `<div class="phase-title">${t('detail.quals.title')}</div>`;
                     html += '<div class="maps-grid">';
                     const medals3 = ['🥇', '🥈', '🥉'];
                     for (let m = 1; m <= 6; m++) {
@@ -3053,8 +3063,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         const tmxMapper = e[`map${m}mapper`] || '';
                         const thumbUrl  = e[`map${m}thumbUrl`] || '';
                         const thumbHtml = thumbUrl ? `<div class="tmx-thumb-wrap"><img src="${thumbUrl}" class="tmx-thumb" alt="Map ${m}"></div>` : '';
-                        const mapLabelHtml = `<div class="map-card-header">Map ${m}</div>`;
-                        const mapTitleHtml = tmxName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${tmxName}${tmxMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> by ${tmxMapper}</span>` : ''}</div>` : '';
+                        const mapLabelHtml = `<div class="map-card-header">${t('detail.map.n')} ${m}</div>`;
+                        const mapTitleHtml = tmxName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${tmxName}${tmxMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> ${t('detail.by')} ${tmxMapper}</span>` : ''}</div>` : '';
                         html += `<div class="map-card">${thumbHtml}${mapLabelHtml}${mapTitleHtml}<div class="map-slots-wrap">`;
                         for (let pos = 1; pos <= 3; pos++) {
                             const r = mapQuals.find(r => r.position === pos);
@@ -3119,8 +3129,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                     const adminCol = isAdmin ? '<th></th>' : '';
                     html += `<div class="phase-title" style="display:flex;align-items:center;justify-content:space-between">
-                        <span>🏆 Finale KO — Phase 2</span>
-                        <button class="btn btn-secondary btn-small" onclick="copyPodium('${e.id}', this)">📷 Partager le podium</button>
+                        <span>${t('detail.finale.title')}</span>
+                        <button class="btn btn-secondary btn-small" onclick="copyPodium('${e.id}', this)">${t('detail.share.podium')}</button>
                     </div>`;
                     const finaleThumbUrl = e.map7thumbUrl || '';
                     const finaleMapName  = e.map7name || '';
@@ -3128,12 +3138,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     if (finaleThumbUrl) {
                         html += `<div class="map-card" style="max-width:340px;margin-bottom:14px">
                             <div class="tmx-thumb-wrap"><img src="${finaleThumbUrl}" class="tmx-thumb" alt="Map Finale"></div>
-                            <div class="map-card-header">🏆 Map Finale</div>
-                            ${finaleMapName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${finaleMapName}${finaleMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> by ${finaleMapper}</span>` : ''}</div>` : ''}
+                            <div class="map-card-header">${t('detail.map.final.label')}</div>
+                            ${finaleMapName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${finaleMapName}${finaleMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> ${t('detail.by')} ${finaleMapper}</span>` : ''}</div>` : ''}
                         </div>`;
                     }
-                    html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">Élimination directe — le dernier survivant est déclaré vainqueur 🏆</p>`;
-                    html += `<table><thead><tr><th>Pos.</th><th>Joueur</th><th>Équipe</th><th>Vies ❤️</th><th>Points</th>${adminCol}</tr></thead><tbody>`;
+                    html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
+                    html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th>${adminCol}</tr></thead><tbody>`;
                     finaleResults.forEach(r => {
                         const player = data.participants.find(p => p.id === r.playerId);
                         if (!player) return;
@@ -3154,7 +3164,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 }
 
                 if (finaleResults.length === 0 && qualResults.length === 0) {
-                    html += '<div class="empty-state"><span class="empty-state-icon">🏁</span><p>Aucun résultat enregistré</p></div>';
+                    html += `<div class="empty-state"><span class="empty-state-icon">🏁</span><p>${t('detail.no.results')}</p></div>`;
                 }
 
                 // Inscrits présents mais non qualifiés
@@ -3162,7 +3172,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const qualIds    = new Set(qualResults.map(r => r.playerId));
                 const presentOnly = [...inscritIds].filter(pid => !qualIds.has(pid));
                 if (presentOnly.length > 0) {
-                    html += `<div class="phase-title" style="margin-top:20px">👤 Présents — non qualifiés (${presentOnly.length})</div>
+                    html += `<div class="phase-title" style="margin-top:20px">${t('detail.present.notq')} (${presentOnly.length})</div>
                         <div class="chips">`;
                     presentOnly.forEach(pid => {
                         const player = data.participants.find(p => p.id === pid);
@@ -3189,9 +3199,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 let workflowHtml = '';
                 if (isAdmin) {
                     const wfMap = {
-                        fermee:       { label: '🔒 Inscriptions fermées', color: 'var(--color-text-secondary)', next: { status: 'inscriptions', btn: '📋 Ouvrir les inscriptions' } },
-                        inscriptions: { label: '📋 Inscriptions ouvertes', color: 'var(--springs-orange)',       next: { status: 'en_cours',     btn: '🎯 Lancer l\'événement'     } },
-                        en_cours:     { label: '🎯 Événement en cours',    color: '#fbbf24',                    next: { status: 'terminee',     btn: '✅ Clôturer l\'édition'     } },
+                        fermee:       { label: t('editions.status.closed'), color: 'var(--color-text-secondary)', next: { status: 'inscriptions', btn: t('detail.open.reg') } },
+                        inscriptions: { label: t('editions.status.open'),   color: 'var(--springs-orange)',       next: { status: 'en_cours',     btn: t('detail.start.event')   } },
+                        en_cours:     { label: t('editions.status.live'),   color: '#fbbf24',                    next: { status: 'terminee',     btn: t('detail.close.edition') } },
                     };
                     const wf = wfMap[e.status] || wfMap.fermee;
                     const nextBtn = wf.next
@@ -3202,7 +3212,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         ${nextBtn}
                         <button class="btn-discord-notify" onclick="openDiscordNotifyModal('${id}')">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                            📢 Notifier Discord
+                            ${t('detail.notify.discord')}
                         </button>
                     </div>`;
                 }
@@ -3211,17 +3221,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 let registrationHtml = '';
                 const status = e.status || 'inscriptions';
                 if (status === 'fermee') {
-                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">🔒 Les inscriptions ne sont pas encore ouvertes.</p>`;
+                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">${t('detail.status.closed')}</p>`;
                 } else if (status === 'en_cours') {
-                    registrationHtml = `<p style="color:#fbbf24;font-weight:600;font-size:0.9rem">🎯 L'événement est en cours — les inscriptions sont fermées.</p>`;
+                    registrationHtml = `<p style="color:#fbbf24;font-weight:600;font-size:0.9rem">${t('detail.status.live')}</p>`;
                 } else if (!currentUser) {
-                    registrationHtml = `<button class="btn btn-primary" onclick="openAuthModal()">🔑 Se connecter pour s'inscrire</button>`;
+                    registrationHtml = `<button class="btn btn-primary" onclick="openAuthModal()">${t('editions.login.to.reg')}</button>`;
                 } else if (alreadyRegistered) {
-                    registrationHtml = `<div class="registered-badge">✓ Vous êtes inscrit à cette édition</div>`;
+                    registrationHtml = `<div class="registered-badge">${t('detail.already.reg')}</div>`;
                 } else if (!currentPlayer) {
-                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">Créez votre profil depuis la page d'accueil pour vous inscrire.</p>`;
+                    registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">${t('detail.create.profile')}</p>`;
                 } else {
-                    registrationHtml = `<button class="btn btn-primary" onclick="registerForEdition('${id}')">S'inscrire à cette édition</button>`;
+                    registrationHtml = `<button class="btn btn-primary" onclick="registerForEdition('${id}')">${t('editions.register.btn')}</button>`;
                 }
 
                 // Edition info block
@@ -3237,7 +3247,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const adminDelCol = isAdmin ? '<th></th>' : '';
                 let registrantsHtml = '';
                 if (inscriptions.length === 0) {
-                    registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>Aucune inscription pour l'instant</p></div>`;
+                    registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>${t('detail.no.reg')}</p></div>`;
                 } else {
                     const showActionsCol = isAdmin || inscriptions.some(r => {
                         const p = data.participants.find(p => p.id === r.playerId);
@@ -3249,7 +3259,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     });
                     const showPasswordCol = isMeRegistered && !!e.password;
                     const actionsHeader = showActionsCol ? '<th></th>' : '';
-                    const passwordHeader = showPasswordCol ? '<th>Mot de passe du salon</th>' : '';
+                    const passwordHeader = showPasswordCol ? `<th>${t('detail.password')}</th>` : '';
                     registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${passwordHeader}${actionsHeader}</tr></thead><tbody>`;
                     inscriptions.forEach((r, i) => {
                         const player = data.participants.find(p => p.id === r.playerId);
@@ -3267,7 +3277,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             if (isAdmin) {
                                 actionCell = `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>`;
                             } else if (isMe) {
-                                actionCell = `<td><button class="btn btn-danger btn-small" onclick="cancelInscription('${r.id}', '${id}')">Annuler</button></td>`;
+                                actionCell = `<td><button class="btn btn-danger btn-small" onclick="cancelInscription('${r.id}', '${id}')">${t('detail.cancel')}</button></td>`;
                             } else {
                                 actionCell = '<td></td>';
                             }
@@ -3287,7 +3297,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const twitchEmbedHtml = e.status === 'en_cours' ? `
                     <div class="stream-section-label">
                         <span class="live-dot" style="width:7px;height:7px"></span>
-                        EN DIRECT sur Twitch
+                        ${t('detail.live.twitch')}
                     </div>
                     <div class="stream-embed-wrap">
                         <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
@@ -3301,10 +3311,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
                     return `<form id="adminInscriptionForm" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                         <select id="adminInscriptionPlayer" style="flex:1;min-width:160px;padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:0.85rem">
-                            <option value="">Inscrire un joueur…</option>
+                            <option value="">${t('detail.add.player.ph')}</option>
                             ${opts}
                         </select>
-                        <button type="submit" class="btn btn-secondary btn-small">➕ Inscrire</button>
+                        <button type="submit" class="btn btn-secondary btn-small">${t('detail.add.player.btn')}</button>
                     </form>`;
                 })() : '';
 
@@ -3316,7 +3326,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin:16px 0;line-height:1.6">${e.description}</p>` : ''}
                     ${registrationHtml}
                     <div style="margin-top:28px">
-                        <div class="phase-title" style="margin-top:0">👥 Inscrits (${inscriptions.length})</div>
+                        <div class="phase-title" style="margin-top:0">${t('detail.registered.list')} (${inscriptions.length})</div>
                         ${registrantsHtml}
                         ${adminInscriptionHtml}
                     </div>
@@ -3358,7 +3368,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     try {
                         if (phase === 'inscription') {
                             if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'inscription')) {
-                                alert('Ce joueur est déjà inscrit à cette édition !'); return;
+                                alert(t('admin.already.reg')); return;
                             }
                             await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'inscription', cupId });
 
@@ -3368,11 +3378,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
                             // Same player can't appear twice on the same map
                             if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification' && r.map === map)) {
-                                alert(`Ce joueur est déjà enregistré sur la Map ${map} !`); return;
+                                alert(t('admin.map.done').replace('{n}', map)); return;
                             }
                             // Same position on same map already taken
                             if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
-                                alert(`La position ${position} sur la Map ${map} est déjà prise !`); return;
+                                alert(t('admin.pos.taken').replace('{position}', position).replace('{n}', map)); return;
                             }
                             await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, cupId });
 
@@ -3380,10 +3390,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                             const position = parseInt(document.getElementById('detailResultPosition').value);
                             if (!position) return;
                             if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'finale')) {
-                                alert('Un résultat de finale existe déjà pour ce joueur !'); return;
+                                alert(t('admin.finale.exists')); return;
                             }
                             if (!data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
-                                alert('Ce joueur n\'a aucune qualification enregistrée pour cette édition !'); return;
+                                alert(t('admin.no.quals')); return;
                             }
                             await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'finale', position, cupId });
                         }
@@ -3400,14 +3410,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             twitchCollapsed = !twitchCollapsed;
             sessionStorage.setItem('twCollapsed_' + currentDetailEditionId, twitchCollapsed ? '1' : '');
             document.getElementById('twitchEmbedWrap').style.display = twitchCollapsed ? 'none' : '';
-            btn.textContent = twitchCollapsed ? '▶ Afficher' : '▼ Réduire';
+            btn.textContent = twitchCollapsed ? t('detail.show') : t('detail.hide');
         };
 
         window.toggleYoutubeEmbed = (btn) => {
             youtubeCollapsed = !youtubeCollapsed;
             sessionStorage.setItem('ytCollapsed_' + currentDetailEditionId, youtubeCollapsed ? '1' : '');
             document.getElementById('youtubeEmbedWrap').style.display = youtubeCollapsed ? 'none' : '';
-            btn.textContent = youtubeCollapsed ? '▶ Afficher' : '▼ Réduire';
+            btn.textContent = youtubeCollapsed ? t('detail.show') : t('detail.hide');
         };
 
         window.detailOnPhaseChange = () => {
@@ -3435,7 +3445,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const maps = existingQuals.map(r => r.map ? `Map ${r.map}` : '?').join(', ');
                 const vies = existingQuals.length - 1;
                 info.style.display = '';
-                info.innerHTML = `⚡ Déjà dans le top 3 sur : <strong>${maps}</strong>${vies > 0 ? ` — ❤️×${vies} vie(s) en finale` : ' — pas encore de vie bonus'}. Enregistrer sur une nouvelle map lui accordera <strong>+1 vie ❤️</strong>`;
+                info.innerHTML = `⚡ ${t('detail.already.top3')} <strong>${maps}</strong>${vies > 0 ? ` — ❤️×${vies} ${t('detail.lives.n')}` : ` — ${t('detail.bonus.none')}`}. ${t('detail.bonus.will.get')} <strong>+1 ${t('detail.bonus.life')}</strong>`;
             } else {
                 info.style.display = 'none';
             }
@@ -3466,18 +3476,18 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const url = new URL(window.location);
             url.searchParams.set('edition', currentDetailEditionId);
             navigator.clipboard.writeText(url.toString()).then(() => {
-                showToast('✅ Lien copié dans le presse-papier !');
+                showToast(t('player.link.copied'));
             });
         };
 
         window.cancelInscription = async (resultId, editionId) => {
-            if (!confirm('Annuler votre inscription à cette édition ?')) return;
+            if (!confirm(t('msg.confirm.cancel.reg'))) return;
             try {
                 await deleteDoc(doc(db, 'results', resultId));
                 openEditionDetail(editionId);
             } catch (err) {
                 console.error('cancelInscription:', err);
-                alert('Impossible d\'annuler l\'inscription. Contactez un administrateur.');
+                alert(t('msg.cancel.error'));
             }
         };
 
@@ -3485,7 +3495,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             if (!currentUser) return;
             const player = data.participants.find(p => p.userId === currentUser.uid);
             if (!player) {
-                alert('Créez votre profil depuis la page d\'accueil pour vous inscrire.');
+                alert(t('detail.create.profile'));
                 return;
             }
             // Prevent double registration
@@ -3599,19 +3609,19 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <div style="flex:1;min-width:0">
                             <div style="font-size:1.4rem;font-weight:900;letter-spacing:-0.5px;line-height:1.1">${pName(player)}</div>
                             <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-top:3px">${player.team || 'Sans équipe'}</div>
-                            ${wins > 0 ? `<span class="hof-wins-badge" style="display:inline-block;margin-top:7px">🏆 ${wins} victoire${wins > 1 ? 's' : ''}</span>` : ''}
+                            ${wins > 0 ? `<span class="hof-wins-badge" style="display:inline-block;margin-top:7px">🏆 ${wins} ${t('hof.wins')}</span>` : ''}
                             ${badgePreviewHtml}
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-                            <button class="player-card-share-btn" onclick="copyPlayerCard('${playerId}', this)" title="Copier l'image — parfait pour Discord">📷 Copier</button>
-                            <button class="player-card-share-btn" style="font-size:0.72rem;padding:4px 10px;opacity:0.7" onclick="copyPlayerLink('${playerId}', this)">🔗 Lien</button>
+                            <button class="player-card-share-btn" onclick="copyPlayerCard('${playerId}', this)" title="Copier l'image — parfait pour Discord">${t('player.copy')}</button>
+                            <button class="player-card-share-btn" style="font-size:0.72rem;padding:4px 10px;opacity:0.7" onclick="copyPlayerLink('${playerId}', this)">${t('player.link')}</button>
                         </div>
                     </div>
                     <div class="player-card-stats" style="position:relative;z-index:1">
-                        <div class="player-card-stat"><div class="player-card-stat-value">${points}</div><div class="player-card-stat-label">Points</div></div>
-                        <div class="player-card-stat"><div class="player-card-stat-value">${finaleRes.length}</div><div class="player-card-stat-label">Finales</div></div>
-                        <div class="player-card-stat"><div class="player-card-stat-value">${winRate !== null ? winRate + '%' : '—'}</div><div class="player-card-stat-label">Win rate</div></div>
-                        <div class="player-card-stat"><div class="player-card-stat-value">${avgPos !== null ? `P${avgPos}` : '—'}</div><div class="player-card-stat-label">Pos. moy.</div></div>
+                        <div class="player-card-stat"><div class="player-card-stat-value">${points}</div><div class="player-card-stat-label">${t('player.pts')}</div></div>
+                        <div class="player-card-stat"><div class="player-card-stat-value">${finaleRes.length}</div><div class="player-card-stat-label">${t('player.finals')}</div></div>
+                        <div class="player-card-stat"><div class="player-card-stat-value">${winRate !== null ? winRate + '%' : '—'}</div><div class="player-card-stat-label">${t('player.winrate')}</div></div>
+                        <div class="player-card-stat"><div class="player-card-stat-value">${avgPos !== null ? `P${avgPos}` : '—'}</div><div class="player-card-stat-label">${t('player.avg.pos')}</div></div>
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;z-index:1">
                         <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.18);font-weight:700">${siteConfig.siteName}</span>
@@ -3619,48 +3629,48 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                 </div>
                 <div class="player-profile-stats" style="margin-bottom:20px">
-                    <div class="pp-stat"><div class="pp-stat-value">${new Set(qualRes.map(r => r.editionId)).size}</div><div class="pp-stat-label">Participations</div></div>
-                    <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">Finales</div></div>
-                    <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">Podiums</div></div>
-                    <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">Meilleur rang</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${new Set(qualRes.map(r => r.editionId)).size}</div><div class="pp-stat-label">${t('stats.participations')}</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">${t('player.finals')}</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">${t('stats.podiums')}</div></div>
+                    <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">${t('rankings.col.best')}</div></div>
                 </div>
                 ${(currentPartStreak > 0 || bestPartStreak > 0 || maxVies > 0 || bestEditionName) ? `
-                <div class="phase-title" style="margin-top:0">⚡ Streaks & Records</div>
+                <div class="phase-title" style="margin-top:0">${t('player.streaks')}</div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin-bottom:20px">
                     ${currentPartStreak > 0 ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
                         <div style="font-size:1.6rem;font-weight:900;color:${currentPartStreak >= 3 ? '#f97316' : '#fff'}">${currentPartStreak >= 3 ? '🔥' : ''}${currentPartStreak}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Streak actuel</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">${t('player.streak.current')}</div>
                     </div>` : ''}
                     ${bestPartStreak > 1 ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
                         <div style="font-size:1.6rem;font-weight:900">${bestPartStreak}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Meilleur streak</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">${t('player.streak.best')}</div>
                     </div>` : ''}
                     ${currentFinStreak > 0 ? `<div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:12px 14px;text-align:center">
                         <div style="font-size:1.6rem;font-weight:900;color:#fbbf24">${currentFinStreak}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Finales consécutives</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">${t('player.consec.finals')}</div>
                     </div>` : ''}
                     ${maxVies > 0 ? `<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:12px 14px;text-align:center">
                         <div style="font-size:1.6rem;font-weight:900;color:#f87171">❤️×${maxVies}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Max vies bonus</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">${t('player.max.lives')}</div>
                     </div>` : ''}
                     ${bestEditionName ? `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;text-align:center">
                         <div style="font-size:1.6rem;font-weight:900;color:var(--color-accent)">+${getPoints(bestEditionResult.position)}</div>
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">Meilleure édition</div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-top:3px">${t('player.best.edition')}</div>
                         <div style="font-size:0.72rem;color:rgba(255,255,255,0.25);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${bestEditionName}</div>
                     </div>` : ''}
                 </div>` : ''}
-                <div class="phase-title" style="margin-top:0">🏅 Badges</div>
+                <div class="phase-title" style="margin-top:0">${t('player.badges')}</div>
                 <div class="achievement-grid">${achievementGridHtml}</div>`;
 
             if (historyRows.length > 0) {
-                html += `<div class="phase-title" style="margin-top:0">📅 Historique par édition</div>
-                    <table><thead><tr><th>Édition</th><th>Participation</th><th>Finale</th><th>Points</th></tr></thead><tbody>`;
+                html += `<div class="phase-title" style="margin-top:0">${t('player.history')}</div>
+                    <table><thead><tr><th>${t('player.col.edition')}</th><th>${t('player.col.participation')}</th><th>${t('player.col.final')}</th><th>${t('player.col.points')}</th></tr></thead><tbody>`;
                 historyRows.forEach(({ edition, participated, finale, inscrit }) => {
                     const pos = finale ? `${medals[finale.position] || ''} P${finale.position}` : '—';
                     const pts = finale ? `<span class="pts-badge">+${getPoints(finale.position)}</span>` : '—';
                     let presenceHtml;
-                    if (participated) presenceHtml = '<span style="color:var(--color-accent)">✓ Qualifié</span>';
-                    else if (inscrit)  presenceHtml = '<span style="color:rgba(255,255,255,0.35)">Présent</span>';
+                    if (participated) presenceHtml = `<span style="color:var(--color-accent)">${t('player.qualified')}</span>`;
+                    else if (inscrit)  presenceHtml = `<span style="color:rgba(255,255,255,0.35)">${t('player.present')}</span>`;
                     else               presenceHtml = '—';
                     html += `<tr>
                         <td><strong>${edition.name}</strong></td>
@@ -3674,7 +3684,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             // Chart only if they have finale results
             if (finaleRes.length > 0) {
-                html += `<div class="phase-title" style="margin-top:20px">📈 Évolution du classement</div>
+                html += `<div class="phase-title" style="margin-top:20px">${t('player.evo')}</div>
                     <div class="player-chart-container"><canvas id="playerChartCanvas"></canvas></div>`;
             }
 
@@ -3688,26 +3698,26 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         </div>`
                     : `<button class="btn-discord" onclick="linkDiscord()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                            Lier mon compte Discord
+                            ${t('discord.link')}
                         </button>`;
                 html += `<div class="phase-title" style="margin-top:24px">💬 Discord</div>
                     <div style="margin-bottom:20px">${discordHtml}</div>`;
-                html += `<div class="phase-title" style="margin-top:4px">✏️ Modifier mon profil</div>
+                html += `<div class="phase-title" style="margin-top:4px">${t('profile.edit')}</div>
                     <form id="ownProfileEditForm">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Pseudo</label>
+                                <label>${t('profile.pseudo.label')}</label>
                                 <input type="text" id="ownProfilePseudo" required>
                             </div>
                             <div class="form-group">
-                                <label>Équipe</label>
+                                <label>${t('profile.team')}</label>
                                 <input type="text" id="ownProfileTeam" placeholder="Sans équipe">
                             </div>
                         </div>
                         <div id="ownProfileSaveMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
                         <div style="display:flex;gap:10px;flex-wrap:wrap">
-                            <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
-                            <button type="button" class="btn btn-danger" onclick="playerSignOut()" style="margin-left:auto">🚪 Déconnexion</button>
+                            <button type="submit" class="btn btn-primary">${t('profile.save.btn')}</button>
+                            <button type="button" class="btn btn-danger" onclick="playerSignOut()" style="margin-left:auto">${t('profile.logout')}</button>
                         </div>
                     </form>`;
             }
@@ -3731,13 +3741,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         msg.style.display = 'block';
                         msg.style.background = 'rgba(0,217,54,0.1)';
                         msg.style.color = 'var(--color-accent)';
-                        msg.textContent = '✓ Profil mis à jour !';
+                        msg.textContent = t('profile.saved');
                         setTimeout(() => msg.style.display = 'none', 3000);
                     } catch {
                         msg.style.display = 'block';
                         msg.style.background = 'rgba(239,68,68,0.1)';
                         msg.style.color = 'var(--color-danger)';
-                        msg.textContent = 'Erreur lors de la sauvegarde.';
+                        msg.textContent = t('profile.error');
                     }
                 });
             }
@@ -3802,7 +3812,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         window.copyPlayerLink = (playerId, btn) => {
             const url = `${location.origin}${location.pathname}?cup=${cupId}&player=${playerId}`;
             navigator.clipboard.writeText(url).then(() => {
-                if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copié !'; setTimeout(() => btn.textContent = orig, 2000); }
+                if (btn) { const orig = btn.textContent; btn.textContent = t('player.copied'); setTimeout(() => btn.textContent = orig, 2000); }
             });
         };
 
@@ -4021,13 +4031,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const orig = btn ? btn.textContent : '';
                 try {
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    if (btn) { btn.textContent = '✅ Copiée !'; setTimeout(() => btn.textContent = orig, 2500); }
+                    if (btn) { btn.textContent = t('msg.saved'); setTimeout(() => btn.textContent = orig, 2500); }
                 } catch {
                     const a = document.createElement('a');
                     a.href = canvas.toDataURL('image/png');
                     a.download = `${pName(player).replace(/\s+/g, '_')}_springs.png`;
                     a.click();
-                    if (btn) { btn.textContent = '⬇️ Téléchargée'; setTimeout(() => btn.textContent = orig, 2500); }
+                    if (btn) { btn.textContent = t('player.downloaded'); setTimeout(() => btn.textContent = orig, 2500); }
                 }
             }, 'image/png');
         };
@@ -4178,13 +4188,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 const orig = btn ? btn.textContent : '';
                 try {
                     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    if (btn) { btn.textContent = '✅ Copiée !'; setTimeout(() => btn.textContent = orig, 2500); }
+                    if (btn) { btn.textContent = t('msg.saved'); setTimeout(() => btn.textContent = orig, 2500); }
                 } catch {
                     const a = document.createElement('a');
                     a.href = canvas.toDataURL('image/png');
                     a.download = `podium_${edition.name.replace(/\s+/g, '_')}.png`;
                     a.click();
-                    if (btn) { btn.textContent = '⬇️ Téléchargée'; setTimeout(() => btn.textContent = orig, 2500); }
+                    if (btn) { btn.textContent = t('player.downloaded'); setTimeout(() => btn.textContent = orig, 2500); }
                 }
             }, 'image/png');
         };
@@ -4248,11 +4258,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         ? `<img class="maps-timeline-thumb" src="${thumb}" alt="Map ${n}" loading="lazy">`
                         : `<div class="maps-timeline-thumb-placeholder">${isFinale ? '🏆' : n}</div>`;
                     const labelHtml = isFinale
-                        ? `<div class="maps-timeline-label" style="color:#fbbf24">🏆 Map Finale</div>`
-                        : `<div class="maps-timeline-label">Map ${n}</div>`;
+                        ? `<div class="maps-timeline-label" style="color:#fbbf24">${t('detail.map.final.label')}</div>`
+                        : `<div class="maps-timeline-label">${t('detail.map.n')} ${n}</div>`;
                     const nameHtml  = name
-                        ? `<div class="maps-timeline-name">${name}${mapper ? `<div class="maps-timeline-mapper">by ${mapper}</div>` : ''}</div>`
-                        : `<div class="maps-timeline-notmx">Nom non renseigné</div>`;
+                        ? `<div class="maps-timeline-name">${name}${mapper ? `<div class="maps-timeline-mapper">${t('detail.by')} ${mapper}</div>` : ''}</div>`
+                        : `<div class="maps-timeline-notmx">${t('detail.unnamed')}</div>`;
 
                     const cardOpen = tmxLink
                         ? `<a class="maps-timeline-card${isFinale ? ' finale-map' : ''}" href="${tmxLink}" target="_blank" rel="noopener" title="Voir sur TMX">`
@@ -4555,8 +4565,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const filterBar = document.getElementById('rankingSeasonFilter');
             if (filterBar) {
                 const tabs = [
-                    currentSeason ? `<button class="filter-btn${selectedRankingSeason === currentSeason ? ' active' : ''}" onclick="setRankingSeason(${currentSeason})">Saison ${currentSeason}</button>` : null,
-                    `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">All-time</button>`,
+                    currentSeason ? `<button class="filter-btn${selectedRankingSeason === currentSeason ? ' active' : ''}" onclick="setRankingSeason(${currentSeason})">${t('hof.season')} ${currentSeason}</button>` : null,
+                    `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">${t('rankings.alltime')}</button>`,
                     ...seasons.slice(1).map(s => `<button class="filter-btn${selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
                 ].filter(Boolean);
                 filterBar.innerHTML = tabs.join('');
@@ -4570,7 +4580,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const finales = data.results.filter(r => r.phase === 'finale' && (editionIds === null || editionIds.has(r.editionId)));
 
             if (finales.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📊</span><p>Aucun résultat de finale enregistré</p></div>';
+                container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📊</span><p>${t('rankings.empty')}</p></div>`;
                 updateChart([]);
                 return;
             }
@@ -4597,14 +4607,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 championBannerHtml = `<div style="background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
                     <div style="font-size:2.4rem;line-height:1">🏆</div>
                     <div style="flex:1;min-width:0">
-                        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">Leader saison ${selectedRankingSeason}</div>
+                        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">${t('rankings.season.leader')} ${selectedRankingSeason}</div>
                         <div style="font-size:1.35rem;font-weight:900;letter-spacing:-0.5px" class="player-name-link" onclick="openPlayerProfile('${champ.player.id}')">${pName(champ.player)}</div>
                         <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:2px">${champ.player.team || 'Sans équipe'}</div>
                     </div>
                     <div style="display:flex;gap:20px;text-align:center">
-                        <div><div style="font-size:1.4rem;font-weight:900;color:#fbbf24">${champ.points}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">pts</div></div>
-                        <div><div style="font-size:1.4rem;font-weight:900">${champ.wins}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">victoire${champ.wins !== 1 ? 's' : ''}</div></div>
-                        <div><div style="font-size:1.4rem;font-weight:900">${champ.finals}<span style="font-size:0.9rem;font-weight:400;color:rgba(255,255,255,0.35)">/${doneCount}</span></div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">finales</div></div>
+                        <div><div style="font-size:1.4rem;font-weight:900;color:#fbbf24">${champ.points}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">${t('rankings.pts')}</div></div>
+                        <div><div style="font-size:1.4rem;font-weight:900">${champ.wins}</div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">${t('rankings.wins')}</div></div>
+                        <div><div style="font-size:1.4rem;font-weight:900">${champ.finals}<span style="font-size:0.9rem;font-weight:400;color:rgba(255,255,255,0.35)">/${doneCount}</span></div><div style="font-size:0.68rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px">${t('rankings.finals')}</div></div>
                     </div>
                 </div>`;
             }
@@ -4619,13 +4629,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     myRankHtml = `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(0,217,54,0.06);border:1px solid rgba(0,217,54,0.2);border-radius:12px;margin-bottom:16px;flex-wrap:wrap">
                         <span class="badge ${myBadgeClass}" style="font-size:1.1rem;padding:5px 13px">${myRank}</span>
                         <div>
-                            <div style="font-weight:800;font-size:1.05rem">Tu es <span style="color:var(--color-accent)">#${myRank}</span> au classement</div>
-                            <div style="color:var(--color-text-secondary);font-size:0.82rem;margin-top:2px">${myEntry.points} pts · ${myEntry.finals} finale${myEntry.finals !== 1 ? 's' : ''} · ${myEntry.wins > 0 ? myEntry.wins + ' victoire' + (myEntry.wins > 1 ? 's' : '') : 'aucune victoire'}</div>
+                            <div style="font-weight:800;font-size:1.05rem">${t('rankings.you.are')} <span style="color:var(--color-accent)">#${myRank}</span> ${t('rankings.in.ranking')}</div>
+                            <div style="color:var(--color-text-secondary);font-size:0.82rem;margin-top:2px">${myEntry.points} ${t('rankings.pts')} · ${myEntry.finals} ${t('rankings.finals')} · ${myEntry.wins > 0 ? myEntry.wins + ' ' + t('rankings.wins') : t('rankings.not.in').split('—')[0].trim()}</div>
                         </div>
                     </div>`;
                 } else {
                     myRankHtml = `<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px">
-                        Tu n'apparais pas encore au classement — participe à une finale !
+                        ${t('rankings.not.in')}
                     </div>`;
                 }
             }
@@ -4638,8 +4648,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             const showTrend = Object.keys(prevRankMap).length > 0;
             const trendHeader = showTrend ? '<th title="Évolution vs édition précédente">±</th>' : '';
-            const evolHeader = last6.length > 1 ? '<th title="Positions sur les dernières éditions">Historique</th>' : '';
-            let html = championBannerHtml + myRankHtml + `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th><th>Points</th><th>Finales</th><th>Victoires</th><th>Podiums</th><th>Meilleur</th>${trendHeader}${evolHeader}</tr></thead><tbody>`;
+            const evolHeader = last6.length > 1 ? `<th title="Positions sur les dernières éditions">${t('rankings.alltime')}</th>` : '';
+            let html = championBannerHtml + myRankHtml + `<table><thead><tr><th>${t('rankings.col.pos')}</th><th>${t('rankings.col.player')}</th><th>${t('rankings.col.team')}</th><th>${t('rankings.col.pts')}</th><th>${t('rankings.col.editions')}</th><th>${t('rankings.col.wins')}</th><th>${t('rankings.col.podiums')}</th><th>${t('rankings.col.best')}</th>${trendHeader}${evolHeader}</tr></thead><tbody>`;
             ranking.forEach((s, i) => {
                 const rank = i + 1;
                 const badgeClass = rank <= 3 ? `badge-${rank}` : 'badge-other';
@@ -4650,7 +4660,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 if (showTrend) {
                     const prev = prevRankMap[s.player.id];
                     if (prev === undefined) {
-                        trendHtml = `<td><span style="color:#60a5fa;font-size:0.7rem;font-weight:700">NEW</span></td>`;
+                        trendHtml = `<td><span style="color:#60a5fa;font-size:0.7rem;font-weight:700">${t('rankings.new')}</span></td>`;
                     } else {
                         const delta = prev - rank;
                         if (delta > 0)      trendHtml = `<td><span style="color:#4ade80;font-size:0.78rem;font-weight:700">▲${delta}</span></td>`;
@@ -4761,11 +4771,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }).filter(Boolean).sort((a, b) => b.points - a.points);
 
             if (rows.length === 0) {
-                container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📈</span><p>Aucune statistique disponible</p></div>';
+                container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📈</span><p>${t('stats.empty')}</p></div>`;
                 return;
             }
 
-            let html = '<table><thead><tr><th>Joueur</th><th>Participations</th><th>Finales</th><th>Points</th><th>Victoires</th><th>Podiums</th></tr></thead><tbody>';
+            let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('stats.participations')}</th><th>${t('stats.finals')}</th><th>${t('players.col.pts')}</th><th>${t('stats.wins')}</th><th>${t('stats.podiums')}</th></tr></thead><tbody>`;
             rows.forEach(r => {
                 html += `<tr>
                     <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong>${playerBadgesHtml(r.p.id)}</td>
@@ -4817,7 +4827,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             }).filter(Boolean).sort((a, b) => b.curPart - a.curPart || b.bestPart - a.bestPart);
 
             if (streakRows.length === 0) {
-                streaksContainer.innerHTML = '<div class="empty-state"><span class="empty-state-icon">⚡</span><p>Pas encore de données</p></div>';
+                streaksContainer.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚡</span><p>${t('stats.no.data')}</p></div>`;
                 return;
             }
 
@@ -4828,10 +4838,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const topVies     = streakRows.reduce((best, r) => r.maxVies  > best.maxVies  ? r : best);
 
             const recordCards = [
-                topCurPart.curPart  > 0 ? { icon: '🔥', label: 'Streak actif',           value: `${topCurPart.curPart} éd.`,  player: topCurPart.p  } : null,
-                topBestPart.bestPart > 1 ? { icon: '📈', label: 'Meilleur streak',         value: `${topBestPart.bestPart} éd.`, player: topBestPart.p } : null,
-                topCurFin.curFin    > 0 ? { icon: '🏆', label: 'Finales consécutives',    value: `${topCurFin.curFin} éd.`,   player: topCurFin.p   } : null,
-                topVies.maxVies     > 0 ? { icon: '❤️',  label: 'Max vies bonus (édition)', value: `×${topVies.maxVies}`,        player: topVies.p     } : null,
+                topCurPart.curPart  > 0 ? { icon: '🔥', label: t('stats.current.streak'),   value: `${topCurPart.curPart} éd.`,   player: topCurPart.p  } : null,
+                topBestPart.bestPart > 1 ? { icon: '📈', label: t('stats.best.streak'),       value: `${topBestPart.bestPart} éd.`, player: topBestPart.p } : null,
+                topCurFin.curFin    > 0 ? { icon: '🏆', label: t('stats.consec.finals'),    value: `${topCurFin.curFin} éd.`,    player: topCurFin.p   } : null,
+                topVies.maxVies     > 0 ? { icon: '❤️',  label: t('stats.max.lives'),         value: `×${topVies.maxVies}`,         player: topVies.p     } : null,
             ].filter(Boolean);
 
             let streakHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px">
@@ -4842,7 +4852,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </div>`).join('')}
             </div>`;
 
-            streakHtml += `<table><thead><tr><th>Joueur</th><th>🔥 Streak actuel</th><th>📈 Meilleur streak</th><th>🏆 Finales consécutives</th><th>❤️ Max vies</th></tr></thead><tbody>`;
+            streakHtml += `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('stats.current.streak')}</th><th>${t('stats.best.streak')}</th><th>${t('stats.consec.finals')}</th><th>${t('stats.max.lives')}</th></tr></thead><tbody>`;
             streakRows.forEach(r => {
                 const isMe = currentUser && r.p.userId === currentUser.uid;
                 const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
@@ -4875,7 +4885,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             const ranking = Object.values(stats).filter(s => s.finals > 0).sort((a, b) => b.points - a.points);
             const csv = [
-                'Position,Joueur,Équipe,Points,Finales,Victoires,Podiums',
+                t('export.csv.header'),
                 ...ranking.map((s, i) => `${i+1},"${pName(s)}","${s.team}",${s.points},${s.finals},${s.wins},${s.podiums}`)
             ].join('\n');
 
@@ -4884,6 +4894,25 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             a.download = `classement_${cupId}.csv`;
             a.click();
         };
+
+        // ── i18n ──────────────────────────────────────────────────────────────
+        const applyI18n = () => {
+            if (!loaded.participants || !loaded.editions || !loaded.results) return;
+            displayHome();
+            displayEditions();
+            displayGeneralRanking();
+            displayParticipants();
+            displayStats();
+            displayHallOfFame();
+            displayNextEditionBanner();
+            if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
+        };
+        window.toggleLang = () => {
+            const newLang = getLang() === 'fr' ? 'en' : 'fr';
+            setLang(newLang);
+            applyI18n();
+        };
+        initLang();
 
         // Load site config (async, non-blocking)
         loadSiteConfig();
