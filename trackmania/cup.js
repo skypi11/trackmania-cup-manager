@@ -3,9 +3,8 @@ import { t, setLang, getLang, initLang } from '../shared/i18n.js';
 import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, getDoc, getDocs, onSnapshot, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
-
-const dateLang = () => getLang() === 'en' ? 'en-GB' : 'fr-FR';
-const tTeam = team => (team && team !== 'Sans équipe') ? team : t('player.no.team');
+import { state } from './modules/state.js';
+import { dateLang, tTeam, pName, getPoints, POINTS_SYSTEM, showToast } from './modules/utils.js';
 
 initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'),
@@ -16,10 +15,9 @@ const DISCORD_CLIENT_ID = '1483592495215673407';
 const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';
 
 // Capture Discord OAuth token from URL hash (before any redirect)
-let pendingDiscordToken = null;
 const _hashParams = new URLSearchParams(window.location.hash.slice(1));
 if (_hashParams.get('access_token')) {
-    pendingDiscordToken = _hashParams.get('access_token');
+    state.pendingDiscordToken = _hashParams.get('access_token');
     const _state = _hashParams.get('state') || '';
     history.replaceState(null, '', window.location.pathname + (_state ? '?' + _state : window.location.search));
 }
@@ -38,14 +36,8 @@ document.getElementById('cupTitle').textContent = CUP.name;
 document.getElementById('cupSubtitle').textContent = `Springs E-Sport · ${CUP.label}`;
 document.getElementById('authCupName').textContent = CUP.name;
 
-// Helper: get player display name — priority: pseudoTM > pseudo > name (backward compat)
-const pName = p => p?.pseudoTM || p?.pseudo || p?.name || '?';
 // Cup filter: backward compat — existing docs without cupId are treated as 'monthly'
 const cupFilter = item => (item.cupId || 'monthly') === cupId;
-
-// Points system: pos 1-10 = F1 points, pos 11+ = 1pt
-const POINTS_SYSTEM = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-const getPoints = (pos) => pos > 0 ? (POINTS_SYSTEM[pos - 1] ?? 1) : 0;
 
 // ── SITE CONFIG ───────────────────────────────────
 const CONFIG_DEFAULTS = {
@@ -60,19 +52,19 @@ const CONFIG_DEFAULTS = {
     discordInviteUrl: 'https://discord.gg/ZXHRRd95C3',
     copyrightText: '© 2026 Springs E-Sport',
 };
-let siteConfig = { ...CONFIG_DEFAULTS };
+state.siteConfig = { ...CONFIG_DEFAULTS };
 
 async function loadSiteConfig() {
     try {
         const snap = await getDoc(doc(db, 'siteContent', `config_${cupId}`));
-        if (snap.exists()) siteConfig = { ...CONFIG_DEFAULTS, ...snap.data() };
+        if (snap.exists()) state.siteConfig = { ...CONFIG_DEFAULTS, ...snap.data() };
     } catch { /* keep defaults */ }
     applySiteConfig();
     displayHome();
 }
 
 function applySiteConfig() {
-    const c = siteConfig;
+    const c = state.siteConfig;
     const titleEl = document.getElementById('cupTitle');
     const subEl   = document.getElementById('cupSubtitle');
     if (titleEl) titleEl.textContent = c.siteName;
@@ -121,7 +113,7 @@ window.saveSiteConfig = async (e) => {
     };
     try {
         await setDoc(doc(db, 'siteContent', `config_${cupId}`), cfg);
-        siteConfig = { ...cfg };
+        state.siteConfig = { ...cfg };
         applySiteConfig();
         displayHome();
         const status = document.getElementById('cfgSaveStatus');
@@ -131,20 +123,6 @@ window.saveSiteConfig = async (e) => {
         showToast(t('msg.save.error'));
     }
 };
-
-let isAdmin = false;
-let currentUser = null;
-let currentUserProfile = null;
-let currentDetailEditionId = null;
-let twitchCollapsed = false;
-let youtubeCollapsed = false;
-let data = { participants: [], editions: [], results: [], predictions: [] };
-let rankingChart = null;
-let playerChart = null;
-let editionFilter = 'all';   // 'all' | 'upcoming' | 'past'
-let editionSort   = 'desc';  // 'desc' | 'asc'
-// 'auth' included so loading overlay stays until Firebase resolves the session
-let loaded = { participants: false, editions: false, results: false, predictions: false, auth: false };
 
 // ── DISCORD ───────────────────────────────────────
 window.linkDiscord = () => {
@@ -166,7 +144,7 @@ async function handleDiscordCallback(token) {
         });
         if (!res.ok) { showToast(t('msg.error')); return; }
         const user = await res.json();
-        const player = data.participants.find(p => p.userId === currentUser?.uid);
+        const player = state.data.participants.find(p => p.userId === state.currentUser?.uid);
         if (player) {
             await updateDoc(doc(db, 'participants', player.id), {
                 discordId: user.id,
@@ -184,13 +162,13 @@ async function handleDiscordCallback(token) {
 }
 
 function updateDiscordReminders() {
-    if (!currentUser || isAdmin) {
+    if (!state.currentUser || state.isAdmin) {
         document.getElementById('discordLinkBanner').style.display = 'none';
         const dot = document.getElementById('discordBadgeDot');
         if (dot) dot.remove();
         return;
     }
-    const player = data.participants.find(p => p.userId === currentUser.uid);
+    const player = state.data.participants.find(p => p.userId === state.currentUser.uid);
     if (!player) return;
     const linked = !!player.discordId;
 
@@ -220,7 +198,7 @@ window.dismissDiscordPrompt = () => {
 
 function maybeShowDiscordPrompt() {
     if (sessionStorage.getItem('discordPromptDismissed')) return;
-    const player = data.participants.find(p => p.userId === currentUser?.uid);
+    const player = state.data.participants.find(p => p.userId === state.currentUser?.uid);
     if (player && !player.discordId) {
         setTimeout(() => {
             document.getElementById('discordPromptOverlay').classList.add('open');
@@ -236,11 +214,11 @@ window.unlinkDiscord = async (playerId) => {
 };
 
 window.openDiscordNotifyModal = (editionId) => {
-    const e = data.editions.find(ed => ed.id === editionId);
+    const e = state.data.editions.find(ed => ed.id === editionId);
     if (!e) return;
-    const inscriptions = data.results.filter(r => r.editionId === editionId && r.phase === 'inscription');
+    const inscriptions = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription');
     const mentions = inscriptions
-        .map(r => data.participants.find(p => p.id === r.playerId))
+        .map(r => state.data.participants.find(p => p.id === r.playerId))
         .filter(p => p?.discordId)
         .map(p => `<@${p.discordId}>`);
     const timeStr = e.time ? ` à **${e.time}**` : '';
@@ -287,16 +265,16 @@ function displayHome() {
     if (!container) return;
     const today = new Date(); today.setHours(0,0,0,0);
 
-    const liveEdition = data.editions.find(e => e.status === 'en_cours');
-    const nextEdition = data.editions
+    const liveEdition = state.data.editions.find(e => e.status === 'en_cours');
+    const nextEdition = state.data.editions
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee' && e.status !== 'en_cours')
         .sort((a,b) => new Date(a.date) - new Date(b.date))[0];
 
-    const totalEditions = data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
-    const totalPlayers = data.participants.length;
-    const totalParticipations = new Set(data.results.filter(r => r.phase === 'qualification' || r.phase === 'inscription').map(r => `${r.playerId}_${r.editionId}`)).size;
+    const totalEditions = state.data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
+    const totalPlayers = state.data.participants.length;
+    const totalParticipations = new Set(state.data.results.filter(r => r.phase === 'qualification' || r.phase === 'inscription').map(r => `${r.playerId}_${r.editionId}`)).size;
 
-    const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+    const currentPlayer = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
 
     // Featured event block
     let featuredHtml = '';
@@ -307,7 +285,7 @@ function displayHome() {
                 <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#fbbf24">${t('detail.live.twitch')}</span>
             </div>
             <div style="font-size:1.2rem;font-weight:800;margin-bottom:14px">${liveEdition.name}</div>
-            <a href="${siteConfig.twitchUrl}" target="_blank" rel="noopener"
+            <a href="${state.siteConfig.twitchUrl}" target="_blank" rel="noopener"
                onclick="event.stopPropagation()"
                style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:10px 18px;border-radius:10px;background:linear-gradient(135deg,#9146ff,#7b2fff);color:#fff;font-weight:700;font-size:0.88rem">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
@@ -318,10 +296,10 @@ function displayHome() {
         const dateStr = new Date(nextEdition.date).toLocaleDateString(dateLang(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const timeStr = nextEdition.time ? ` à ${nextEdition.time}` : '';
         const countdown = getCountdown(nextEdition.date, nextEdition.time);
-        const isRegistered = currentPlayer && data.results.some(r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+        const isRegistered = currentPlayer && state.data.results.some(r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
         let ctaHtml = '';
         if (nextEdition.status === 'inscriptions') {
-            if (!currentUser) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();openAuthModal()" style="margin-top:18px">${t('editions.login.to.reg')}</button>`;
+            if (!state.currentUser) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();openAuthModal()" style="margin-top:18px">${t('editions.login.to.reg')}</button>`;
             else if (isRegistered) ctaHtml = `<div class="registered-badge" style="margin-top:16px">${t('editions.already.reg')}</div>`;
             else if (currentPlayer) ctaHtml = `<button class="btn btn-primary" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')" style="margin-top:18px">${t('editions.register.btn')}</button>`;
         }
@@ -340,16 +318,16 @@ function displayHome() {
     }
 
     // Last champions
-    const pastWithChampion = data.editions
-        .filter(e => data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
+    const pastWithChampion = state.data.editions
+        .filter(e => state.data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
         .sort((a,b) => new Date(b.date) - new Date(a.date))
         .slice(0, 3);
 
     let championsHtml = '';
     if (pastWithChampion.length > 0) {
         const cards = pastWithChampion.map(e => {
-            const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
-            const player = winner ? data.participants.find(p => p.id === winner.playerId) : null;
+            const winner = state.data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+            const player = winner ? state.data.participants.find(p => p.id === winner.playerId) : null;
             if (!player) return '';
             const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { month: 'long', year: 'numeric' });
             return `<div class="home-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
@@ -364,7 +342,7 @@ function displayHome() {
         </div>`;
     }
 
-    const guestCtaHtml = !currentUser ? `
+    const guestCtaHtml = !state.currentUser ? `
         <div style="background:linear-gradient(135deg,rgba(0,0,0,0.18),rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:18px;margin-bottom:20px">
             <div style="font-size:2rem;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(255,255,255,0.15))">🎮</div>
             <div style="flex:1">
@@ -382,8 +360,8 @@ function displayHome() {
     container.innerHTML = `
         <div class="home-hero">
             <img src="../assets/springs-logo.png" class="home-hero-logo" alt="Springs Esport">
-            <div class="home-hero-title">${siteConfig.siteName}</div>
-            <div class="home-hero-sub">${siteConfig.siteSubtitle}</div>
+            <div class="home-hero-title">${state.siteConfig.siteName}</div>
+            <div class="home-hero-sub">${state.siteConfig.siteSubtitle}</div>
             ${featuredHtml}
         </div>
         ${guestCtaHtml}
@@ -400,8 +378,8 @@ function displayHallOfFame() {
     const container = document.getElementById('hallofFameContent');
     if (!container) return;
 
-    const finaleResults = data.results.filter(r => r.phase === 'finale');
-    const editionsWithWinner = data.editions
+    const finaleResults = state.data.results.filter(r => r.phase === 'finale');
+    const editionsWithWinner = state.data.editions
         .filter(e => finaleResults.some(r => r.editionId === e.id && r.position === 1))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -412,7 +390,7 @@ function displayHallOfFame() {
 
     // --- All-time player stats ---
     const playerStats = {};
-    data.participants.forEach(p => {
+    state.data.participants.forEach(p => {
         playerStats[p.id] = { player: p, wins: 0, podiums: 0, finals: 0, points: 0 };
     });
     finaleResults.forEach(r => {
@@ -498,7 +476,7 @@ function displayHallOfFame() {
                     const sorted = Object.entries(seasonStats).sort((a, b) => b[1].points - a[1].points || b[1].wins - a[1].wins);
                     if (sorted.length === 0) return '';
                     const [champId, champData] = sorted[0];
-                    const champ = data.participants.find(p => p.id === champId);
+                    const champ = state.data.participants.find(p => p.id === champId);
                     if (!champ) return '';
                     return `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:12px">
                         <span style="font-size:1.8rem;flex-shrink:0">🏆</span>
@@ -524,12 +502,12 @@ function displayHallOfFame() {
         if (yearEditions.length === 0) return;
         const cardsHtml = yearEditions.map(e => {
             const win = finaleResults.find(r => r.editionId === e.id && r.position === 1);
-            const player = win ? data.participants.find(p => p.id === win.playerId) : null;
+            const player = win ? state.data.participants.find(p => p.id === win.playerId) : null;
             if (!player) return '';
             const p2 = finaleResults.find(r => r.editionId === e.id && r.position === 2);
             const p3 = finaleResults.find(r => r.editionId === e.id && r.position === 3);
-            const player2 = p2 ? data.participants.find(p => p.id === p2.playerId) : null;
-            const player3 = p3 ? data.participants.find(p => p.id === p3.playerId) : null;
+            const player2 = p2 ? state.data.participants.find(p => p.id === p2.playerId) : null;
+            const player3 = p3 ? state.data.participants.find(p => p.id === p3.playerId) : null;
             const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' });
             return `<div class="hof-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
                 <div class="hof-trophy">🏆</div>
@@ -558,28 +536,28 @@ function displayHallOfFame() {
 }
 window.displayHallOfFame = displayHallOfFame;
 
-let urlAutoOpenDone = false;
+let state.urlAutoOpenDone = false;
 function checkLoaded() {
-    if (Object.values(loaded).every(Boolean)) {
+    if (Object.values(state.loaded).every(Boolean)) {
         document.getElementById('loadingOverlay').classList.add('hidden');
         displayHome();
         updateDiscordReminders();
         // Handle Discord OAuth callback
-        if (pendingDiscordToken && currentUser) {
-            handleDiscordCallback(pendingDiscordToken);
-            pendingDiscordToken = null;
+        if (state.pendingDiscordToken && state.currentUser) {
+            handleDiscordCallback(state.pendingDiscordToken);
+            state.pendingDiscordToken = null;
         }
         maybeShowDiscordPrompt();
         // Auto-open edition or player from URL param (once)
-        if (!urlAutoOpenDone) {
-            urlAutoOpenDone = true;
+        if (!state.urlAutoOpenDone) {
+            state.urlAutoOpenDone = true;
             const params = new URLSearchParams(window.location.search);
             const editionId = params.get('edition');
             const playerId  = params.get('player');
-            if (editionId && data.editions.find(e => e.id === editionId)) {
+            if (editionId && state.data.editions.find(e => e.id === editionId)) {
                 showSection('editions');
                 openEditionDetail(editionId);
-            } else if (playerId && data.participants.find(p => p.id === playerId)) {
+            } else if (playerId && state.data.participants.find(p => p.id === playerId)) {
                 openPlayerProfile(playerId);
             }
         }
@@ -608,7 +586,7 @@ window.authGoogleSignIn = async () => {
 
 // Auth
 onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
+    state.currentUser = user;
     const authOverlay = document.getElementById('authOverlay');
 
     const loginBtn  = document.getElementById('loginBtn');
@@ -616,12 +594,12 @@ onAuthStateChanged(auth, async (user) => {
     const playerBtn = document.getElementById('playerBtn');
 
     if (!user) {
-        isAdmin = false;
-        currentUserProfile = null;
+        state.isAdmin = false;
+        state.currentUserProfile = null;
         loginBtn.style.display  = '';
         adminBtn.style.display  = 'none';
         playerBtn.style.display = 'none';
-        loaded.auth = true;
+        state.loaded.auth = true;
         checkLoaded();
         displayParticipants();
         displayEditions();
@@ -638,32 +616,32 @@ onAuthStateChanged(auth, async (user) => {
             getDoc(doc(db, 'admins', user.uid)),
             getDocs(query(collection(db, 'participants'), where('userId', '==', user.uid)))
         ]);
-        isAdmin = adminSnap.exists();
-        currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
+        state.isAdmin = adminSnap.exists();
+        state.currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
     } catch {
-        isAdmin = false;
-        currentUserProfile = null;
+        state.isAdmin = false;
+        state.currentUserProfile = null;
     }
 
-    if (isAdmin) {
+    if (state.isAdmin) {
         document.body.classList.add('admin-mode');
         adminBtn.style.display  = '';
         playerBtn.style.display = '';
         adminBtn.classList.add('active');
         adminBtn.textContent = t('admin.logout');
-        const pseudoAdmin = currentUserProfile?.pseudo || user.displayName || t('nav.account');
+        const pseudoAdmin = state.currentUserProfile?.pseudo || user.displayName || t('nav.account');
         playerBtn.textContent = `👤 ${pseudoAdmin}`;
     } else {
         document.body.classList.remove('admin-mode');
         adminBtn.style.display  = 'none';
         playerBtn.style.display = '';
         adminBtn.classList.remove('active');
-        const linkedPlayer = data.participants.find(p => p.userId === user.uid);
-        const pseudo = linkedPlayer ? pName(linkedPlayer) : (currentUserProfile?.pseudo || user.displayName || t('nav.account'));
+        const linkedPlayer = state.data.participants.find(p => p.userId === user.uid);
+        const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || user.displayName || t('nav.account'));
         playerBtn.textContent = `👤 ${pseudo}`;
     }
     // Mark auth as resolved so loading overlay can hide
-    loaded.auth = true;
+    state.loaded.auth = true;
     checkLoaded();
     displayParticipants();
     displayEditions();
@@ -673,7 +651,7 @@ onAuthStateChanged(auth, async (user) => {
 const googleProvider = new GoogleAuthProvider();
 
 window.toggleAdmin = async () => {
-    if (isAdmin) {
+    if (state.isAdmin) {
         await signOut(auth);
     } else {
         try {
@@ -693,8 +671,8 @@ window.playerSignOut = async () => {
 
 // Opens the player's own fiche joueur (with edit section)
 window.openPlayerAccount = () => {
-    if (!currentUser) return openAuthModal();
-    const player = data.participants.find(p => p.userId === currentUser.uid);
+    if (!state.currentUser) return openAuthModal();
+    const player = state.data.participants.find(p => p.userId === state.currentUser.uid);
     if (player) {
         openPlayerProfile(player.id);
     } else {
@@ -716,13 +694,13 @@ window.closeCreateProfile = () => {
 
 document.getElementById('createProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!state.currentUser) return;
     const pseudo = document.getElementById('newProfilePseudo').value.trim();
     const team   = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
     const msg    = document.getElementById('createProfileMsg');
 
     if (!pseudo) return;
-    if (data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
+    if (state.data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
         msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
         msg.textContent = t('profile.exists');
         return;
@@ -731,9 +709,9 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     btn.disabled = true; btn.textContent = t('profile.creating');
     try {
         await addDoc(collection(db, 'participants'), {
-            pseudo, team, userId: currentUser.uid, cupId,
+            pseudo, team, userId: state.currentUser.uid, cupId,
             pseudoTM: pseudo, games: ['trackmania'],
-            email: currentUser.email, discordId: '', discordUsername: ''
+            email: state.currentUser.email, discordId: '', discordUsername: ''
         });
         closeCreateProfile();
         document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
@@ -751,7 +729,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
 
 // Edit participant
 window.openEditParticipant = (id) => {
-    const p = data.participants.find(p => p.id === id);
+    const p = state.data.participants.find(p => p.id === id);
     if (!p) return;
     document.getElementById('editParticipantId').value = id;
     document.getElementById('editPlayerName').value = pName(p);
@@ -766,7 +744,7 @@ document.getElementById('editParticipantForm').addEventListener('submit', async 
     const id = document.getElementById('editParticipantId').value;
     const name = document.getElementById('editPlayerName').value.trim();
     const team = document.getElementById('editPlayerTeam').value.trim();
-    const duplicate = data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
+    const duplicate = state.data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
     if (duplicate) { alert(t('admin.pseudo.used')); return; }
     await updateDoc(doc(db, 'participants', id), { pseudoTM: name, name, team: team || 'Sans équipe' });
     closeEditParticipant();
@@ -774,7 +752,7 @@ document.getElementById('editParticipantForm').addEventListener('submit', async 
 
 // Edit edition
 window.openEditEdition = (id) => {
-    const e = data.editions.find(e => e.id === id);
+    const e = state.data.editions.find(e => e.id === id);
     if (!e) return;
     document.getElementById('editEditionId').value = id;
     document.getElementById('editEditionName').value = e.name;
@@ -808,7 +786,7 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
     const description = document.getElementById('editEditionDesc').value.trim();
     const youtubeUrl  = document.getElementById('editEditionYoutube').value.trim();
     const newStatus = document.getElementById('editEditionStatus').value;
-    const current   = data.editions.find(ed => ed.id === id);
+    const current   = state.data.editions.find(ed => ed.id === id);
     const saison  = parseInt(document.getElementById('editEditionSaison').value) || new Date(date).getFullYear();
     const mapsTmx = {}; [1,2,3,4,5,6,7].forEach(n => { mapsTmx[`map${n}tmx`] = document.getElementById(`editEditionMap${n}tmx`).value.trim(); mapsTmx[`map${n}name`] = document.getElementById(`editEditionMap${n}name`).value.trim(); });
     const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus, saison, ...mapsTmx };
@@ -826,14 +804,14 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
 // Delete functions
 window.deleteParticipant = async (id) => {
     if (!confirm(t('msg.confirm.delete.player'))) return;
-    for (const r of data.results.filter(r => r.playerId === id))
+    for (const r of state.data.results.filter(r => r.playerId === id))
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'participants', id));
 };
 
 window.deleteEdition = async (id) => {
     if (!confirm(t('msg.confirm.delete.edition'))) return;
-    for (const r of data.results.filter(r => r.editionId === id))
+    for (const r of state.data.results.filter(r => r.editionId === id))
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'editions', id));
 };
@@ -897,7 +875,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
     e.preventDefault();
     const name = document.getElementById('playerName').value.trim();
     const team = document.getElementById('playerTeam').value.trim();
-    if (data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
+    if (state.data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
         alert(t('admin.player.exists')); return;
     }
     await addDoc(collection(db, 'participants'), { name, team: team || 'Sans équipe', cupId });
@@ -908,7 +886,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
 window.displayParticipants = function() {
     const container = document.getElementById('participantsList');
     const search = (document.getElementById('searchPlayers')?.value || '').toLowerCase();
-    const filtered = data.participants
+    const filtered = state.data.participants
         .filter(p => pName(p).toLowerCase().includes(search))
         .sort((a, b) => pName(a).localeCompare(pName(b)));
 
@@ -917,12 +895,12 @@ window.displayParticipants = function() {
         return;
     }
 
-    const adminCol = isAdmin ? '<th></th>' : '';
+    const adminCol = state.isAdmin ? '<th></th>' : '';
     let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
     filtered.forEach(p => {
-        const quals = new Set(data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
-        const finals = data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
-        const del = isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
+        const quals = new Set(state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
+        const finals = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
+        const del = state.isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
         html += `<tr>
             <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</td>
             <td style="color:var(--color-text-secondary)">${tTeam(p.team)}</td>
@@ -972,7 +950,7 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
 function displayNextEditionBanner() {
     const banner = document.getElementById('nextEditionBanner');
     const today = new Date(); today.setHours(0,0,0,0);
-    const upcoming = data.editions
+    const upcoming = state.data.editions
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -989,11 +967,11 @@ function displayNextEditionBanner() {
     };
     const statusInfo = statusMap[next.status] || statusMap.inscriptions;
 
-    const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+    const currentPlayer = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
     const alreadyRegistered = currentPlayer
-        ? data.results.some(r => r.editionId === next.id && r.playerId === currentPlayer.id && r.phase === 'inscription')
+        ? state.data.results.some(r => r.editionId === next.id && r.playerId === currentPlayer.id && r.phase === 'inscription')
         : false;
-    const inscritCount = data.results.filter(r => r.editionId === next.id && r.phase === 'inscription').length;
+    const inscritCount = state.data.results.filter(r => r.editionId === next.id && r.phase === 'inscription').length;
 
     // CTA
     let ctaHtml = '';
@@ -1001,7 +979,7 @@ function displayNextEditionBanner() {
     if (nStatus === 'fermee') {
         ctaHtml = `<span style="color:var(--color-text-secondary);font-size:0.85rem">${t('detail.status.soon')}</span>`;
     } else if (nStatus === 'inscriptions') {
-        if (!currentUser) {
+        if (!state.currentUser) {
             ctaHtml = `<button class="btn btn-primary" onclick="openAuthModal()">${t('editions.login.to.reg')}</button>`;
         } else if (alreadyRegistered) {
             ctaHtml = `<div class="registered-badge" style="font-size:0.85rem;padding:8px 14px">${t('editions.already.reg')}</div>`;
@@ -1040,12 +1018,12 @@ function displayNextEditionBanner() {
 
 // Navigate to an edition (switch to Editions tab + open detail)
 window.setEditionFilter = (f) => {
-    editionFilter = f;
+    state.editionFilter = f;
     document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
     displayEditions();
 };
 window.setEditionSort = (s) => {
-    editionSort = s;
+    state.editionSort = s;
     document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === s));
     displayEditions();
 };
@@ -1079,10 +1057,10 @@ const ACHIEVEMENTS = [
 ];
 
 function computePlayerStats(playerId) {
-    const quals   = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
-    const finales = data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+    const quals   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+    const finales = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
 
-    const pastEditions = data.editions
+    const pastEditions = state.data.editions
         .filter(e => new Date(e.date) < new Date())
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -1140,32 +1118,32 @@ function displayEditions() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
 
     // If detail is open, refresh it
-    if (currentDetailEditionId) {
-        openEditionDetail(currentDetailEditionId);
+    if (state.currentDetailEditionId) {
+        openEditionDetail(state.currentDetailEditionId);
     }
 
-    if (data.editions.length === 0) {
+    if (state.data.editions.length === 0) {
         grid.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📅</span><p>${t('editions.empty')}</p></div>`;
         return;
     }
 
-    const sortFn = editionSort === 'asc'
+    const sortFn = state.editionSort === 'asc'
         ? (a, b) => new Date(a.date) - new Date(b.date)
         : (a, b) => new Date(b.date) - new Date(a.date);
-    const sorted   = [...data.editions].sort(sortFn);
+    const sorted   = [...state.data.editions].sort(sortFn);
     const allUpcoming = sorted.filter(e => new Date(e.date) >= today && e.status !== 'terminee');
     const allPast     = sorted.filter(e => new Date(e.date) <  today || e.status === 'terminee');
 
     // Apply filter
-    const upcoming = editionFilter === 'past'     ? [] : allUpcoming;
-    const past     = editionFilter === 'upcoming' ? [] : allPast;
+    const upcoming = state.editionFilter === 'past'     ? [] : allUpcoming;
+    const past     = state.editionFilter === 'upcoming' ? [] : allPast;
 
     // Hide filter bar when detail is open (handled by grid.style.display)
     const filterBar = document.getElementById('editionFilters');
-    if (filterBar) filterBar.style.display = currentDetailEditionId ? 'none' : '';
+    if (filterBar) filterBar.style.display = state.currentDetailEditionId ? 'none' : '';
 
     // Current player (for badge)
-    const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+    const currentPlayer = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
 
     const WORKFLOW_LABELS = {
         fermee:       t('editions.status.closed'),
@@ -1189,18 +1167,18 @@ function displayEditions() {
         // Player badge
         let playerBadgeHtml = '';
         if (currentPlayer) {
-            const isFinaliste = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
-            const isQualified = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
-            const isInscrit   = data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+            const isFinaliste = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
+            const isQualified = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
+            const isInscrit   = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
             if (isFinaliste)    playerBadgeHtml = `<div class="edition-card-player-badge finalist">${t('editions.finalist')}</div>`;
             else if (isQualified) playerBadgeHtml = `<div class="edition-card-player-badge qualified">${t('editions.participated')}</div>`;
             else if (isInscrit)  playerBadgeHtml = `<div class="edition-card-player-badge">${t('editions.registered')}</div>`;
         }
 
         const participantCount = isPast
-            ? data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length
-            : data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
-        const finals = data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
+            ? state.data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length
+            : state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
+        const finals = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
 
         const descHtml = e.description
             ? `<div class="event-row-desc">${e.description}</div>`
@@ -1227,7 +1205,7 @@ function displayEditions() {
                     ${liveBadgeHtml}
                     ${playerBadgeHtml}
                     <span class="event-row-cta">${t('editions.see')}</span>
-                    ${isAdmin ? `<div class="edition-card-admin" onclick="event.stopPropagation()">
+                    ${state.isAdmin ? `<div class="edition-card-admin" onclick="event.stopPropagation()">
                         <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button>
                         <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
                     </div>` : ''}
@@ -1357,12 +1335,12 @@ function buildStatusHistoryHtml(edition) {
 
 // Open edition detail
 window.openEditionDetail = (id) => {
-    currentDetailEditionId = id;
-    const e = data.editions.find(e => e.id === id);
+    state.currentDetailEditionId = id;
+    const e = state.data.editions.find(e => e.id === id);
     if (!e) return;
     // Restore collapsed states from sessionStorage
-    youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
-    twitchCollapsed  = sessionStorage.getItem('twCollapsed_' + id) === '1';
+    state.youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
+    state.twitchCollapsed  = sessionStorage.getItem('twCollapsed_' + id) === '1';
 
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const isPast = new Date(e.date) < today || e.status === 'terminee' || e.status === 'en_cours';
@@ -1381,8 +1359,8 @@ window.openEditionDetail = (id) => {
 
     if (isPast) {
         // Admin result entry form
-        if (isAdmin) {
-            const playerOptions = data.participants
+        if (state.isAdmin) {
+            const playerOptions = state.data.participants
                 .sort((a, b) => pName(a).localeCompare(pName(b)))
                 .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
             html += `<div class="card">
@@ -1432,20 +1410,20 @@ window.openEditionDetail = (id) => {
         }
 
         // Results display
-        const edResults = data.results.filter(r => r.editionId === e.id);
+        const edResults = state.data.results.filter(r => r.editionId === e.id);
         const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
         const qualResults = edResults.filter(r => r.phase === 'qualification');
 
         const timeStr = e.time ? ` à ${e.time}` : '';
-        const editBtnHtml = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
+        const editBtnHtml = state.isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
         // YouTube VOD embed for past editions (collapsible)
         const ytId = extractYoutubeId(e.youtubeUrl);
         const vodEmbedHtml = ytId ? `
             <div class="vod-section-label" style="justify-content:space-between;margin-bottom:0">
                 <span>${t('detail.vod')}</span>
-                <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${youtubeCollapsed ? t('detail.show') : t('detail.hide')}</button>
+                <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${state.youtubeCollapsed ? t('detail.show') : t('detail.hide')}</button>
             </div>
-            <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="margin-top:10px${youtubeCollapsed ? ';display:none' : ''}">
+            <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="margin-top:10px${state.youtubeCollapsed ? ';display:none' : ''}">
                 <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
             </div>` : '';
 
@@ -1455,10 +1433,10 @@ window.openEditionDetail = (id) => {
                     <span class="live-dot" style="width:7px;height:7px"></span>
                     ${t('detail.live.twitch')}
                 </span>
-                <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
+                <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${state.twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
             </div>
-            <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${twitchCollapsed ? 'display:none' : ''}">
-                <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
+            <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${state.twitchCollapsed ? 'display:none' : ''}">
+                <iframe src="https://player.twitch.tv/?channel=${state.siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
             </div>` : '';
 
         html += `<div class="card">
@@ -1496,12 +1474,12 @@ window.openEditionDetail = (id) => {
                 for (let pos = 1; pos <= 3; pos++) {
                     const r = mapQuals.find(r => r.position === pos);
                     if (r) {
-                        const player = data.participants.find(p => p.id === r.playerId);
+                        const player = state.data.participants.find(p => p.id === r.playerId);
                         // Cumulative vies at this map: rank of this appearance (0 = first = no vie)
                         const playerQualsSorted = qualResults.filter(q => q.playerId === r.playerId && q.map).sort((a, b) => a.map - b.map);
                         const appearanceIndex = playerQualsSorted.findIndex(q => q.map === m);
                         const viesHtml = appearanceIndex > 0 ? `<span class="vie-badge">❤️×${appearanceIndex}</span>` : '';
-                        const del = isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
+                        const del = state.isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
                         html += `<div class="map-slot map-slot-filled" onclick="openPlayerProfile('${player?.id}')">
                             <span class="map-medal">${medals3[pos-1]}</span>
                             <span class="map-player-name">${player ? pName(player) : '?'}</span>
@@ -1517,9 +1495,9 @@ window.openEditionDetail = (id) => {
             if (legacyQuals.length > 0) {
                 html += '<div style="margin-top:6px" class="chips">';
                 legacyQuals.forEach(r => {
-                    const player = data.participants.find(p => p.id === r.playerId);
+                    const player = state.data.participants.find(p => p.id === r.playerId);
                     if (!player) return;
-                    const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
+                    const del = state.isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
                     html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
                 });
                 html += '</div>';
@@ -1535,7 +1513,7 @@ window.openEditionDetail = (id) => {
             if (podiumOrder.length > 0) {
                 html += '<div class="podium">';
                 podiumOrder.forEach(r => {
-                    const player = data.participants.find(p => p.id === r.playerId);
+                    const player = state.data.participants.find(p => p.id === r.playerId);
                     if (!player) return;
                     const viesCountP = qualResults.filter(q => q.playerId === player.id).length - 1;
                     const viesHtml = viesCountP > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${viesCountP}</div>` : '';
@@ -1554,7 +1532,7 @@ window.openEditionDetail = (id) => {
                 html += '</div>';
             }
 
-            const adminCol = isAdmin ? '<th></th>' : '';
+            const adminCol = state.isAdmin ? '<th></th>' : '';
             html += `<div class="phase-title" style="display:flex;align-items:center;justify-content:space-between">
                 <span>${t('detail.finale.title')}</span>
                 <button class="btn btn-secondary btn-small" onclick="copyPodium('${e.id}', this)">${t('detail.share.podium')}</button>
@@ -1572,12 +1550,12 @@ window.openEditionDetail = (id) => {
             html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
             html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th>${adminCol}</tr></thead><tbody>`;
             finaleResults.forEach(r => {
-                const player = data.participants.find(p => p.id === r.playerId);
+                const player = state.data.participants.find(p => p.id === r.playerId);
                 if (!player) return;
                 const viesCount = qualResults.filter(q => q.playerId === player.id).length - 1;
                 const vies = viesCount > 0 ? `×${viesCount}` : '—';
                 const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
-                const del = isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
+                const del = state.isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                 html += `<tr>
                     <td><span class="badge ${badgeClass}">${r.position}</span></td>
                     <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</td>
@@ -1602,9 +1580,9 @@ window.openEditionDetail = (id) => {
             html += `<div class="phase-title" style="margin-top:20px">${t('detail.present.notq')} (${presentOnly.length})</div>
                 <div class="chips">`;
             presentOnly.forEach(pid => {
-                const player = data.participants.find(p => p.id === pid);
+                const player = state.data.participants.find(p => p.id === pid);
                 if (!player) return;
-                const del = isAdmin ? `<button class="chip-delete" onclick="deleteResult('${edResults.find(r => r.playerId === pid && r.phase === 'inscription')?.id}')">✕</button>` : '';
+                const del = state.isAdmin ? `<button class="chip-delete" onclick="deleteResult('${edResults.find(r => r.playerId === pid && r.phase === 'inscription')?.id}')">✕</button>` : '';
                 html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
             });
             html += '</div>';
@@ -1617,14 +1595,14 @@ window.openEditionDetail = (id) => {
         const timeStr = e.time ? ` à ${e.time}` : '';
 
         // Check if current user is already registered for THIS edition
-        const currentPlayer = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
+        const currentPlayer = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
         const alreadyRegistered = currentPlayer
-            ? data.results.some(r => r.editionId === id && r.playerId === currentPlayer.id && r.phase === 'inscription')
+            ? state.data.results.some(r => r.editionId === id && r.playerId === currentPlayer.id && r.phase === 'inscription')
             : false;
 
         // Admin workflow panel
         let workflowHtml = '';
-        if (isAdmin) {
+        if (state.isAdmin) {
             const wfMap = {
                 fermee:       { label: t('editions.status.closed'), color: 'var(--color-text-secondary)', next: { status: 'inscriptions', btn: t('detail.open.reg') } },
                 inscriptions: { label: t('editions.status.open'),   color: 'var(--springs-orange)',       next: { status: 'en_cours',     btn: t('detail.start.event')   } },
@@ -1651,7 +1629,7 @@ window.openEditionDetail = (id) => {
             registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">${t('detail.status.closed')}</p>`;
         } else if (status === 'en_cours') {
             registrationHtml = `<p style="color:#fbbf24;font-weight:600;font-size:0.9rem">${t('detail.status.live')}</p>`;
-        } else if (!currentUser) {
+        } else if (!state.currentUser) {
             registrationHtml = `<button class="btn btn-primary" onclick="openAuthModal()">${t('editions.login.to.reg')}</button>`;
         } else if (alreadyRegistered) {
             registrationHtml = `<div class="registered-badge">${t('detail.already.reg')}</div>`;
@@ -1670,28 +1648,28 @@ window.openEditionDetail = (id) => {
         const infoHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;font-size:0.9rem;color:var(--color-text-secondary)">${infoItems.join('')}</div>`;
 
         // List of players registered for THIS edition (phase: 'inscription')
-        const inscriptions = data.results.filter(r => r.editionId === id && r.phase === 'inscription');
-        const adminDelCol = isAdmin ? '<th></th>' : '';
+        const inscriptions = state.data.results.filter(r => r.editionId === id && r.phase === 'inscription');
+        const adminDelCol = state.isAdmin ? '<th></th>' : '';
         let registrantsHtml = '';
         if (inscriptions.length === 0) {
             registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>${t('detail.no.reg')}</p></div>`;
         } else {
-            const showActionsCol = isAdmin || inscriptions.some(r => {
-                const p = data.participants.find(p => p.id === r.playerId);
-                return p && currentUser && p.userId === currentUser.uid;
+            const showActionsCol = state.isAdmin || inscriptions.some(r => {
+                const p = state.data.participants.find(p => p.id === r.playerId);
+                return p && state.currentUser && p.userId === state.currentUser.uid;
             });
             const isMeRegistered = inscriptions.some(r => {
-                const p = data.participants.find(p => p.id === r.playerId);
-                return p && currentUser && p.userId === currentUser.uid;
+                const p = state.data.participants.find(p => p.id === r.playerId);
+                return p && state.currentUser && p.userId === state.currentUser.uid;
             });
             const showPasswordCol = isMeRegistered && !!e.password;
             const actionsHeader = showActionsCol ? '<th></th>' : '';
             const passwordHeader = showPasswordCol ? `<th>${t('detail.password')}</th>` : '';
             registrantsHtml = `<table><thead><tr><th>#</th><th>Joueur</th><th>Équipe</th>${passwordHeader}${actionsHeader}</tr></thead><tbody>`;
             inscriptions.forEach((r, i) => {
-                const player = data.participants.find(p => p.id === r.playerId);
+                const player = state.data.participants.find(p => p.id === r.playerId);
                 if (!player) return;
-                const isMe = currentUser && player.userId === currentUser.uid;
+                const isMe = state.currentUser && player.userId === state.currentUser.uid;
                 const meStyle = isMe ? 'background:rgba(0,217,54,0.06)' : '';
                 let passwordCell = '';
                 if (showPasswordCol) {
@@ -1701,7 +1679,7 @@ window.openEditionDetail = (id) => {
                 }
                 let actionCell = '';
                 if (showActionsCol) {
-                    if (isAdmin) {
+                    if (state.isAdmin) {
                         actionCell = `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>`;
                     } else if (isMe) {
                         actionCell = `<td><button class="btn btn-danger btn-small" onclick="cancelInscription('${r.id}', '${id}')">${t('detail.cancel')}</button></td>`;
@@ -1727,12 +1705,12 @@ window.openEditionDetail = (id) => {
                 ${t('detail.live.twitch')}
             </div>
             <div class="stream-embed-wrap">
-                <iframe src="https://player.twitch.tv/?channel=${siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
+                <iframe src="https://player.twitch.tv/?channel=${state.siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
             </div>` : '';
 
-        const upcomingEditBtn = isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
-        const adminInscriptionHtml = isAdmin ? (() => {
-            const opts = data.participants
+        const upcomingEditBtn = state.isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
+        const adminInscriptionHtml = state.isAdmin ? (() => {
+            const opts = state.data.participants
                 .filter(p => !inscriptions.some(r => r.playerId === p.id))
                 .sort((a, b) => pName(a).localeCompare(pName(b)))
                 .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
@@ -1794,7 +1772,7 @@ window.openEditionDetail = (id) => {
 
             try {
                 if (phase === 'inscription') {
-                    if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'inscription')) {
+                    if (state.data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'inscription')) {
                         alert(t('admin.already.reg')); return;
                     }
                     await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'inscription', cupId });
@@ -1804,11 +1782,11 @@ window.openEditionDetail = (id) => {
                     const position = parseInt(document.getElementById('detailResultQualPos').value);
 
                     // Same player can't appear twice on the same map
-                    if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification' && r.map === map)) {
+                    if (state.data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification' && r.map === map)) {
                         alert(t('admin.map.done').replace('{n}', map)); return;
                     }
                     // Same position on same map already taken
-                    if (data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
+                    if (state.data.results.some(r => r.editionId === id && r.phase === 'qualification' && r.map === map && r.position === position)) {
                         alert(t('admin.pos.taken').replace('{position}', position).replace('{n}', map)); return;
                     }
                     await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'qualification', map, position, cupId });
@@ -1816,10 +1794,10 @@ window.openEditionDetail = (id) => {
                 } else if (phase === 'finale') {
                     const position = parseInt(document.getElementById('detailResultPosition').value);
                     if (!position) return;
-                    if (data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'finale')) {
+                    if (state.data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'finale')) {
                         alert(t('admin.finale.exists')); return;
                     }
-                    if (!data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
+                    if (!state.data.results.some(r => r.editionId === id && r.playerId === playerId && r.phase === 'qualification')) {
                         alert(t('admin.no.quals')); return;
                     }
                     await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'finale', position, cupId });
@@ -1834,17 +1812,17 @@ window.openEditionDetail = (id) => {
 };
 
 window.toggleTwitchEmbed = (btn) => {
-    twitchCollapsed = !twitchCollapsed;
-    sessionStorage.setItem('twCollapsed_' + currentDetailEditionId, twitchCollapsed ? '1' : '');
-    document.getElementById('twitchEmbedWrap').style.display = twitchCollapsed ? 'none' : '';
-    btn.textContent = twitchCollapsed ? t('detail.show') : t('detail.hide');
+    state.twitchCollapsed = !state.twitchCollapsed;
+    sessionStorage.setItem('twCollapsed_' + state.currentDetailEditionId, state.twitchCollapsed ? '1' : '');
+    document.getElementById('twitchEmbedWrap').style.display = state.twitchCollapsed ? 'none' : '';
+    btn.textContent = state.twitchCollapsed ? t('detail.show') : t('detail.hide');
 };
 
 window.toggleYoutubeEmbed = (btn) => {
-    youtubeCollapsed = !youtubeCollapsed;
-    sessionStorage.setItem('ytCollapsed_' + currentDetailEditionId, youtubeCollapsed ? '1' : '');
-    document.getElementById('youtubeEmbedWrap').style.display = youtubeCollapsed ? 'none' : '';
-    btn.textContent = youtubeCollapsed ? t('detail.show') : t('detail.hide');
+    state.youtubeCollapsed = !state.youtubeCollapsed;
+    sessionStorage.setItem('ytCollapsed_' + state.currentDetailEditionId, state.youtubeCollapsed ? '1' : '');
+    document.getElementById('youtubeEmbedWrap').style.display = state.youtubeCollapsed ? 'none' : '';
+    btn.textContent = state.youtubeCollapsed ? t('detail.show') : t('detail.hide');
 };
 
 window.detailOnPhaseChange = () => {
@@ -1867,7 +1845,7 @@ window.detailOnPlayerChange = () => {
     const info     = document.getElementById('detailViesBonusInfo');
     if (phase !== 'qualification' || !playerId) { info.style.display = 'none'; return; }
 
-    const existingQuals = data.results.filter(r => r.editionId === currentDetailEditionId && r.playerId === playerId && r.phase === 'qualification');
+    const existingQuals = state.data.results.filter(r => r.editionId === state.currentDetailEditionId && r.playerId === playerId && r.phase === 'qualification');
     if (existingQuals.length > 0) {
         const maps = existingQuals.map(r => r.map ? `Map ${r.map}` : '?').join(', ');
         const vies = existingQuals.length - 1;
@@ -1879,7 +1857,7 @@ window.detailOnPlayerChange = () => {
 };
 
 window.closeEditionDetail = () => {
-    currentDetailEditionId = null;
+    state.currentDetailEditionId = null;
     document.getElementById('editionsList').style.display = '';
     document.getElementById('editionDetail').classList.remove('open');
     document.getElementById('editionFilters').style.display = '';
@@ -1891,17 +1869,11 @@ window.closeEditionDetail = () => {
     history.replaceState(null, '', url);
 };
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-}
 
 window.shareEdition = () => {
-    if (!currentDetailEditionId) return;
+    if (!state.currentDetailEditionId) return;
     const url = new URL(window.location);
-    url.searchParams.set('edition', currentDetailEditionId);
+    url.searchParams.set('edition', state.currentDetailEditionId);
     navigator.clipboard.writeText(url.toString()).then(() => {
         showToast(t('player.link.copied'));
     });
@@ -1919,14 +1891,14 @@ window.cancelInscription = async (resultId, editionId) => {
 };
 
 window.registerForEdition = async (editionId) => {
-    if (!currentUser) return;
-    const player = data.participants.find(p => p.userId === currentUser.uid);
+    if (!state.currentUser) return;
+    const player = state.data.participants.find(p => p.userId === state.currentUser.uid);
     if (!player) {
         alert(t('detail.create.profile'));
         return;
     }
     // Prevent double registration
-    if (data.results.some(r => r.editionId === editionId && r.playerId === player.id && r.phase === 'inscription')) {
+    if (state.data.results.some(r => r.editionId === editionId && r.playerId === player.id && r.phase === 'inscription')) {
         return;
     }
     await addDoc(collection(db, 'results'), { editionId, playerId: player.id, phase: 'inscription', cupId });
@@ -1935,25 +1907,25 @@ window.registerForEdition = async (editionId) => {
 
 // Player profile
 window.openPlayerProfile = (playerId) => {
-    const player = data.participants.find(p => p.id === playerId);
+    const player = state.data.participants.find(p => p.id === playerId);
     if (!player) return;
 
-    const qualRes  = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
-    const finaleRes = data.results.filter(r => r.playerId === playerId && r.phase === 'finale').sort((a, b) => a.position - b.position);
+    const qualRes  = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+    const finaleRes = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale').sort((a, b) => a.position - b.position);
     const points   = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
     const wins     = finaleRes.filter(r => r.position === 1).length;
     const podiums  = finaleRes.filter(r => r.position <= 3).length;
     const bestRank = finaleRes.length > 0 ? Math.min(...finaleRes.map(r => r.position)) : null;
 
     // Per-edition history (past editions only, sorted by date)
-    const pastEditions = data.editions
+    const pastEditions = state.data.editions
         .filter(e => new Date(e.date) < new Date())
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const historyRows = pastEditions.map(e => {
         const participated = qualRes.some(r => r.editionId === e.id);
         const finale = finaleRes.find(r => r.editionId === e.id);
-        const inscrit = data.results.some(r => r.editionId === e.id && r.playerId === playerId && r.phase === 'inscription');
+        const inscrit = state.data.results.some(r => r.editionId === e.id && r.playerId === playerId && r.phase === 'inscription');
         if (!participated && !finale && !inscrit) return null;
         return { edition: e, participated, finale, inscrit };
     }).filter(Boolean);
@@ -1996,10 +1968,10 @@ window.openPlayerProfile = (playerId) => {
         ? finaleRes.reduce((best, r) => getPoints(r.position) > getPoints(best.position) ? r : best)
         : null;
     const bestEditionName = bestEditionResult
-        ? (data.editions.find(e => e.id === bestEditionResult.editionId)?.name || '?')
+        ? (state.data.editions.find(e => e.id === bestEditionResult.editionId)?.name || '?')
         : null;
 
-    const isOwnProfile = currentUser && player.userId === currentUser.uid;
+    const isOwnProfile = state.currentUser && player.userId === state.currentUser.uid;
     const avatar = pName(player).charAt(0);
     const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
     const pStats = computePlayerStats(playerId);
@@ -2051,7 +2023,7 @@ window.openPlayerProfile = (playerId) => {
                 <div class="player-card-stat"><div class="player-card-stat-value">${avgPos !== null ? `P${avgPos}` : '—'}</div><div class="player-card-stat-label">${t('player.avg.pos')}</div></div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;z-index:1">
-                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.18);font-weight:700">${siteConfig.siteName}</span>
+                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.18);font-weight:700">${state.siteConfig.siteName}</span>
                 <img src="../assets/springs-logo.png" style="height:18px;opacity:0.22">
             </div>
         </div>
@@ -2188,8 +2160,8 @@ window.openPlayerProfile = (playerId) => {
         });
         const pointColors = chartData.map(v => v === 1 ? '#fbbf24' : v !== null ? CUP.color : 'transparent');
         const ctx = document.getElementById('playerChartCanvas').getContext('2d');
-        if (playerChart) playerChart.destroy();
-        playerChart = new Chart(ctx, {
+        if (state.playerChart) state.playerChart.destroy();
+        state.playerChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: chartLabels,
@@ -2233,7 +2205,7 @@ window.openPlayerProfile = (playerId) => {
 
 window.closePlayerProfile = () => {
     document.getElementById('playerProfileModal').classList.remove('open');
-    if (playerChart) { playerChart.destroy(); playerChart = null; }
+    if (state.playerChart) { state.playerChart.destroy(); state.playerChart = null; }
 };
 
 window.copyPlayerLink = (playerId, btn) => {
@@ -2244,11 +2216,11 @@ window.copyPlayerLink = (playerId, btn) => {
 };
 
 window.copyPlayerCard = async (playerId, btn) => {
-    const player = data.participants.find(p => p.id === playerId);
+    const player = state.data.participants.find(p => p.id === playerId);
     if (!player) return;
 
-    const qualRes   = data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
-    const finaleRes = data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+    const qualRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+    const finaleRes = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
     const points  = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
     const wins    = finaleRes.filter(r => r.position === 1).length;
     const podiums = finaleRes.filter(r => r.position <= 3).length;
@@ -2311,7 +2283,7 @@ window.copyPlayerCard = async (playerId, btn) => {
     ctx.font = `bold 10px Arial`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(siteConfig.siteName.toUpperCase(), 24, 22);
+    ctx.fillText(state.siteConfig.siteName.toUpperCase(), 24, 22);
 
     // Logo (top-right)
     if (logo) {
@@ -2470,9 +2442,9 @@ window.copyPlayerCard = async (playerId, btn) => {
 };
 
 window.copyPodium = async (editionId, btn) => {
-    const edition = data.editions.find(e => e.id === editionId);
+    const edition = state.data.editions.find(e => e.id === editionId);
     if (!edition) return;
-    const finaleResults = data.results.filter(r => r.editionId === editionId && r.phase === 'finale').sort((a, b) => a.position - b.position);
+    const finaleResults = state.data.results.filter(r => r.editionId === editionId && r.phase === 'finale').sort((a, b) => a.position - b.position);
     if (finaleResults.length === 0) return;
 
     const logo = await new Promise(resolve => {
@@ -2527,7 +2499,7 @@ window.copyPodium = async (editionId, btn) => {
     ctx.fillStyle = ACCENT + 'cc';
     ctx.font = `bold 10px Arial`;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillText(siteConfig.siteName.toUpperCase(), 24, 20);
+    ctx.fillText(state.siteConfig.siteName.toUpperCase(), 24, 20);
 
     // Edition name
     ctx.fillStyle = '#ffffff';
@@ -2554,7 +2526,7 @@ window.copyPodium = async (editionId, btn) => {
 
     podiumOrder.forEach((pos, i) => {
         const result = finaleResults.find(r => r.position === pos);
-        const player = result ? data.participants.find(p => p.id === result.playerId) : null;
+        const player = result ? state.data.participants.find(p => p.id === result.playerId) : null;
         const bh = podiumHeights[pos];
         const x = startX + i * (blockW + gap);
         const y = baseY - bh;
@@ -2627,8 +2599,8 @@ window.copyPodium = async (editionId, btn) => {
 };
 
 // ── Maps Timeline ────────────────────────────────
-let selectedMapsSeason = null;
-window.setMapsSeason = (s) => { selectedMapsSeason = s; displayMapsTimeline(); };
+let state.selectedMapsSeason = null;
+window.setMapsSeason = (s) => { state.selectedMapsSeason = s; displayMapsTimeline(); };
 
 function displayMapsTimeline() {
     const filterBar  = document.getElementById('mapsSeasonFilter');
@@ -2637,23 +2609,23 @@ function displayMapsTimeline() {
 
     // Seasons with any map data
     const allSeasons = [...new Set(
-        data.editions.map(e => e.saison || new Date(e.date).getFullYear())
+        state.data.editions.map(e => e.saison || new Date(e.date).getFullYear())
     )].sort((a, b) => b - a);
 
-    if (selectedMapsSeason === null) selectedMapsSeason = allSeasons[0] ?? 'all';
+    if (state.selectedMapsSeason === null) state.selectedMapsSeason = allSeasons[0] ?? 'all';
 
     const tabs = [
-        `<button class="filter-btn${selectedMapsSeason === 'all' ? ' active' : ''}" onclick="setMapsSeason('all')">Toutes</button>`,
-        ...allSeasons.map(s => `<button class="filter-btn${selectedMapsSeason === s ? ' active' : ''}" onclick="setMapsSeason(${s})">${s}</button>`)
+        `<button class="filter-btn${state.selectedMapsSeason === 'all' ? ' active' : ''}" onclick="setMapsSeason('all')">Toutes</button>`,
+        ...allSeasons.map(s => `<button class="filter-btn${state.selectedMapsSeason === s ? ' active' : ''}" onclick="setMapsSeason(${s})">${s}</button>`)
     ];
     filterBar.innerHTML = tabs.join('');
 
-    const editions = data.editions
+    const editions = state.data.editions
         .filter(e => {
-            if (selectedMapsSeason === 'all') return true;
-            return (e.saison || new Date(e.date).getFullYear()) === selectedMapsSeason;
+            if (state.selectedMapsSeason === 'all') return true;
+            return (e.saison || new Date(e.date).getFullYear()) === state.selectedMapsSeason;
         })
-        .filter(e => e.status === 'terminee' || e.status === 'live' || isAdmin)
+        .filter(e => e.status === 'terminee' || e.status === 'live' || state.isAdmin)
         .filter(e => [1,2,3,4,5,6,7].some(n => e[`map${n}tmx`] || e[`map${n}name`]))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -2664,8 +2636,8 @@ function displayMapsTimeline() {
 
     let html = '';
     editions.forEach(e => {
-        const winner = data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
-        const winnerPlayer = winner ? data.participants.find(p => p.id === winner.playerId) : null;
+        const winner = state.data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+        const winnerPlayer = winner ? state.data.participants.find(p => p.id === winner.playerId) : null;
         const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
         let mapsHtml = '';
@@ -2720,19 +2692,19 @@ function displayMapsTimeline() {
 
 // ── Predictions ──────────────────────────────────
 
-let predState = {}; // { editionId: { finalists: Set, top3: [null,null,null] } } — local UI state
+let state.predState = {}; // { editionId: { finalists: Set, top3: [null,null,null] } } — local UI state
 
 window.togglePredFinalist = function(edId, playerId) {
-    if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
-    const s = predState[edId];
+    if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+    const s = state.predState[edId];
     if (s.finalists.has(playerId)) s.finalists.delete(playerId);
     else s.finalists.add(playerId);
     renderPredForm(edId);
 };
 
 window.setPredTop = function(edId, rank, playerId) {
-    if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
-    const s = predState[edId];
+    if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+    const s = state.predState[edId];
     // If already placed at another rank, remove it
     s.top3 = s.top3.map((p, i) => (p === playerId && i !== rank - 1) ? null : p);
     s.top3[rank - 1] = s.top3[rank - 1] === playerId ? null : playerId;
@@ -2740,13 +2712,13 @@ window.setPredTop = function(edId, rank, playerId) {
 };
 
 window.submitPrediction = async function(edId) {
-    if (!currentUser) { alert(t('predictions.login')); return; }
-    const s = predState[edId];
+    if (!state.currentUser) { alert(t('predictions.login')); return; }
+    const s = state.predState[edId];
     if (!s || s.finalists.size === 0) { alert(t('predictions.select')); return; }
-    const myPart = data.participants.find(p => p.userId === currentUser.uid);
+    const myPart = state.data.participants.find(p => p.userId === state.currentUser.uid);
     if (!myPart) { alert(t('predictions.must.reg')); return; }
 
-    const existing = data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id);
+    const existing = state.data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id);
     const payload = {
         editionId: edId,
         playerId: myPart.id,
@@ -2765,14 +2737,14 @@ window.submitPrediction = async function(edId) {
 };
 
 window.calculatePredictionScores = async function(edId) {
-    if (!isAdmin) return;
-    const finaleRes = data.results.filter(r => r.editionId === edId && r.phase === 'finale');
+    if (!state.isAdmin) return;
+    const finaleRes = state.data.results.filter(r => r.editionId === edId && r.phase === 'finale');
     if (finaleRes.length === 0) { alert(t('predictions.no.finals')); return; }
 
     const finalistIds = new Set(finaleRes.map(r => r.playerId));
     const top3 = [1,2,3].map(pos => finaleRes.find(r => r.position === pos)?.playerId ?? null);
 
-    const preds = data.predictions.filter(p => p.editionId === edId);
+    const preds = state.data.predictions.filter(p => p.editionId === edId);
     for (const pred of preds) {
         let score = 0;
         // +1 per correct finalist
@@ -2787,24 +2759,24 @@ window.calculatePredictionScores = async function(edId) {
 function renderPredForm(edId) {
     const container = document.getElementById(`pred-form-${edId}`);
     if (!container) return;
-    const edition = data.editions.find(e => e.id === edId);
+    const edition = state.data.editions.find(e => e.id === edId);
     if (!edition) return;
 
-    const myPart = currentUser ? data.participants.find(p => p.userId === currentUser.uid) : null;
-    const myPred = myPart ? data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id) : null;
+    const myPart = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
+    const myPred = myPart ? state.data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id) : null;
 
     // Init state from saved prediction if not yet set
-    if (!predState[edId] && myPred) {
-        predState[edId] = { finalists: new Set(myPred.finalists || []), top3: myPred.top3 || [null,null,null] };
+    if (!state.predState[edId] && myPred) {
+        state.predState[edId] = { finalists: new Set(myPred.finalists || []), top3: myPred.top3 || [null,null,null] };
     }
-    if (!predState[edId]) predState[edId] = { finalists: new Set(), top3: [null,null,null] };
-    const s = predState[edId];
+    if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
+    const s = state.predState[edId];
 
     // Inscribed players (for this edition) — those who have an inscription or qualification result
-    const inscribedIds = new Set(data.results
+    const inscribedIds = new Set(state.data.results
         .filter(r => r.editionId === edId && (r.phase === 'inscription' || r.phase === 'qualification'))
         .map(r => r.playerId));
-    const players = data.participants.filter(p => inscribedIds.has(p.id));
+    const players = state.data.participants.filter(p => inscribedIds.has(p.id));
 
     const rankLabels = ['🥇 1er', '🥈 2ème', '🥉 3ème'];
 
@@ -2820,7 +2792,7 @@ function renderPredForm(edId) {
     html += `<div class="pred-section-title" style="margin-top:16px">Ton top 3</div>`;
     html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Clique sur une position puis un joueur (+3 pts si correct)</p>`;
     [0,1,2].forEach(i => {
-        const chosen = s.top3[i] ? data.participants.find(p => p.id === s.top3[i]) : null;
+        const chosen = s.top3[i] ? state.data.participants.find(p => p.id === s.top3[i]) : null;
         const rankClass = `selected-top${i+1}`;
         html += `<div style="margin-bottom:6px">
             <span style="font-size:0.82rem;font-weight:700;margin-right:8px">${rankLabels[i]}</span>
@@ -2832,11 +2804,11 @@ function renderPredForm(edId) {
         html += `</div></div>`;
     });
 
-    const canSubmit = !!(currentUser && myPart);
+    const canSubmit = !!(state.currentUser && myPart);
     html += `<button class="btn btn-primary" style="margin-top:14px" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
         ${myPred ? '✏️ Modifier ma prédiction' : '✅ Envoyer ma prédiction'}
     </button>`;
-    if (!currentUser) html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>`;
+    if (!state.currentUser) html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>`;
 
     container.innerHTML = html;
 }
@@ -2847,14 +2819,14 @@ function displayPredictions() {
 
     // Upcoming editions (open for predictions)
     const today = new Date();
-    const upcoming = data.editions
+    const upcoming = state.data.editions
         .filter(e => e.status === 'upcoming' || new Date(e.date) > today)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Past editions with prediction results
-    const past = data.editions
+    const past = state.data.editions
         .filter(e => e.status === 'terminee' || new Date(e.date) <= today)
-        .filter(e => data.predictions.some(p => p.editionId === e.id))
+        .filter(e => state.data.predictions.some(p => p.editionId === e.id))
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
 
@@ -2871,13 +2843,13 @@ function displayPredictions() {
         html += '<div class="card"><h2>🔮 Prédis l\'édition suivante</h2>';
         upcoming.forEach(e => {
             const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-            const inscribedIds = new Set(data.results
+            const inscribedIds = new Set(state.data.results
                 .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
                 .map(r => r.playerId));
             if (inscribedIds.size === 0) return; // skip if no players registered yet
 
             // Count predictions
-            const predCount = data.predictions.filter(p => p.editionId === e.id).length;
+            const predCount = state.data.predictions.filter(p => p.editionId === e.id).length;
             html += `<div class="pred-edition-card">
                 <div class="pred-edition-header">
                     <div style="flex:1;font-weight:800">${e.name}</div>
@@ -2897,10 +2869,10 @@ function displayPredictions() {
     if (past.length > 0) {
         html += '<div class="card"><h2>📊 Résultats des prédictions</h2>';
         past.forEach(e => {
-            const preds = data.predictions.filter(p => p.editionId === e.id && p.scored);
+            const preds = state.data.predictions.filter(p => p.editionId === e.id && p.scored);
             if (preds.length === 0) {
                 // Scored not yet — show admin calc button
-                if (!isAdmin) return;
+                if (!state.isAdmin) return;
                 html += `<div class="pred-edition-card">
                     <div class="pred-edition-header">
                         <div style="flex:1;font-weight:700">${e.name}</div>
@@ -2915,7 +2887,7 @@ function displayPredictions() {
 
             const ranked = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
             const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' }) : '';
-            const adminCalc = isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">🔄 Recalculer</button>` : '';
+            const adminCalc = state.isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">🔄 Recalculer</button>` : '';
             html += `<div class="pred-edition-card">
                 <div class="pred-edition-header">
                     <div style="flex:1;font-weight:700">${e.name}</div>
@@ -2925,8 +2897,8 @@ function displayPredictions() {
                 </div>
                 <div class="pred-body">`;
             ranked.forEach((pred, i) => {
-                const player = data.participants.find(p => p.id === pred.playerId);
-                const isMe = currentUser && player?.userId === currentUser.uid;
+                const player = state.data.participants.find(p => p.id === pred.playerId);
+                const isMe = state.currentUser && player?.userId === state.currentUser.uid;
                 html += `<div class="pred-score-row" style="${isMe ? 'background:rgba(0,217,54,0.04);border-radius:6px;padding:8px 6px;' : ''}">
                     <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;min-width:22px">${i+1}.</span>
                     <span style="flex:1;font-weight:${isMe?'700':'400'}">${player ? pName(player) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.75rem">← toi</span>' : ''}</span>
@@ -2942,7 +2914,7 @@ function displayPredictions() {
 
     // Render prediction forms for upcoming editions
     upcoming.forEach(e => {
-        const inscribedIds = new Set(data.results
+        const inscribedIds = new Set(state.data.results
             .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
             .map(r => r.playerId));
         if (inscribedIds.size > 0) renderPredForm(e.id);
@@ -2950,12 +2922,12 @@ function displayPredictions() {
 }
 
 // General ranking
-let selectedRankingSeason = null; // null = auto-detect on first load
-window.setRankingSeason = (s) => { selectedRankingSeason = s; displayGeneralRanking(); };
+let state.selectedRankingSeason = null; // null = auto-detect on first load
+window.setRankingSeason = (s) => { state.selectedRankingSeason = s; displayGeneralRanking(); };
 
 function buildRankingStats(finaleResults) {
     const stats = {};
-    data.participants.forEach(p => {
+    state.data.participants.forEach(p => {
         stats[p.id] = { player: p, points: 0, finals: 0, wins: 0, podiums: 0, best: Infinity };
     });
     finaleResults.forEach(r => {
@@ -2976,15 +2948,15 @@ function displayGeneralRanking() {
 
     // Build available seasons (only those with finale data)
     const seasons = [...new Set(
-        data.results.filter(r => r.phase === 'finale').map(r => {
-            const e = data.editions.find(ed => ed.id === r.editionId);
+        state.data.results.filter(r => r.phase === 'finale').map(r => {
+            const e = state.data.editions.find(ed => ed.id === r.editionId);
             return e ? (e.saison || new Date(e.date).getFullYear()) : null;
         }).filter(Boolean)
     )].sort((a, b) => b - a);
 
     // Auto-select most recent season on first load
-    if (selectedRankingSeason === null) {
-        selectedRankingSeason = seasons.length > 0 ? seasons[0] : 'all';
+    if (state.selectedRankingSeason === null) {
+        state.selectedRankingSeason = seasons.length > 0 ? seasons[0] : 'all';
     }
     const currentSeason = seasons[0] || null;
 
@@ -2992,19 +2964,19 @@ function displayGeneralRanking() {
     const filterBar = document.getElementById('rankingSeasonFilter');
     if (filterBar) {
         const tabs = [
-            currentSeason ? `<button class="filter-btn${selectedRankingSeason === currentSeason ? ' active' : ''}" onclick="setRankingSeason(${currentSeason})">${t('hof.season')} ${currentSeason}</button>` : null,
-            `<button class="filter-btn${selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">${t('rankings.alltime')}</button>`,
-            ...seasons.slice(1).map(s => `<button class="filter-btn${selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
+            currentSeason ? `<button class="filter-btn${state.selectedRankingSeason === currentSeason ? ' active' : ''}" onclick="setRankingSeason(${currentSeason})">${t('hof.season')} ${currentSeason}</button>` : null,
+            `<button class="filter-btn${state.selectedRankingSeason === 'all' ? ' active' : ''}" onclick="setRankingSeason('all')">${t('rankings.alltime')}</button>`,
+            ...seasons.slice(1).map(s => `<button class="filter-btn${state.selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
         ].filter(Boolean);
         filterBar.innerHTML = tabs.join('');
     }
 
     // Filter editions by selected season
-    const seasonEditions = selectedRankingSeason === 'all'
-        ? data.editions
-        : data.editions.filter(e => (e.saison || new Date(e.date).getFullYear()) === selectedRankingSeason);
-    const editionIds = selectedRankingSeason === 'all' ? null : new Set(seasonEditions.map(e => e.id));
-    const finales = data.results.filter(r => r.phase === 'finale' && (editionIds === null || editionIds.has(r.editionId)));
+    const seasonEditions = state.selectedRankingSeason === 'all'
+        ? state.data.editions
+        : state.data.editions.filter(e => (e.saison || new Date(e.date).getFullYear()) === state.selectedRankingSeason);
+    const editionIds = state.selectedRankingSeason === 'all' ? null : new Set(seasonEditions.map(e => e.id));
+    const finales = state.data.results.filter(r => r.phase === 'finale' && (editionIds === null || editionIds.has(r.editionId)));
 
     if (finales.length === 0) {
         container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📊</span><p>${t('rankings.empty')}</p></div>`;
@@ -3028,13 +3000,13 @@ function displayGeneralRanking() {
 
     // Champion de saison banner (only for a specific season)
     let championBannerHtml = '';
-    if (selectedRankingSeason !== 'all' && ranking.length > 0) {
+    if (state.selectedRankingSeason !== 'all' && ranking.length > 0) {
         const champ = ranking[0];
         const doneCount = doneEditions.length;
         championBannerHtml = `<div style="background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:2.4rem;line-height:1">🏆</div>
             <div style="flex:1;min-width:0">
-                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">${t('rankings.season.leader')} ${selectedRankingSeason}</div>
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">${t('rankings.season.leader')} ${state.selectedRankingSeason}</div>
                 <div style="font-size:1.35rem;font-weight:900;letter-spacing:-0.5px" class="player-name-link" onclick="openPlayerProfile('${champ.player.id}')">${pName(champ.player)}</div>
                 <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:2px">${tTeam(champ.player.team)}</div>
             </div>
@@ -3047,10 +3019,10 @@ function displayGeneralRanking() {
     }
 
     // "Ma position" block
-    const myEntry = currentUser ? ranking.find(s => s.player.userId === currentUser.uid) : null;
+    const myEntry = state.currentUser ? ranking.find(s => s.player.userId === state.currentUser.uid) : null;
     const myRank  = myEntry ? ranking.indexOf(myEntry) + 1 : null;
     let myRankHtml = '';
-    if (currentUser) {
+    if (state.currentUser) {
         if (myRank) {
             const myBadgeClass = myRank <= 3 ? `badge-${myRank}` : 'badge-other';
             myRankHtml = `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(0,217,54,0.06);border:1px solid rgba(0,217,54,0.2);border-radius:12px;margin-bottom:16px;flex-wrap:wrap">
@@ -3080,7 +3052,7 @@ function displayGeneralRanking() {
     ranking.forEach((s, i) => {
         const rank = i + 1;
         const badgeClass = rank <= 3 ? `badge-${rank}` : 'badge-other';
-        const isMe = currentUser && s.player.userId === currentUser.uid;
+        const isMe = state.currentUser && s.player.userId === state.currentUser.uid;
         const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
 
         let trendHtml = '';
@@ -3102,7 +3074,7 @@ function displayGeneralRanking() {
                 const pos = edResultMap[e.id]?.[s.player.id];
                 if (pos === undefined) return `<span style="color:rgba(255,255,255,0.12);font-size:0.72rem">·</span>`;
                 const color = pos === 1 ? '#fbbf24' : pos === 2 ? '#94a3b8' : pos === 3 ? '#cd7c3a' : 'rgba(255,255,255,0.45)';
-                return `<span style="color:${color};font-weight:700;font-size:0.72rem" title="${data.editions.find(ed=>ed.id===e.id)?.name||''}">P${pos}</span>`;
+                return `<span style="color:${color};font-weight:700;font-size:0.72rem" title="${state.data.editions.find(ed=>ed.id===e.id)?.name||''}">P${pos}</span>`;
             }).join('<span style="color:rgba(255,255,255,0.1);margin:0 2px;font-size:0.7rem">›</span>');
             evolHtml = `<td><span style="display:flex;align-items:center;gap:2px;flex-wrap:nowrap">${dots}</span></td>`;
         }
@@ -3130,11 +3102,11 @@ function displayGeneralRanking() {
 
 // Chart
 function updateChart(ranking) {
-    const ctx = document.getElementById('rankingChart').getContext('2d');
-    if (rankingChart) rankingChart.destroy();
+    const ctx = document.getElementById('state.rankingChart').getContext('2d');
+    if (state.rankingChart) state.rankingChart.destroy();
     if (ranking.length === 0) return;
 
-    rankingChart = new Chart(ctx, {
+    state.rankingChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ranking.map(s => pName(s.player)),
@@ -3171,20 +3143,20 @@ function updateChart(ranking) {
 
 // Stats
 function displayStats() {
-    const quals = data.results.filter(r => r.phase === 'qualification').length;
-    const finals = data.results.filter(r => r.phase === 'finale').length;
-    const activePlayerIds = new Set(data.results.map(r => r.playerId));
-    document.getElementById('totalParticipants').textContent = data.participants.filter(p => activePlayerIds.has(p.id)).length;
+    const quals = state.data.results.filter(r => r.phase === 'qualification').length;
+    const finals = state.data.results.filter(r => r.phase === 'finale').length;
+    const activePlayerIds = new Set(state.data.results.map(r => r.playerId));
+    document.getElementById('totalParticipants').textContent = state.data.participants.filter(p => activePlayerIds.has(p.id)).length;
     const today = new Date(); today.setHours(0,0,0,0);
-    document.getElementById('totalEditions').textContent = data.editions.filter(e => e.status === 'terminee' || new Date(e.date) < today).length;
+    document.getElementById('totalEditions').textContent = state.data.editions.filter(e => e.status === 'terminee' || new Date(e.date) < today).length;
     document.getElementById('totalQuals').textContent = quals;
     document.getElementById('totalFinals').textContent = finals;
 
     const container = document.getElementById('playerStats');
-    const rows = data.participants.map(p => {
-        const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
-        const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
-        const iRes = data.results.filter(r => r.playerId === p.id && r.phase === 'inscription');
+    const rows = state.data.participants.map(p => {
+        const qRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
+        const fRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
+        const iRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'inscription');
         if (qRes.length === 0 && fRes.length === 0 && iRes.length === 0) return null;
         const participEditions = new Set([...qRes, ...iRes].map(r => r.editionId)).size;
         return {
@@ -3218,14 +3190,14 @@ function displayStats() {
 
     // ── Streaks & Records ──────────────────────────────────────────
     const streaksContainer = document.getElementById('streaksStats');
-    const pastEditionsAsc = data.editions
+    const pastEditionsAsc = state.data.editions
         .filter(e => e.status === 'terminee' || new Date(e.date) < today)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
     const pastEditionsDesc = [...pastEditionsAsc].reverse();
 
-    const streakRows = data.participants.map(p => {
-        const qRes = data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
-        const fRes = data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
+    const streakRows = state.data.participants.map(p => {
+        const qRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
+        const fRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
         if (qRes.length === 0 && fRes.length === 0) return null;
 
         // Current participation streak
@@ -3281,7 +3253,7 @@ function displayStats() {
 
     streakHtml += `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('stats.current.streak')}</th><th>${t('stats.best.streak')}</th><th>${t('stats.consec.finals')}</th><th>${t('stats.max.lives')}</th></tr></thead><tbody>`;
     streakRows.forEach(r => {
-        const isMe = currentUser && r.p.userId === currentUser.uid;
+        const isMe = state.currentUser && r.p.userId === state.currentUser.uid;
         const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
         streakHtml += `<tr style="${rowStyle}">
             <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong></td>
@@ -3297,11 +3269,11 @@ function displayStats() {
 
 // Export CSV
 window.exportCSV = () => {
-    const finales = data.results.filter(r => r.phase === 'finale');
+    const finales = state.data.results.filter(r => r.phase === 'finale');
     if (finales.length === 0) { alert(t('export.no.finals')); return; }
 
     const stats = {};
-    data.participants.forEach(p => { stats[p.id] = { ...p, points: 0, finals: 0, wins: 0, podiums: 0 }; });
+    state.data.participants.forEach(p => { stats[p.id] = { ...p, points: 0, finals: 0, wins: 0, podiums: 0 }; });
     finales.forEach(r => {
         if (!stats[r.playerId]) return;
         stats[r.playerId].points += getPoints(r.position);
@@ -3324,7 +3296,7 @@ window.exportCSV = () => {
 
 // ── i18n ──────────────────────────────────────────────────────────────
 const applyI18n = () => {
-    if (!loaded.participants || !loaded.editions || !loaded.results) return;
+    if (!state.loaded.participants || !state.loaded.editions || !state.loaded.results) return;
     displayHome();
     displayEditions();
     displayGeneralRanking();
@@ -3351,11 +3323,11 @@ function watchCollection(ref, name, onData) {
         const unsub = onSnapshot(ref,
             snap => {
                 onData(snap);
-                if (!loaded[name]) { loaded[name] = true; checkLoaded(); }
+                if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
             },
             err => {
                 console.error(`Listener Firestore "${name}" error:`, err.code, err.message);
-                if (!loaded[name]) { loaded[name] = true; checkLoaded(); }
+                if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
                 unsub?.();
                 // Retry automatique après 8 secondes
                 setTimeout(subscribe, 8000);
@@ -3366,21 +3338,21 @@ function watchCollection(ref, name, onData) {
 }
 
 watchCollection(collection(db, 'participants'), 'participants', snap => {
-    data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     displayParticipants(); displayEditions(); displayHome();
     displayHallOfFame(); displayNextEditionBanner(); displayStats();
     displayGeneralRanking(); updateDiscordReminders();
 });
 
 watchCollection(collection(db, 'editions'), 'editions', snap => {
-    data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+    state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
     displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
     if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
     if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
 });
 
 watchCollection(collection(db, 'results'), 'results', snap => {
-    data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
+    state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
     displayParticipants(); displayEditions(); displayHome();
     displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
 });
@@ -3389,7 +3361,7 @@ watchCollection(
     query(collection(db, 'predictions'), where('cupId', '==', cupId)),
     'predictions',
     snap => {
-        data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
     }
 );
