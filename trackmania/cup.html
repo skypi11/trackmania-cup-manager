@@ -2505,11 +2505,36 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), personnalisation: t('nav.custom') };
             const titleEl = document.getElementById('topbarTitle');
             if (titleEl) titleEl.textContent = titles[id] || '';
+            // Sync URL hash (replaceState = pas d'entrée dans l'historique pour nav interne)
+            if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
         }
         window.showSection = showSection;
+
+        // Nav clicks : pushState pour que le bouton Retour du navigateur fonctionne
         document.querySelectorAll('.nav-item').forEach(btn => {
-            btn.addEventListener('click', () => showSection(btn.dataset.section));
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.section;
+                history.pushState(null, '', '#' + id);
+                showSection(id);
+                // Ferme la sidebar sur mobile après navigation
+                document.getElementById('sidebar')?.classList.remove('open');
+                document.getElementById('sidebarOverlay')?.classList.remove('open');
+            });
         });
+
+        // Bouton retour/avant du navigateur
+        window.addEventListener('popstate', () => {
+            const id = location.hash.slice(1) || 'home';
+            if (document.getElementById(id)) showSection(id);
+        });
+
+        // Chargement direct avec un hash dans l'URL (ex: cup.html#rankings)
+        const _initHash = location.hash.slice(1);
+        if (_initHash && document.getElementById(_initHash)) {
+            showSection(_initHash);
+        } else {
+            history.replaceState(null, '', '#home');
+        }
 
         // Add participant
         document.getElementById('addParticipantForm').addEventListener('submit', async (e) => {
@@ -4964,59 +4989,54 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         // Load site config (async, non-blocking)
         loadSiteConfig();
 
-        // Real-time listeners
-        const onErr = (name) => (err) => {
-            console.error('Firestore error (' + name + '):', err);
-            loaded[name] = true;
-            checkLoaded();
-        };
+        // Real-time listeners avec auto-retry si le listener Firestore meurt
+        function watchCollection(ref, name, onData) {
+            function subscribe() {
+                const unsub = onSnapshot(ref,
+                    snap => {
+                        onData(snap);
+                        if (!loaded[name]) { loaded[name] = true; checkLoaded(); }
+                    },
+                    err => {
+                        console.error(`Listener Firestore "${name}" error:`, err.code, err.message);
+                        if (!loaded[name]) { loaded[name] = true; checkLoaded(); }
+                        unsub?.();
+                        // Retry automatique après 8 secondes
+                        setTimeout(subscribe, 8000);
+                    }
+                );
+            }
+            subscribe();
+        }
 
-        onSnapshot(collection(db, 'participants'), snap => {
+        watchCollection(collection(db, 'participants'), 'participants', snap => {
             data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            loaded.participants = true;
-            checkLoaded();
-            displayParticipants();
-            displayEditions();
-            displayHome();
-            displayHallOfFame();
-            displayNextEditionBanner();
-            displayStats();
-            displayGeneralRanking();
-            updateDiscordReminders();
-        }, onErr('participants'));
+            displayParticipants(); displayEditions(); displayHome();
+            displayHallOfFame(); displayNextEditionBanner(); displayStats();
+            displayGeneralRanking(); updateDiscordReminders();
+        });
 
-        onSnapshot(collection(db, 'editions'), snap => {
+        watchCollection(collection(db, 'editions'), 'editions', snap => {
             data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-            loaded.editions = true;
-            checkLoaded();
-            displayEditions();
-            displayHome();
-            displayNextEditionBanner();
-            displayStats();
+            displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
             if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
             if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-        }, onErr('editions'));
+        });
 
-        onSnapshot(collection(db, 'results'), snap => {
+        watchCollection(collection(db, 'results'), 'results', snap => {
             data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-            loaded.results = true;
-            checkLoaded();
-            displayParticipants();
-            displayEditions();
-            displayHome();
-            displayHallOfFame();
-            displayNextEditionBanner();
-            displayStats();
-            displayGeneralRanking();
-        }, onErr('results'));
+            displayParticipants(); displayEditions(); displayHome();
+            displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
+        });
 
-        onSnapshot(query(collection(db, 'predictions'), where('cupId', '==', cupId)), snap => {
-            data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            loaded.predictions = true;
-            checkLoaded();
-            // Refresh predictions section if visible
-            if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-        }, onErr('predictions'));
+        watchCollection(
+            query(collection(db, 'predictions'), where('cupId', '==', cupId)),
+            'predictions',
+            snap => {
+                data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
+            }
+        );
     </script>
 </body>
 </html>
