@@ -946,10 +946,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
 /* ── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 960px) {
-    .sidebar { transform: translateX(-240px); }
+    .sidebar { transform: translateX(-240px); width: min(240px, 85vw); }
     .sidebar.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.6); }
     .main-area { margin-left: 0; }
-    .topbar { display: flex; }
+    .topbar { display: flex; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
     .main-content { padding: 20px 18px; }
 }
 @media (max-width: 600px) {
@@ -999,6 +999,36 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     .hof-champion-grid { grid-template-columns: 1fr; }
     .hof-champion-card { flex-wrap: wrap; gap: 10px; }
     .hof-date { width: 100%; text-align: left; }
+}
+@media (max-width: 480px) {
+    .main-content { padding: 12px 10px; }
+    .card { padding: 14px 12px; }
+    .home-hero { padding: 28px 14px 20px; }
+    .home-hero-title { font-size: 1.35rem; }
+    .home-stat-value { font-size: 1.5rem; }
+    .home-stat { padding: 14px 10px; }
+    .next-edition-countdown { font-size: 1.6rem; }
+    .next-edition-name { font-size: 1.3rem; }
+    .next-edition-banner { padding: 18px 14px; }
+    .modal { padding: 18px 12px; border-radius: 12px; }
+    .auth-box { padding: 24px 14px; border-radius: 14px; }
+    .discord-prompt-box { padding: 22px 14px; }
+    .topbar { padding: 10px 12px; gap: 8px; }
+    .topbar-title { font-size: 0.85rem; }
+    .event-row-body { padding: 10px 12px; gap: 8px; }
+    table th, table td { padding: 7px 8px; font-size: 0.78rem; }
+    .chart-container { height: 200px; }
+    .btn { padding: 7px 12px; font-size: 0.8rem; }
+    .player-profile-stats { grid-template-columns: repeat(2, 1fr) !important; }
+    .maps-grid { grid-template-columns: 1fr !important; }
+    .section-title { font-size: 1rem; }
+    .edition-detail-topbar { gap: 6px; }
+    .edition-detail-topbar .btn { font-size: 0.78rem; padding: 6px 10px; }
+    .sidebar-cup-name { font-size: 0.72rem; }
+    .podium-spot { max-width: 88px; }
+    .podium-name { font-size: 0.72rem; }
+    .home-champions-grid { gap: 8px; }
+    .hof-records-grid { grid-template-columns: 1fr; }
 }
     </style>
 </head>
