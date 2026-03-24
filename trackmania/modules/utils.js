@@ -1,6 +1,6 @@
 // modules/utils.js — Fonctions utilitaires pures
 
-import { t, getLang } from '../shared/i18n.js';
+import { t, getLang } from '../../shared/i18n.js';
 
 export const dateLang = () => getLang() === 'en' ? 'en-GB' : 'fr-FR';
 export const tTeam = team => (team && team !== 'Sans équipe') ? team : t('player.no.team');
