@@ -127,13 +127,13 @@ window.saveSiteConfig = async (e) => {
 
 // ── DISCORD ───────────────────────────────────────
 window.linkDiscord = () => {
-    const state = window.location.search.slice(1) || 'cup=monthly';
+    const oauthState = window.location.search.slice(1) || 'cup=monthly';
     const params = new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         redirect_uri: DISCORD_REDIRECT_URI,
         response_type: 'token',
         scope: 'identify',
-        state
+        state: oauthState
     });
     window.location.href = `https://discord.com/oauth2/authorize?${params}`;
 };
@@ -537,7 +537,7 @@ function displayHallOfFame() {
 }
 window.displayHallOfFame = displayHallOfFame;
 
-let state.urlAutoOpenDone = false;
+state.urlAutoOpenDone = false;
 function checkLoaded() {
     if (Object.values(state.loaded).every(Boolean)) {
         document.getElementById('loadingOverlay').classList.add('hidden');
@@ -2600,7 +2600,7 @@ window.copyPodium = async (editionId, btn) => {
 };
 
 // ── Maps Timeline ────────────────────────────────
-let state.selectedMapsSeason = null;
+state.selectedMapsSeason = null;
 window.setMapsSeason = (s) => { state.selectedMapsSeason = s; displayMapsTimeline(); };
 
 function displayMapsTimeline() {
@@ -2693,7 +2693,7 @@ function displayMapsTimeline() {
 
 // ── Predictions ──────────────────────────────────
 
-let state.predState = {}; // { editionId: { finalists: Set, top3: [null,null,null] } } — local UI state
+state.predState = {}; // { editionId: { finalists: Set, top3: [null,null,null] } } — local UI state
 
 window.togglePredFinalist = function(edId, playerId) {
     if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
