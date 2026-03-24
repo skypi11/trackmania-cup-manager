@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
-import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
+import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 

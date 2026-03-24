@@ -4,7 +4,7 @@ import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { dateLang, pName, tTeam, getPoints, getCountdown, showToast } from './utils.js';
-import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
+import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -225,15 +225,15 @@ async function fetchTmxMapInfo(tmxId) {
     try {
         const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(tmxUrl)}`);
         if (r.ok) { const p = parseTmxPage(await r.text()); if (p.thumbUrl) return p; }
-    } catch {}
+    } catch(e) { console.warn('TMX proxy 1 failed:', e.message); }
     try {
         const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(tmxUrl)}`);
         if (r.ok) { const d = await r.json(); const p = parseTmxPage(d.contents || ''); if (p.thumbUrl) return p; }
-    } catch {}
+    } catch(e) { console.warn('TMX proxy 2 failed:', e.message); }
     try {
         const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tmxUrl)}`);
         if (r.ok) { const p = parseTmxPage(await r.text()); if (p.thumbUrl) return p; }
-    } catch {}
+    } catch(e) { console.warn('TMX proxy 3 failed:', e.message); }
     return { thumbUrl: null, name: null, mapper: null };
 }
 

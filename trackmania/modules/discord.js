@@ -4,7 +4,7 @@ import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast } from './utils.js';
-import { updateDoc, doc, getDoc, collection } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
+import { updateDoc, doc, getDoc, collection } from 'firebase/firestore';
 
 const DISCORD_CLIENT_ID = '1483592495215673407';
 const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';

@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, tTeam, getPoints, dateLang } from './utils.js';
 import { computePlayerStats, ACHIEVEMENTS, playerBadgesHtml } from './display-editions.js';
-import { updateDoc, doc, addDoc, collection } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
+import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 const CUP = cupId === 'mania'
@@ -267,7 +267,8 @@ window.openPlayerProfile = (playerId) => {
                 msg.style.color = 'var(--color-accent)';
                 msg.textContent = t('profile.saved');
                 setTimeout(() => msg.style.display = 'none', 3000);
-            } catch {
+            } catch(err) {
+                console.error('Save profile error:', err);
                 msg.style.display = 'block';
                 msg.style.background = 'rgba(239,68,68,0.1)';
                 msg.style.color = 'var(--color-danger)';

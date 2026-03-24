@@ -4,7 +4,7 @@ import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, dateLang } from './utils.js';
-import { updateDoc, doc, addDoc, collection } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
+import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 

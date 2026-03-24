@@ -1,7 +1,7 @@
 import { app, db } from '../shared/firebase-config.js';
 import { t, setLang, getLang, initLang } from '../shared/i18n.js';
-import { collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { state } from './modules/state.js';
 import { buildRankingStats, displayGeneralRanking, displayStats } from './modules/display-rankings.js';
 import { displayMapsTimeline } from './modules/display-maps.js';

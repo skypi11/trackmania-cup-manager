@@ -4,8 +4,8 @@ import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast } from './utils.js';
-import { addDoc, getDoc, getDocs, doc, collection, query, where } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js';
+import { addDoc, getDoc, getDocs, doc, collection, query, where } from 'firebase/firestore';
+import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { handleDiscordCallback, updateDiscordReminders, maybeShowDiscordPrompt } from './discord.js';
 import { displayHome, displayNextEditionBanner } from './display-home.js';
 import { displayParticipants } from './display-players.js';
@@ -113,7 +113,8 @@ onAuthStateChanged(auth, async (user) => {
         ]);
         state.isAdmin = adminSnap.exists();
         state.currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
-    } catch {
+    } catch(err) {
+        console.error('Auth Firestore fetch error:', err);
         state.isAdmin = false;
         state.currentUserProfile = null;
     }
@@ -194,7 +195,8 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
         setTimeout(() => {
             document.getElementById('discordPromptOverlay').classList.add('open');
         }, 700);
-    } catch {
+    } catch(err) {
+        console.error('Create profile error:', err);
         msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
         msg.textContent = t('profile.error.create');
         btn.disabled = false; btn.textContent = t('profile.create.btn');
