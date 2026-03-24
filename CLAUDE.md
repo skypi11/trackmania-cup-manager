@@ -4,6 +4,9 @@
 Site de gestion des compétitions Springs E-Sport (Trackmania Monthly Cup, et à venir Rocket League).
 Réponses en **français** uniquement.
 
+## Collaboration
+L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait tout le code et les pushs. Il vérifie uniquement sur le site Vercel. Ne jamais lui demander de lancer des commandes ou de manipuler des fichiers manuellement.
+
 ## Stack technique
 - **Frontend** : Vanilla JS (ES modules), HTML/CSS inline par fichier
 - **Base de données** : Firebase Firestore
