@@ -122,7 +122,7 @@ function streakColHtml(s, side) {
     if (s.maxVies > 0) parts.push(streakBox(`❤️×${s.maxVies}`, t('player.max.lives'), 'color:#f87171'));
     if (s.bestEditionResult) parts.push(streakBox(`+${getPoints(s.bestEditionResult.position)}`, t('player.best.edition'), 'color:var(--color-accent)'));
     return parts.length
-        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:${justify}">${parts.join('')}</div>`
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:${justify};width:100%">${parts.join('')}</div>`
         : `<div style="color:rgba(255,255,255,0.2);font-size:0.82rem;padding:8px 0;text-align:${side === 'A' ? 'right' : 'left'}">${t('duel.no.streak')}</div>`;
 }
 
@@ -216,7 +216,8 @@ export function displayDuel() {
 
     // ── Tableau stats (miroir natif) ──────────────────────────────────────
     const statsHtml = `<div class="card" style="margin-top:16px;overflow:hidden">
-        <table style="width:100%;border-collapse:collapse">
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+            <colgroup><col style="width:45%"><col style="width:10%"><col style="width:45%"></colgroup>
             <thead><tr>
                 <th style="text-align:right;padding:14px 16px;font-size:1.05rem;color:var(--color-accent);font-weight:700">
                     ${nameA}<br><span style="font-size:0.75rem;color:var(--color-text-secondary);font-weight:400">${pA?.team && pA.team !== 'Sans équipe' ? pA.team : '&nbsp;'}</span>
