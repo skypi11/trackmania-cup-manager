@@ -1191,6 +1191,29 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                         <label for="editionYoutube" data-i18n="form.youtube.opt">VOD YouTube (optionnel)</label>
                         <input type="url" id="editionYoutube" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
+                    <div style="display:flex;gap:12px;margin-bottom:12px">
+                        <div class="form-group" style="flex:1;margin:0">
+                            <label for="editionNbMaps">Nb de maps (qualif)</label>
+                            <select id="editionNbMaps">
+                                <option value="1">1 map</option>
+                                <option value="2">2 maps</option>
+                                <option value="3">3 maps</option>
+                                <option value="4">4 maps</option>
+                                <option value="5">5 maps</option>
+                                <option value="6" selected>6 maps</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;margin:0">
+                            <label for="editionNbQualifPerMap">Qualifiés par map</label>
+                            <select id="editionNbQualifPerMap">
+                                <option value="1">Top 1</option>
+                                <option value="2">Top 2</option>
+                                <option value="3" selected>Top 3</option>
+                                <option value="4">Top 4</option>
+                                <option value="5">Top 5</option>
+                            </select>
+                        </div>
+                    </div>
                     <details style="margin-bottom:16px">
                         <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none" data-i18n="form.maps.tmx">🗺️ IDs TMX des maps (optionnel)</summary>
                         <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1612,6 +1635,29 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <div class="form-group">
                     <label for="editEditionYoutube" data-i18n="form.youtube">VOD YouTube (URL)</label>
                     <input type="url" id="editEditionYoutube" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                <div style="display:flex;gap:12px;margin-bottom:12px">
+                    <div class="form-group" style="flex:1;margin:0">
+                        <label for="editEditionNbMaps">Nb de maps (qualif)</label>
+                        <select id="editEditionNbMaps">
+                            <option value="1">1 map</option>
+                            <option value="2">2 maps</option>
+                            <option value="3">3 maps</option>
+                            <option value="4">4 maps</option>
+                            <option value="5">5 maps</option>
+                            <option value="6" selected>6 maps</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;margin:0">
+                        <label for="editEditionNbQualifPerMap">Qualifiés par map</label>
+                        <select id="editEditionNbQualifPerMap">
+                            <option value="1">Top 1</option>
+                            <option value="2">Top 2</option>
+                            <option value="3" selected>Top 3</option>
+                            <option value="4">Top 4</option>
+                            <option value="5">Top 5</option>
+                        </select>
+                    </div>
                 </div>
                 <details style="margin-bottom:16px">
                     <summary style="cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--color-text-secondary);padding:6px 0;user-select:none" data-i18n="form.maps.tmx">🗺️ IDs TMX des maps (optionnel)</summary>

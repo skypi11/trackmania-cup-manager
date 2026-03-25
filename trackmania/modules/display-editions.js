@@ -345,7 +345,7 @@ window.openEditionDetail = (id) => {
                         <div class="form-group" id="detailMapField" style="display:none">
                             <label>${t('detail.map')}</label>
                             <select id="detailResultMap">
-                                ${[1,2,3,4,5,6].map(n => `<option value="${n}">${t('detail.map.n')} ${n}</option>`).join('')}
+                                ${Array.from({length: e.nbMaps || 6}, (_, i) => i + 1).map(n => `<option value="${n}">${t('detail.map.n')} ${n}</option>`).join('')}
                                 <option value="7">${t('detail.map.finale')}</option>
                             </select>
                         </div>
@@ -360,9 +360,7 @@ window.openEditionDetail = (id) => {
                         <div class="form-group" id="detailQualPosField" style="display:none">
                             <label>${t('detail.pos.map')}</label>
                             <select id="detailResultQualPos">
-                                <option value="1">${t('detail.pos.1')}</option>
-                                <option value="2">${t('detail.pos.2')}</option>
-                                <option value="3">${t('detail.pos.3')}</option>
+                                ${Array.from({length: e.nbQualifPerMap || 3}, (_, i) => i + 1).map(pos => `<option value="${pos}">${t(`detail.pos.${pos}`) || `${pos}e`}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group" id="detailPositionField" style="display:none">
@@ -425,7 +423,7 @@ window.openEditionDetail = (id) => {
             html += `<div class="phase-title">${t('detail.quals.title')}</div>`;
             html += '<div class="maps-grid">';
             const medals3 = ['🥇', '🥈', '🥉'];
-            for (let m = 1; m <= 6; m++) {
+            for (let m = 1; m <= (e.nbMaps || 6); m++) {
                 const mapQuals = qualResults.filter(r => r.map === m).sort((a, b) => (a.position||0) - (b.position||0));
                 const tmxName   = e[`map${m}name`]   || '';
                 const tmxMapper = e[`map${m}mapper`] || '';
@@ -434,7 +432,7 @@ window.openEditionDetail = (id) => {
                 const mapLabelHtml = `<div class="map-card-header">${t('detail.map.n')} ${m}</div>`;
                 const mapTitleHtml = tmxName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${tmxName}${tmxMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> ${t('detail.by')} ${tmxMapper}</span>` : ''}</div>` : '';
                 html += `<div class="map-card">${thumbHtml}${mapLabelHtml}${mapTitleHtml}<div class="map-slots-wrap">`;
-                for (let pos = 1; pos <= 3; pos++) {
+                for (let pos = 1; pos <= (e.nbQualifPerMap || 3); pos++) {
                     const r = mapQuals.find(r => r.position === pos);
                     if (r) {
                         const player = state.data.participants.find(p => p.id === r.playerId);

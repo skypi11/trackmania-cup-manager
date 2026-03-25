@@ -39,6 +39,8 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
     const description = document.getElementById('editionDesc').value.trim();
     const youtubeUrl  = document.getElementById('editionYoutube').value.trim();
     const saison      = parseInt(document.getElementById('editionSaison').value) || (dateVal ? new Date(dateVal).getFullYear() : new Date().getFullYear());
+    const nbMaps         = parseInt(document.getElementById('editionNbMaps').value) || 6;
+    const nbQualifPerMap = parseInt(document.getElementById('editionNbQualifPerMap').value) || 3;
     const mapTmxValsCreate = Object.fromEntries([1,2,3,4,5,6,7].map(n => [n, document.getElementById(`editionMap${n}tmx`)?.value.trim() || '']));
     const newEditionRef = await addDoc(collection(db, 'editions'), {
         name: document.getElementById('editionName').value.trim(),
@@ -53,6 +55,8 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
         ...(description ? { description } : {}),
         ...(youtubeUrl  ? { youtubeUrl }  : {}),
         ...(Object.fromEntries([1,2,3,4,5,6,7].flatMap(n => [[`map${n}tmx`, mapTmxValsCreate[n]], [`map${n}name`, document.getElementById(`editionMap${n}name`)?.value.trim() || '']]))),
+        nbMaps,
+        nbQualifPerMap,
         cupId
     });
     storeTmxThumbs(newEditionRef.id, mapTmxValsCreate);
@@ -100,6 +104,8 @@ window.openEditEdition = (id) => {
     document.getElementById('editEditionDesc').value = e.description || '';
     document.getElementById('editEditionYoutube').value = e.youtubeUrl || '';
     document.getElementById('editEditionSaison').value = e.saison || new Date(e.date).getFullYear();
+    document.getElementById('editEditionNbMaps').value = e.nbMaps || 6;
+    document.getElementById('editEditionNbQualifPerMap').value = e.nbQualifPerMap || 3;
     [1,2,3,4,5,6,7].forEach(n => {
         document.getElementById(`editEditionMap${n}tmx`).value = e[`map${n}tmx`] || '';
         document.getElementById(`editEditionMap${n}name`).value = e[`map${n}name`] || '';
@@ -122,9 +128,11 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
     const youtubeUrl  = document.getElementById('editEditionYoutube').value.trim();
     const newStatus = document.getElementById('editEditionStatus').value;
     const current   = state.data.editions.find(ed => ed.id === id);
-    const saison  = parseInt(document.getElementById('editEditionSaison').value) || new Date(date).getFullYear();
+    const saison         = parseInt(document.getElementById('editEditionSaison').value) || new Date(date).getFullYear();
+    const nbMaps         = parseInt(document.getElementById('editEditionNbMaps').value) || 6;
+    const nbQualifPerMap = parseInt(document.getElementById('editEditionNbQualifPerMap').value) || 3;
     const mapsTmx = {}; [1,2,3,4,5,6,7].forEach(n => { mapsTmx[`map${n}tmx`] = document.getElementById(`editEditionMap${n}tmx`).value.trim(); mapsTmx[`map${n}name`] = document.getElementById(`editEditionMap${n}name`).value.trim(); });
-    const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus, saison, ...mapsTmx };
+    const updates   = { name, date, time, club, salon, password, description, youtubeUrl, status: newStatus, saison, nbMaps, nbQualifPerMap, ...mapsTmx };
     if (current && current.status !== newStatus) {
         updates.statusHistory = arrayUnion({ status: newStatus, at: new Date().toISOString() });
     }
