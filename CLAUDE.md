@@ -187,6 +187,12 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - **Ligue uniquement** — tournois supprimés, code propre centré sur la ligue
 - Collection `rl_competitions` (type toujours `'league'`)
 
+### Fonctionnalités TM livrées (session 2026-03-25)
+- ✅ TM : nbMaps / nbQualifPerMap configurables par édition
+- ✅ TM : Discord notifications admin avec 4 templates (Rappel, Annonce, Résultats, Libre)
+- ✅ TM : Onglet ⚔️ Duel — comparaison tête-à-tête en miroir (stats, streaks, achievements, graphe, H2H)
+- ✅ TM : Onglet 📋 Règles et Format — éditeur admin bilingue FR/EN, fallback FR si EN vide
+
 ### Planifié (ordre priorité)
 - [ ] RL : Bracket LAN (double élim, génération + saisie scores + avancement auto)
 - [ ] RL : Mercato (transferts inter-équipes, validation admin)
