@@ -121,8 +121,9 @@ function streakColHtml(s, side) {
     if (s.currentFinStreak > 0) parts.push(streakBox(s.currentFinStreak, t('player.consec.finals'), 'color:#fbbf24'));
     if (s.maxVies > 0) parts.push(streakBox(`❤️×${s.maxVies}`, t('player.max.lives'), 'color:#f87171'));
     if (s.bestEditionResult) parts.push(streakBox(`+${getPoints(s.bestEditionResult.position)}`, t('player.best.edition'), 'color:var(--color-accent)'));
-    return parts.length
-        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:${justify};width:100%">${parts.join('')}</div>`
+    const ordered = side === 'A' ? [...parts].reverse() : parts;
+    return ordered.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:${justify};width:100%">${ordered.join('')}</div>`
         : `<div style="color:rgba(255,255,255,0.2);font-size:0.82rem;padding:8px 0;text-align:${side === 'A' ? 'right' : 'left'}">${t('duel.no.streak')}</div>`;
 }
 
