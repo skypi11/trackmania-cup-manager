@@ -109,26 +109,60 @@ window.unlinkDiscord = async (playerId) => {
 
 // ── Notifications admin ───────────────────────────────────────────────────────
 
-window.openDiscordNotifyModal = (editionId) => {
-    const e = state.data.editions.find(ed => ed.id === editionId);
-    if (!e) return;
+function buildMentions(editionId) {
     const inscriptions = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription');
-    const mentions = inscriptions
+    return inscriptions
         .map(r => state.data.participants.find(p => p.id === r.playerId))
         .filter(p => p?.discordId)
         .map(p => `<@${p.discordId}>`);
-    const timeStr = e.time ? ` à **${e.time}**` : '';
-    const mentionsStr = mentions.length > 0 ? mentions.join(' ') + '\n\n' : '';
-    const defaultMsg = `${mentionsStr}🏎️ **${e.name}** commence bientôt${timeStr} !\nPréparez-vous, on vous attend en jeu ! 🎮`;
+}
 
-    const modal = document.getElementById('discordNotifyModal');
+function buildTemplate(type, editionId) {
+    const e = state.data.editions.find(ed => ed.id === editionId);
+    if (!e) return '';
+    const mentions = buildMentions(editionId);
+    const mentionsStr = mentions.length > 0 ? mentions.join(' ') + '\n\n' : '';
+    const timeStr = e.time ? ` à **${e.time}**` : '';
+    const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+    if (type === 'rappel') {
+        return `${mentionsStr}🏎️ **${e.name}** commence bientôt${timeStr} !\nPréparez-vous, on vous attend en jeu ! 🎮`;
+    }
+    if (type === 'annonce') {
+        return `📅 Nouvelle édition annoncée !\n\n🏎️ **${e.name}**\n📆 ${dateStr}${timeStr}\n\nInscriptions ouvertes sur le site ! 🔗`;
+    }
+    if (type === 'resultats') {
+        const finaleResults = state.data.results
+            .filter(r => r.editionId === editionId && r.phase === 'finale')
+            .sort((a, b) => a.position - b.position);
+        const medals = ['🥇', '🥈', '🥉'];
+        const podium = [1, 2, 3].map(pos => {
+            const r = finaleResults.find(r => r.position === pos);
+            const p = r ? state.data.participants.find(p => p.id === r.playerId) : null;
+            return `${medals[pos - 1]} **${p ? pName(p) : '—'}**`;
+        }).join('\n');
+        return `🏆 Résultats de **${e.name}** !\n\n${podium}\n\nGG à tous les participants ! 👏`;
+    }
+    return '';
+}
+
+window.openDiscordNotifyModal = (editionId) => {
+    const e = state.data.editions.find(ed => ed.id === editionId);
+    if (!e) return;
+    const mentions = buildMentions(editionId);
     document.getElementById('discordNotifyEditionId').value = editionId;
-    document.getElementById('discordNotifyMessage').value = defaultMsg;
+    document.getElementById('discordNotifyMessage').value = buildTemplate('rappel', editionId);
     const hint = mentions.length > 0
         ? `${mentions.length} joueur(s) mentionné(s) via Discord`
         : 'Aucun joueur n\'a lié son Discord — pas de @mention';
     document.getElementById('discordNotifyHint').textContent = hint;
-    modal.classList.add('open');
+    document.getElementById('discordNotifyModal').classList.add('open');
+};
+
+window.applyDiscordTemplate = (type) => {
+    const editionId = document.getElementById('discordNotifyEditionId').value;
+    document.getElementById('discordNotifyMessage').value = type === 'libre' ? '' : buildTemplate(type, editionId);
+    document.getElementById('discordNotifyMessage').focus();
 };
 
 window.closeDiscordNotifyModal = () => {

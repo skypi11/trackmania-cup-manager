@@ -1542,6 +1542,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <span data-i18n="admin.notify.discord">Notification Discord</span>
             </h2>
             <input type="hidden" id="discordNotifyEditionId">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+                <button type="button" class="btn btn-secondary btn-small" onclick="applyDiscordTemplate('rappel')">⏰ Rappel</button>
+                <button type="button" class="btn btn-secondary btn-small" onclick="applyDiscordTemplate('annonce')">📅 Annonce</button>
+                <button type="button" class="btn btn-secondary btn-small" onclick="applyDiscordTemplate('resultats')">🏆 Résultats</button>
+                <button type="button" class="btn btn-secondary btn-small" onclick="applyDiscordTemplate('libre')">✏️ Libre</button>
+            </div>
             <div class="form-group">
                 <label data-i18n="form.message">Message</label>
                 <textarea id="discordNotifyMessage" rows="6" style="resize:vertical;font-family:monospace;font-size:0.85rem"></textarea>
