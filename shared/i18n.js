@@ -469,6 +469,33 @@ const translations = {
     'detail.club.label':      '🏛️ Club :',
     'detail.salon.label':     '🎮 Salon :',
     'detail.reg.num':         '#',
+
+    // ── Duel ─────────────────────────────────────────────────────────────
+    'nav.duel':               '⚔️ Duel',
+    'duel.player.a':          'Joueur A',
+    'duel.player.b':          'Joueur B',
+    'duel.select.ph':         'Choisir un joueur…',
+    'duel.select.prompt':     'Sélectionnez deux joueurs pour comparer leurs stats.',
+    'duel.select.diff':       'Choisissez deux joueurs différents.',
+    'duel.stats':             'Stats',
+    'duel.total.points':      'Points totaux',
+    'duel.best.rank':         'Meilleur rang',
+    'duel.avg.pos':           'Pos. moy. finale',
+    'duel.no.streak':         'Aucun streak',
+    'duel.achievements':      'Achievements',
+    'duel.evo':               'Évolution en finale',
+    'duel.evo.note':          'Les points n\'apparaissent que sur les éditions où le joueur a atteint la finale.',
+    'duel.h2h.common':        '{n} finale(s) en commun',
+    'duel.h2h.edition':       'Édition',
+    'duel.no.h2h':            'Ces deux joueurs ne se sont jamais affrontés en finale.',
+
+    // ── Règlement ─────────────────────────────────────────────────────────
+    'nav.reglement':          'Règlement',
+    'rules.empty':            'Aucun règlement publié pour le moment.',
+    'rules.edit':             '✏️ Éditer le règlement',
+    'rules.format.hint':      'Mise en forme :',
+    'rules.save':             '💾 Enregistrer',
+    'rules.saved':            '✅ Règlement enregistré',
   },
 
   en: {
@@ -939,6 +966,33 @@ const translations = {
     'detail.club.label':      '🏛️ Club:',
     'detail.salon.label':     '🎮 Room:',
     'detail.reg.num':         '#',
+
+    // ── Duel ─────────────────────────────────────────────────────────────
+    'nav.duel':               '⚔️ Duel',
+    'duel.player.a':          'Player A',
+    'duel.player.b':          'Player B',
+    'duel.select.ph':         'Choose a player…',
+    'duel.select.prompt':     'Select two players to compare their stats.',
+    'duel.select.diff':       'Please select two different players.',
+    'duel.stats':             'Stats',
+    'duel.total.points':      'Total points',
+    'duel.best.rank':         'Best rank',
+    'duel.avg.pos':           'Avg. final pos.',
+    'duel.no.streak':         'No streak',
+    'duel.achievements':      'Achievements',
+    'duel.evo':               'Final evolution',
+    'duel.evo.note':          'Dots only appear on editions where the player reached the final.',
+    'duel.h2h.common':        '{n} final(s) in common',
+    'duel.h2h.edition':       'Edition',
+    'duel.no.h2h':            'These two players have never faced each other in a final.',
+
+    // ── Règlement ─────────────────────────────────────────────────────────
+    'nav.reglement':          'Rules',
+    'rules.empty':            'No rules published yet.',
+    'rules.edit':             '✏️ Edit rules',
+    'rules.format.hint':      'Formatting:',
+    'rules.save':             '💾 Save',
+    'rules.saved':            '✅ Rules saved',
   }
 };
 

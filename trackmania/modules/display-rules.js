@@ -2,6 +2,7 @@
 
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
+import { t } from '../../shared/i18n.js';
 import { showToast } from './utils.js';
 import { updateDoc, doc } from 'firebase/firestore';
 
@@ -34,21 +35,21 @@ export function displayRules() {
     } else if (!state.isAdmin) {
         html += `<div class="card" style="text-align:center;padding:60px;color:var(--color-text-secondary)">
             <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
-            <p>Aucun règlement publié pour le moment.</p>
+            <p>${t('rules.empty')}</p>
         </div>`;
     }
 
     if (state.isAdmin) {
         html += `<div class="card" style="margin-top:16px">
-            <h3 style="margin:0 0 6px;font-size:1rem">✏️ Éditer le règlement</h3>
-            <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:12px">Mise en forme :
+            <h3 style="margin:0 0 6px;font-size:1rem">${t('rules.edit')}</h3>
+            <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:12px">${t('rules.format.hint')}
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px"># Titre</code>
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">## Sous-titre</code>
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">- élément</code>
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">**gras**</code>
             </p>
             <textarea id="rulesEditor" rows="18" style="width:100%;box-sizing:border-box;resize:vertical;font-family:monospace;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;color:var(--color-text-primary)">${rules || ''}</textarea>
-            <button class="btn btn-primary" onclick="saveRules()" style="margin-top:12px">💾 Enregistrer</button>
+            <button class="btn btn-primary" onclick="saveRules()" style="margin-top:12px">${t('rules.save')}</button>
         </div>`;
     }
 
@@ -60,7 +61,7 @@ window.saveRules = async () => {
     try {
         await updateDoc(doc(db, 'siteContent', `config_${cupId}`), { rules: content });
         state.siteConfig.rules = content;
-        showToast('✅ Règlement enregistré');
+        showToast(t('rules.saved'));
         displayRules();
     } catch(err) {
         console.error('Save rules error:', err);
