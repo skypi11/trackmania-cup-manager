@@ -14,6 +14,8 @@ import './modules/admin-forms.js';
 import { updateDiscordReminders } from './modules/discord.js';
 import { loadSiteConfig, applySiteConfig } from './modules/site-config.js';
 import { checkLoaded } from './modules/auth.js';
+import { displayRules } from './modules/display-rules.js';
+import { displayDuel } from './modules/display-duel.js';
 
 initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'),
@@ -54,7 +56,9 @@ function showSection(id) {
     else if (id === 'personnalisation') applySiteConfig();
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
-    const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), personnalisation: t('nav.custom') };
+    else if (id === 'reglement') displayRules();
+    else if (id === 'duel') displayDuel();
+    const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), personnalisation: t('nav.custom'), reglement: 'Règlement', duel: '⚔️ Duel' };
     const titleEl = document.getElementById('topbarTitle');
     if (titleEl) titleEl.textContent = titles[id] || '';
     // Sync URL hash (replaceState = pas d'entrée dans l'historique pour nav interne)

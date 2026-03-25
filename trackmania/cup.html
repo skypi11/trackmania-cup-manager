@@ -1085,6 +1085,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label" data-i18n="nav.players">Joueurs</span></button>
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav.stats">Stats</span></button>
           <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label" data-i18n="nav.hof">Hall of Fame</span></button>
+          <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label">Duel</span></button>
+          <button class="nav-item" data-section="reglement"><span class="nav-icon">📋</span><span class="nav-label">Règlement</span></button>
           <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
         </nav>
         <div class="sidebar-footer">
@@ -1419,6 +1421,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
               <div id="overlayUrlsContainer"></div>
             </div>
           </div>
+
+          <!-- DUEL -->
+          <div class="section-panel" id="duel" style="display:none">
+            <div id="duelContent"></div>
+          </div>
+
+          <!-- RÈGLEMENT -->
+          <div class="section-panel" id="reglement" style="display:none">
+            <div id="rulesContent"></div>
+          </div>
+
         </div>
 
         <!-- FOOTER -->
