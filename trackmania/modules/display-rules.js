@@ -2,7 +2,7 @@
 
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
-import { t } from '../../shared/i18n.js';
+import { t, getLang } from '../../shared/i18n.js';
 import { showToast } from './utils.js';
 import { updateDoc, doc } from 'firebase/firestore';
 
@@ -28,10 +28,12 @@ export function displayRules() {
     const container = document.getElementById('rulesContent');
     if (!container) return;
     const rules = state.siteConfig?.rules;
+    const rulesEn = state.siteConfig?.rulesEn;
+    const content = (getLang() === 'en' && rulesEn) ? rulesEn : rules;
     let html = '';
 
-    if (rules) {
-        html += `<div class="card" style="line-height:1.7">${renderMarkdown(rules)}</div>`;
+    if (content) {
+        html += `<div class="card" style="line-height:1.7">${renderMarkdown(content)}</div>`;
     } else if (!state.isAdmin) {
         html += `<div class="card" style="text-align:center;padding:60px;color:var(--color-text-secondary)">
             <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
@@ -40,15 +42,22 @@ export function displayRules() {
     }
 
     if (state.isAdmin) {
-        html += `<div class="card" style="margin-top:16px">
-            <h3 style="margin:0 0 6px;font-size:1rem">${t('rules.edit')}</h3>
-            <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:12px">${t('rules.format.hint')}
-                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px"># Titre</code>
+        const fmtCodes = `<code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px"># Titre</code>
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">## Sous-titre</code>
                 <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">- élément</code>
-                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">**gras**</code>
-            </p>
-            <textarea id="rulesEditor" rows="18" style="width:100%;box-sizing:border-box;resize:vertical;font-family:monospace;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;color:var(--color-text-primary)">${rules || ''}</textarea>
+                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">**gras**</code>`;
+        const taStyle = `width:100%;box-sizing:border-box;resize:vertical;font-family:monospace;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;color:var(--color-text-primary)`;
+        html += `<div class="card" style="margin-top:16px">
+            <h3 style="margin:0 0 6px;font-size:1rem">${t('rules.edit')}</h3>
+            <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:16px">${t('rules.format.hint')} ${fmtCodes}</p>
+
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px">${t('rules.tab.fr')}</label>
+            <textarea id="rulesEditor" rows="14" style="${taStyle}">${rules || ''}</textarea>
+
+            <label style="display:block;font-size:0.85rem;font-weight:600;margin-top:16px;margin-bottom:4px">${t('rules.tab.en')}</label>
+            <p style="font-size:0.78rem;color:var(--color-text-secondary);margin:0 0 6px">${t('rules.en.hint')}</p>
+            <textarea id="rulesEditorEn" rows="14" style="${taStyle}">${rulesEn || ''}</textarea>
+
             <button class="btn btn-primary" onclick="saveRules()" style="margin-top:12px">${t('rules.save')}</button>
         </div>`;
     }
@@ -57,10 +66,12 @@ export function displayRules() {
 }
 
 window.saveRules = async () => {
-    const content = document.getElementById('rulesEditor')?.value || '';
+    const frContent = document.getElementById('rulesEditor')?.value || '';
+    const enContent = document.getElementById('rulesEditorEn')?.value || '';
     try {
-        await updateDoc(doc(db, 'siteContent', `config_${cupId}`), { rules: content });
-        state.siteConfig.rules = content;
+        await updateDoc(doc(db, 'siteContent', `config_${cupId}`), { rules: frContent, rulesEn: enContent });
+        state.siteConfig.rules = frContent;
+        state.siteConfig.rulesEn = enContent;
         showToast(t('rules.saved'));
         displayRules();
     } catch(err) {

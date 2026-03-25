@@ -489,13 +489,16 @@ const translations = {
     'duel.h2h.edition':       'Édition',
     'duel.no.h2h':            'Ces deux joueurs ne se sont jamais affrontés en finale.',
 
-    // ── Règlement ─────────────────────────────────────────────────────────
-    'nav.reglement':          'Règlement',
+    // ── Règles & Format ───────────────────────────────────────────────────
+    'nav.reglement':          'Règles et Format',
     'rules.empty':            'Aucun règlement publié pour le moment.',
-    'rules.edit':             '✏️ Éditer le règlement',
+    'rules.edit':             '✏️ Éditer les règles',
     'rules.format.hint':      'Mise en forme :',
     'rules.save':             '💾 Enregistrer',
-    'rules.saved':            '✅ Règlement enregistré',
+    'rules.saved':            '✅ Règles enregistrées',
+    'rules.tab.fr':           '🇫🇷 Version française',
+    'rules.tab.en':           '🇬🇧 Version anglaise',
+    'rules.en.hint':          'Si vide, les visiteurs en anglais verront la version française.',
   },
 
   en: {
@@ -986,13 +989,16 @@ const translations = {
     'duel.h2h.edition':       'Edition',
     'duel.no.h2h':            'These two players have never faced each other in a final.',
 
-    // ── Règlement ─────────────────────────────────────────────────────────
-    'nav.reglement':          'Rules',
+    // ── Rules & Format ────────────────────────────────────────────────────
+    'nav.reglement':          'Rules & Format',
     'rules.empty':            'No rules published yet.',
     'rules.edit':             '✏️ Edit rules',
     'rules.format.hint':      'Formatting:',
     'rules.save':             '💾 Save',
     'rules.saved':            '✅ Rules saved',
+    'rules.tab.fr':           '🇫🇷 French version',
+    'rules.tab.en':           '🇬🇧 English version',
+    'rules.en.hint':          'If empty, English visitors will see the French version.',
   }
 };
 
