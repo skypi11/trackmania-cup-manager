@@ -140,6 +140,7 @@ watchCollection(collection(db, 'participants'), 'participants', snap => {
     displayParticipants(); displayEditions(); displayHome();
     displayHallOfFame(); displayNextEditionBanner(); displayStats();
     displayGeneralRanking(); updateDiscordReminders();
+    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
 });
 
 watchCollection(collection(db, 'editions'), 'editions', snap => {
@@ -153,6 +154,7 @@ watchCollection(collection(db, 'results'), 'results', snap => {
     state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
     displayParticipants(); displayEditions(); displayHome();
     displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
+    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
 });
 
 watchCollection(
