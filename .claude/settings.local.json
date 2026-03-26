@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n '<[\\\\\\\\]' \"c:/Users/mattm/site cup monthly/trackmania-cup.html\")",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}

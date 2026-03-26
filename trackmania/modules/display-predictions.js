@@ -13,8 +13,12 @@ const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly
 window.togglePredFinalist = function(edId, playerId) {
     if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
     const s = state.predState[edId];
-    if (s.finalists.has(playerId)) s.finalists.delete(playerId);
-    else s.finalists.add(playerId);
+    if (s.finalists.has(playerId)) {
+        s.finalists.delete(playerId);
+        s.top3 = s.top3.map(p => p === playerId ? null : p);
+    } else {
+        s.finalists.add(playerId);
+    }
     renderPredForm(edId);
 };
 
@@ -26,8 +30,19 @@ window.setPredTop = function(edId, rank, playerId) {
     renderPredForm(edId);
 };
 
+window.filterPredSearch = function(edId) {
+    const input = document.getElementById(`pred-search-${edId}`);
+    if (!input) return;
+    const query = input.value.toLowerCase();
+    document.getElementById(`pred-grid-${edId}`)?.querySelectorAll('.pred-player-chip').forEach(chip => {
+        chip.style.display = (chip.dataset.name || '').toLowerCase().includes(query) ? '' : 'none';
+    });
+};
+
 window.submitPrediction = async function(edId) {
     if (!state.currentUser) { alert(t('predictions.login')); return; }
+    const edition = state.data.editions.find(e => e.id === edId);
+    if (edition?.status === 'live' || edition?.status === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
     const s = state.predState[edId];
     if (!s || s.finalists.size === 0) { alert(t('predictions.select')); return; }
     const myPart = state.data.participants.find(p => p.userId === state.currentUser.uid);
@@ -35,13 +50,9 @@ window.submitPrediction = async function(edId) {
 
     const existing = state.data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id);
     const payload = {
-        editionId: edId,
-        playerId: myPart.id,
-        cupId,
-        finalists: [...s.finalists],
-        top3: s.top3,
-        createdAt: new Date().toISOString(),
-        score: null, scored: false
+        editionId: edId, playerId: myPart.id, cupId,
+        finalists: [...s.finalists], top3: s.top3,
+        createdAt: new Date().toISOString(), score: null, scored: false
     };
     if (existing) {
         await updateDoc(doc(db, 'predictions', existing.id), payload);
@@ -69,6 +80,78 @@ window.calculatePredictionScores = async function(edId) {
     alert(t('predictions.calc', {n: preds.length}));
 };
 
+// ── Carte récapitulatif ───────────────────────────────────────────────────────
+
+function recapCardHtml(pred, players) {
+    const rankLabels = ['🥇', '🥈', '🥉'];
+    const finalistNames = (pred.finalists || []).map(id => pName(players.find(p => p.id === id)) || '?');
+    const top3Parts = (pred.top3 || []).map((id, i) => {
+        if (!id) return null;
+        const p = players.find(p => p.id === id);
+        return p ? `${rankLabels[i]} ${pName(p)}` : null;
+    }).filter(Boolean);
+
+    let html = `<div style="background:rgba(0,217,54,0.04);border:1px solid rgba(0,217,54,0.15);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:10px">🔮 Ta prédiction</div>
+        <div style="margin-bottom:${top3Parts.length ? '8px' : '0'}">
+            <span style="font-size:0.72rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em">Finalistes (${finalistNames.length})</span>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">`;
+    finalistNames.forEach(name => {
+        html += `<span style="background:rgba(255,255,255,0.07);border-radius:6px;padding:3px 8px;font-size:0.8rem">${name}</span>`;
+    });
+    html += `</div></div>`;
+    if (top3Parts.length) {
+        html += `<div>
+            <span style="font-size:0.72rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em">Top 3</span>
+            <div style="display:flex;gap:12px;margin-top:5px;font-size:0.85rem">${top3Parts.map(p => `<span>${p}</span>`).join('')}</div>
+        </div>`;
+    }
+    if (pred.scored) {
+        html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-weight:700;color:var(--color-accent)">Score : ${pred.score} pt${pred.score !== 1 ? 's' : ''}</div>`;
+    }
+    html += `</div>`;
+    return html;
+}
+
+// ── Prédictions communauté (visible dès que l'édition est live) ───────────────
+
+function communityPredHtml(edId, players) {
+    const preds = state.data.predictions.filter(p => p.editionId === edId);
+    if (preds.length === 0) return '';
+
+    const rankLabels = ['🥇', '🥈', '🥉'];
+    const sorted = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
+    const taStyle = `background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 12px;margin-bottom:8px;`;
+
+    let html = `<div style="margin-top:16px">
+        <div class="pred-section-title">👥 Prédictions de la communauté (${preds.length})</div>`;
+
+    sorted.forEach(pred => {
+        const predictor = state.data.participants.find(p => p.id === pred.playerId);
+        const isMe = state.currentUser && predictor?.userId === state.currentUser.uid;
+        const finalistNames = (pred.finalists || []).map(id => pName(players.find(p => p.id === id)) || '?');
+        const top3Parts = (pred.top3 || []).map((id, i) => {
+            if (!id) return null;
+            const p = players.find(p => p.id === id);
+            return p ? `${rankLabels[i]} ${pName(p)}` : null;
+        }).filter(Boolean);
+
+        html += `<div style="${taStyle}${isMe ? 'border:1px solid rgba(0,217,54,0.2)' : 'border:1px solid rgba(255,255,255,0.06)'}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-weight:700;font-size:0.85rem">${predictor ? pName(predictor) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
+                ${pred.scored ? `<span style="color:var(--color-accent);font-weight:700;font-size:0.85rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;${top3Parts.length ? 'margin-bottom:5px' : ''}">
+                ${finalistNames.map(n => `<span style="background:rgba(255,255,255,0.06);border-radius:5px;padding:2px 7px;font-size:0.75rem">${n}</span>`).join('')}
+            </div>
+            ${top3Parts.length ? `<div style="font-size:0.78rem;color:var(--color-text-secondary)">${top3Parts.join(' · ')}</div>` : ''}
+        </div>`;
+    });
+
+    html += `</div>`;
+    return html;
+}
+
 // ── Formulaire de prédiction (rendu interne) ──────────────────────────────────
 
 function renderPredForm(edId) {
@@ -77,8 +160,27 @@ function renderPredForm(edId) {
     const edition = state.data.editions.find(e => e.id === edId);
     if (!edition) return;
 
+    const locked = edition.status === 'live' || edition.status === 'terminee';
     const myPart = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
     const myPred = myPart ? state.data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id) : null;
+
+    const inscribedIds = new Set(state.data.results
+        .filter(r => r.editionId === edId && (r.phase === 'inscription' || r.phase === 'qualification'))
+        .map(r => r.playerId));
+    const players = state.data.participants.filter(p => inscribedIds.has(p.id));
+
+    // ── Locked (live / terminée) : recap + communauté ──
+    if (locked) {
+        let html = '';
+        if (myPred) {
+            html += recapCardHtml(myPred, players);
+        } else if (myPart) {
+            html += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
+        }
+        html += communityPredHtml(edId, players);
+        container.innerHTML = html;
+        return;
+    }
 
     if (!state.predState[edId] && myPred) {
         state.predState[edId] = { finalists: new Set(myPred.finalists || []), top3: myPred.top3 || [null,null,null] };
@@ -86,35 +188,54 @@ function renderPredForm(edId) {
     if (!state.predState[edId]) state.predState[edId] = { finalists: new Set(), top3: [null,null,null] };
     const s = state.predState[edId];
 
-    const inscribedIds = new Set(state.data.results
-        .filter(r => r.editionId === edId && (r.phase === 'inscription' || r.phase === 'qualification'))
-        .map(r => r.playerId));
-    const players = state.data.participants.filter(p => inscribedIds.has(p.id));
-
     const rankLabels = ['🥇 1er', '🥈 2ème', '🥉 3ème'];
+    let html = '';
 
-    let html = `<div class="pred-section-title">Qui sera en finale ?</div>`;
-    html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Sélectionne les joueurs que tu penses voir en finale</p>`;
-    html += `<div class="pred-player-grid">`;
+    // Recap si déjà voté
+    if (myPred) {
+        html += recapCardHtml(myPred, players);
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:12px">Tu peux modifier ta prédiction jusqu'au début de l'édition.</p>`;
+    }
+
+    // ── Section 1 : sélection finalistes ──
+    html += `<div class="pred-section-title">Qui sera en finale ?</div>
+        <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Sélectionne les joueurs que tu penses voir en finale</p>`;
+
+    if (players.length > 10) {
+        html += `<input id="pred-search-${edId}" type="text" placeholder="Rechercher un joueur..." oninput="filterPredSearch('${edId}')"
+            style="width:100%;box-sizing:border-box;margin-bottom:8px;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--color-text-primary);font-size:0.85rem;outline:none">`;
+    }
+
+    html += `<div id="pred-grid-${edId}" class="pred-player-grid" style="max-height:200px;overflow-y:auto;padding-right:4px">`;
     players.forEach(p => {
         const sel = s.finalists.has(p.id) ? ' selected-finalist' : '';
-        html += `<div class="pred-player-chip${sel}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
+        html += `<div class="pred-player-chip${sel}" data-name="${pName(p)}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
     });
     html += `</div>`;
+    if (s.finalists.size > 0) {
+        html += `<p style="font-size:0.75rem;color:var(--color-accent);margin-top:4px">${s.finalists.size} joueur${s.finalists.size > 1 ? 's' : ''} sélectionné${s.finalists.size > 1 ? 's' : ''}</p>`;
+    }
 
+    // ── Section 2 : top 3 parmi les finalistes sélectionnés ──
     html += `<div class="pred-section-title" style="margin-top:16px">Ton top 3</div>`;
-    html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Clique sur une position puis un joueur (+3 pts si correct)</p>`;
-    [0,1,2].forEach(i => {
-        const rankClass = `selected-top${i+1}`;
-        html += `<div style="margin-bottom:6px">
-            <span style="font-size:0.82rem;font-weight:700;margin-right:8px">${rankLabels[i]}</span>
-            <div class="pred-player-grid" style="display:inline-flex;flex-wrap:wrap;gap:6px">`;
-        players.forEach(p => {
-            const isChosen = s.top3[i] === p.id;
-            html += `<div class="pred-player-chip${isChosen ? ' ' + rankClass : ''}" onclick="setPredTop('${edId}',${i+1},'${p.id}')">${pName(p)}</div>`;
+    const finalistPlayers = players.filter(p => s.finalists.has(p.id));
+
+    if (finalistPlayers.length === 0) {
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary)">Sélectionne d'abord tes finalistes ci-dessus.</p>`;
+    } else {
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Parmi tes finalistes, qui termine dans le top 3 ? (+3 pts si correct)</p>`;
+        [0,1,2].forEach(i => {
+            const rankClass = `selected-top${i+1}`;
+            html += `<div style="margin-bottom:6px">
+                <span style="font-size:0.82rem;font-weight:700;margin-right:8px">${rankLabels[i]}</span>
+                <div class="pred-player-grid" style="display:inline-flex;flex-wrap:wrap;gap:6px">`;
+            finalistPlayers.forEach(p => {
+                const isChosen = s.top3[i] === p.id;
+                html += `<div class="pred-player-chip${isChosen ? ' ' + rankClass : ''}" onclick="setPredTop('${edId}',${i+1},'${p.id}')">${pName(p)}</div>`;
+            });
+            html += `</div></div>`;
         });
-        html += `</div></div>`;
-    });
+    }
 
     const canSubmit = !!(state.currentUser && myPart);
     html += `<button class="btn btn-primary" style="margin-top:14px" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
@@ -133,11 +254,11 @@ export function displayPredictions() {
 
     const today = new Date();
     const upcoming = state.data.editions
-        .filter(e => e.status === 'upcoming' || new Date(e.date) > today)
+        .filter(e => e.status === 'upcoming' || e.status === 'inscriptions' || e.status === 'live' || new Date(e.date) > today)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const past = state.data.editions
-        .filter(e => e.status === 'terminee' || new Date(e.date) <= today)
+        .filter(e => e.status === 'terminee')
         .filter(e => state.data.predictions.some(p => p.editionId === e.id))
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
@@ -151,25 +272,28 @@ export function displayPredictions() {
     }
 
     if (upcoming.length > 0) {
-        html += '<div class="card"><h2>🔮 Prédis l\'édition suivante</h2>';
+        html += '<div class="card"><h2>🔮 Prédictions</h2>';
         upcoming.forEach(e => {
             const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             const inscribedIds = new Set(state.data.results
                 .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
                 .map(r => r.playerId));
-            if (inscribedIds.size === 0) return;
+            if (inscribedIds.size === 0 && e.status !== 'live') return;
 
             const predCount = state.data.predictions.filter(p => p.editionId === e.id).length;
+            const isLive = e.status === 'live';
+            const badgeHtml = isLive
+                ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">🔴 En cours — Prédictions fermées</span>`
+                : `<span class="pred-badge open">Ouvert</span>`;
+
             html += `<div class="pred-edition-card">
                 <div class="pred-edition-header">
                     <div style="flex:1;font-weight:800">${e.name}</div>
                     <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
-                    <span class="pred-badge open">Ouvert</span>
+                    ${badgeHtml}
                     <span style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${predCount} prédiction${predCount !== 1 ? 's' : ''}</span>
                 </div>
-                <div class="pred-body">
-                    <div id="pred-form-${e.id}"></div>
-                </div>
+                <div class="pred-body"><div id="pred-form-${e.id}"></div></div>
             </div>`;
         });
         html += '</div>';
@@ -224,6 +348,6 @@ export function displayPredictions() {
         const inscribedIds = new Set(state.data.results
             .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
             .map(r => r.playerId));
-        if (inscribedIds.size > 0) renderPredForm(e.id);
+        if (inscribedIds.size > 0 || e.status === 'live') renderPredForm(e.id);
     });
 }
