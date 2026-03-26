@@ -162,3 +162,94 @@ window.deleteResult = async (id) => {
     if (!confirm(t('msg.confirm.delete.result'))) return;
     await deleteDoc(doc(db, 'results', id));
 };
+
+// ── Diagnostic & réparation des données ──────────────────────────────────────
+
+window.runDataDiagnostic = async function() {
+    const container = document.getElementById('diagResults');
+    if (!container) return;
+    container.innerHTML = '<div style="color:var(--color-text-secondary);font-size:0.85rem">Analyse en cours…</div>';
+
+    const participantIds = new Set(state.data.participants.map(p => p.id));
+
+    // Résultats orphelins (playerId inexistant dans participants)
+    const orphaned = state.data.results.filter(r => !participantIds.has(r.playerId));
+    const orphanedByPlayerId = {};
+    orphaned.forEach(r => {
+        if (!orphanedByPlayerId[r.playerId]) orphanedByPlayerId[r.playerId] = [];
+        orphanedByPlayerId[r.playerId].push(r);
+    });
+
+    // Doublons de participants (même userId)
+    const byUserId = {};
+    state.data.participants.forEach(p => {
+        if (p.userId) {
+            if (!byUserId[p.userId]) byUserId[p.userId] = [];
+            byUserId[p.userId].push(p);
+        }
+    });
+    const duplicates = Object.values(byUserId).filter(arr => arr.length > 1);
+
+    let html = '';
+
+    if (duplicates.length > 0) {
+        html += `<div style="margin-bottom:16px">
+            <div style="font-weight:700;color:var(--color-warning);margin-bottom:8px">⚠️ ${duplicates.length} compte(s) dupliqué(s) (même userId)</div>`;
+        duplicates.forEach(players => {
+            html += `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:0.8rem">`;
+            players.forEach(p => {
+                const nbRes = state.data.results.filter(r => r.playerId === p.id).length;
+                html += `<div style="margin-bottom:3px">ID <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px">${p.id}</code> — <b>${pName(p)}</b> — ${nbRes} résultat(s)</div>`;
+            });
+            html += `</div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (Object.keys(orphanedByPlayerId).length > 0) {
+        const playerOpts = state.data.participants
+            .sort((a,b) => pName(a).localeCompare(pName(b)))
+            .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+        html += `<div>
+            <div style="font-weight:700;color:var(--color-danger);margin-bottom:8px">❌ ${orphaned.length} résultat(s) orphelin(s) — ${Object.keys(orphanedByPlayerId).length} ancien(s) ID</div>`;
+
+        Object.entries(orphanedByPlayerId).forEach(([oldId, results]) => {
+            const phases = results.map(r => `${r.phase}${r.position ? ' P'+r.position : ''}`).join(', ');
+            html += `<div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;margin-bottom:8px">
+                <div style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">
+                    Ancien ID : <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px">${oldId}</code><br>
+                    ${results.length} résultat(s) : ${phases}
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <select id="remap-${oldId.replace(/[^a-zA-Z0-9]/g,'_')}" style="flex:1;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.82rem;font-family:inherit">
+                        <option value="">— Sélectionner le bon joueur —</option>
+                        ${playerOpts}
+                    </select>
+                    <button onclick="repairOrphanedResults('${oldId}')" style="padding:7px 14px;border-radius:8px;background:var(--color-danger);color:#fff;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Réassigner</button>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (orphaned.length === 0 && duplicates.length === 0) {
+        html = '<div style="color:var(--color-accent);font-size:0.85rem">✅ Aucun problème détecté — toutes les données sont cohérentes.</div>';
+    }
+
+    container.innerHTML = html;
+};
+
+window.repairOrphanedResults = async function(oldPlayerId) {
+    const safeId = oldPlayerId.replace(/[^a-zA-Z0-9]/g, '_');
+    const sel = document.getElementById(`remap-${safeId}`);
+    const newPlayerId = sel?.value;
+    if (!newPlayerId) { alert('Sélectionne un joueur cible.'); return; }
+    const toUpdate = state.data.results.filter(r => r.playerId === oldPlayerId);
+    if (!confirm(`Réassigner ${toUpdate.length} résultat(s) vers ce joueur ?`)) return;
+    for (const r of toUpdate) {
+        await updateDoc(doc(db, 'results', r.id), { playerId: newPlayerId });
+    }
+    showToast(`✅ ${toUpdate.length} résultat(s) réassigné(s)`);
+    runDataDiagnostic();
+};

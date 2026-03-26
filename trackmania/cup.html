@@ -1440,6 +1440,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
           <!-- PERSONNALISATION (admin only) -->
           <div class="section-panel admin-only" id="personnalisation" style="display:none">
+            <div class="card" style="margin-bottom:16px">
+              <h2 style="margin-bottom:8px">🔧 Diagnostic données</h2>
+              <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:12px">Détecte les résultats orphelins (joueur supprimé/recréé) et les doublons de participants.</p>
+              <button class="btn btn-secondary" onclick="runDataDiagnostic()">🔍 Analyser</button>
+              <div id="diagResults" style="margin-top:14px"></div>
+            </div>
             <div class="card">
               <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
               <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
