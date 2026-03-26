@@ -158,10 +158,26 @@ body {
 .nav-icon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
 .nav-label { font-size: 0.87rem; }
 .nav-group-label {
+    display: flex; align-items: center; gap: 6px;
     font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; color: rgba(255,255,255,0.2);
     padding: 14px 14px 4px; margin-top: 2px; user-select: none;
+    width: 100%; border: none; background: none; cursor: pointer;
+    font-family: 'Inter', sans-serif; text-align: left;
+    transition: color 0.15s;
 }
+.nav-group-label:hover { color: rgba(255,255,255,0.4); }
+.nav-group-chevron {
+    margin-left: auto; font-size: 0.55rem; opacity: 0.5;
+    transition: transform 0.22s cubic-bezier(.4,0,.2,1); display: inline-block;
+}
+.nav-group.collapsed .nav-group-chevron { transform: rotate(-90deg); }
+.nav-group-items {
+    overflow: hidden;
+    max-height: 400px;
+    transition: max-height 0.25s cubic-bezier(.4,0,.2,1);
+}
+.nav-group.collapsed .nav-group-items { max-height: 0; }
 .sidebar-footer {
     padding: 16px 12px 24px;
     border-top: 1px solid rgba(255,255,255,0.05);
@@ -1082,24 +1098,37 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           </div>
         </div>
         <nav class="sidebar-nav">
-          <div class="nav-group-label" data-i18n="nav.group.competition">Compétition</div>
-          <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label" data-i18n="nav.home">Accueil</span></button>
-          <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label" data-i18n="nav.editions">Éditions</span></button>
-          <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav.maps">Maps</span></button>
-          <button class="nav-item" data-section="reglement"><span class="nav-icon">📋</span><span class="nav-label" data-i18n="nav.reglement">Règles et Format</span></button>
-
-          <div class="nav-group-label" data-i18n="nav.group.players">Joueurs</div>
-          <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label" data-i18n="nav.rankings">Classement</span></button>
-          <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label" data-i18n="nav.players">Joueurs</span></button>
-          <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav.stats">Stats</span></button>
-          <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label" data-i18n="nav.hof">Hall of Fame</span></button>
-
-          <div class="nav-group-label" data-i18n="nav.group.community">Communauté</div>
-          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label" data-i18n="nav.predictions">Prédictions</span></button>
-          <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label" data-i18n="nav.duel">Duel</span></button>
-
-          <div class="nav-group-label admin-only" data-i18n="nav.group.admin">Admin</div>
-          <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
+          <div class="nav-group" data-group="competition">
+            <button class="nav-group-label" data-i18n="nav.group.competition">Compétition<span class="nav-group-chevron">▼</span></button>
+            <div class="nav-group-items">
+              <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label" data-i18n="nav.home">Accueil</span></button>
+              <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label" data-i18n="nav.editions">Éditions</span></button>
+              <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav.maps">Maps</span></button>
+              <button class="nav-item" data-section="reglement"><span class="nav-icon">📋</span><span class="nav-label" data-i18n="nav.reglement">Règles et Format</span></button>
+            </div>
+          </div>
+          <div class="nav-group" data-group="players">
+            <button class="nav-group-label" data-i18n="nav.group.players">Joueurs<span class="nav-group-chevron">▼</span></button>
+            <div class="nav-group-items">
+              <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label" data-i18n="nav.rankings">Classement</span></button>
+              <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label" data-i18n="nav.players">Joueurs</span></button>
+              <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav.stats">Stats</span></button>
+              <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label" data-i18n="nav.hof">Hall of Fame</span></button>
+            </div>
+          </div>
+          <div class="nav-group" data-group="community">
+            <button class="nav-group-label" data-i18n="nav.group.community">Communauté<span class="nav-group-chevron">▼</span></button>
+            <div class="nav-group-items">
+              <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label" data-i18n="nav.predictions">Prédictions</span></button>
+              <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label" data-i18n="nav.duel">Duel</span></button>
+            </div>
+          </div>
+          <div class="nav-group admin-only" data-group="admin">
+            <button class="nav-group-label admin-only" data-i18n="nav.group.admin">Admin<span class="nav-group-chevron">▼</span></button>
+            <div class="nav-group-items">
+              <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
+            </div>
+          </div>
         </nav>
         <div class="sidebar-footer">
           <a id="sidebarTwitchBtn" href="https://www.twitch.tv/springsesport" target="_blank" rel="noopener" class="sidebar-twitch-btn">
@@ -1727,5 +1756,50 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     </div>
 
     <script type="module" src="./cup.js"></script>
+    <script>
+    // ── Collapsible sidebar nav groups ────────────────────────────────────────
+    (function() {
+        const STORAGE_KEY = 'navGroups';
+        function getState() {
+            try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+        }
+        function saveState(s) { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+        document.querySelectorAll('.nav-group').forEach(group => {
+            const id = group.dataset.group;
+            const btn = group.querySelector('.nav-group-label');
+            const items = group.querySelector('.nav-group-items');
+            if (!btn || !items) return;
+
+            const saved = getState();
+            if (saved[id] === false) group.classList.add('collapsed');
+
+            btn.addEventListener('click', () => {
+                const collapsed = group.classList.toggle('collapsed');
+                const s = getState();
+                s[id] = !collapsed;
+                saveState(s);
+            });
+        });
+
+        // Ensure active section's group is always expanded
+        function ensureActiveGroupOpen() {
+            document.querySelectorAll('.nav-item.active').forEach(item => {
+                const group = item.closest('.nav-group');
+                if (group && group.classList.contains('collapsed')) {
+                    group.classList.remove('collapsed');
+                    const s = getState();
+                    s[group.dataset.group] = true;
+                    saveState(s);
+                }
+            });
+        }
+        // Run on nav clicks
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => setTimeout(ensureActiveGroupOpen, 0));
+        });
+        ensureActiveGroupOpen();
+    })();
+    </script>
 </body>
 </html>

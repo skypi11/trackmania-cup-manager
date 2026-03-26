@@ -175,8 +175,6 @@ export function displayDuel() {
     // ── Sélecteurs (layout versus) ────────────────────────────────────────
     const pA = players.find(p => p.id === idA);
     const pB = players.find(p => p.id === idB);
-    const avatarA = pA ? pName(pA).charAt(0).toUpperCase() : '?';
-    const avatarB = pB ? pName(pB).charAt(0).toUpperCase() : '?';
     const nameA   = pA ? pName(pA) : t('duel.player.a');
     const nameB   = pB ? pName(pB) : t('duel.player.b');
 
@@ -205,37 +203,32 @@ export function displayDuel() {
 
     const teamA = pA?.team && pA.team !== 'Sans équipe' ? pA.team : '';
     const teamB = pB?.team && pB.team !== 'Sans équipe' ? pB.team : '';
-    const selStyle = (color) => `background:rgba(${color},.07);border:1px solid rgba(${color},.22);`;
+    const selStyle = (color) => `background:rgba(${color},.07);border:1px solid rgba(${color},.2);`;
+
+    const playerSide = (name, team, selectedId, side, color, glow, opts) => {
+        const isRight = side === 'B';
+        const hasPlayer = !!selectedId;
+        const nameHtml = hasPlayer
+            ? `<div style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-0.03em;line-height:1;color:${color};text-shadow:0 0 24px ${glow},0 0 48px ${glow.replace('0.7','0.35')},0 0 80px ${glow.replace('0.7','0.15')};margin-bottom:6px;word-break:break-word">${name}</div>`
+            : `<div style="font-size:1.1rem;font-weight:600;color:rgba(255,255,255,0.18);letter-spacing:0.02em;margin-bottom:6px">${t('duel.select.ph')}</div>`;
+        const teamHtml = `<div style="font-size:0.72rem;color:${color};opacity:0.55;letter-spacing:0.05em;margin-bottom:18px;min-height:16px">${team}</div>`;
+        return `<div style="padding:32px 24px;text-align:${isRight ? 'left' : 'right'};background:linear-gradient(${isRight ? '245' : '115'}deg, rgba(${color === '#00D936' ? '0,217,54' : '123,47,190'},0.09) 0%, transparent 55%)">
+            ${nameHtml}${teamHtml}
+            <select onchange="setDuelPlayer('${side}',this.value)" class="duel-select" style="${selStyle(color === '#00D936' ? '0,217,54' : '123,47,190')}${isRight ? '' : 'text-align:right;direction:rtl'}">
+                <option value="">${t('duel.select.ph')}</option>${opts}
+            </select>
+        </div>`;
+    };
 
     const selectsHtml = `<div style="border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.07)">
-        <div style="display:grid;grid-template-columns:1fr 52px 1fr">
-
-            <!-- ── Joueur A ── -->
-            <div style="padding:28px 22px;text-align:right;background:linear-gradient(115deg, rgba(0,217,54,0.1) 0%, rgba(0,0,0,0) 55%)">
-                <div style="display:inline-flex;width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#00ff6a,#00D936,#009e27);align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;color:#001a08;margin-bottom:12px;animation:duel-glow-green 2.4s ease-in-out infinite">${avatarA}</div>
-                <div style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.1;margin-bottom:4px">${nameA}</div>
-                <div style="font-size:0.72rem;color:var(--color-accent);letter-spacing:0.04em;margin-bottom:16px;min-height:16px;opacity:0.75">${teamA}</div>
-                <select onchange="setDuelPlayer('A',this.value)" class="duel-select" style="${selStyle('0,217,54')}text-align:right;direction:rtl">
-                    <option value="">${t('duel.select.ph')}</option>${selectOpts(idA)}
-                </select>
+        <div style="display:grid;grid-template-columns:1fr 40px 1fr">
+            ${playerSide(nameA, teamA, idA, 'A', '#00D936', 'rgba(0,217,54,0.7)', selectOpts(idA))}
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border-left:1px solid rgba(255,255,255,0.05);border-right:1px solid rgba(255,255,255,0.05)">
+                <div style="width:1px;flex:1;background:linear-gradient(to bottom,transparent,rgba(0,217,54,0.35))"></div>
+                <div style="font-size:0.65rem;font-weight:900;letter-spacing:0.12em;writing-mode:vertical-lr;background:linear-gradient(180deg,#00D936,#7B2FBE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:6px 0;animation:duel-vs-pulse 3s ease-in-out infinite">VS</div>
+                <div style="width:1px;flex:1;background:linear-gradient(to top,transparent,rgba(123,47,190,0.35))"></div>
             </div>
-
-            <!-- ── VS central ── -->
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.025);border-left:1px solid rgba(255,255,255,0.05);border-right:1px solid rgba(255,255,255,0.05);gap:6px;padding:8px 0">
-                <div style="width:1px;flex:1;background:linear-gradient(to bottom,transparent,rgba(0,217,54,0.4))"></div>
-                <div style="font-size:1rem;font-weight:900;letter-spacing:0.05em;writing-mode:vertical-lr;background:linear-gradient(180deg,#00D936 0%,#9b5de5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:duel-vs-pulse 3s ease-in-out infinite">VS</div>
-                <div style="width:1px;flex:1;background:linear-gradient(to top,transparent,rgba(123,47,190,0.4))"></div>
-            </div>
-
-            <!-- ── Joueur B ── -->
-            <div style="padding:28px 22px;text-align:left;background:linear-gradient(245deg, rgba(123,47,190,0.1) 0%, rgba(0,0,0,0) 55%)">
-                <div style="display:inline-flex;width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#c084fc,#7B2FBE,#4a1a7a);align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;color:#fff;margin-bottom:12px;animation:duel-glow-purple 2.4s ease-in-out infinite 1.2s">${avatarB}</div>
-                <div style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.1;margin-bottom:4px">${nameB}</div>
-                <div style="font-size:0.72rem;color:#c084fc;letter-spacing:0.04em;margin-bottom:16px;min-height:16px;opacity:0.85">${teamB}</div>
-                <select onchange="setDuelPlayer('B',this.value)" class="duel-select" style="${selStyle('123,47,190')}">
-                    <option value="">${t('duel.select.ph')}</option>${selectOpts(idB)}
-                </select>
-            </div>
+            ${playerSide(nameB, teamB, idB, 'B', '#7B2FBE', 'rgba(123,47,190,0.7)', selectOpts(idB))}
         </div>
     </div>`;
 
