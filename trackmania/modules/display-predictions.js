@@ -4,7 +4,7 @@ import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, dateLang } from './utils.js';
-import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
+import { updateDoc, doc, addDoc, collection, getDoc } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -41,8 +41,10 @@ window.filterPredSearch = function(edId) {
 
 window.submitPrediction = async function(edId) {
     if (!state.currentUser) { alert(t('predictions.login')); return; }
-    const edition = state.data.editions.find(e => e.id === edId);
-    if (edition?.status === 'live' || edition?.status === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
+    // Vérifie le statut directement en Firestore (évite les problèmes de cache/bloqueur)
+    const freshSnap = await getDoc(doc(db, 'editions', edId));
+    const freshStatus = freshSnap.exists() ? freshSnap.data().status : null;
+    if (freshStatus === 'live' || freshStatus === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
     const s = state.predState[edId];
     if (!s || s.finalists.size === 0) { alert(t('predictions.select')); return; }
     const myPart = state.data.participants.find(p => p.userId === state.currentUser.uid);
