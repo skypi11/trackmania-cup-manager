@@ -38,7 +38,7 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 
 ## Collections Firestore — Trackmania
 - **`participants`** : profils joueurs (`pseudo`, `pseudoTM`, `pseudoRL`, `team`, `games`, `email`, `userId`, `cupId`, `discordId`, `discordUsername`) + champs RL : `trackerUrl` (verrouillé après saisie), `trackerUrlLockedAt`, `epicId`, `dateOfBirth`, `country`
-- **`editions`** : éditions de cup (`name`, `date`, `status`, `cupId`) — statuts : `inscriptions`, `live`, `terminee`, `upcoming`
+- **`editions`** : éditions de cup (`name`, `date`, `status`, `cupId`) — statuts : `inscriptions`, `en_cours`, `terminee`, `upcoming` (⚠️ valeur réelle `en_cours`, pas `live`)
 - **`results`** : résultats (`editionId`, `playerId`, `phase`, `position`, `map`, `cupId`) — phases : `inscription`, `qualification`, `finale`
 - **`predictions`** : prédictions joueurs avant chaque édition
 - **`admins`** : `{uid: true}` — admins du site
