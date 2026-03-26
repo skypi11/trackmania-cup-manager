@@ -100,46 +100,51 @@ function statRow(label, valA, valB, higherIsBetter = true) {
     </tr>`;
 }
 
-// Card streak individuelle
-function streakBox(val, label, colorStyle) {
-    return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;flex:0 0 auto;min-width:68px;max-width:100px">
+// Card streak individuelle — bgRgb teinte la couleur du joueur
+function streakBox(val, label, colorStyle, bgRgb = '255,255,255') {
+    return `<div style="background:rgba(${bgRgb},0.06);border:1px solid rgba(${bgRgb},0.14);border-radius:10px;padding:10px 12px;text-align:center;flex:0 0 auto;min-width:68px;max-width:100px">
         <div style="font-size:1.3rem;font-weight:900;${colorStyle}">${val}</div>
         <div style="font-size:0.65rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;margin-top:3px;line-height:1.3">${label}</div>
     </div>`;
 }
 
-// Colonne streaks — side: 'A' = flex-end + texte centré, 'B' = flex-start
+// Colonne streaks — side: 'A' = flex-end, 'B' = flex-start — badges teintés couleur joueur
 function streakColHtml(s, side) {
+    const bgRgb = side === 'A' ? '0,217,54' : '123,47,190';
     const justify = side === 'A' ? 'flex-end' : 'flex-start';
     const parts = [];
     if (s.currentPartStreak > 0) parts.push(streakBox(
         (s.currentPartStreak >= 3 ? '🔥' : '') + s.currentPartStreak,
         t('player.streak.current'),
-        s.currentPartStreak >= 3 ? 'color:#f97316' : ''
+        s.currentPartStreak >= 3 ? 'color:#f97316' : '',
+        bgRgb
     ));
-    if (s.bestPartStreak > 1) parts.push(streakBox(s.bestPartStreak, t('player.streak.best'), ''));
-    if (s.currentFinStreak > 0) parts.push(streakBox(s.currentFinStreak, t('player.consec.finals'), 'color:#fbbf24'));
-    if (s.maxVies > 0) parts.push(streakBox(`❤️×${s.maxVies}`, t('player.max.lives'), 'color:#f87171'));
-    if (s.bestEditionResult) parts.push(streakBox(`+${getPoints(s.bestEditionResult.position)}`, t('player.best.edition'), 'color:var(--color-accent)'));
+    if (s.bestPartStreak > 1) parts.push(streakBox(s.bestPartStreak, t('player.streak.best'), '', bgRgb));
+    if (s.currentFinStreak > 0) parts.push(streakBox(s.currentFinStreak, t('player.consec.finals'), 'color:#fbbf24', bgRgb));
+    if (s.maxVies > 0) parts.push(streakBox(`❤️×${s.maxVies}`, t('player.max.lives'), 'color:#f87171', bgRgb));
+    if (s.bestEditionResult) parts.push(streakBox(`+${getPoints(s.bestEditionResult.position)}`, t('player.best.edition'), 'color:var(--color-accent)', bgRgb));
     const ordered = side === 'A' ? [...parts].reverse() : parts;
     return ordered.length
         ? `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:${justify};width:100%">${ordered.join('')}</div>`
         : `<div style="color:rgba(255,255,255,0.2);font-size:0.82rem;padding:8px 0;text-align:${side === 'A' ? 'right' : 'left'}">${t('duel.no.streak')}</div>`;
 }
 
-// Colonne achievements — side: 'A' = row-reverse (icône côté centre), 'B' = normal
-function achievementColHtml(pStats, side) {
+// Colonne achievements — side: 'A' = row-reverse, 'B' = normal — pastille colorée + fond sur débloqué
+function achievementColHtml(pStats, side, playerRgb) {
     const rowDir = side === 'A' ? 'row-reverse' : 'row';
     const textAlign = side === 'A' ? 'right' : 'left';
     return ACHIEVEMENTS.map(a => {
         const ok = a.check(pStats);
-        return `<div style="display:flex;flex-direction:${rowDir};align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-            <span style="font-size:1rem;flex-shrink:0;${ok ? '' : 'filter:grayscale(1);opacity:0.3'}">${a.icon}</span>
+        const dot = ok
+            ? `<div style="width:7px;height:7px;border-radius:50%;background:rgba(${playerRgb},1);flex-shrink:0;box-shadow:0 0 6px rgba(${playerRgb},0.7)"></div>`
+            : `<div style="width:7px;height:7px;flex-shrink:0"></div>`;
+        return `<div style="display:flex;flex-direction:${rowDir};align-items:center;gap:8px;padding:6px 8px;margin-bottom:2px;border-radius:8px;${ok ? `background:rgba(${playerRgb},0.07)` : ''}">
+            <span style="font-size:1rem;flex-shrink:0;${ok ? '' : 'filter:grayscale(1);opacity:0.25'}">${a.icon}</span>
             <div style="flex:1;min-width:0;text-align:${textAlign}">
-                <div style="font-size:0.78rem;color:${ok ? 'var(--color-text-primary)' : 'rgba(255,255,255,0.25)'};line-height:1.2">${a.name}</div>
-                <div style="font-size:0.68rem;color:rgba(255,255,255,0.2);line-height:1.2">${a.desc}</div>
+                <div style="font-size:0.8rem;color:${ok ? 'var(--color-text-primary)' : 'rgba(255,255,255,0.2)'};font-weight:${ok ? '600' : '400'};line-height:1.2">${a.name}</div>
+                <div style="font-size:0.68rem;color:${ok ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'};line-height:1.2">${a.desc}</div>
             </div>
-            ${ok ? `<span style="font-size:0.7rem;color:var(--color-accent);flex-shrink:0">✓</span>` : ''}
+            ${dot}
         </div>`;
     }).join('');
 }
@@ -203,18 +208,18 @@ export function displayDuel() {
 
     const teamA = pA?.team && pA.team !== 'Sans équipe' ? pA.team : '';
     const teamB = pB?.team && pB.team !== 'Sans équipe' ? pB.team : '';
-    const selStyle = (color) => `background:rgba(${color},.07);border:1px solid rgba(${color},.2);`;
 
     const playerSide = (name, team, selectedId, side, color, glow, opts) => {
         const isRight = side === 'B';
+        const rgb = color === '#00D936' ? '0,217,54' : '123,47,190';
         const hasPlayer = !!selectedId;
         const nameHtml = hasPlayer
-            ? `<div style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-0.03em;line-height:1;color:${color};text-shadow:0 0 24px ${glow},0 0 48px ${glow.replace('0.7','0.35')},0 0 80px ${glow.replace('0.7','0.15')};margin-bottom:6px;word-break:break-word">${name}</div>`
-            : `<div style="font-size:1.1rem;font-weight:600;color:rgba(255,255,255,0.18);letter-spacing:0.02em;margin-bottom:6px">${t('duel.select.ph')}</div>`;
-        const teamHtml = `<div style="font-size:0.72rem;color:${color};opacity:0.55;letter-spacing:0.05em;margin-bottom:18px;min-height:16px">${team}</div>`;
-        return `<div style="padding:32px 24px;text-align:${isRight ? 'left' : 'right'};background:linear-gradient(${isRight ? '245' : '115'}deg, rgba(${color === '#00D936' ? '0,217,54' : '123,47,190'},0.09) 0%, transparent 55%)">
-            ${nameHtml}${teamHtml}
-            <select onchange="setDuelPlayer('${side}',this.value)" class="duel-select" style="${selStyle(color === '#00D936' ? '0,217,54' : '123,47,190')}${isRight ? '' : 'text-align:right;direction:rtl'}">
+            ? `<div style="font-size:clamp(1.4rem,2.5vw,2.1rem);font-weight:900;letter-spacing:-0.03em;line-height:1.1;color:${color};text-shadow:0 0 24px ${glow},0 0 48px ${glow.replace('0.7','0.35')},0 0 80px ${glow.replace('0.7','0.15')};word-break:break-word">${name}</div>`
+            : `<div style="font-size:1rem;font-weight:600;color:rgba(255,255,255,0.18);letter-spacing:0.02em">${t('duel.select.ph')}</div>`;
+        const teamHtml = team ? `<div style="font-size:0.72rem;color:${color};opacity:0.55;letter-spacing:0.05em;margin-top:4px">${team}</div>` : '';
+        return `<div style="padding:18px 20px 16px;text-align:${isRight ? 'left' : 'right'};background:linear-gradient(${isRight ? '245' : '115'}deg, rgba(${rgb},0.09) 0%, transparent 55%);display:flex;flex-direction:column;gap:12px">
+            <div>${nameHtml}${teamHtml}</div>
+            <select onchange="setDuelPlayer('${side}',this.value)" class="duel-select" style="background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.2);">
                 <option value="">${t('duel.select.ph')}</option>${opts}
             </select>
         </div>`;
@@ -245,8 +250,25 @@ export function displayDuel() {
     const fmt = (n, d = 0) => n != null ? n.toFixed(d) : '—';
     const medals = ['🥇', '🥈', '🥉'];
 
+    // ── Badge "mène le duel" ──────────────────────────────────────────────
+    let leadBadge = '';
+    if (dA.points !== dB.points) {
+        const leader = dA.points > dB.points
+            ? { name: nameA, color: '#00D936', rgb: '0,217,54' }
+            : { name: nameB, color: '#7B2FBE', rgb: '123,47,190' };
+        const diff = Math.abs(dA.points - dB.points);
+        leadBadge = `<div style="text-align:center;padding:12px 0 0">
+            <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(${leader.rgb},0.1);border:1px solid rgba(${leader.rgb},0.3);border-radius:999px;padding:7px 20px">
+                <span style="font-size:0.95rem">👑</span>
+                <span style="font-size:0.88rem;font-weight:700;color:${leader.color}">${leader.name}</span>
+                <span style="font-size:0.75rem;color:rgba(255,255,255,0.35)">+${diff} pts</span>
+            </span>
+        </div>`;
+    }
+
     // ── Tableau stats (miroir natif) ──────────────────────────────────────
     const statsHtml = `<div class="card" style="margin-top:16px;overflow:hidden">
+        ${leadBadge}
         <table style="width:100%;border-collapse:collapse;table-layout:fixed">
             <colgroup><col style="width:45%"><col style="width:10%"><col style="width:45%"></colgroup>
             <thead><tr>
@@ -281,8 +303,8 @@ export function displayDuel() {
     // ── Achievements (miroir) ─────────────────────────────────────────────
     const achievHtml = mirrorSection(
         t('duel.achievements'),
-        achievementColHtml(dA.pStats, 'A'),
-        achievementColHtml(dB.pStats, 'B')
+        achievementColHtml(dA.pStats, 'A', '0,217,54'),
+        achievementColHtml(dB.pStats, 'B', '123,47,190')
     );
 
     // ── Graphique évolution ───────────────────────────────────────────────
