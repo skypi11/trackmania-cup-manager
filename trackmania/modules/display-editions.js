@@ -37,6 +37,7 @@ window.goToEdition = (id) => {
 // ── Système d'achievements ────────────────────────────────────────────────────
 
 export const ACHIEVEMENTS = [
+    // ── Compétition ───────────────────────────────────────────────────────
     { id: 'rookie',         icon: '🌱', name: 'Rookie',             desc: '1ère participation',                          check: s => s.quals >= 1 },
     { id: 'regulier',       icon: '⭐', name: 'Régulier',           desc: '5 participations',                            check: s => s.quals >= 5 },
     { id: 'veteran',        icon: '💪', name: 'Vétéran',            desc: '10 participations',                           check: s => s.quals >= 10 },
@@ -49,6 +50,13 @@ export const ACHIEVEMENTS = [
     { id: 'patron',         icon: '👑', name: 'Patron',             desc: '3 victoires',                                 check: s => s.wins >= 3 },
     { id: 'en_feu',         icon: '🔥', name: 'En feu',             desc: '2 victoires consécutives',                    check: s => s.maxConsecWins >= 2 },
     { id: 'perfectionniste',icon: '💎', name: 'Perfectionniste',    desc: 'Top 5 à chaque finale (3 finales min.)',       check: s => s.finals >= 3 && s.alwaysTop5 },
+    // ── Prédictions ───────────────────────────────────────────────────────
+    { id: 'pred_debutant',  icon: '🔮', name: 'Oracle débutant',    desc: '1ère prédiction soumise',                     check: s => s.predCount >= 1 },
+    { id: 'pred_instinct',  icon: '🎱', name: 'Bon instinct',       desc: '1 finaliste correctement prédit',             check: s => s.predBestScore >= 1 },
+    { id: 'pred_voyant',    icon: '🌟', name: 'Voyant',             desc: 'Une position du top 3 prédite exactement',    check: s => s.predTop3Hits >= 1 },
+    { id: 'pred_oracle',    icon: '🔭', name: 'Oracle',             desc: 'Meilleur prédicteur d\'une édition',          check: s => s.predWins >= 1 },
+    { id: 'pred_fidele',    icon: '🧿', name: 'Nostradamus',        desc: 'Prédictions sur 5 éditions ou plus',          check: s => s.predCount >= 5 },
+    { id: 'pred_medium',    icon: '💫', name: 'Médium',             desc: '10 points ou plus sur une édition',           check: s => s.predBestScore >= 10 },
 ];
 
 export function computePlayerStats(playerId) {
@@ -71,6 +79,28 @@ export function computePlayerStats(playerId) {
 
     const alwaysTop5 = finales.length >= 3 && finales.every(r => r.position <= 5);
 
+    // ── Stats prédictions ─────────────────────────────────────────────────
+    const allMyPreds  = state.data.predictions.filter(p => p.playerId === playerId);
+    const scoredPreds = allMyPreds.filter(p => p.scored);
+    const predCount   = allMyPreds.length;
+    const predBestScore = scoredPreds.length > 0 ? Math.max(...scoredPreds.map(p => p.score || 0)) : 0;
+
+    let predTop3Hits = 0;
+    scoredPreds.forEach(pred => {
+        const edFinale = state.data.results.filter(r => r.editionId === pred.editionId && r.phase === 'finale');
+        const realTop3 = [1,2,3].map(pos => edFinale.find(r => r.position === pos)?.playerId ?? null);
+        (pred.top3 || []).forEach((pid, i) => { if (pid && pid === realTop3[i]) predTop3Hits++; });
+    });
+
+    let predWins = 0;
+    [...new Set(scoredPreds.map(p => p.editionId))].forEach(edId => {
+        const edPreds = state.data.predictions.filter(p => p.editionId === edId && p.scored);
+        if (edPreds.length === 0) return;
+        const maxScore = Math.max(...edPreds.map(p => p.score || 0));
+        const myScore  = scoredPreds.find(p => p.editionId === edId)?.score || 0;
+        if (myScore > 0 && myScore === maxScore) predWins++;
+    });
+
     return {
         quals:          new Set(quals.map(r => r.editionId)).size,
         finals:         finales.length,
@@ -79,6 +109,10 @@ export function computePlayerStats(playerId) {
         allEditions,
         maxConsecWins,
         alwaysTop5,
+        predCount,
+        predBestScore,
+        predTop3Hits,
+        predWins,
     };
 }
 
