@@ -207,24 +207,49 @@ window.runDataDiagnostic = async function() {
     }
 
     if (Object.keys(orphanedByPlayerId).length > 0) {
-        const playerOpts = state.data.participants
-            .sort((a,b) => pName(a).localeCompare(pName(b)))
-            .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
-
         html += `<div>
-            <div style="font-weight:700;color:var(--color-danger);margin-bottom:8px">❌ ${orphaned.length} résultat(s) orphelin(s) — ${Object.keys(orphanedByPlayerId).length} ancien(s) ID</div>`;
+            <div style="font-weight:700;color:var(--color-danger);margin-bottom:12px">❌ ${orphaned.length} résultat(s) orphelin(s) — ${Object.keys(orphanedByPlayerId).length} ancien(s) ID</div>`;
 
         Object.entries(orphanedByPlayerId).forEach(([oldId, results]) => {
-            const phases = results.map(r => `${r.phase}${r.position ? ' P'+r.position : ''}`).join(', ');
-            html += `<div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;margin-bottom:8px">
-                <div style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">
-                    Ancien ID : <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px">${oldId}</code><br>
-                    ${results.length} résultat(s) : ${phases}
-                </div>
+            // Pour chaque résultat orphelin, trouver les joueurs qui N'ont PAS ce type de résultat dans cette édition
+            const candidates = [];
+            results.forEach(r => {
+                const edName = state.data.editions.find(e => e.id === r.editionId)?.name || r.editionId;
+                const playersWithSameResult = new Set(
+                    state.data.results
+                        .filter(x => x.editionId === r.editionId && x.phase === r.phase)
+                        .map(x => x.playerId)
+                );
+                // Joueurs qui n'ont pas encore ce résultat dans cette édition
+                state.data.participants
+                    .filter(p => !playersWithSameResult.has(p.id))
+                    .forEach(p => {
+                        if (!candidates.find(c => c.id === p.id)) candidates.push(p);
+                    });
+            });
+            candidates.sort((a,b) => pName(a).localeCompare(pName(b)));
+
+            const phases = results.map(r => {
+                const edName = state.data.editions.find(e => e.id === r.editionId)?.name || '?';
+                return `<b>${r.phase}</b>${r.position ? ' P'+r.position : ''} — ${edName}`;
+            }).join('<br>');
+
+            const allOpts = state.data.participants
+                .sort((a,b) => pName(a).localeCompare(pName(b)))
+                .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+            const candidateNote = candidates.length > 0
+                ? `<div style="font-size:0.75rem;color:var(--color-warning);margin-bottom:6px">💡 Candidats probables (n'ont pas encore ce résultat) : <b>${candidates.map(p => pName(p)).join(', ')}</b></div>`
+                : '';
+
+            const safeId = oldId.replace(/[^a-zA-Z0-9]/g,'_');
+            html += `<div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;margin-bottom:10px">
+                <div style="font-size:0.78rem;margin-bottom:8px">${phases}</div>
+                ${candidateNote}
                 <div style="display:flex;gap:8px;align-items:center">
-                    <select id="remap-${oldId.replace(/[^a-zA-Z0-9]/g,'_')}" style="flex:1;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.82rem;font-family:inherit">
+                    <select id="remap-${safeId}" style="flex:1;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.82rem;font-family:inherit">
                         <option value="">— Sélectionner le bon joueur —</option>
-                        ${playerOpts}
+                        ${candidates.length > 0 ? '<optgroup label="Candidats probables">' + candidates.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('') + '</optgroup><optgroup label="Tous les joueurs">' + allOpts + '</optgroup>' : allOpts}
                     </select>
                     <button onclick="repairOrphanedResults('${oldId}')" style="padding:7px 14px;border-radius:8px;background:var(--color-danger);color:#fff;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">Réassigner</button>
                 </div>
