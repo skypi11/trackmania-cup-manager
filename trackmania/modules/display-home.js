@@ -3,6 +3,7 @@
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, dateLang, getCountdown, getPoints } from './utils.js';
+import springsLogo from '../../assets/springs-logo.png';
 
 export function displayHome() {
     const container = document.getElementById('homeContent');
@@ -156,7 +157,7 @@ export function displayHome() {
 
     container.innerHTML = `
         <div class="home-hero">
-            <img src="/assets/springs-logo.png" class="home-hero-logo" alt="Springs Esport">
+            <img src="${springsLogo}" class="home-hero-logo" alt="Springs Esport">
             <div class="home-hero-title">${state.siteConfig?.siteName || 'Springs Monthly Cup'}</div>
             <div class="home-hero-sub">${state.siteConfig?.siteSubtitle || 'Springs E-Sport · EN LIGNE'}</div>
             ${featuredHtml}
