@@ -41,7 +41,6 @@ window.filterPredSearch = function(edId) {
 
 window.submitPrediction = async function(edId) {
     if (!state.currentUser) { alert(t('predictions.login')); return; }
-    // Vérifie le statut directement en Firestore (évite les problèmes de cache/bloqueur)
     const freshSnap = await getDoc(doc(db, 'editions', edId));
     const freshStatus = freshSnap.exists() ? freshSnap.data().status : null;
     if (freshStatus === 'en_cours' || freshStatus === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
@@ -83,35 +82,91 @@ window.calculatePredictionScores = async function(edId) {
 };
 
 // ── Carte récapitulatif ───────────────────────────────────────────────────────
+// finaleResults : tableau des results phase=finale de cette édition (pour feedback coloré)
 
-function recapCardHtml(pred, players) {
+function recapCardHtml(pred, players, finaleResults = null) {
     const rankLabels = ['🥇', '🥈', '🥉'];
-    const finalistNames = (pred.finalists || []).map(id => pName(players.find(p => p.id === id)) || '?');
+    const realFinalistIds = finaleResults ? new Set(finaleResults.map(r => r.playerId)) : null;
+    const realTop3 = finaleResults ? [1,2,3].map(pos => finaleResults.find(r => r.position === pos)?.playerId ?? null) : null;
+
+    const finalistItems = (pred.finalists || []).map(id => {
+        const p = players.find(pl => pl.id === id);
+        const name = pName(p) || '?';
+        if (realFinalistIds) {
+            const ok = realFinalistIds.has(id);
+            return `<span style="display:inline-flex;align-items:center;gap:4px;background:${ok ? 'rgba(0,217,54,0.12)' : 'rgba(239,68,68,0.1)'};border:1px solid ${ok ? 'rgba(0,217,54,0.25)' : 'rgba(239,68,68,0.25)'};border-radius:6px;padding:3px 9px;font-size:0.8rem;color:${ok ? 'var(--color-accent)' : '#ef4444'}"><span>${ok ? '✓' : '✗'}</span>${name}</span>`;
+        }
+        return `<span style="background:rgba(255,255,255,0.07);border-radius:6px;padding:3px 9px;font-size:0.8rem">${name}</span>`;
+    });
+
     const top3Parts = (pred.top3 || []).map((id, i) => {
         if (!id) return null;
-        const p = players.find(p => p.id === id);
-        return p ? `${rankLabels[i]} ${pName(p)}` : null;
+        const p = players.find(pl => pl.id === id);
+        const name = pName(p) || '?';
+        if (realTop3) {
+            const exact = realTop3[i] === id;
+            const inFinale = realFinalistIds?.has(id);
+            const color = exact ? 'var(--color-accent)' : (inFinale ? 'var(--color-warning)' : '#ef4444');
+            const icon = exact ? '✓' : (inFinale ? '↕' : '✗');
+            return `<span style="color:${color};font-size:0.85rem">${rankLabels[i]} ${icon} ${name}</span>`;
+        }
+        return `<span style="font-size:0.85rem">${rankLabels[i]} ${name}</span>`;
     }).filter(Boolean);
 
     let html = `<div style="background:rgba(0,217,54,0.04);border:1px solid rgba(0,217,54,0.15);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-weight:700;font-size:0.9rem;margin-bottom:10px">🔮 Ta prédiction</div>
-        <div style="margin-bottom:${top3Parts.length ? '8px' : '0'}">
-            <span style="font-size:0.72rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em">Finalistes (${finalistNames.length})</span>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">`;
-    finalistNames.forEach(name => {
-        html += `<span style="background:rgba(255,255,255,0.07);border-radius:6px;padding:3px 8px;font-size:0.8rem">${name}</span>`;
-    });
-    html += `</div></div>`;
+        <div style="font-weight:700;font-size:0.88rem;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+            <span>🔮 Ta prédiction</span>
+            ${pred.scored ? `<span style="background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.25);border-radius:99px;padding:3px 12px;color:var(--color-accent);font-size:0.82rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
+        </div>
+        <div style="margin-bottom:${top3Parts.length ? '10px' : '0'}">
+            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Finalistes (${finalistItems.length})</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">${finalistItems.join('')}</div>
+        </div>`;
     if (top3Parts.length) {
         html += `<div>
-            <span style="font-size:0.72rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em">Top 3</span>
-            <div style="display:flex;gap:12px;margin-top:5px;font-size:0.85rem">${top3Parts.map(p => `<span>${p}</span>`).join('')}</div>
+            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Top 3</div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px">${top3Parts.map(p => `<span>${p}</span>`).join('')}</div>
         </div>`;
     }
-    if (pred.scored) {
-        html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-weight:700;color:var(--color-accent)">Score : ${pred.score} pt${pred.score !== 1 ? 's' : ''}</div>`;
+    if (realFinalistIds) {
+        html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.7rem;color:rgba(255,255,255,0.3)">✓ correct &nbsp;·&nbsp; ↕ en finale mais mauvaise place &nbsp;·&nbsp; ✗ absent de la finale</div>`;
     }
     html += `</div>`;
+    return html;
+}
+
+// ── Stats communauté (pré-live) — joueurs les plus prédits ───────────────────
+
+function communityStatsHtml(edId, players) {
+    const preds = state.data.predictions.filter(p => p.editionId === edId);
+    if (preds.length < 2) return '';
+
+    const counts = {};
+    preds.forEach(pred => {
+        (pred.finalists || []).forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    });
+    const total = preds.length;
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (sorted.length === 0) return '';
+
+    let html = `<div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07)">
+        <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);margin-bottom:12px">
+            👥 Ce que pense la communauté · ${total} prédiction${total > 1 ? 's' : ''}
+        </div>`;
+
+    sorted.forEach(([id, count]) => {
+        const player = players.find(p => p.id === id);
+        const name = pName(player) || '?';
+        const pct = Math.round(count / total * 100);
+        html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+            <span style="min-width:110px;font-size:0.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</span>
+            <div style="flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,0.07);overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:var(--color-accent);border-radius:99px;transition:width 0.4s ease"></div>
+            </div>
+            <span style="font-size:0.75rem;color:var(--color-text-secondary);min-width:32px;text-align:right">${pct}%</span>
+        </div>`;
+    });
+    html += '</div>';
     return html;
 }
 
@@ -123,10 +178,33 @@ function communityPredHtml(edId, players) {
 
     const rankLabels = ['🥇', '🥈', '🥉'];
     const sorted = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
-    const taStyle = `background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 12px;margin-bottom:8px;`;
+    const taStyle = `border-radius:8px;padding:10px 12px;margin-bottom:6px;`;
+
+    // Stats joueurs les plus prédits (en haut)
+    const counts = {};
+    preds.forEach(pred => { (pred.finalists || []).forEach(id => { counts[id] = (counts[id] || 0) + 1; }); });
+    const top5 = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    let statsHtml = '';
+    if (top5.length > 0) {
+        statsHtml = `<div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);margin-bottom:10px">Finalistes les plus prédits</div>`;
+        top5.forEach(([id, count]) => {
+            const player = players.find(p => p.id === id);
+            const pct = Math.round(count / preds.length * 100);
+            statsHtml += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                <span style="min-width:110px;font-size:0.82rem">${pName(player) || '?'}</span>
+                <div style="flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,0.07);overflow:hidden">
+                    <div style="width:${pct}%;height:100%;background:var(--color-accent);border-radius:99px"></div>
+                </div>
+                <span style="font-size:0.75rem;color:var(--color-text-secondary);min-width:32px;text-align:right">${pct}%</span>
+            </div>`;
+        });
+        statsHtml += '</div>';
+    }
 
     let html = `<div style="margin-top:16px">
-        <div class="pred-section-title">👥 Prédictions de la communauté (${preds.length})</div>`;
+        <div class="pred-section-title">👥 Prédictions de la communauté (${preds.length})</div>
+        ${statsHtml}`;
 
     sorted.forEach(pred => {
         const predictor = state.data.participants.find(p => p.id === pred.playerId);
@@ -134,11 +212,11 @@ function communityPredHtml(edId, players) {
         const finalistNames = (pred.finalists || []).map(id => pName(players.find(p => p.id === id)) || '?');
         const top3Parts = (pred.top3 || []).map((id, i) => {
             if (!id) return null;
-            const p = players.find(p => p.id === id);
+            const p = players.find(pl => pl.id === id);
             return p ? `${rankLabels[i]} ${pName(p)}` : null;
         }).filter(Boolean);
 
-        html += `<div style="${taStyle}${isMe ? 'border:1px solid rgba(0,217,54,0.2)' : 'border:1px solid rgba(255,255,255,0.06)'}">
+        html += `<div style="${taStyle}${isMe ? 'background:rgba(0,217,54,0.05);border:1px solid rgba(0,217,54,0.18)' : 'background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)'}">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
                 <span style="font-weight:700;font-size:0.85rem">${predictor ? pName(predictor) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
                 ${pred.scored ? `<span style="color:var(--color-accent);font-weight:700;font-size:0.85rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
@@ -154,7 +232,42 @@ function communityPredHtml(edId, players) {
     return html;
 }
 
-// ── Formulaire de prédiction (rendu interne) ──────────────────────────────────
+// ── Leaderboard global des meilleurs prédicteurs ──────────────────────────────
+
+function globalLeaderboardHtml() {
+    const scoredPreds = state.data.predictions.filter(p => p.scored);
+    if (scoredPreds.length === 0) return '';
+
+    const totals = {};
+    scoredPreds.forEach(pred => {
+        if (!totals[pred.playerId]) totals[pred.playerId] = { total: 0, count: 0 };
+        totals[pred.playerId].total += pred.score || 0;
+        totals[pred.playerId].count++;
+    });
+
+    const ranked = Object.entries(totals).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+    if (ranked.length === 0) return '';
+
+    const medals = ['🥇', '🥈', '🥉'];
+    let html = `<div class="card" style="margin-top:16px">
+        <h2 style="margin-bottom:14px">🏆 Meilleurs prédicteurs</h2>`;
+
+    ranked.forEach(([id, data], i) => {
+        const player = state.data.participants.find(p => p.id === id);
+        const isMe = state.currentUser && player?.userId === state.currentUser.uid;
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;margin-bottom:3px;${isMe ? 'background:rgba(0,217,54,0.05);border:1px solid rgba(0,217,54,0.14)' : 'border-bottom:1px solid rgba(255,255,255,0.04)'}">
+            <span style="min-width:22px;text-align:center;font-size:${i < 3 ? '1rem' : '0.75rem'};${i >= 3 ? 'color:rgba(255,255,255,0.3)' : ''}">${medals[i] || (i + 1)}</span>
+            <span style="flex:1;font-weight:${isMe ? '700' : '400'};font-size:0.88rem">${player ? pName(player) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
+            <span style="font-size:0.75rem;color:var(--color-text-secondary)">${data.count} éd.</span>
+            <span style="font-weight:700;color:${i === 0 ? 'var(--color-accent)' : 'var(--color-text-primary)'};min-width:52px;text-align:right">${data.total} pts</span>
+        </div>`;
+    });
+
+    html += `</div>`;
+    return html;
+}
+
+// ── Formulaire de prédiction ──────────────────────────────────────────────────
 
 function renderPredForm(edId) {
     const container = document.getElementById(`pred-form-${edId}`);
@@ -171,11 +284,13 @@ function renderPredForm(edId) {
         .map(r => r.playerId));
     const players = state.data.participants.filter(p => inscribedIds.has(p.id));
 
-    // ── Locked (live / terminée) : recap + communauté ──
+    // ── Locked : recap + communauté ──
     if (locked) {
+        const finaleResults = state.data.results.filter(r => r.editionId === edId && r.phase === 'finale');
+        const hasResults = finaleResults.length > 0;
         let html = '';
         if (myPred) {
-            html += recapCardHtml(myPred, players);
+            html += recapCardHtml(myPred, players, hasResults ? finaleResults : null);
         } else if (myPart) {
             html += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
         }
@@ -193,44 +308,51 @@ function renderPredForm(edId) {
     const rankLabels = ['🥇 1er', '🥈 2ème', '🥉 3ème'];
     let html = '';
 
-    // Recap si déjà voté
     if (myPred) {
         html += recapCardHtml(myPred, players);
-        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:12px">Tu peux modifier ta prédiction jusqu'au début de l'édition.</p>`;
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:14px">Tu peux modifier ta prédiction jusqu'au début de l'édition.</p>`;
     }
 
-    // ── Section 1 : sélection finalistes ──
-    html += `<div class="pred-section-title">Qui sera en finale ?</div>
-        <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Sélectionne les joueurs que tu penses voir en finale</p>`;
+    // ── Étape 1 : finalistes ──
+    const stepStyle = `display:flex;align-items:center;gap:10px;margin-bottom:10px`;
+    const stepNumStyle = (active) => `width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;${active ? 'background:var(--color-accent);color:#000' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4)'}`;
+
+    html += `<div style="${stepStyle}">
+        <div style="${stepNumStyle(true)}">1</div>
+        <div style="font-weight:700;font-size:0.9rem">Qui sera en finale ?</div>
+        ${s.finalists.size > 0 ? `<span style="margin-left:auto;font-size:0.78rem;color:var(--color-accent);font-weight:600">${s.finalists.size} sélectionné${s.finalists.size > 1 ? 's' : ''}</span>` : ''}
+    </div>
+    <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px;padding-left:32px">Sélectionne les joueurs que tu penses voir en finale (+1 pt par bonne réponse)</p>`;
 
     if (players.length > 10) {
         html += `<input id="pred-search-${edId}" type="text" placeholder="Rechercher un joueur..." oninput="filterPredSearch('${edId}')"
             style="width:100%;box-sizing:border-box;margin-bottom:8px;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--color-text-primary);font-size:0.85rem;outline:none">`;
     }
 
-    html += `<div id="pred-grid-${edId}" class="pred-player-grid" style="max-height:200px;overflow-y:auto;padding-right:4px">`;
+    html += `<div id="pred-grid-${edId}" class="pred-player-grid" style="max-height:200px;overflow-y:auto;padding-right:4px;margin-bottom:4px">`;
     players.forEach(p => {
         const sel = s.finalists.has(p.id) ? ' selected-finalist' : '';
         html += `<div class="pred-player-chip${sel}" data-name="${pName(p)}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
     });
     html += `</div>`;
-    if (s.finalists.size > 0) {
-        html += `<p style="font-size:0.75rem;color:var(--color-accent);margin-top:4px">${s.finalists.size} joueur${s.finalists.size > 1 ? 's' : ''} sélectionné${s.finalists.size > 1 ? 's' : ''}</p>`;
-    }
 
-    // ── Section 2 : top 3 parmi les finalistes sélectionnés ──
-    html += `<div class="pred-section-title" style="margin-top:16px">Ton top 3</div>`;
+    // ── Étape 2 : top 3 ──
+    const step2Active = s.finalists.size > 0;
+    html += `<div style="${stepStyle};margin-top:18px">
+        <div style="${stepNumStyle(step2Active)}">2</div>
+        <div style="font-weight:700;font-size:0.9rem;${step2Active ? '' : 'color:rgba(255,255,255,0.3)'}">Ton top 3</div>
+    </div>`;
+
     const finalistPlayers = players.filter(p => s.finalists.has(p.id));
-
     if (finalistPlayers.length === 0) {
-        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary)">Sélectionne d'abord tes finalistes ci-dessus.</p>`;
+        html += `<p style="font-size:0.78rem;color:rgba(255,255,255,0.2);padding-left:32px">Sélectionne d'abord tes finalistes ci-dessus.</p>`;
     } else {
-        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px">Parmi tes finalistes, qui termine dans le top 3 ? (+3 pts si correct)</p>`;
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:10px;padding-left:32px">Parmi tes finalistes, qui termine dans le top 3 ? (+3 pts si position exacte)</p>`;
         [0,1,2].forEach(i => {
             const rankClass = `selected-top${i+1}`;
-            html += `<div style="margin-bottom:6px">
+            html += `<div style="margin-bottom:8px;padding-left:32px">
                 <span style="font-size:0.82rem;font-weight:700;margin-right:8px">${rankLabels[i]}</span>
-                <div class="pred-player-grid" style="display:inline-flex;flex-wrap:wrap;gap:6px">`;
+                <div class="pred-player-grid" style="display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:4px">`;
             finalistPlayers.forEach(p => {
                 const isChosen = s.top3[i] === p.id;
                 html += `<div class="pred-player-chip${isChosen ? ' ' + rankClass : ''}" onclick="setPredTop('${edId}',${i+1},'${p.id}')">${pName(p)}</div>`;
@@ -240,15 +362,20 @@ function renderPredForm(edId) {
     }
 
     const canSubmit = !!(state.currentUser && myPart);
-    html += `<button class="btn btn-primary" style="margin-top:14px" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
-        ${myPred ? '✏️ Modifier ma prédiction' : '✅ Envoyer ma prédiction'}
-    </button>`;
-    if (!state.currentUser) html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>`;
+    html += `<div style="margin-top:16px;padding-left:32px">
+        <button class="btn btn-primary" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
+            ${myPred ? '✏️ Modifier ma prédiction' : '✅ Envoyer ma prédiction'}
+        </button>
+        ${!state.currentUser ? '<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>' : ''}
+    </div>`;
+
+    // Stats communauté en bas du formulaire
+    html += communityStatsHtml(edId, players);
 
     container.innerHTML = html;
 }
 
-// ── Affichage principal des prédictions ───────────────────────────────────────
+// ── Affichage principal ───────────────────────────────────────────────────────
 
 export function displayPredictions() {
     const container = document.getElementById('predictionsContent');
@@ -288,14 +415,15 @@ export function displayPredictions() {
                 ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">🔴 En cours — Prédictions fermées</span>`
                 : `<span class="pred-badge open">Ouvert</span>`;
 
-            // Pour les éditions live, on injecte directement le contenu verrouillé
             let bodyContent;
             if (isLive) {
                 const players = state.data.participants.filter(p => inscribedIds.has(p.id));
                 const myPart = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
                 const myPred = myPart ? state.data.predictions.find(p => p.editionId === e.id && p.playerId === myPart.id) : null;
+                const finaleResults = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale');
+                const hasResults = finaleResults.length > 0;
                 let lockedHtml = '';
-                if (myPred) lockedHtml += recapCardHtml(myPred, players);
+                if (myPred) lockedHtml += recapCardHtml(myPred, players, hasResults ? finaleResults : null);
                 else if (myPart) lockedHtml += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
                 lockedHtml += communityPredHtml(e.id, players);
                 bodyContent = lockedHtml;
@@ -358,6 +486,9 @@ export function displayPredictions() {
         });
         html += '</div>';
     }
+
+    // Leaderboard global
+    html += globalLeaderboardHtml();
 
     container.innerHTML = html;
 
