@@ -326,6 +326,7 @@ window.openEditionDetail = (id) => {
 
     if (isPast) {
         if (state.isAdmin) {
+            // Phase inscription : tous les participants (défaut)
             const playerOptions = state.data.participants
                 .sort((a, b) => pName(a).localeCompare(pName(b)))
                 .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
@@ -782,7 +783,24 @@ window.detailOnPhaseChange = () => {
     document.getElementById('detailViesBonusInfo').style.display = 'none';
     const posInput = document.getElementById('detailResultPosition');
     if (posInput) posInput.required = isFinale;
-    document.getElementById('detailResultPlayer').value = '';
+
+    // Mettre à jour la liste des joueurs selon la phase
+    const playerSelect = document.getElementById('detailResultPlayer');
+    if (playerSelect && state.currentDetailEditionId) {
+        const needsFilter = isQual || isFinale;
+        let players;
+        if (needsFilter) {
+            const inscribedIds = new Set(state.data.results
+                .filter(r => r.editionId === state.currentDetailEditionId && r.phase === 'inscription')
+                .map(r => r.playerId));
+            players = state.data.participants.filter(p => inscribedIds.has(p.id));
+        } else {
+            players = [...state.data.participants];
+        }
+        players.sort((a, b) => pName(a).localeCompare(pName(b)));
+        playerSelect.innerHTML = `<option value="">${t('detail.player.select')}</option>` +
+            players.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+    }
 };
 
 window.detailOnPlayerChange = () => {

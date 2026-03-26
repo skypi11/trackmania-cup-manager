@@ -286,6 +286,21 @@ export function displayPredictions() {
                 ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">🔴 En cours — Prédictions fermées</span>`
                 : `<span class="pred-badge open">Ouvert</span>`;
 
+            // Pour les éditions live, on injecte directement le contenu verrouillé
+            let bodyContent;
+            if (isLive) {
+                const players = state.data.participants.filter(p => inscribedIds.has(p.id));
+                const myPart = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
+                const myPred = myPart ? state.data.predictions.find(p => p.editionId === e.id && p.playerId === myPart.id) : null;
+                let lockedHtml = '';
+                if (myPred) lockedHtml += recapCardHtml(myPred, players);
+                else if (myPart) lockedHtml += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
+                lockedHtml += communityPredHtml(e.id, players);
+                bodyContent = lockedHtml;
+            } else {
+                bodyContent = `<div id="pred-form-${e.id}"></div>`;
+            }
+
             html += `<div class="pred-edition-card">
                 <div class="pred-edition-header">
                     <div style="flex:1;font-weight:800">${e.name}</div>
@@ -293,7 +308,7 @@ export function displayPredictions() {
                     ${badgeHtml}
                     <span style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${predCount} prédiction${predCount !== 1 ? 's' : ''}</span>
                 </div>
-                <div class="pred-body"><div id="pred-form-${e.id}"></div></div>
+                <div class="pred-body">${bodyContent}</div>
             </div>`;
         });
         html += '</div>';
