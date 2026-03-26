@@ -11,7 +11,7 @@ import { displayEditions } from './modules/display-editions.js';
 import { displayParticipants } from './modules/display-players.js';
 import { displayPredictions } from './modules/display-predictions.js';
 import './modules/admin-forms.js';
-import { updateDiscordReminders } from './modules/discord.js';
+import { updateDiscordReminders, renderDiscordConfig } from './modules/discord.js';
 import { loadSiteConfig, applySiteConfig } from './modules/site-config.js';
 import { checkLoaded } from './modules/auth.js';
 import { displayRules } from './modules/display-rules.js';
@@ -53,7 +53,7 @@ function showSection(id) {
     else if (id === 'stats') displayStats();
     else if (id === 'home') displayHome();
     else if (id === 'halloffame') displayHallOfFame();
-    else if (id === 'personnalisation') applySiteConfig();
+    else if (id === 'personnalisation') { applySiteConfig(); renderDiscordConfig(); }
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
     else if (id === 'reglement') displayRules();
