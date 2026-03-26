@@ -180,23 +180,60 @@ export function displayDuel() {
     const nameA   = pA ? pName(pA) : t('duel.player.a');
     const nameB   = pB ? pName(pB) : t('duel.player.b');
 
-    const selectsHtml = `<div class="card">
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center">
-            <div style="text-align:right">
-                <div style="display:inline-flex;width:52px;height:52px;border-radius:50%;background:var(--color-accent);align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#000;margin-bottom:6px">${avatarA}</div>
-                <div style="font-size:0.95rem;font-weight:700;margin-bottom:8px;min-height:1.2em">${nameA}</div>
-                <select onchange="setDuelPlayer('A',this.value)" style="width:100%;text-align:right">
-                    <option value="">${t('duel.select.ph')}</option>
-                    ${selectOpts(idA)}
+    // Inject keyframe animations once
+    if (!document.getElementById('duel-styles')) {
+        const s = document.createElement('style');
+        s.id = 'duel-styles';
+        s.textContent = `
+            @keyframes duel-glow-green {
+                0%,100% { box-shadow:0 0 22px rgba(0,217,54,.5),0 0 44px rgba(0,217,54,.18),inset 0 1px 0 rgba(255,255,255,.25); }
+                50%     { box-shadow:0 0 32px rgba(0,217,54,.75),0 0 64px rgba(0,217,54,.3), inset 0 1px 0 rgba(255,255,255,.25); }
+            }
+            @keyframes duel-glow-purple {
+                0%,100% { box-shadow:0 0 22px rgba(123,47,190,.5),0 0 44px rgba(123,47,190,.18),inset 0 1px 0 rgba(255,255,255,.18); }
+                50%     { box-shadow:0 0 32px rgba(123,47,190,.75),0 0 64px rgba(123,47,190,.3), inset 0 1px 0 rgba(255,255,255,.18); }
+            }
+            @keyframes duel-vs-pulse {
+                0%,100% { opacity:.9; }
+                50%     { opacity:1; filter:drop-shadow(0 0 8px rgba(255,255,255,.15)); }
+            }
+            .duel-select { width:100%;padding:8px 12px;border-radius:9px;color:#fff;font-size:0.85rem;outline:none;cursor:pointer;font-family:Inter,sans-serif; }
+            .duel-select option { background:#1a1a1a; }
+        `;
+        document.head.appendChild(s);
+    }
+
+    const teamA = pA?.team && pA.team !== 'Sans équipe' ? pA.team : '';
+    const teamB = pB?.team && pB.team !== 'Sans équipe' ? pB.team : '';
+    const selStyle = (color) => `background:rgba(${color},.07);border:1px solid rgba(${color},.22);`;
+
+    const selectsHtml = `<div style="border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.07)">
+        <div style="display:grid;grid-template-columns:1fr 52px 1fr">
+
+            <!-- ── Joueur A ── -->
+            <div style="padding:28px 22px;text-align:right;background:linear-gradient(115deg, rgba(0,217,54,0.1) 0%, rgba(0,0,0,0) 55%)">
+                <div style="display:inline-flex;width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#00ff6a,#00D936,#009e27);align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;color:#001a08;margin-bottom:12px;animation:duel-glow-green 2.4s ease-in-out infinite">${avatarA}</div>
+                <div style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.1;margin-bottom:4px">${nameA}</div>
+                <div style="font-size:0.72rem;color:var(--color-accent);letter-spacing:0.04em;margin-bottom:16px;min-height:16px;opacity:0.75">${teamA}</div>
+                <select onchange="setDuelPlayer('A',this.value)" class="duel-select" style="${selStyle('0,217,54')}text-align:right;direction:rtl">
+                    <option value="">${t('duel.select.ph')}</option>${selectOpts(idA)}
                 </select>
             </div>
-            <div style="text-align:center;font-size:1.8rem;line-height:1;padding:0 8px">⚔️</div>
-            <div style="text-align:left">
-                <div style="display:inline-flex;width:52px;height:52px;border-radius:50%;background:var(--springs-purple);align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff;margin-bottom:6px">${avatarB}</div>
-                <div style="font-size:0.95rem;font-weight:700;margin-bottom:8px;min-height:1.2em">${nameB}</div>
-                <select onchange="setDuelPlayer('B',this.value)" style="width:100%">
-                    <option value="">${t('duel.select.ph')}</option>
-                    ${selectOpts(idB)}
+
+            <!-- ── VS central ── -->
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.025);border-left:1px solid rgba(255,255,255,0.05);border-right:1px solid rgba(255,255,255,0.05);gap:6px;padding:8px 0">
+                <div style="width:1px;flex:1;background:linear-gradient(to bottom,transparent,rgba(0,217,54,0.4))"></div>
+                <div style="font-size:1rem;font-weight:900;letter-spacing:0.05em;writing-mode:vertical-lr;background:linear-gradient(180deg,#00D936 0%,#9b5de5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:duel-vs-pulse 3s ease-in-out infinite">VS</div>
+                <div style="width:1px;flex:1;background:linear-gradient(to top,transparent,rgba(123,47,190,0.4))"></div>
+            </div>
+
+            <!-- ── Joueur B ── -->
+            <div style="padding:28px 22px;text-align:left;background:linear-gradient(245deg, rgba(123,47,190,0.1) 0%, rgba(0,0,0,0) 55%)">
+                <div style="display:inline-flex;width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#c084fc,#7B2FBE,#4a1a7a);align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;color:#fff;margin-bottom:12px;animation:duel-glow-purple 2.4s ease-in-out infinite 1.2s">${avatarB}</div>
+                <div style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1.1;margin-bottom:4px">${nameB}</div>
+                <div style="font-size:0.72rem;color:#c084fc;letter-spacing:0.04em;margin-bottom:16px;min-height:16px;opacity:0.85">${teamB}</div>
+                <select onchange="setDuelPlayer('B',this.value)" class="duel-select" style="${selStyle('123,47,190')}">
+                    <option value="">${t('duel.select.ph')}</option>${selectOpts(idB)}
                 </select>
             </div>
         </div>

@@ -14,6 +14,10 @@ const translations = {
     'nav.custom':         'Personnalisation',
     'nav.account':        'Mon compte',
     'nav.back':           '← Accueil',
+    'nav.group.competition': 'Compétition',
+    'nav.group.players':     'Joueurs',
+    'nav.group.community':   'Communauté',
+    'nav.group.admin':       'Admin',
     'nav.admin.save':     '💾 Sauvegarder',
     'nav.admin.hint':     '✏️ Cliquez sur les textes pour les modifier',
 
@@ -515,6 +519,10 @@ const translations = {
     'nav.account':        'My account',
     'nav.back':           '← Home',
     'nav.admin.save':     '💾 Save',
+    'nav.group.competition': 'Competition',
+    'nav.group.players':     'Players',
+    'nav.group.community':   'Community',
+    'nav.group.admin':       'Admin',
     'nav.admin.hint':     '✏️ Click on texts to edit them',
 
     // ── Landing page ─────────────────────────────────────────────────────

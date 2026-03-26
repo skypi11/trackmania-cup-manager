@@ -157,6 +157,11 @@ body {
 }
 .nav-icon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
 .nav-label { font-size: 0.87rem; }
+.nav-group-label {
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(255,255,255,0.2);
+    padding: 14px 14px 4px; margin-top: 2px; user-select: none;
+}
 .sidebar-footer {
     padding: 16px 12px 24px;
     border-top: 1px solid rgba(255,255,255,0.05);
@@ -1077,16 +1082,23 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           </div>
         </div>
         <nav class="sidebar-nav">
+          <div class="nav-group-label" data-i18n="nav.group.competition">Compétition</div>
           <button class="nav-item active" data-section="home"><span class="nav-icon">🏠</span><span class="nav-label" data-i18n="nav.home">Accueil</span></button>
           <button class="nav-item" data-section="editions"><span class="nav-icon">📅</span><span class="nav-label" data-i18n="nav.editions">Éditions</span></button>
-          <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label" data-i18n="nav.rankings">Classement</span></button>
           <button class="nav-item" data-section="maps"><span class="nav-icon">🗺️</span><span class="nav-label" data-i18n="nav.maps">Maps</span></button>
-          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label" data-i18n="nav.predictions">Prédictions</span></button>
+          <button class="nav-item" data-section="reglement"><span class="nav-icon">📋</span><span class="nav-label" data-i18n="nav.reglement">Règles et Format</span></button>
+
+          <div class="nav-group-label" data-i18n="nav.group.players">Joueurs</div>
+          <button class="nav-item" data-section="rankings"><span class="nav-icon">🏆</span><span class="nav-label" data-i18n="nav.rankings">Classement</span></button>
           <button class="nav-item" data-section="participants"><span class="nav-icon">👥</span><span class="nav-label" data-i18n="nav.players">Joueurs</span></button>
           <button class="nav-item" data-section="stats"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="nav.stats">Stats</span></button>
           <button class="nav-item" data-section="halloffame"><span class="nav-icon">🏅</span><span class="nav-label" data-i18n="nav.hof">Hall of Fame</span></button>
-          <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label" data-i18n="nav.duel">⚔️ Duel</span></button>
-          <button class="nav-item" data-section="reglement"><span class="nav-icon">📋</span><span class="nav-label" data-i18n="nav.reglement">Règlement</span></button>
+
+          <div class="nav-group-label" data-i18n="nav.group.community">Communauté</div>
+          <button class="nav-item" data-section="predictions"><span class="nav-icon">🔮</span><span class="nav-label" data-i18n="nav.predictions">Prédictions</span></button>
+          <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label" data-i18n="nav.duel">Duel</span></button>
+
+          <div class="nav-group-label admin-only" data-i18n="nav.group.admin">Admin</div>
           <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
         </nav>
         <div class="sidebar-footer">
