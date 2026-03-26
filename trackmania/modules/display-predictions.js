@@ -44,7 +44,7 @@ window.submitPrediction = async function(edId) {
     // Vérifie le statut directement en Firestore (évite les problèmes de cache/bloqueur)
     const freshSnap = await getDoc(doc(db, 'editions', edId));
     const freshStatus = freshSnap.exists() ? freshSnap.data().status : null;
-    if (freshStatus === 'live' || freshStatus === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
+    if (freshStatus === 'en_cours' || freshStatus === 'terminee') { alert('Les prédictions sont fermées pour cette édition.'); return; }
     const s = state.predState[edId];
     if (!s || s.finalists.size === 0) { alert(t('predictions.select')); return; }
     const myPart = state.data.participants.find(p => p.userId === state.currentUser.uid);
@@ -162,7 +162,7 @@ function renderPredForm(edId) {
     const edition = state.data.editions.find(e => e.id === edId);
     if (!edition) return;
 
-    const locked = edition.status === 'live' || edition.status === 'terminee';
+    const locked = edition.status === 'en_cours' || edition.status === 'terminee';
     const myPart = state.currentUser ? state.data.participants.find(p => p.userId === state.currentUser.uid) : null;
     const myPred = myPart ? state.data.predictions.find(p => p.editionId === edId && p.playerId === myPart.id) : null;
 
@@ -256,7 +256,7 @@ export function displayPredictions() {
 
     const today = new Date();
     const upcoming = state.data.editions
-        .filter(e => e.status === 'upcoming' || e.status === 'inscriptions' || e.status === 'live' || new Date(e.date) > today)
+        .filter(e => e.status === 'upcoming' || e.status === 'inscriptions' || e.status === 'en_cours' || new Date(e.date) > today)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const past = state.data.editions
@@ -280,10 +280,10 @@ export function displayPredictions() {
             const inscribedIds = new Set(state.data.results
                 .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
                 .map(r => r.playerId));
-            if (inscribedIds.size === 0 && e.status !== 'live') return;
+            if (inscribedIds.size === 0 && e.status !== 'en_cours') return;
 
             const predCount = state.data.predictions.filter(p => p.editionId === e.id).length;
-            const isLive = e.status === 'live';
+            const isLive = e.status === 'en_cours';
             const badgeHtml = isLive
                 ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">🔴 En cours — Prédictions fermées</span>`
                 : `<span class="pred-badge open">Ouvert</span>`;
@@ -365,6 +365,6 @@ export function displayPredictions() {
         const inscribedIds = new Set(state.data.results
             .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
             .map(r => r.playerId));
-        if (inscribedIds.size > 0 || e.status === 'live') renderPredForm(e.id);
+        if (inscribedIds.size > 0 || e.status === 'en_cours') renderPredForm(e.id);
     });
 }
