@@ -119,14 +119,14 @@ window.openPlayerProfile = (playerId) => {
         return `<div class="achievement-card ${ok ? 'unlocked' : 'locked'}">
             ${!ok ? '<span class="achievement-lock">🔒</span>' : ''}
             <div class="achievement-icon">${a.icon}</div>
-            <div class="achievement-name">${a.name}</div>
-            <div class="achievement-desc">${a.desc}</div>
+            <div class="achievement-name">${t(`ach.${a.id}`)}</div>
+            <div class="achievement-desc">${t(`ach.${a.id}.desc`)}</div>
         </div>`;
     }).join('');
 
     const unlockedAchievements = ACHIEVEMENTS.filter(a => a.check(pStats));
     const badgePreviewHtml = unlockedAchievements.length > 0
-        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">${unlockedAchievements.slice(0, 4).map(a => `<span title="${a.name} — ${a.desc}" style="font-size:1.25rem;line-height:1;background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;border:1px solid rgba(255,255,255,0.1)">${a.icon}</span>`).join('')}${unlockedAchievements.length > 4 ? `<span style="font-size:0.75rem;color:var(--color-text-secondary);align-self:center;padding-left:4px">+${unlockedAchievements.length - 4}</span>` : ''}</div>`
+        ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">${unlockedAchievements.slice(0, 4).map(a => `<span title="${t(`ach.${a.id}`)} — ${t(`ach.${a.id}.desc`)}" style="font-size:1.25rem;line-height:1;background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;border:1px solid rgba(255,255,255,0.1)">${a.icon}</span>`).join('')}${unlockedAchievements.length > 4 ? `<span style="font-size:0.75rem;color:var(--color-text-secondary);align-self:center;padding-left:4px">+${unlockedAchievements.length - 4}</span>` : ''}</div>`
         : '';
 
     let html = `
