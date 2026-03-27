@@ -38,25 +38,25 @@ window.goToEdition = (id) => {
 
 export const ACHIEVEMENTS = [
     // ── Compétition ───────────────────────────────────────────────────────
-    { id: 'rookie',         icon: '🌱', name: 'Rookie',             desc: '1ère participation',                          check: s => s.quals >= 1 },
-    { id: 'regulier',       icon: '⭐', name: 'Régulier',           desc: '5 participations',                            check: s => s.quals >= 5 },
-    { id: 'veteran',        icon: '💪', name: 'Vétéran',            desc: '10 participations',                           check: s => s.quals >= 10 },
-    { id: 'assidu',         icon: '📅', name: 'Assidu',             desc: 'A participé à toutes les éditions',           check: s => s.allEditions },
-    { id: 'finaliste',      icon: '🎯', name: 'Finaliste',          desc: '1ère finale',                                 check: s => s.finals >= 1 },
-    { id: 'podium',         icon: '🥉', name: 'Sur le podium',      desc: '1er podium (top 3)',                          check: s => s.podiums >= 1 },
-    { id: 'habitue',        icon: '🎪', name: 'Habitué du podium',  desc: '3 podiums',                                   check: s => s.podiums >= 3 },
-    { id: 'inarretable',    icon: '⚡', name: 'Inarrêtable',        desc: '5 podiums',                                   check: s => s.podiums >= 5 },
-    { id: 'champion',       icon: '🏆', name: 'Champion',           desc: '1ère victoire',                               check: s => s.wins >= 1 },
-    { id: 'patron',         icon: '👑', name: 'Patron',             desc: '3 victoires',                                 check: s => s.wins >= 3 },
-    { id: 'en_feu',         icon: '🔥', name: 'En feu',             desc: '2 victoires consécutives',                    check: s => s.maxConsecWins >= 2 },
-    { id: 'perfectionniste',icon: '💎', name: 'Perfectionniste',    desc: 'Top 5 à chaque finale (3 finales min.)',       check: s => s.finals >= 3 && s.alwaysTop5 },
+    { id: 'rookie',          icon: '🌱', check: s => s.quals >= 1 },
+    { id: 'regulier',        icon: '⭐', check: s => s.quals >= 5 },
+    { id: 'veteran',         icon: '💪', check: s => s.quals >= 10 },
+    { id: 'assidu',          icon: '📅', check: s => s.allEditions },
+    { id: 'finaliste',       icon: '🎯', check: s => s.finals >= 1 },
+    { id: 'podium',          icon: '🥉', check: s => s.podiums >= 1 },
+    { id: 'habitue',         icon: '🎪', check: s => s.podiums >= 3 },
+    { id: 'inarretable',     icon: '⚡', check: s => s.podiums >= 5 },
+    { id: 'champion',        icon: '🏆', check: s => s.wins >= 1 },
+    { id: 'patron',          icon: '👑', check: s => s.wins >= 3 },
+    { id: 'en_feu',          icon: '🔥', check: s => s.maxConsecWins >= 2 },
+    { id: 'perfectionniste', icon: '💎', check: s => s.finals >= 3 && s.alwaysTop5 },
     // ── Prédictions ───────────────────────────────────────────────────────
-    { id: 'pred_debutant',  icon: '🔮', name: 'Oracle débutant',    desc: '1ère prédiction soumise',                     check: s => s.predCount >= 1 },
-    { id: 'pred_instinct',  icon: '🎱', name: 'Bon instinct',       desc: '1 finaliste correctement prédit',             check: s => s.predBestScore >= 1 },
-    { id: 'pred_voyant',    icon: '🌟', name: 'Voyant',             desc: 'Une position du top 3 prédite exactement',    check: s => s.predTop3Hits >= 1 },
-    { id: 'pred_oracle',    icon: '🔭', name: 'Oracle',             desc: 'Meilleur prédicteur d\'une édition',          check: s => s.predWins >= 1 },
-    { id: 'pred_fidele',    icon: '🧿', name: 'Nostradamus',        desc: 'Prédictions sur 5 éditions ou plus',          check: s => s.predCount >= 5 },
-    { id: 'pred_medium',    icon: '💫', name: 'Médium',             desc: '10 points ou plus sur une édition',           check: s => s.predBestScore >= 10 },
+    { id: 'pred_debutant',   icon: '🔮', check: s => s.predCount >= 1 },
+    { id: 'pred_instinct',   icon: '🎱', check: s => s.predBestScore >= 1 },
+    { id: 'pred_voyant',     icon: '🌟', check: s => s.predTop3Hits >= 1 },
+    { id: 'pred_oracle',     icon: '🔭', check: s => s.predWins >= 1 },
+    { id: 'pred_fidele',     icon: '🧿', check: s => s.predCount >= 5 },
+    { id: 'pred_medium',     icon: '💫', check: s => s.predBestScore >= 10 },
 ];
 
 export function computePlayerStats(playerId) {
@@ -120,7 +120,7 @@ export function playerBadgesHtml(playerId) {
     const stats    = computePlayerStats(playerId);
     const unlocked = ACHIEVEMENTS.filter(a => a.check(stats));
     if (unlocked.length === 0) return '';
-    const icons = unlocked.map(a => `<span title="${a.name} : ${a.desc}">${a.icon}</span>`).join('');
+    const icons = unlocked.map(a => `<span title="${t(`ach.${a.id}`)} : ${t(`ach.${a.id}.desc`)}">${a.icon}</span>`).join('');
     return `<span class="player-badges">${icons}</span>`;
 }
 window.playerBadgesHtml = playerBadgesHtml;

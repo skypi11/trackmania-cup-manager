@@ -123,21 +123,21 @@ function recapCardHtml(pred, players, finaleResults = null) {
 
     let html = `<div style="background:rgba(0,217,54,0.04);border:1px solid rgba(0,217,54,0.15);border-radius:10px;padding:14px;margin-bottom:14px">
         <div style="font-weight:700;font-size:0.88rem;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
-            <span>🔮 Ta prédiction</span>
+            <span>🔮 ${t('predictions.my.pred')}</span>
             ${pred.scored ? `<span style="background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.25);border-radius:99px;padding:3px 12px;color:var(--color-accent);font-size:0.82rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
         </div>
         <div style="margin-bottom:${top3Parts.length ? '10px' : '0'}">
-            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Finalistes (${finalistItems.length})</div>
+            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${t('predictions.finalists')} (${finalistItems.length})</div>
             <div style="display:flex;flex-wrap:wrap;gap:5px">${finalistItems.join('')}</div>
         </div>`;
     if (top3Parts.length) {
         html += `<div>
-            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Top 3</div>
+            <div style="font-size:0.7rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${t('predictions.step2')}</div>
             <div style="display:flex;flex-wrap:wrap;gap:12px">${top3Parts.map(p => `<span>${p}</span>`).join('')}</div>
         </div>`;
     }
     if (realFinalistIds) {
-        html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.7rem;color:rgba(255,255,255,0.3)">✓ correct &nbsp;·&nbsp; ↕ en finale mais mauvaise place &nbsp;·&nbsp; ✗ absent de la finale</div>`;
+        html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.7rem;color:rgba(255,255,255,0.3)">${t('predictions.legend')}</div>`;
     }
     html += `</div>`;
     return html;
@@ -159,7 +159,7 @@ function communityStatsHtml(edId, players) {
 
     let html = `<div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07)">
         <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);margin-bottom:12px">
-            👥 Ce que pense la communauté · ${total} prédiction${total > 1 ? 's' : ''}
+            👥 ${t('predictions.community')} · ${t('predictions.preds.count').replace('{n}', total)}
         </div>`;
 
     sorted.forEach(([id, count]) => {
@@ -195,7 +195,7 @@ function communityPredHtml(edId, players) {
     let statsHtml = '';
     if (top5.length > 0) {
         statsHtml = `<div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
-            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);margin-bottom:10px">Finalistes les plus prédits</div>`;
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);margin-bottom:10px">${t('predictions.top.predicted')}</div>`;
         top5.forEach(([id, count]) => {
             const player = players.find(p => p.id === id);
             const pct = Math.round(count / preds.length * 100);
@@ -211,7 +211,7 @@ function communityPredHtml(edId, players) {
     }
 
     let html = `<div style="margin-top:16px">
-        <div class="pred-section-title">👥 Prédictions de la communauté (${preds.length})</div>
+        <div class="pred-section-title">👥 ${t('predictions.community.full')} (${preds.length})</div>
         ${statsHtml}`;
 
     sorted.forEach(pred => {
@@ -265,7 +265,7 @@ function globalLeaderboardHtml() {
 
     const medals = ['🥇', '🥈', '🥉'];
     let html = `<div class="card" style="margin-top:16px">
-        <h2 style="margin-bottom:14px">🏆 Meilleurs prédicteurs</h2>`;
+        <h2 style="margin-bottom:14px">🏆 ${t('predictions.best')}</h2>`;
 
     ranked.forEach(([id, data], i) => {
         const player = state.data.participants.find(p => p.id === id);
@@ -307,7 +307,7 @@ function renderPredForm(edId) {
         if (myPred) {
             html += recapCardHtml(myPred, players, hasResults ? finaleResults : null);
         } else if (myPart) {
-            html += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
+            html += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">${t('predictions.no.pred')}</p>`;
         }
         html += communityPredHtml(edId, players);
         container.innerHTML = html;
@@ -325,7 +325,7 @@ function renderPredForm(edId) {
 
     if (myPred) {
         html += recapCardHtml(myPred, players);
-        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:14px">Tu peux modifier ta prédiction jusqu'au début de l'édition.</p>`;
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:14px">${t('predictions.modify.hint')}</p>`;
     }
 
     // ── Étape 1 : finalistes ──
@@ -334,10 +334,10 @@ function renderPredForm(edId) {
 
     html += `<div style="${stepStyle}">
         <div style="${stepNumStyle(true)}">1</div>
-        <div style="font-weight:700;font-size:0.9rem">Qui sera en finale ?</div>
-        ${s.finalists.size > 0 ? `<span style="margin-left:auto;font-size:0.78rem;color:var(--color-accent);font-weight:600">${s.finalists.size} sélectionné${s.finalists.size > 1 ? 's' : ''}</span>` : ''}
+        <div style="font-weight:700;font-size:0.9rem">${t('predictions.step1')}</div>
+        ${s.finalists.size > 0 ? `<span style="margin-left:auto;font-size:0.78rem;color:var(--color-accent);font-weight:600">${t('predictions.selected').replace('{n}', s.finalists.size)}</span>` : ''}
     </div>
-    <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px;padding-left:32px">Sélectionne les joueurs que tu penses voir en finale (+1 pt par bonne réponse)</p>`;
+    <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px;padding-left:32px">${t('predictions.step1.hint')}</p>`;
 
     if (players.length > 10) {
         html += `<input id="pred-search-${edId}" type="text" placeholder="Rechercher un joueur..." oninput="filterPredSearch('${edId}')"
@@ -355,14 +355,14 @@ function renderPredForm(edId) {
     const step2Active = s.finalists.size > 0;
     html += `<div style="${stepStyle};margin-top:18px">
         <div style="${stepNumStyle(step2Active)}">2</div>
-        <div style="font-weight:700;font-size:0.9rem;${step2Active ? '' : 'color:rgba(255,255,255,0.3)'}">Ton top 3</div>
+        <div style="font-weight:700;font-size:0.9rem;${step2Active ? '' : 'color:rgba(255,255,255,0.3)'}">${t('predictions.step2')}</div>
     </div>`;
 
     const finalistPlayers = players.filter(p => s.finalists.has(p.id));
     if (finalistPlayers.length === 0) {
-        html += `<p style="font-size:0.78rem;color:rgba(255,255,255,0.2);padding-left:32px">Sélectionne d'abord tes finalistes ci-dessus.</p>`;
+        html += `<p style="font-size:0.78rem;color:rgba(255,255,255,0.2);padding-left:32px">${t('predictions.step2.wait')}</p>`;
     } else {
-        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:10px;padding-left:32px">Parmi tes finalistes, qui termine dans le top 3 ? (+3 pts si position exacte)</p>`;
+        html += `<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:10px;padding-left:32px">${t('predictions.step2.hint')}</p>`;
         [0,1,2].forEach(i => {
             const rankClass = `selected-top${i+1}`;
             html += `<div style="margin-bottom:8px;padding-left:32px">
@@ -379,7 +379,7 @@ function renderPredForm(edId) {
     const canSubmit = !!(state.currentUser && myPart);
     html += `<div style="margin-top:16px;padding-left:32px">
         <button class="btn btn-primary" onclick="submitPrediction('${edId}')" ${canSubmit ? '' : 'disabled title="Connecte-toi et inscris-toi pour prédire"'}>
-            ${myPred ? '✏️ Modifier ma prédiction' : '✅ Envoyer ma prédiction'}
+            ${myPred ? t('predictions.edit') : t('predictions.send')}
         </button>
         ${!state.currentUser ? '<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:8px">Connecte-toi pour soumettre une prédiction.</p>' : ''}
     </div>`;
@@ -416,10 +416,10 @@ function myHistoryHtml() {
 
     let html = `<div class="card" style="margin-top:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <h2 style="margin:0">🔮 Mon historique</h2>
+            <h2 style="margin:0">🔮 ${t('predictions.my.history')}</h2>
             <div style="display:flex;gap:14px">
-                <span style="font-size:0.78rem;color:var(--color-text-secondary)">${rows.length} éd. prédite${rows.length > 1 ? 's' : ''}</span>
-                <span style="font-size:0.85rem;font-weight:700;color:var(--color-accent)">${totalPts} pts total</span>
+                <span style="font-size:0.78rem;color:var(--color-text-secondary)">${t('predictions.editions').replace('{n}', rows.length)}</span>
+                <span style="font-size:0.85rem;font-weight:700;color:var(--color-accent)">${t('predictions.total.pts').replace('{n}', totalPts)}</span>
             </div>
         </div>`;
 
@@ -435,7 +435,7 @@ function myHistoryHtml() {
             ? `<span style="background:${pred.score >= bestScore && bestScore > 0 ? 'rgba(0,217,54,0.12)' : 'rgba(255,255,255,0.06)'};border:1px solid ${pred.score >= bestScore && bestScore > 0 ? 'rgba(0,217,54,0.25)' : 'rgba(255,255,255,0.1)'};border-radius:99px;padding:3px 12px;font-size:0.82rem;font-weight:700;color:${pred.score >= bestScore && bestScore > 0 ? 'var(--color-accent)' : 'var(--color-text-primary)'}">
                 ${pred.score} pt${pred.score !== 1 ? 's' : ''}${pred.score >= bestScore && bestScore > 0 ? ' 🏅' : ''}
               </span>`
-            : `<span style="font-size:0.75rem;color:rgba(255,255,255,0.3);font-style:italic">Non calculé</span>`;
+            : `<span style="font-size:0.75rem;color:rgba(255,255,255,0.3);font-style:italic">${t('predictions.not.calc')}</span>`;
 
         html += `<details style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:8px;overflow:hidden">
             <summary style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none;user-select:none" onclick="this.parentElement.querySelectorAll('.pred-history-body').forEach(el => el.style.display = this.parentElement.open ? 'none' : 'block')">
@@ -474,13 +474,13 @@ export function displayPredictions() {
     let html = '';
 
     if (upcoming.length === 0 && past.length === 0) {
-        html = '<div class="card"><div class="empty-state"><span class="empty-state-icon">🔮</span><p>Aucune prédiction disponible pour le moment</p></div></div>';
+        html = `<div class="card"><div class="empty-state"><span class="empty-state-icon">🔮</span><p>${t('predictions.no.pred.yet')}</p></div></div>`;
         container.innerHTML = html;
         return;
     }
 
     if (upcoming.length > 0) {
-        html += '<div class="card"><h2>🔮 Prédictions</h2>';
+        html += `<div class="card"><h2>🔮 ${t('predictions.section')}</h2>`;
         upcoming.forEach(e => {
             const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             const inscribedIds = new Set(state.data.results
@@ -491,8 +491,8 @@ export function displayPredictions() {
             const predCount = state.data.predictions.filter(p => p.editionId === e.id).length;
             const isLive = e.status === 'en_cours';
             const badgeHtml = isLive
-                ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">🔴 En cours — Prédictions fermées</span>`
-                : `<span class="pred-badge open">Ouvert</span>`;
+                ? `<span class="pred-badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.2)">${t('predictions.closed')}</span>`
+                : `<span class="pred-badge open">${t('predictions.open')}</span>`;
 
             let bodyContent;
             if (isLive) {
@@ -503,7 +503,7 @@ export function displayPredictions() {
                 const hasResults = finaleResults.length > 0;
                 let lockedHtml = '';
                 if (myPred) lockedHtml += recapCardHtml(myPred, players, hasResults ? finaleResults : null);
-                else if (myPart) lockedHtml += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">Tu n'avais pas fait de prédiction pour cette édition.</p>`;
+                else if (myPart) lockedHtml += `<p style="color:var(--color-text-secondary);font-size:0.85rem;font-style:italic;margin-bottom:12px">${t('predictions.no.pred')}</p>`;
                 lockedHtml += communityPredHtml(e.id, players);
                 bodyContent = lockedHtml;
             } else {
@@ -515,7 +515,7 @@ export function displayPredictions() {
                     <div style="flex:1;font-weight:800">${e.name}</div>
                     <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
                     ${badgeHtml}
-                    <span style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${predCount} prédiction${predCount !== 1 ? 's' : ''}</span>
+                    <span style="font-size:0.75rem;color:rgba(255,255,255,0.3)">${t('predictions.preds.count').replace('{n}', predCount)}</span>
                 </div>
                 <div class="pred-body">${bodyContent}</div>
             </div>`;
@@ -524,7 +524,7 @@ export function displayPredictions() {
     }
 
     if (past.length > 0) {
-        html += '<div class="card"><h2>📊 Résultats des prédictions</h2>';
+        html += `<div class="card"><h2>📊 ${t('predictions.results')}</h2>`;
         past.forEach(e => {
             const preds = state.data.predictions.filter(p => p.editionId === e.id && p.scored);
             if (preds.length === 0) {
@@ -532,10 +532,10 @@ export function displayPredictions() {
                 html += `<div class="pred-edition-card">
                     <div class="pred-edition-header">
                         <div style="flex:1;font-weight:700">${e.name}</div>
-                        <span class="pred-badge closed">Non calculé</span>
+                        <span class="pred-badge closed">${t('predictions.not.calc')}</span>
                     </div>
                     <div class="pred-body">
-                        <button class="btn btn-secondary" onclick="calculatePredictionScores('${e.id}')">⚡ Calculer les scores</button>
+                        <button class="btn btn-secondary" onclick="calculatePredictionScores('${e.id}')">${t('predictions.calc.btn')}</button>
                     </div>
                 </div>`;
                 return;
@@ -543,12 +543,12 @@ export function displayPredictions() {
 
             const ranked = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
             const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' }) : '';
-            const adminCalc = state.isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">🔄 Recalculer</button>` : '';
+            const adminCalc = state.isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">${t('predictions.recalc')}</button>` : '';
             html += `<div class="pred-edition-card">
                 <div class="pred-edition-header">
                     <div style="flex:1;font-weight:700">${e.name}</div>
                     <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
-                    <span class="pred-badge scored">Calculé</span>
+                    <span class="pred-badge scored">${t('predictions.scored')}</span>
                     ${adminCalc}
                 </div>
                 <div class="pred-body">`;

@@ -141,8 +141,8 @@ function achievementColHtml(pStats, side, playerRgb) {
         return `<div style="display:flex;flex-direction:${rowDir};align-items:center;gap:8px;padding:6px 8px;margin-bottom:2px;border-radius:8px;${ok ? `background:rgba(${playerRgb},0.07)` : ''}">
             <span style="font-size:1rem;flex-shrink:0;${ok ? '' : 'filter:grayscale(1);opacity:0.25'}">${a.icon}</span>
             <div style="flex:1;min-width:0;text-align:${textAlign}">
-                <div style="font-size:0.8rem;color:${ok ? 'var(--color-text-primary)' : 'rgba(255,255,255,0.2)'};font-weight:${ok ? '600' : '400'};line-height:1.2">${a.name}</div>
-                <div style="font-size:0.68rem;color:${ok ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'};line-height:1.2">${a.desc}</div>
+                <div style="font-size:0.8rem;color:${ok ? 'var(--color-text-primary)' : 'rgba(255,255,255,0.2)'};font-weight:${ok ? '600' : '400'};line-height:1.2">${t(`ach.${a.id}`)}</div>
+                <div style="font-size:0.68rem;color:${ok ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'};line-height:1.2">${t(`ach.${a.id}.desc`)}</div>
             </div>
             ${dot}
         </div>`;
