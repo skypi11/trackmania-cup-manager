@@ -4,7 +4,7 @@ import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, dateLang } from './utils.js';
-import { updateDoc, doc, addDoc, collection, getDoc } from 'firebase/firestore';
+import { updateDoc, doc, addDoc, collection, getDoc, deleteDoc } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -61,6 +61,14 @@ window.submitPrediction = async function(edId) {
         await addDoc(collection(db, 'predictions'), payload);
     }
     alert(t('predictions.saved'));
+};
+
+window.deletePrediction = async function(predId, playerName) {
+    if (!state.isAdmin) return;
+    if (!confirm(`Supprimer la prédiction de ${playerName} ?`)) return;
+    await deleteDoc(doc(db, 'predictions', predId));
+    state.data.predictions = state.data.predictions.filter(p => p.id !== predId);
+    displayPredictions();
 };
 
 window.calculatePredictionScores = async function(edId) {
@@ -216,10 +224,17 @@ function communityPredHtml(edId, players) {
             return p ? `${rankLabels[i]} ${pName(p)}` : null;
         }).filter(Boolean);
 
+        const predName = predictor ? pName(predictor) : '?';
+        const adminDeleteBtn = state.isAdmin
+            ? `<button onclick="deletePrediction('${pred.id}','${predName.replace(/'/g,"\\'")}\")" title="Supprimer" style="background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.5);font-size:0.85rem;padding:2px 4px;line-height:1" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(239,68,68,0.5)'">🗑️</button>`
+            : '';
         html += `<div style="${taStyle}${isMe ? 'background:rgba(0,217,54,0.05);border:1px solid rgba(0,217,54,0.18)' : 'background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)'}">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <span style="font-weight:700;font-size:0.85rem">${predictor ? pName(predictor) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
-                ${pred.scored ? `<span style="color:var(--color-accent);font-weight:700;font-size:0.85rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
+                <span style="font-weight:700;font-size:0.85rem">${predName}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
+                <span style="display:flex;align-items:center;gap:6px">
+                    ${pred.scored ? `<span style="color:var(--color-accent);font-weight:700;font-size:0.85rem">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>` : ''}
+                    ${adminDeleteBtn}
+                </span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;${top3Parts.length ? 'margin-bottom:5px' : ''}">
                 ${finalistNames.map(n => `<span style="background:rgba(255,255,255,0.06);border-radius:5px;padding:2px 7px;font-size:0.75rem">${n}</span>`).join('')}
@@ -375,6 +390,70 @@ function renderPredForm(edId) {
     container.innerHTML = html;
 }
 
+// ── Historique personnel ──────────────────────────────────────────────────────
+
+function myHistoryHtml() {
+    if (!state.currentUser) return '';
+    const myPart = state.data.participants.find(p => p.userId === state.currentUser.uid);
+    if (!myPart) return '';
+
+    const myPreds = state.data.predictions.filter(p => p.playerId === myPart.id);
+    if (myPreds.length === 0) return '';
+
+    // Uniquement les éditions terminées
+    const pastEditions = state.data.editions
+        .filter(e => e.status === 'terminee')
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const rows = pastEditions
+        .map(e => ({ edition: e, pred: myPreds.find(p => p.editionId === e.id) }))
+        .filter(({ pred }) => pred);
+
+    if (rows.length === 0) return '';
+
+    const totalPts = rows.reduce((s, { pred }) => s + (pred.score || 0), 0);
+    const bestScore = Math.max(...rows.map(({ pred }) => pred.score || 0));
+
+    let html = `<div class="card" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h2 style="margin:0">🔮 Mon historique</h2>
+            <div style="display:flex;gap:14px">
+                <span style="font-size:0.78rem;color:var(--color-text-secondary)">${rows.length} éd. prédite${rows.length > 1 ? 's' : ''}</span>
+                <span style="font-size:0.85rem;font-weight:700;color:var(--color-accent)">${totalPts} pts total</span>
+            </div>
+        </div>`;
+
+    rows.forEach(({ edition: e, pred }) => {
+        const inscribedIds = new Set(state.data.results
+            .filter(r => r.editionId === e.id && (r.phase === 'inscription' || r.phase === 'qualification'))
+            .map(r => r.playerId));
+        const players = state.data.participants.filter(p => inscribedIds.has(p.id));
+        const finaleResults = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale');
+        const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+        const scoreBadge = pred.scored
+            ? `<span style="background:${pred.score >= bestScore && bestScore > 0 ? 'rgba(0,217,54,0.12)' : 'rgba(255,255,255,0.06)'};border:1px solid ${pred.score >= bestScore && bestScore > 0 ? 'rgba(0,217,54,0.25)' : 'rgba(255,255,255,0.1)'};border-radius:99px;padding:3px 12px;font-size:0.82rem;font-weight:700;color:${pred.score >= bestScore && bestScore > 0 ? 'var(--color-accent)' : 'var(--color-text-primary)'}">
+                ${pred.score} pt${pred.score !== 1 ? 's' : ''}${pred.score >= bestScore && bestScore > 0 ? ' 🏅' : ''}
+              </span>`
+            : `<span style="font-size:0.75rem;color:rgba(255,255,255,0.3);font-style:italic">Non calculé</span>`;
+
+        html += `<details style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:8px;overflow:hidden">
+            <summary style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;list-style:none;user-select:none" onclick="this.parentElement.querySelectorAll('.pred-history-body').forEach(el => el.style.display = this.parentElement.open ? 'none' : 'block')">
+                <span style="flex:1;font-weight:700;font-size:0.9rem">${e.name}</span>
+                <span style="font-size:0.75rem;color:var(--color-text-secondary)">${dateStr}</span>
+                ${scoreBadge}
+                <span style="color:rgba(255,255,255,0.3);font-size:0.7rem;margin-left:4px">▼</span>
+            </summary>
+            <div class="pred-history-body" style="padding:0 14px 14px">
+                ${recapCardHtml(pred, players, finaleResults.length > 0 ? finaleResults : null)}
+            </div>
+        </details>`;
+    });
+
+    html += `</div>`;
+    return html;
+}
+
 // ── Affichage principal ───────────────────────────────────────────────────────
 
 export function displayPredictions() {
@@ -476,16 +555,24 @@ export function displayPredictions() {
             ranked.forEach((pred, i) => {
                 const player = state.data.participants.find(p => p.id === pred.playerId);
                 const isMe = state.currentUser && player?.userId === state.currentUser.uid;
+                const rName = player ? pName(player) : '?';
+                const adminDel = state.isAdmin
+                    ? `<button onclick="deletePrediction('${pred.id}','${rName.replace(/'/g,"\\'")}\")" title="Supprimer" style="background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.4);font-size:0.8rem;padding:0 2px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(239,68,68,0.4)'">🗑️</button>`
+                    : '';
                 html += `<div class="pred-score-row" style="${isMe ? 'background:rgba(0,217,54,0.04);border-radius:6px;padding:8px 6px;' : ''}">
                     <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;min-width:22px">${i+1}.</span>
-                    <span style="flex:1;font-weight:${isMe?'700':'400'}">${player ? pName(player) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.75rem">← toi</span>' : ''}</span>
+                    <span style="flex:1;font-weight:${isMe?'700':'400'}">${rName}${isMe ? ' <span style="color:var(--color-accent);font-size:0.75rem">← toi</span>' : ''}</span>
                     <span class="pred-score-pts">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>
+                    ${adminDel}
                 </div>`;
             });
             html += '</div></div>';
         });
         html += '</div>';
     }
+
+    // Historique personnel
+    html += myHistoryHtml();
 
     // Leaderboard global
     html += globalLeaderboardHtml();
