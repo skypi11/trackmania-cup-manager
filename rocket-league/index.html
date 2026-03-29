@@ -116,14 +116,27 @@ img{display:block}
 .stbl tr.top8 td{background:var(--red-g)}
 
 /* ── TEAMS ── */
-.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
-.team-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(232,0,26,.04));pointer-events:none;opacity:0;transition:opacity .25s}
-.team-card:hover{border-color:var(--red);transform:translateY(-3px);box-shadow:0 8px 24px rgba(232,0,26,.12)}
-.team-card:hover::after{opacity:1}
-.team-card img{width:80px;height:80px;object-fit:contain;border-radius:8px;margin:0 auto 12px;background:var(--bg3)}
-.tc-name{font-weight:700;font-size:.9rem;margin-bottom:6px;line-height:1.3}
-.tc-tag{font-size:.72rem;color:var(--text2);background:var(--bg3);display:inline-block;padding:3px 9px;border-radius:10px;font-weight:700;letter-spacing:.04em}
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .25s;overflow:hidden;display:flex;flex-direction:column}
+.team-card:hover{border-color:rgba(232,0,26,.5);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px rgba(232,0,26,.15)}
+.tc-logo-area{background:var(--bg3);padding:24px 20px;display:flex;align-items:center;justify-content:center;position:relative;min-height:120px;border-bottom:1px solid var(--border)}
+.tc-logo-area img{width:76px;height:76px;object-fit:contain;border-radius:8px}
+.tc-logo-placeholder{width:76px;height:76px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);font-weight:900}
+.tc-pool{position:absolute;top:9px;right:9px;background:rgba(232,0,26,.15);color:var(--red);font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.07em;border:1px solid rgba(232,0,26,.25)}
+.tc-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
+.tc-name{font-weight:800;font-size:.92rem;line-height:1.3;color:var(--text)}
+.tc-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+.tc-tag{font-size:.68rem;color:var(--text2);font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.tc-count{font-size:.68rem;color:var(--text2);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
+
+/* ── ROLE BADGES ── */
+.role-badge{font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;border:1px solid;white-space:nowrap;flex-shrink:0}
+.role-capitaine{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.3)}
+.role-titulaire{background:rgba(0,200,100,.1);color:#0c8;border-color:rgba(0,200,100,.25)}
+.role-sub{background:rgba(148,163,184,.08);color:#94a3b8;border-color:rgba(148,163,184,.2)}
+.role-coach{background:rgba(0,129,255,.1);color:var(--rl-blue);border-color:rgba(0,129,255,.3)}
+.role-fondateur{background:rgba(232,0,26,.1);color:var(--red);border-color:rgba(232,0,26,.3)}
+.role-manager{background:rgba(139,92,246,.1);color:#8b5cf6;border-color:rgba(139,92,246,.3)}
 
 /* ── MODAL ── */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px}
@@ -135,17 +148,20 @@ img{display:block}
 .btn-x{background:none;border:none;color:var(--text2);font-size:1.4rem;line-height:1;padding:2px 6px;transition:color .2s}
 .btn-x:hover{color:var(--text)}
 .modal-body{padding:20px}
-.team-hero{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-.team-hero img{width:72px;height:72px;object-fit:contain;border-radius:8px;background:var(--bg3)}
-.th-name{font-size:1.1rem;font-weight:800}
-.th-tag{color:var(--red);font-weight:700}
-.th-meta{font-size:.78rem;color:var(--text2);margin-top:3px}
+.team-hero{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)}
+.team-hero img{width:68px;height:68px;object-fit:contain;border-radius:8px;background:var(--bg2);flex-shrink:0}
+.th-name{font-size:1.15rem;font-weight:900;margin-bottom:3px}
+.th-tag{color:var(--red);font-weight:700;font-size:.82rem;letter-spacing:.04em}
+.th-meta{font-size:.76rem;color:var(--text2);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap}
+.th-meta-chip{background:rgba(255,255,255,.04);border:1px solid var(--border);padding:1px 7px;border-radius:4px}
 .roster-tbl{width:100%;border-collapse:collapse}
-.roster-tbl th{font-size:.66rem;color:var(--text2);font-weight:700;padding:6px 8px;text-align:left;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border)}
-.roster-tbl td{padding:8px;border-bottom:1px solid var(--border);font-size:.8rem}
+.roster-tbl th{font-size:.63rem;color:var(--text2);font-weight:700;padding:7px 10px;text-align:left;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3)}
+.roster-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:.81rem;vertical-align:middle}
 .roster-tbl tr:last-child td{border-bottom:none}
-.p-ava{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--bg3)}
-.p-link{color:var(--red);font-size:.72rem;font-weight:600}
+.roster-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.p-ava{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--bg3);border:1px solid var(--border)}
+.p-link{color:var(--rl-blue);font-size:.72rem;font-weight:700}
+.p-link:hover{color:#60b4ff}
 
 /* ── RESULTS ── */
 .res-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
@@ -779,12 +795,26 @@ async function loadTeams(pool) {
   const teams = Object.values(teamsMap).filter(t=>t.pool===pool)
     .sort((a,b)=>a.name.localeCompare(b.name));
   if (!teams.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
-  wrap.innerHTML = `<div class="teams-grid">${teams.map(t=>`
-    <div class="team-card" onclick="openTeamModal('${t.id}')">
-      <img src="${t.logoUrl||''}" alt="${esc(t.name)}" onerror="this.src=''">
-      <div class="tc-name">${esc(t.name)}</div>
-      <div class="tc-tag">${esc(t.tag||'')}</div>
-    </div>`).join('')}</div>`;
+  wrap.innerHTML = `<div class="teams-grid">${teams.map(team=>{
+    const pCount = Object.values(playersMap).filter(p=>p.teamId===team.id).length;
+    const logoEl = team.logoUrl
+      ? `<img src="${esc(team.logoUrl)}" alt="${esc(team.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    const placeholder = `<div class="tc-logo-placeholder" style="${team.logoUrl?'display:none':''}">?</div>`;
+    return `<div class="team-card" onclick="openTeamModal('${team.id}')">
+      <div class="tc-logo-area">
+        ${logoEl}${placeholder}
+        <span class="tc-pool">P${team.pool}</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-name">${esc(team.name)}</div>
+        <div class="tc-footer">
+          <span class="tc-tag">${esc(team.tag||'—')}</span>
+          <span class="tc-count">${pCount} joueur${pCount!==1?'s':''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 window.openTeamModal = async function(teamId) {
@@ -795,24 +825,44 @@ window.openTeamModal = async function(teamId) {
   body.innerHTML = '<div class="loading"></div>';
   openModal('mo-team');
   const players = Object.values(playersMap).filter(p=>p.teamId===teamId);
-  const logo = team.logoUrl ? `<img src="${team.logoUrl}" alt="">` : `<div style="width:72px;height:72px;background:var(--bg3);border-radius:8px"></div>`;
+  // Sort: capitaine first, then titulaire, sub, coach, fondateur, manager
+  const roleOrder = {capitaine:0,titulaire:1,sub:2,coach:3,fondateur:4,manager:5};
+  players.sort((a,b)=>(roleOrder[a.role]??1)-(roleOrder[b.role]??1));
+  const logo = team.logoUrl
+    ? `<img src="${team.logoUrl}" alt="" style="width:68px;height:68px;object-fit:contain;border-radius:8px;background:var(--bg2)">`
+    : `<div style="width:68px;height:68px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3)">?</div>`;
+  const roleLabel = {capitaine:'Capitaine',titulaire:'Titulaire',sub:'Sub',coach:'Coach',fondateur:'Fondateur',manager:'Manager'};
   let rosterHtml = `<div class="empty" style="padding:14px">${t('no_players')}</div>`;
   if (players.length) {
     rosterHtml = `<table class="roster-tbl">
-      <thead><tr><th></th><th>${t('col_player')}</th><th>Discord</th><th>Tracker</th><th>Âge</th><th>Pays</th></tr></thead>
-      <tbody>${players.map(p=>`<tr>
-        <td><img class="p-ava" src="${p.photoUrl||''}" onerror="this.src=''" alt=""></td>
-        <td style="font-weight:600">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</td>
-        <td style="color:var(--text2);font-size:.76rem">${esc(p.pseudoDiscord||'—')}</td>
-        <td>${p.trackerUrl?`<a class="p-link" href="${p.trackerUrl}" target="_blank" rel="noopener">Tracker ↗</a>`:'—'}</td>
-        <td>${p.age||'—'}</td>
-        <td>${FLAGS[p.country]||p.country||'—'}</td>
-      </tr>`).join('')}</tbody>
+      <thead><tr><th></th><th>Joueur</th><th>Rôle</th><th>Discord</th><th>Tracker</th><th>Pays</th></tr></thead>
+      <tbody>${players.map(p=>{
+        const roleCls = p.role ? `role-badge role-${p.role}` : '';
+        const roleTxt = p.role ? (roleLabel[p.role]||p.role) : '—';
+        return `<tr>
+          <td><img class="p-ava" src="${p.photoUrl||''}" onerror="this.src=''" alt=""></td>
+          <td style="font-weight:700">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</td>
+          <td>${roleCls?`<span class="${roleCls}">${roleTxt}</span>`:roleTxt}</td>
+          <td style="color:var(--text2);font-size:.76rem">${esc(p.pseudoDiscord||'—')}</td>
+          <td>${p.trackerUrl?`<a class="p-link" href="${p.trackerUrl}" target="_blank" rel="noopener">Tracker ↗</a>`:'—'}</td>
+          <td>${FLAGS[p.country]||p.country||'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
     </table>`;
   }
+  const wins = Object.values(matchesMap).filter(m=>m.status==='played'&&(m.homeTeamId===teamId||m.awayTeamId===teamId)&&((m.homeTeamId===teamId&&m.homeScore>m.awayScore)||(m.awayTeamId===teamId&&m.awayScore>m.homeScore))).length;
+  const played = Object.values(matchesMap).filter(m=>m.status==='played'&&(m.homeTeamId===teamId||m.awayTeamId===teamId)).length;
   body.innerHTML = `
-    <div class="team-hero">${logo}<div><div class="th-name">${esc(team.name)}</div><div class="th-tag">${esc(team.tag||'')}</div><div class="th-meta">Poule ${team.pool} • ${players.length} joueur(s)</div></div></div>
-    <div class="stitle" style="font-size:.82rem">${t('roster')}</div>
+    <div class="team-hero">${logo}<div>
+      <div class="th-name">${esc(team.name)}</div>
+      <div class="th-tag">${esc(team.tag||'')}</div>
+      <div class="th-meta">
+        <span class="th-meta-chip">Poule ${team.pool}</span>
+        <span class="th-meta-chip">${players.length} joueur${players.length!==1?'s':''}</span>
+        ${played?`<span class="th-meta-chip">${wins}V / ${played-wins}D</span>`:''}
+      </div>
+    </div></div>
+    <div class="stitle" style="font-size:.82rem;margin-bottom:10px">${t('roster')}</div>
     ${rosterHtml}`;
 };
 
@@ -1110,10 +1160,12 @@ async function admPlayers() {
     if (!ps.length) return `<div class="empty">${t('no_players')}</div>`;
     return ps.map(p=>{
       const tm = teamsMap[p.teamId]||{};
-      return `<div class="adm-item">
+      const roleColors={capitaine:'#f59e0b',titulaire:'#0c8',sub:'#94a3b8',coach:'#0081FF',fondateur:'#E8001A',manager:'#8b5cf6'};
+    const roleColor=roleColors[p.role]||'var(--text2)';
+    return `<div class="adm-item">
         <div class="adm-item-l">
           <img class="adm-item-logo" style="border-radius:50%" src="${p.photoUrl||''}" alt="" onerror="this.src=''">
-          <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div>
+          <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}${p.role?` <span style="font-size:.62rem;font-weight:800;color:${roleColor};margin-left:4px">${p.role.toUpperCase()}</span>`:''}</div>
           <div class="adm-item-meta">${esc(tm.name||'—')} · ${FLAGS[p.country]||''} ${p.age||''}</div></div>
         </div>
         <div class="adm-item-r">
@@ -1132,6 +1184,16 @@ async function admPlayers() {
       <div class="fg full"><label>${t('f_track')}</label><input class="finput" id="pf-track" placeholder="https://rocketleague.tracker.network/..." type="url"></div>
       <div class="fg"><label>${t('f_age')}</label><input class="finput" id="pf-age" type="number" min="1" max="99" placeholder="22"></div>
       <div class="fg"><label>${t('f_country')}</label><input class="finput" id="pf-country" placeholder="FR" maxlength="3" style="text-transform:uppercase"></div>
+      <div class="fg"><label>Rôle</label>
+        <select class="finput" id="pf-role">
+          <option value="titulaire">Titulaire</option>
+          <option value="capitaine">Capitaine</option>
+          <option value="sub">Substitut</option>
+          <option value="coach">Coach</option>
+          <option value="fondateur">Fondateur</option>
+          <option value="manager">Manager</option>
+        </select>
+      </div>
       <div class="fg full"><label>${t('f_photo')}</label><input class="finput" id="pf-photo" placeholder="https://..." type="url"></div>
       <div class="fg full"><label>${t('f_team')}</label><select class="finput" id="pf-team"><option value="">${t('f_team')}...</option>${teamOpts}</select></div>
       <div class="fg full f-actions">
@@ -1150,12 +1212,14 @@ async function admPlayers() {
 window.filterPlayerList = function(teamId) {
   const ps = Object.values(playersMap).filter(p=>!teamId||p.teamId===teamId)
     .sort((a,b)=>(a.pseudoRL||'').localeCompare(b.pseudoRL||''));
+  const roleColors={capitaine:'#f59e0b',titulaire:'#0c8',sub:'#94a3b8',coach:'#0081FF',fondateur:'#E8001A',manager:'#8b5cf6'};
   document.getElementById('player-list').innerHTML = ps.map(p=>{
     const tm=teamsMap[p.teamId]||{};
+    const roleColor=roleColors[p.role]||'var(--text2)';
     return `<div class="adm-item">
       <div class="adm-item-l">
         <img class="adm-item-logo" style="border-radius:50%" src="${p.photoUrl||''}" alt="" onerror="this.src=''">
-        <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div>
+        <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}${p.role?` <span style="font-size:.62rem;font-weight:800;color:${roleColor};margin-left:4px">${p.role.toUpperCase()}</span>`:''}</div>
         <div class="adm-item-meta">${esc(tm.name||'—')} · ${FLAGS[p.country]||''} ${p.age||''}</div></div>
       </div>
       <div class="adm-item-r">
@@ -1174,9 +1238,10 @@ window.savePlayer = async function() {
   const cntry = document.getElementById('pf-country').value.trim().toUpperCase();
   const photo = document.getElementById('pf-photo').value.trim();
   const teamId= document.getElementById('pf-team').value;
+  const role  = document.getElementById('pf-role').value;
   if (!rl&&!disc) { toast('Pseudo requis','err'); return; }
   try {
-    const data = {pseudoRL:rl,pseudoDiscord:disc,trackerUrl:track,age,country:cntry,photoUrl:photo,teamId};
+    const data = {pseudoRL:rl,pseudoDiscord:disc,trackerUrl:track,age,country:cntry,photoUrl:photo,teamId,role};
     if (editPlayerId) { await updateDoc(doc(db,'rl_players',editPlayerId),data); }
     else { await addDoc(collection(db,'rl_players'),{...data,createdAt:serverTimestamp()}); }
     toast(t('saved'),'ok');
@@ -1195,12 +1260,14 @@ window.editPlayer = function(id) {
   document.getElementById('pf-country').value=p.country||'';
   document.getElementById('pf-photo').value=p.photoUrl||'';
   document.getElementById('pf-team').value=p.teamId||'';
+  document.getElementById('pf-role').value=p.role||'titulaire';
   window.scrollTo({top:0,behavior:'smooth'});
 };
 window.clearPlayerForm = function() {
   editPlayerId=null;
   ['pf-rl','pf-disc','pf-track','pf-age','pf-country','pf-photo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('pf-team').value='';
+  document.getElementById('pf-role').value='titulaire';
 };
 window.deletePlayer = async function(id) {
   if (!confirm(t('confirm_del'))) return;
