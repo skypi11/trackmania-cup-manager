@@ -389,12 +389,14 @@ img{display:block}
 <div id="toast"></div>
 
 <script type="module">
-import { db, auth } from '../shared/firebase-config.js';
+import { db, auth, app } from '../shared/firebase-config.js';
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc,
   doc, query, where, serverTimestamp, writeBatch, getDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
 
 // ════════════════════════════════════════════════
 // CONSTANTS
