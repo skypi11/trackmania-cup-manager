@@ -614,7 +614,7 @@ const I18N = {
     login:'Connexion',logout:'Déconnexion',
     nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Compétition',lbl_fmt:'Format',lbl_pools:'Poules',lbl_weeks:'Semaines',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Classement — Aperçu',
-    col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'M+',col_gl:'M-',col_diff:'Diff',
+    col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'B+',col_gl:'B-',col_diff:'Diff',
     week:'Sem.',all:'Tout',played:'Joués',sched:'À venir',
     no_match:'Aucun match pour ce filtre.',no_team:'Aucune équipe.',
     lan_q:'LAN',roster:'Roster',
@@ -811,8 +811,9 @@ function buildStandings(pool) {
   });
   return Object.values(map).sort((a,b)=>{
     if(b.pts!==a.pts) return b.pts-a.pts;
-    if(b.gw!==a.gw) return b.gw-a.gw;
-    return (b.gw-b.gl)-(a.gw-a.gl);
+    const diffA=a.gw-a.gl, diffB=b.gw-b.gl;
+    if(diffB!==diffA) return diffB-diffA;
+    return b.gw-a.gw;
   });
 }
 
@@ -961,9 +962,9 @@ async function loadStandings(pool) {
       <th title="Victoires">${t('col_w')}</th>
       <th title="Défaites">${t('col_l')}</th>
       <th title="Points">${t('col_pts')}</th>
-      <th title="Manches gagnées">${t('col_gw')}</th>
-      <th title="Manches perdues">${t('col_gl')}</th>
-      <th title="Différentiel manches">${t('col_diff')}</th>
+      <th title="Buts marqués">${t('col_gw')}</th>
+      <th title="Buts encaissés">${t('col_gl')}</th>
+      <th title="Différentiel de buts">${t('col_diff')}</th>
       <th>Forme</th>
     </tr></thead>
     <tbody>${rows.map((t2,i)=>{
