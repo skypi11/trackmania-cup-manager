@@ -906,7 +906,7 @@ async function loadAccueil() {
   // Twitch embed
   const te = document.getElementById('twitch-embed');
   if (!te.querySelector('iframe')) {
-    te.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${TWITCH}&parent=${location.hostname}" allowfullscreen scrolling="no"></iframe>`;
+    te.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${TWITCH}&parent=${location.hostname}&autoplay=true&muted=false" allowfullscreen allow="autoplay; fullscreen" scrolling="no"></iframe>`;
   }
   await fetchAll();
 
