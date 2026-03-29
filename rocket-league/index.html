@@ -191,10 +191,11 @@ img{display:block}
 .mc-stats.open{display:block}
 .stats-mini-section{margin-bottom:12px}
 .stats-mini-lbl{font-size:.68rem;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
-.mini-tbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.mini-tbl{width:100%;border-collapse:collapse;font-size:.76rem;table-layout:fixed}
 .mini-tbl th{color:var(--text2);font-size:.65rem;font-weight:700;padding:3px 6px;text-align:right;border-bottom:1px solid var(--border)}
-.mini-tbl th:first-child{text-align:left}
-.mini-tbl td{padding:4px 6px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04)}
+.mini-tbl th:first-child{text-align:left;width:auto}
+.mini-tbl th:not(:first-child){width:40px}
+.mini-tbl td{padding:4px 6px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini-tbl td:first-child{text-align:left;font-weight:600}
 .mini-tbl tr:last-child td{border-bottom:none}
 .mvp-chip{font-size:.6rem;background:#f59e0b;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:4px}
@@ -421,6 +422,7 @@ img{display:block}
         <button class="pbtn" onclick="switchRP(2)" id="rp2">Poule 2</button>
       </div>
       <div class="week-tabs" id="week-tabs"></div>
+      <select class="adm-sel" id="r-team-filter" onchange="switchRTeam(this.value)" style="margin-left:auto"><option value="">Toutes les équipes</option></select>
     </div>
     <div id="results-wrap"><div class="loading"></div></div>
   </section>
@@ -486,6 +488,26 @@ img{display:block}
         <div class="fg full f-actions">
           <button class="btn-p" onclick="savePlayerModal()">💾 Enregistrer</button>
           <button class="btn-s" onclick="closeModal('mo-player')">✕ Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="mo-team-edit" onclick="closeModal('mo-team-edit')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><h2 id="mo-team-edit-title">Modifier l'équipe</h2><button class="btn-x" onclick="closeModal('mo-team-edit')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg"><label>Nom</label><input class="finput" id="mt-name" placeholder="Exaltia Espada"></div>
+        <div class="fg"><label>Tag</label><input class="finput" id="mt-tag" placeholder="EXA" maxlength="6"></div>
+        <div class="fg"><label>Logo URL</label><input class="finput" id="mt-logo" placeholder="https://..." type="url"></div>
+        <div class="fg"><label>Poule</label>
+          <select class="finput" id="mt-pool"><option value="1">Poule 1</option><option value="2">Poule 2</option></select>
+        </div>
+        <div class="fg full f-actions">
+          <button class="btn-p" onclick="saveTeamModal()">💾 Enregistrer</button>
+          <button class="btn-s" onclick="closeModal('mo-team-edit')">✕ Annuler</button>
         </div>
       </div>
     </div>
@@ -597,6 +619,7 @@ let curTab = 'accueil';
 let isAdmin = false;
 let curUser = null;
 let sPool = 1, tPool = 1, rPool = 1, rWeek = 'all';
+let rTeam = '';
 let sCat = 'goals';
 let admSec = 'equipes';
 let editTeamId = null, editPlayerId = null;
@@ -918,8 +941,10 @@ function initResultsWeekTabs() {
 
 window.switchRP = async function(p) {
   rPool=p;
+  rTeam='';
   document.getElementById('rp1').classList.toggle('active',p===1);
   document.getElementById('rp2').classList.toggle('active',p===2);
+  updateTeamFilter();
   await loadResults();
 };
 window.switchRW = async function(w) {
@@ -929,13 +954,35 @@ window.switchRW = async function(w) {
   await loadResults();
 };
 
+window.switchRTeam = async function(teamId) {
+  rTeam = teamId;
+  await loadResults();
+};
+
+function updateTeamFilter() {
+  const sel = document.getElementById('r-team-filter');
+  if (!sel) return;
+  const teams = Object.values(teamsMap).filter(t=>t.pool===rPool).sort((a,b)=>a.name.localeCompare(b.name));
+  sel.innerHTML = `<option value="">Toutes les équipes</option>` +
+    teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  sel.value = rTeam;
+}
+
 async function loadResults() {
   const wrap = document.getElementById('results-wrap');
   wrap.innerHTML = '<div class="loading"></div>';
   await fetchAll();
+  updateTeamFilter();
   let matches = Object.values(matchesMap).filter(m=>m.pool===rPool);
   if (rWeek!=='all') matches = matches.filter(m=>m.week===rWeek);
-  matches.sort((a,b)=>{ if(a.week!==b.week) return a.week-b.week; return a.group?.localeCompare(b.group||'')||0; });
+  if (rTeam) matches = matches.filter(m=>m.homeTeamId===rTeam||m.awayTeamId===rTeam);
+  matches.sort((a,b)=>{
+    // Joués en premier
+    if (a.status==='played' && b.status!=='played') return -1;
+    if (a.status!=='played' && b.status==='played') return 1;
+    if (a.week!==b.week) return a.week-b.week;
+    return a.group?.localeCompare(b.group||'')||0;
+  });
   if (!matches.length) { wrap.innerHTML=`<div class="empty">${t('no_match')}</div>`; return; }
   if (rWeek === 'all') {
     const byWeek = {};
@@ -1159,15 +1206,29 @@ window.saveTeam = async function() {
 };
 
 window.editTeam = function(id) {
-  const tm = teamsMap[id];
-  if (!tm) return;
-  editTeamId=id;
-  document.getElementById('tf-name').value=tm.name||'';
-  document.getElementById('tf-tag').value=tm.tag||'';
-  document.getElementById('tf-logo').value=tm.logoUrl||'';
-  document.getElementById('tf-pool').value=String(tm.pool);
-  document.getElementById('tf-name').focus();
-  window.scrollTo({top:0,behavior:'smooth'});
+  const tm = teamsMap[id]; if(!tm) return;
+  editTeamId = id;
+  document.getElementById('mo-team-edit-title').textContent = tm.name;
+  document.getElementById('mt-name').value  = tm.name||'';
+  document.getElementById('mt-tag').value   = tm.tag||'';
+  document.getElementById('mt-logo').value  = tm.logoUrl||'';
+  document.getElementById('mt-pool').value  = String(tm.pool||1);
+  openModal('mo-team-edit');
+};
+
+window.saveTeamModal = async function() {
+  const name = document.getElementById('mt-name').value.trim();
+  const tag  = document.getElementById('mt-tag').value.trim();
+  const logo = document.getElementById('mt-logo').value.trim();
+  const pool = parseInt(document.getElementById('mt-pool').value);
+  if (!name) { toast('Nom requis','err'); return; }
+  try {
+    await updateDoc(doc(db,'rl_teams',editTeamId),{name,tag,logoUrl:logo,pool});
+    toast('Enregistré','ok');
+    editTeamId=null;
+    closeModal('mo-team-edit');
+    await admTeams();
+  } catch(e) { toast('Erreur','err'); console.error(e); }
 };
 
 window.clearTeamForm = function() {
