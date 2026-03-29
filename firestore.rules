@@ -70,7 +70,7 @@ service cloud.firestore {
 
     // ── RL — Équipes ─────────────────────────────────────────────────────
     match /rl_teams/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null;
       allow update: if request.auth != null && (
         isAdmin() ||
@@ -82,7 +82,7 @@ service cloud.firestore {
 
     // ── RL — Joueurs ──────────────────────────────────────────────────────
     match /rl_players/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
@@ -136,7 +136,7 @@ service cloud.firestore {
 
     // ── RL — Matchs ──────────────────────────────────────────────────────
     match /rl_matches/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if isAdmin();
       allow update: if request.auth != null && (
         isAdmin() ||
@@ -148,7 +148,7 @@ service cloud.firestore {
 
     // ── RL — Stats de match ───────────────────────────────────────────────
     match /rl_match_stats/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isAdmin();
     }
 

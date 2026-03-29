@@ -305,6 +305,14 @@ img{display:block}
 /* ── STANDINGS SEPARATOR ── */
 .stbl-sep td{padding:0 !important;height:2px;background:rgba(232,0,26,.4) !important;border:none !important}
 
+/* ── NO-PROFILE BANNER ── */
+.no-profile-banner{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px}
+.no-profile-banner .npb-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px}
+.no-profile-banner .npb-text{font-size:.82rem;line-height:1.5;color:var(--text2)}
+.no-profile-banner .npb-text strong{color:#f59e0b;display:block;margin-bottom:3px}
+.no-profile-banner .npb-uid{font-family:monospace;font-size:.75rem;background:rgba(0,0,0,.3);padding:3px 8px;border-radius:4px;border:1px solid rgba(245,158,11,.2);color:#f59e0b;cursor:pointer;transition:background .15s}
+.no-profile-banner .npb-uid:hover{background:rgba(245,158,11,.1)}
+
 /* Utilities */
 .loading{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--text2);font-size:.85rem;gap:10px}
 .loading::before{content:'';width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
@@ -342,6 +350,16 @@ img{display:block}
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
+<div id="no-profile-banner-wrap" style="max-width:1200px;margin:12px auto 0;padding:0 20px;display:none">
+  <div class="no-profile-banner">
+    <span class="npb-icon">⚠️</span>
+    <div class="npb-text">
+      <strong>Compte non lié à un profil joueur</strong>
+      Ton compte Google n'est pas encore associé à un joueur. Communique cet identifiant à un admin :<br>
+      <span class="npb-uid" id="npb-uid" onclick="copyUID()" title="Cliquer pour copier"></span>
+    </div>
+  </div>
+</div>
 <div class="main">
 
   <!-- ACCUEIL -->
@@ -459,7 +477,7 @@ img{display:block}
 import { db, auth, app } from '../shared/firebase-config.js';
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, query, where, serverTimestamp, writeBatch, getDoc
+  doc, query, where, serverTimestamp, writeBatch, getDoc, limit
 } from 'firebase/firestore';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
@@ -597,22 +615,39 @@ function applyI18n() {
 onAuthStateChanged(auth, async user => {
   curUser = user;
   const btn = document.getElementById('btn-auth');
+  const banner = document.getElementById('no-profile-banner-wrap');
   if (user) {
     btn.textContent = user.displayName?.split(' ')[0] || t('logout');
     btn.classList.add('on');
     try {
       const d = await getDoc(doc(db,'admins',user.uid));
       isAdmin = d.exists();
-    } catch(e) { console.error('[RL] admin check failed:', e); isAdmin = false; }
+    } catch(e) { isAdmin = false; }
+    // Check if user is linked to a player profile
+    try {
+      const q = await getDocs(query(collection(db,'rl_players'), where('userId','==',user.uid), limit(1)));
+      if (q.empty && !isAdmin) {
+        document.getElementById('npb-uid').textContent = user.uid;
+        banner.style.display = 'block';
+      } else {
+        banner.style.display = 'none';
+      }
+    } catch(e) { banner.style.display = 'none'; }
   } else {
     btn.textContent = t('login');
     btn.classList.remove('on');
     isAdmin = false;
+    banner.style.display = 'none';
   }
   const navAdm = document.getElementById('nav-admin');
   navAdm.style.display = isAdmin ? 'inline-block' : 'none';
   if (curTab === 'admin' && !isAdmin) goTab('accueil');
 });
+
+window.copyUID = function() {
+  const uid = document.getElementById('npb-uid').textContent;
+  navigator.clipboard.writeText(uid).then(()=>toast('UID copié !','ok'));
+};
 
 window.doAuth = async function() {
   if (curUser) { await signOut(auth); toast(t('logout'),'ok'); }
@@ -1196,6 +1231,7 @@ async function admPlayers() {
       </div>
       <div class="fg full"><label>${t('f_photo')}</label><input class="finput" id="pf-photo" placeholder="https://..." type="url"></div>
       <div class="fg full"><label>${t('f_team')}</label><select class="finput" id="pf-team"><option value="">${t('f_team')}...</option>${teamOpts}</select></div>
+      <div class="fg full"><label>Google UID <span style="font-size:.68rem;color:var(--text3);font-weight:400">(pour lier le compte Google du joueur)</span></label><input class="finput" id="pf-uid" placeholder="Coller l'UID du joueur..." style="font-family:monospace;font-size:.76rem"></div>
       <div class="fg full f-actions">
         <button class="btn-p" onclick="savePlayer()">💾 ${t('save')}</button>
         <button class="btn-s" onclick="clearPlayerForm()">✕ ${t('cancel')}</button>
@@ -1239,9 +1275,10 @@ window.savePlayer = async function() {
   const photo = document.getElementById('pf-photo').value.trim();
   const teamId= document.getElementById('pf-team').value;
   const role  = document.getElementById('pf-role').value;
+  const uid   = document.getElementById('pf-uid').value.trim();
   if (!rl&&!disc) { toast('Pseudo requis','err'); return; }
   try {
-    const data = {pseudoRL:rl,pseudoDiscord:disc,trackerUrl:track,age,country:cntry,photoUrl:photo,teamId,role};
+    const data = {pseudoRL:rl,pseudoDiscord:disc,trackerUrl:track,age,country:cntry,photoUrl:photo,teamId,role,...(uid?{userId:uid}:{})};
     if (editPlayerId) { await updateDoc(doc(db,'rl_players',editPlayerId),data); }
     else { await addDoc(collection(db,'rl_players'),{...data,createdAt:serverTimestamp()}); }
     toast(t('saved'),'ok');
@@ -1261,6 +1298,7 @@ window.editPlayer = function(id) {
   document.getElementById('pf-photo').value=p.photoUrl||'';
   document.getElementById('pf-team').value=p.teamId||'';
   document.getElementById('pf-role').value=p.role||'titulaire';
+  document.getElementById('pf-uid').value=p.userId||'';
   window.scrollTo({top:0,behavior:'smooth'});
 };
 window.clearPlayerForm = function() {
@@ -1268,6 +1306,7 @@ window.clearPlayerForm = function() {
   ['pf-rl','pf-disc','pf-track','pf-age','pf-country','pf-photo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('pf-team').value='';
   document.getElementById('pf-role').value='titulaire';
+  document.getElementById('pf-uid').value='';
 };
 window.deletePlayer = async function(id) {
   if (!confirm(t('confirm_del'))) return;
