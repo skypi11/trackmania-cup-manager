@@ -460,6 +460,38 @@ img{display:block}
   </div>
 </div>
 
+<div class="modal-ov" id="mo-player" onclick="closeModal('mo-player')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><h2 id="mo-player-title">Modifier le joueur</h2><button class="btn-x" onclick="closeModal('mo-player')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg"><label>Pseudo RL</label><input class="finput" id="mp-rl" placeholder="SkyPi11"></div>
+        <div class="fg"><label>Discord</label><input class="finput" id="mp-disc" placeholder="pseudo#0000"></div>
+        <div class="fg full"><label>Tracker URL</label><input class="finput" id="mp-track" placeholder="https://rocketleague.tracker.network/..." type="url"></div>
+        <div class="fg"><label>Âge</label><input class="finput" id="mp-age" type="number" min="1" max="99" placeholder="22"></div>
+        <div class="fg"><label>Pays</label><input class="finput" id="mp-country" placeholder="FR" maxlength="3" style="text-transform:uppercase"></div>
+        <div class="fg"><label>Rôle</label>
+          <select class="finput" id="mp-role">
+            <option value="titulaire">Titulaire</option>
+            <option value="capitaine">Capitaine</option>
+            <option value="sub">Substitut</option>
+            <option value="coach">Coach</option>
+            <option value="fondateur">Fondateur</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Photo URL</label><input class="finput" id="mp-photo" placeholder="https://..." type="url"></div>
+        <div class="fg full"><label>Équipe</label><select class="finput" id="mp-team"></select></div>
+        <div class="fg full"><label>Google UID <span style="font-size:.68rem;color:var(--text3);font-weight:400">(lier le compte Google)</span></label><input class="finput" id="mp-uid" placeholder="Coller l'UID..." style="font-family:monospace;font-size:.76rem"></div>
+        <div class="fg full f-actions">
+          <button class="btn-p" onclick="savePlayerModal()">💾 Enregistrer</button>
+          <button class="btn-s" onclick="closeModal('mo-player')">✕ Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- Accès admin discret — seuls les admins savent que c'est là -->
@@ -1262,16 +1294,44 @@ window.savePlayer = async function() {
 window.editPlayer = function(id) {
   const p=playersMap[id]; if(!p) return;
   editPlayerId=id;
-  document.getElementById('pf-rl').value=p.pseudoRL||'';
-  document.getElementById('pf-disc').value=p.pseudoDiscord||'';
-  document.getElementById('pf-track').value=p.trackerUrl||'';
-  document.getElementById('pf-age').value=p.age||'';
-  document.getElementById('pf-country').value=p.country||'';
-  document.getElementById('pf-photo').value=p.photoUrl||'';
-  document.getElementById('pf-team').value=p.teamId||'';
-  document.getElementById('pf-role').value=p.role||'titulaire';
-  document.getElementById('pf-uid').value=p.userId||'';
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('mo-player-title').textContent = p.pseudoRL||p.pseudoDiscord||'Joueur';
+  // Remplir les options équipes
+  const teamOpts = `<option value="">— Sans équipe —</option>`+
+    Object.values(teamsMap).sort((a,b)=>a.name.localeCompare(b.name))
+      .map(t=>`<option value="${t.id}">${esc(t.name)} (P${t.pool})</option>`).join('');
+  document.getElementById('mp-team').innerHTML = teamOpts;
+  // Remplir les champs
+  document.getElementById('mp-rl').value      = p.pseudoRL||'';
+  document.getElementById('mp-disc').value    = p.pseudoDiscord||'';
+  document.getElementById('mp-track').value   = p.trackerUrl||'';
+  document.getElementById('mp-age').value     = p.age||'';
+  document.getElementById('mp-country').value = p.country||'';
+  document.getElementById('mp-photo').value   = p.photoUrl||'';
+  document.getElementById('mp-team').value    = p.teamId||'';
+  document.getElementById('mp-role').value    = p.role||'titulaire';
+  document.getElementById('mp-uid').value     = p.userId||'';
+  openModal('mo-player');
+};
+
+window.savePlayerModal = async function() {
+  const rl    = document.getElementById('mp-rl').value.trim();
+  const disc  = document.getElementById('mp-disc').value.trim();
+  const track = document.getElementById('mp-track').value.trim();
+  const age   = parseInt(document.getElementById('mp-age').value)||null;
+  const cntry = document.getElementById('mp-country').value.trim().toUpperCase();
+  const photo = document.getElementById('mp-photo').value.trim();
+  const teamId= document.getElementById('mp-team').value;
+  const role  = document.getElementById('mp-role').value;
+  const uid   = document.getElementById('mp-uid').value.trim();
+  if (!rl&&!disc) { toast('Pseudo requis','err'); return; }
+  try {
+    const data = {pseudoRL:rl,pseudoDiscord:disc,trackerUrl:track,age,country:cntry,photoUrl:photo,teamId,role,...(uid?{userId:uid}:{})};
+    await updateDoc(doc(db,'rl_players',editPlayerId),data);
+    toast(t('saved'),'ok');
+    editPlayerId=null;
+    closeModal('mo-player');
+    await admPlayers();
+  } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 window.clearPlayerForm = function() {
   editPlayerId=null;
