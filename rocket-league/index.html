@@ -52,7 +52,7 @@ img{display:block}
 .nav::-webkit-scrollbar{display:none}
 .nav-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);padding:12px 16px;font-size:.82rem;font-weight:600;white-space:nowrap;transition:all .2s}
 .nav-btn:hover{color:var(--text)}
-.nav-btn.active{color:var(--red);border-bottom-color:var(--red)}
+.nav-btn.active{color:var(--rl-blue);border-bottom-color:var(--rl-blue)}
 #nav-admin{display:none;color:#f59e0b}
 #nav-admin.active{border-bottom-color:#f59e0b;color:#f59e0b}
 
@@ -63,7 +63,7 @@ img{display:block}
 /* ── POOL TOGGLE ── */
 .ptoggle{display:flex;gap:8px;margin-bottom:18px}
 .pbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:5px 18px;border-radius:20px;font-size:.8rem;font-weight:700;transition:all .2s}
-.pbtn.active{background:var(--red);border-color:var(--red);color:#fff}
+.pbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
 
 /* ── SECTION TITLE ── */
 .stitle{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
@@ -101,6 +101,9 @@ img{display:block}
 
 /* ── STANDINGS ── */
 .stbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto}
+.stbl-fade{position:relative}
+.stbl-fade::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(to right,transparent,var(--bg2));pointer-events:none;border-radius:0 var(--r) var(--r) 0}
+@media(min-width:700px){.stbl-fade::after{display:none}}
 .stbl{width:100%;border-collapse:collapse;min-width:580px}
 .stbl th{background:var(--bg3);padding:9px 11px;text-align:left;font-size:.68rem;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .stbl td{padding:9px 11px;border-bottom:1px solid var(--border);font-size:.83rem}
@@ -111,9 +114,12 @@ img{display:block}
 .tlogo-sm{width:26px;height:26px;border-radius:4px;object-fit:contain;background:var(--bg3)}
 .tname{font-weight:600}
 .ttag{font-size:.72rem;color:var(--text2)}
-.pts-cell{font-weight:700;color:var(--red)}
+.pts-cell{font-weight:700;color:var(--rl-blue)}
 .lan-badge{background:var(--red-g);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em}
 .stbl tr.top8 td{background:var(--red-g)}
+.form-dot{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:.58rem;font-weight:800;margin-right:2px}
+.fw{background:rgba(0,200,100,.15);color:#0c8}
+.fl{background:rgba(239,68,68,.12);color:#ef4444}
 
 /* ── TEAMS ── */
 .teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
@@ -123,6 +129,7 @@ img{display:block}
 .tc-logo-area img{width:76px;height:76px;object-fit:contain;border-radius:8px}
 .tc-logo-placeholder{width:76px;height:76px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);font-weight:900}
 .tc-pool{position:absolute;top:9px;right:9px;background:rgba(232,0,26,.15);color:var(--red);font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.07em;border:1px solid rgba(232,0,26,.25)}
+.tc-rank{position:absolute;top:9px;left:9px;background:rgba(0,0,0,.5);color:var(--text2);font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.05em}
 .tc-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
 .tc-name{font-weight:800;font-size:.92rem;line-height:1.3;color:var(--text)}
 .tc-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
@@ -167,7 +174,7 @@ img{display:block}
 .res-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
 .week-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .wbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
-.wbtn.active{background:var(--red);border-color:var(--red);color:#fff}
+.wbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
 .match-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
 .match-card:hover{border-color:rgba(232,0,26,.35)}
 .mc-meta{display:flex;align-items:center;gap:8px;padding:7px 13px;border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text2)}
@@ -183,6 +190,8 @@ img{display:block}
 .mc-foot{padding:7px 13px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .vod-btn{display:flex;align-items:center;gap:5px;color:var(--red);font-size:.74rem;font-weight:700}
 .mc-badge{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:3px}
+.mc-goals{font-size:.68rem;color:var(--text3);margin-left:auto}
+.mc-schedule{font-size:.68rem;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:4px}
 .mc-badge.played{background:rgba(0,200,100,.1);color:#0c8}
 .mc-badge.sched{background:rgba(255,255,255,.05);color:var(--text2)}
 .mc-expand-btn{background:none;border:none;color:var(--text2);font-size:.74rem;font-weight:600;padding:0;transition:color .2s}
@@ -251,6 +260,9 @@ img{display:block}
 .ge-sep{font-size:1rem;color:var(--text3);font-weight:700}
 .ge-goals{margin-left:auto;font-size:.72rem;color:var(--text2)}
 
+.btn-cal{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:3px 7px;border-radius:5px;font-size:.8rem;transition:all .2s}
+.btn-cal:hover{border-color:var(--rl-blue);color:var(--text)}
+
 /* Calendar admin */
 .cal-box{max-width:560px}
 .cal-info{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;font-size:.83rem;color:var(--text2);line-height:1.6}
@@ -276,6 +288,19 @@ img{display:block}
 .hstat-lbl{font-size:.6rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-top:4px}
 @media(max-width:760px){.hero{padding:22px 18px}.hero-title{font-size:1.6rem}.hero-stats{width:100%}.hstat{flex:1;padding:10px}.hstat-val{font-size:1.1rem}}
 @media(max-width:420px){.hero-stats{display:grid;grid-template-columns:repeat(3,1fr)}}
+
+.acc-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+@media(max-width:600px){.acc-cards{grid-template-columns:1fr}}
+.acc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.acc-card-hdr{background:var(--bg3);padding:9px 14px;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border)}
+.acc-match-row{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.78rem}
+.acc-match-row:last-child{border-bottom:none}
+.amr-team{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amr-team.away{text-align:right}
+.amr-team.amr-win{color:var(--text)}
+.amr-team:not(.amr-win){color:var(--text2)}
+.amr-score{font-weight:800;font-size:.9rem;text-align:center;white-space:nowrap}
+.amr-goals{font-size:.66rem;color:var(--text3);white-space:nowrap}
 
 /* ── WEEK SECTION HEADER (résultats) ── */
 .week-section{margin-bottom:28px}
@@ -342,7 +367,7 @@ img{display:block}
           <p class="hero-sub">La ligue Rocket League compétitive francophone Springs E-Sport</p>
         </div>
         <div class="hero-stats">
-          <div class="hstat"><span class="hstat-val">32</span><span class="hstat-lbl">Équipes</span></div>
+          <div class="hstat"><span class="hstat-val" data-stat="teams">32</span><span class="hstat-lbl">Équipes</span></div>
           <div class="hstat"><span class="hstat-val">2</span><span class="hstat-lbl">Poules</span></div>
           <div class="hstat"><span class="hstat-val">5</span><span class="hstat-lbl">Semaines</span></div>
           <div class="hstat"><span class="hstat-val">BO7</span><span class="hstat-lbl">Format</span></div>
@@ -367,6 +392,16 @@ img{display:block}
           <div class="info-row"><span class="info-lbl" id="lbl-lan">LAN</span><span class="info-val">Top 8 × 2 poules</span></div>
           <div class="info-row"><span class="info-lbl" id="lbl-pts">Points</span><span class="info-val">V=3 + 0.1/manche</span></div>
         </div>
+      </div>
+    </div>
+    <div class="acc-cards">
+      <div class="acc-card">
+        <div class="acc-card-hdr">Derniers résultats</div>
+        <div id="acc-recent"><div class="loading"></div></div>
+      </div>
+      <div class="acc-card">
+        <div class="acc-card-hdr" id="acc-upcoming-title">À venir</div>
+        <div id="acc-upcoming"><div class="loading"></div></div>
       </div>
     </div>
     <div class="stitle" id="lbl-preview">Classement — Aperçu</div>
@@ -581,7 +616,7 @@ let lang = 'fr';
 let curTab = 'accueil';
 let isAdmin = false;
 let curUser = null;
-let sPool = 1, tPool = 1, rPool = 1, rWeek = 'all';
+let gPool = 1, rWeek = 'all';
 let rTeam = '';
 let admSec = 'equipes';
 let editTeamId = null, editPlayerId = null;
@@ -657,9 +692,21 @@ window.goTab = function(tab) {
 
 async function loadTab(tab) {
   if (tab==='accueil')       { await loadAccueil(); }
-  else if (tab==='classement')   { await loadStandings(sPool); }
-  else if (tab==='equipes')      { await loadTeams(tPool); }
-  else if (tab==='resultats')    { initResultsWeekTabs(); await loadResults(); }
+  else if (tab==='classement')   { await loadStandings(gPool); }
+  else if (tab==='equipes')      { await loadTeams(gPool); }
+  else if (tab==='resultats')    {
+    initResultsWeekTabs();
+    if (rWeek === 'all') {
+      const playedWeeks = [...new Set(Object.values(matchesMap).filter(m=>m.status==='played').map(m=>m.week))];
+      if (playedWeeks.length) {
+        rWeek = Math.max(...playedWeeks);
+        document.querySelectorAll('.wbtn').forEach(b=>b.classList.remove('active'));
+        document.getElementById('rw-'+rWeek)?.classList.add('active');
+        document.getElementById('rw-all')?.classList.remove('active');
+      }
+    }
+    await loadResults();
+  }
   else if (tab==='admin')        { await loadAdm(admSec); }
 }
 
@@ -700,7 +747,7 @@ function calcPts(own, opp) {
 function buildStandings(pool) {
   const teams = Object.values(teamsMap).filter(t=>t.pool===pool);
   const map = {};
-  teams.forEach(t => { map[t.id]={...t,played:0,wins:0,losses:0,pts:0,gw:0,gl:0}; });
+  teams.forEach(t => { map[t.id]={...t,played:0,wins:0,losses:0,pts:0,gw:0,gl:0,form:[]}; });
   Object.values(matchesMap).forEach(m => {
     if (m.pool!==pool||m.status!=='played') return;
     const h=map[m.homeTeamId], a=map[m.awayTeamId];
@@ -717,6 +764,8 @@ function buildStandings(pool) {
     h.pts=Math.round((h.pts+hp)*100)/100;
     a.pts=Math.round((a.pts+ap)*100)/100;
     if(m.homeScore>m.awayScore){h.wins++;a.losses++;}else{a.wins++;h.losses++;}
+    h.form.push(m.homeScore>m.awayScore?'W':'L');
+    a.form.push(m.awayScore>m.homeScore?'W':'L');
   });
   return Object.values(map).sort((a,b)=>{
     if(b.pts!==a.pts) return b.pts-a.pts;
@@ -735,6 +784,57 @@ async function loadAccueil() {
     te.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${TWITCH}&parent=${location.hostname}" allowfullscreen scrolling="no"></iframe>`;
   }
   await fetchAll();
+
+  // Recent results
+  const recentPlayed = Object.values(matchesMap)
+    .filter(m=>m.status==='played')
+    .sort((a,b)=>(b.scheduledAt||'')>(a.scheduledAt||'')?1:-1||(b.week-a.week)||(b.id>a.id?-1:1))
+    .slice(0,4);
+
+  // Upcoming matches
+  const allWeeks = [...new Set(Object.values(matchesMap).map(m=>m.week))].sort((a,b)=>a-b);
+  const playedWeeks = [...new Set(Object.values(matchesMap).filter(m=>m.status==='played').map(m=>m.week))];
+  const nextWeek = allWeeks.find(w=>!playedWeeks.includes(w)) || allWeeks[allWeeks.length-1];
+  const upcoming = Object.values(matchesMap).filter(m=>m.status!=='played'&&m.week===nextWeek).slice(0,6);
+
+  const el_recent = document.getElementById('acc-recent');
+  const el_upcoming = document.getElementById('acc-upcoming');
+
+  if (el_recent) {
+    el_recent.innerHTML = recentPlayed.length ? recentPlayed.map(m=>{
+      const ht=teamsMap[m.homeTeamId]||{name:'?'}, at=teamsMap[m.awayTeamId]||{name:'?'};
+      const hg = m.games?m.games.reduce((s,g)=>s+(g.homeGoals||0),0):0;
+      const ag = m.games?m.games.reduce((s,g)=>s+(g.awayGoals||0),0):0;
+      return `<div class="acc-match-row">
+        <span class="amr-team ${m.homeScore>m.awayScore?'amr-win':''}">${esc(ht.name)}</span>
+        <span class="amr-score">${m.homeScore} – ${m.awayScore}</span>
+        <span class="amr-team away ${m.awayScore>m.homeScore?'amr-win':''}">${esc(at.name)}</span>
+        <span class="amr-goals">${hg}–${ag} buts</span>
+      </div>`;
+    }).join('') : `<div class="empty" style="padding:12px">Aucun résultat pour l'instant</div>`;
+  }
+
+  if (el_upcoming) {
+    el_upcoming.innerHTML = upcoming.length ? upcoming.map(m=>{
+      const ht=teamsMap[m.homeTeamId]||{name:'?'}, at=teamsMap[m.awayTeamId]||{name:'?'};
+      const sched = m.scheduledAt ? formatSchedule(m.scheduledAt) : null;
+      return `<div class="acc-match-row">
+        <span class="amr-team">${esc(ht.name)}</span>
+        <span class="amr-score" style="font-size:.78rem;color:var(--text2)">${sched||'vs'}</span>
+        <span class="amr-team away">${esc(at.name)}</span>
+        <span class="amr-goals"></span>
+      </div>`;
+    }).join('') : `<div class="empty" style="padding:12px">Pas de matchs à venir</div>`;
+  }
+
+  const titleEl = document.getElementById('acc-upcoming-title');
+  if (titleEl && nextWeek) titleEl.textContent = `Semaine ${nextWeek} — À venir`;
+
+  // Update hero stats dynamically
+  const totalTeams = Object.values(teamsMap).length;
+  const hstatTeams = document.querySelector('.hstat-val[data-stat="teams"]');
+  if (hstatTeams) hstatTeams.textContent = totalTeams;
+
   [1,2].forEach(pool => {
     const rows = buildStandings(pool).slice(0,8);
     const el = document.getElementById('prev'+pool);
@@ -755,12 +855,14 @@ async function loadAccueil() {
 // ════════════════════════════════════════════════
 // TAB: CLASSEMENT
 // ════════════════════════════════════════════════
-window.switchSP = async function(p) {
-  sPool=p;
-  document.getElementById('sp1').classList.toggle('active',p===1);
-  document.getElementById('sp2').classList.toggle('active',p===2);
-  await loadStandings(p);
-};
+function setGlobalPool(p) {
+  gPool = p;
+  ['sp1','sp2','tp1','tp2','rp1','rp2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', el.id.endsWith(String(p)));
+  });
+}
+window.switchSP = async function(p) { setGlobalPool(p); await loadStandings(p); };
 
 async function loadStandings(pool) {
   const wrap = document.getElementById('standings-wrap');
@@ -768,7 +870,7 @@ async function loadStandings(pool) {
   await fetchAll();
   const rows = buildStandings(pool);
   if (!rows.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
-  wrap.innerHTML = `<div class="stbl-wrap"><table class="stbl">
+  wrap.innerHTML = `<div class="stbl-wrap stbl-fade"><table class="stbl">
     <thead><tr>
       <th>${t('col_rank')}</th><th>${t('col_team')}</th>
       <th title="Matchs joués">${t('col_p')}</th>
@@ -778,6 +880,7 @@ async function loadStandings(pool) {
       <th title="Manches gagnées">${t('col_gw')}</th>
       <th title="Manches perdues">${t('col_gl')}</th>
       <th title="Différentiel manches">${t('col_diff')}</th>
+      <th>Forme</th>
     </tr></thead>
     <tbody>${rows.map((t2,i)=>{
       const rank=i+1;
@@ -785,14 +888,15 @@ async function loadStandings(pool) {
       const diff=t2.gw-t2.gl;
       const inLan=rank<=8&&t2.played>0;
       const lan=inLan?`<span class="lan-badge">${t('lan_q')}</span>`:'';
-      const sep=rank===8&&rows.length>8?`<tr class="stbl-sep"><td colspan="9"></td></tr>`:'';
-      return `<tr class="${inLan?'top8':''}">
+      const sep=rank===8&&rows.length>8?`<tr class="stbl-sep"><td colspan="10"></td></tr>`:'';
+      return `<tr class="${inLan?'top8':''}" onclick="openTeamModal('${t2.id}')" style="cursor:pointer">
         <td class="rk">${rank}</td>
         <td><div class="t-cell">${logo}<span><div class="tname">${esc(t2.name)} ${lan}</div><div class="ttag">${esc(t2.tag||'')}</div></span></div></td>
         <td>${t2.played}</td><td>${t2.wins}</td><td>${t2.losses}</td>
         <td class="pts-cell">${t2.pts.toFixed(1)}</td>
         <td>${t2.gw}</td><td>${t2.gl}</td>
         <td style="color:${diff>0?'#0c8':diff<0?'#ef4444':''}">${diff>0?'+':''}${diff}</td>
+        <td>${(t2.form.slice(-5).map(r=>`<span class="form-dot ${r==='W'?'fw':'fl'}">${r}</span>`).join(''))|| '<span style="color:var(--text3);font-size:.72rem">—</span>'}</td>
       </tr>${sep}`;
     }).join('')}</tbody>
   </table></div>`;
@@ -801,12 +905,7 @@ async function loadStandings(pool) {
 // ════════════════════════════════════════════════
 // TAB: ÉQUIPES
 // ════════════════════════════════════════════════
-window.switchTP = async function(p) {
-  tPool=p;
-  document.getElementById('tp1').classList.toggle('active',p===1);
-  document.getElementById('tp2').classList.toggle('active',p===2);
-  await loadTeams(p);
-};
+window.switchTP = async function(p) { setGlobalPool(p); await loadTeams(p); };
 
 async function loadTeams(pool) {
   const wrap = document.getElementById('teams-wrap');
@@ -815,15 +914,21 @@ async function loadTeams(pool) {
   const teams = Object.values(teamsMap).filter(t=>t.pool===pool)
     .sort((a,b)=>a.name.localeCompare(b.name));
   if (!teams.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
+  const standings = buildStandings(pool);
+  const rankMap = {};
+  standings.forEach((t,i) => { rankMap[t.id] = i+1; });
   wrap.innerHTML = `<div class="teams-grid">${teams.map(team=>{
     const pCount = Object.values(playersMap).filter(p=>p.teamId===team.id).length;
     const logoEl = team.logoUrl
       ? `<img src="${esc(team.logoUrl)}" alt="${esc(team.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const placeholder = `<div class="tc-logo-placeholder" style="${team.logoUrl?'display:none':''}">?</div>`;
+    const rank = rankMap[team.id];
+    const rankBadge = rank ? `<span class="tc-rank">#${rank}</span>` : '';
     return `<div class="team-card" onclick="openTeamModal('${team.id}')">
       <div class="tc-logo-area">
         ${logoEl}${placeholder}
+        ${rankBadge}
         <span class="tc-pool">P${team.pool}</span>
       </div>
       <div class="tc-body">
@@ -897,14 +1002,7 @@ function initResultsWeekTabs() {
   el.innerHTML = btns.join('');
 }
 
-window.switchRP = async function(p) {
-  rPool=p;
-  rTeam='';
-  document.getElementById('rp1').classList.toggle('active',p===1);
-  document.getElementById('rp2').classList.toggle('active',p===2);
-  updateTeamFilter();
-  await loadResults();
-};
+window.switchRP = async function(p) { setGlobalPool(p); rTeam=''; updateTeamFilter(); await loadResults(); };
 window.switchRW = async function(w) {
   rWeek=w;
   document.querySelectorAll('.wbtn').forEach(b=>b.classList.remove('active'));
@@ -920,7 +1018,7 @@ window.switchRTeam = async function(teamId) {
 function updateTeamFilter() {
   const sel = document.getElementById('r-team-filter');
   if (!sel) return;
-  const teams = Object.values(teamsMap).filter(t=>t.pool===rPool).sort((a,b)=>a.name.localeCompare(b.name));
+  const teams = Object.values(teamsMap).filter(t=>t.pool===gPool).sort((a,b)=>a.name.localeCompare(b.name));
   sel.innerHTML = `<option value="">Toutes les équipes</option>` +
     teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
   sel.value = rTeam;
@@ -931,7 +1029,7 @@ async function loadResults() {
   wrap.innerHTML = '<div class="loading"></div>';
   await fetchAll();
   updateTeamFilter();
-  let matches = Object.values(matchesMap).filter(m=>m.pool===rPool);
+  let matches = Object.values(matchesMap).filter(m=>m.pool===gPool);
   if (rWeek!=='all') matches = matches.filter(m=>m.week===rWeek);
   if (rTeam) matches = matches.filter(m=>m.homeTeamId===rTeam||m.awayTeamId===rTeam);
   matches.sort((a,b)=>{
@@ -959,16 +1057,36 @@ async function loadResults() {
   }
 }
 
+function formatSchedule(iso) {
+  const d = new Date(iso);
+  const now = Date.now();
+  const diff = d - now;
+  const days = Math.floor(diff / 86400000);
+  const time = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  if (diff < 0) return d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + ' ' + time;
+  if (days === 0) return `Aujourd'hui · ${time}`;
+  if (days === 1) return `Demain · ${time}`;
+  if (days < 7) return d.toLocaleDateString('fr-FR',{weekday:'long'}) + ` · ${time}`;
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'}) + ` · ${time}`;
+}
+
 function renderMatchCard(m) {
   const ht = teamsMap[m.homeTeamId]||{name:'?',logoUrl:''};
   const at = teamsMap[m.awayTeamId]||{name:'?',logoUrl:''};
   const played = m.status==='played';
+  const scheduleInfo = !played && m.scheduledAt ? formatSchedule(m.scheduledAt) : null;
   const score = played
     ? `<div class="mc-score-val"><span>${m.homeScore}</span><span class="sep"> - </span><span>${m.awayScore}</span></div>`
     : `<div class="mc-pending">vs</div>`;
   const badge = played
     ? `<span class="mc-badge played">${t('played')}</span>`
     : `<span class="mc-badge sched">${t('sched')}</span>`;
+  let goalSummary = '';
+  if (played && m.games && m.games.length) {
+    const hg = m.games.reduce((s,g)=>s+(g.homeGoals||0),0);
+    const ag = m.games.reduce((s,g)=>s+(g.awayGoals||0),0);
+    goalSummary = `<span class="mc-goals">${hg} — ${ag} buts</span>`;
+  }
   const vod = played&&m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
   const statsBtn = played ? `<button class="mc-expand-btn" onclick="toggleStats('${m.id}')">Manches ▾</button>` : `<span></span>`;
 
@@ -1004,6 +1122,8 @@ function renderMatchCard(m) {
     <div class="mc-meta">
       <span>S${m.week} · Gr.${m.group} · Poule ${m.pool}</span>
       ${badge}
+      ${goalSummary}
+      ${scheduleInfo ? `<span class="mc-schedule">📅 ${scheduleInfo}</span>` : ''}
     </div>
     <div class="mc-body">
       <div class="mc-team">
@@ -1331,15 +1451,17 @@ function _renderAdmMatches() {
     const badge = played
       ? `<span style="color:#22c55e;font-size:.8rem">✓ ${m.homeScore}-${m.awayScore}</span>`
       : `<span style="color:#f59e0b;font-size:.8rem">⏳ À saisir</span>`;
+    const schedDisp = !played && m.scheduledAt ? ` · 📅 ${formatSchedule(m.scheduledAt)}` : '';
     return `<div class="adm-item">
       <div class="adm-item-l">
         <div>
           <div class="adm-item-name">${esc(ht.name)} <span style="color:var(--text2)">vs</span> ${esc(at.name)}</div>
-          <div class="adm-item-meta">P${m.pool} · S${m.week} · Gr.${m.group||'?'} &nbsp;${badge}</div>
+          <div class="adm-item-meta">P${m.pool} · S${m.week} · Gr.${m.group||'?'} &nbsp;${badge}${schedDisp}</div>
         </div>
       </div>
       <div class="adm-item-r">
         <button class="btn-res" onclick="openMatchEntry('${m.id}')">${played?'✏':'+ Saisir'}</button>
+        ${!played?`<button class="btn-cal" onclick="openScheduleMatch('${m.id}')" title="Planifier">📅</button>`:''}
         ${played?`<button class="btn-d" title="Réinitialiser" onclick="resetMatch('${m.id}')">↺</button>`:''}
       </div>
     </div>`;
@@ -1379,6 +1501,35 @@ async function admResults() {
 }
 
 window.admFilterMatch = function() { _renderAdmMatches(); };
+
+window.openScheduleMatch = function(matchId) {
+  const m = matchesMap[matchId]; if(!m) return;
+  const ht = teamsMap[m.homeTeamId]||{name:'?'};
+  const at = teamsMap[m.awayTeamId]||{name:'?'};
+  const cur = m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : '';
+  document.getElementById('mo-match-title').textContent = `📅 ${ht.name} vs ${at.name}`;
+  document.getElementById('mo-match-body').innerHTML = `
+    <div class="fg" style="margin-bottom:14px">
+      <label>Date et heure du match</label>
+      <input class="finput" id="sc-date" type="datetime-local" value="${cur}">
+    </div>
+    <div class="f-actions">
+      <button class="btn-p" onclick="saveSchedule('${matchId}')">💾 Enregistrer</button>
+      <button class="btn-s" onclick="closeModal('mo-match')">Annuler</button>
+    </div>`;
+  openModal('mo-match');
+};
+
+window.saveSchedule = async function(matchId) {
+  const val = document.getElementById('sc-date').value;
+  if (!val) { toast('Date requise','err'); return; }
+  try {
+    await updateDoc(doc(db,'rl_matches',matchId),{scheduledAt: new Date(val).toISOString()});
+    toast('Date enregistrée','ok');
+    closeModal('mo-match');
+    await admResults();
+  } catch(e){toast(t('err_save'),'err');}
+};
 
 window.resetMatch = async function(id) {
   if(!confirm('Remettre ce match à zéro ?')) return;
@@ -1424,6 +1575,10 @@ window.openMatchEntry = async function(matchId) {
       <div id="game-rows"></div>
       <button class="btn-add-game" onclick="addGameRow()">+ Manche</button>
       <div class="ge-total" id="ge-total"></div>
+    </div>
+    <div class="fg" style="margin:14px 0 0">
+      <label>📅 Date et heure du match</label>
+      <input class="finput" id="si-date" type="datetime-local" value="${m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : ''}">
     </div>
     <div class="fg" style="margin:14px 0 0">
       <label>${t('f_vod')}</label>
@@ -1518,8 +1673,9 @@ window.saveMatchResult = async function(matchId) {
     else if ((g.awayGoals||0) > (g.homeGoals||0)) awayScore++;
   });
   const vod = document.getElementById('si-vod').value.trim();
+  const dateVal = document.getElementById('si-date')?.value;
   try {
-    await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod});
+    await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod, ...(dateVal?{scheduledAt:new Date(dateVal).toISOString()}:{})});
     toast(t('saved'),'ok');
     closeModal('mo-match');
     await admResults();
