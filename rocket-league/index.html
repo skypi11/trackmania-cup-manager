@@ -189,31 +189,14 @@ img{display:block}
 .mc-expand-btn:hover{color:var(--text)}
 .mc-stats{display:none;padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
 .mc-stats.open{display:block}
-.stats-mini-section{margin-bottom:12px}
-.stats-mini-lbl{font-size:.68rem;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
-.mini-tbl{width:100%;border-collapse:collapse;font-size:.76rem;table-layout:fixed}
-.mini-tbl th{color:var(--text2);font-size:.65rem;font-weight:700;padding:3px 6px;text-align:right;border-bottom:1px solid var(--border)}
-.mini-tbl th:first-child{text-align:left;width:auto}
-.mini-tbl th:not(:first-child){width:40px}
-.mini-tbl td{padding:4px 6px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mini-tbl td:first-child{text-align:left;font-weight:600}
-.mini-tbl tr:last-child td{border-bottom:none}
-.mvp-chip{font-size:.6rem;background:#f59e0b;color:#000;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:4px}
-
-/* ── STATS ── */
-.scat-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.scat-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:5px 15px;border-radius:16px;font-size:.8rem;font-weight:700;transition:all .2s}
-.scat-btn.active{background:var(--red);border-color:var(--red);color:#fff}
-.stats-tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.stats-tbl{width:100%;border-collapse:collapse}
-.stats-tbl th{background:var(--bg3);padding:9px 13px;text-align:left;font-size:.68rem;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:uppercase}
-.stats-tbl td{padding:9px 13px;border-bottom:1px solid var(--border);font-size:.83rem}
-.stats-tbl tr:last-child td{border-bottom:none}
-.stats-tbl tr:hover td{background:rgba(255,255,255,.02)}
-.sval{font-weight:700;color:var(--red);font-size:.95rem}
-.pcell{display:flex;align-items:center;gap:10px}
-.p-av{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
-.medal{font-size:.95rem}
+/* ── GAME RESULTS DISPLAY ── */
+.games-detail{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.game-result-row{display:flex;align-items:center;gap:8px;font-size:.78rem}
+.gr-num{color:var(--text3);font-size:.68rem;font-weight:700;width:24px}
+.gr-score{font-weight:800;font-size:.88rem;color:var(--text3);width:18px;text-align:center}
+.gr-score.gr-win{color:var(--text)}
+.gr-dash{color:var(--text3);font-size:.8rem}
+.games-total{font-size:.72rem;color:var(--text2);padding-top:6px;border-top:1px solid var(--border)}
 
 /* ── ADMIN ── */
 .adm-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -250,25 +233,23 @@ img{display:block}
 .adm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .adm-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:.8rem}
 
-/* Match score entry modal */
-.score-entry{display:grid;grid-template-columns:1fr 60px 1fr;gap:16px;align-items:center;background:var(--bg3);border-radius:var(--r);padding:16px;margin-bottom:14px}
-.se-team{text-align:center}
-.se-name{font-weight:700;font-size:.88rem;margin-bottom:8px}
-.se-vs{font-size:1.2rem;font-weight:900;color:var(--text3);text-align:center}
-.score-inp{width:64px;background:var(--bg2);border:2px solid var(--border);color:var(--text);padding:8px;border-radius:7px;font-size:1.6rem;font-weight:900;text-align:center}
-.score-inp:focus{outline:none;border-color:var(--red)}
-.team-stats-sect{margin-bottom:14px}
-.tss-hdr{font-size:.76rem;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px}
-.siform{width:100%;border-collapse:collapse}
-.siform th{font-size:.66rem;color:var(--text2);font-weight:700;padding:5px 4px;text-align:center;border-bottom:1px solid var(--border);letter-spacing:.04em}
-.siform th:first-child{text-align:left;min-width:110px}
-.siform td{padding:3px 3px;border-bottom:1px solid rgba(255,255,255,.04);text-align:center}
-.siform td:first-child{text-align:left;font-size:.8rem;font-weight:600;padding-left:0}
-.siform tr:last-child td{border-bottom:none}
-.si-num{width:44px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:.8rem;text-align:center}
-.si-num:focus{outline:none;border-color:var(--red)}
-.si-sc{width:60px}
-.mvp-rb{width:15px;height:15px;accent-color:#f59e0b;cursor:pointer}
+/* ── GAME ENTRY ── */
+.games-entry-wrap{margin-bottom:8px}
+.games-entry-hdr{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-bottom:10px;font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.game-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;background:var(--bg3);border-radius:6px;padding:6px 10px}
+.game-row-num{font-size:.7rem;font-weight:700;color:var(--text3);width:24px;flex-shrink:0}
+.game-row-sep{color:var(--text3);font-weight:700;flex-shrink:0}
+.score-inp.sm{width:54px;text-align:center;font-size:1rem;font-weight:800;padding:4px 6px;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:6px}
+.score-inp.sm:focus{outline:none;border-color:var(--rl-blue)}
+.btn-rm-game{background:none;border:none;color:var(--text3);font-size:1rem;padding:0 4px;transition:color .2s;margin-left:auto}
+.btn-rm-game:hover{color:var(--red)}
+.btn-add-game{background:var(--bg3);border:1px dashed var(--border);color:var(--text2);width:100%;padding:7px;border-radius:6px;font-size:.8rem;font-weight:700;margin-top:4px;transition:all .2s}
+.btn-add-game:hover{border-color:var(--rl-blue);color:var(--text)}
+.ge-total{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:var(--bg3);border-radius:6px;font-size:.82rem}
+.ge-score{font-size:1.2rem;font-weight:900;color:var(--text3);min-width:28px;text-align:center}
+.ge-score.win{color:var(--text)}
+.ge-sep{font-size:1rem;color:var(--text3);font-weight:700}
+.ge-goals{margin-left:auto;font-size:.72rem;color:var(--text2)}
 
 /* Calendar admin */
 .cal-box{max-width:560px}
@@ -346,7 +327,6 @@ img{display:block}
   <button class="nav-btn" onclick="goTab('classement')" id="nav-classement">Classement</button>
   <button class="nav-btn" onclick="goTab('equipes')" id="nav-equipes">Équipes</button>
   <button class="nav-btn" onclick="goTab('resultats')" id="nav-resultats">Résultats</button>
-  <button class="nav-btn" onclick="goTab('statistiques')" id="nav-statistiques">Statistiques</button>
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
@@ -425,12 +405,6 @@ img{display:block}
       <select class="adm-sel" id="r-team-filter" onchange="switchRTeam(this.value)" style="margin-left:auto"><option value="">Toutes les équipes</option></select>
     </div>
     <div id="results-wrap"><div class="loading"></div></div>
-  </section>
-
-  <!-- STATISTIQUES -->
-  <section class="tab" id="tab-statistiques">
-    <div class="scat-nav" id="scat-nav"></div>
-    <div id="stats-wrap"><div class="loading"></div></div>
   </section>
 
   <!-- ADMIN -->
@@ -523,7 +497,7 @@ img{display:block}
 import { db, auth, app } from '../shared/firebase-config.js';
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, query, where, serverTimestamp, writeBatch, getDoc, limit
+  doc, serverTimestamp, writeBatch, getDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
@@ -559,24 +533,14 @@ const SCHEDULE = {
 
 const FLAGS = {FR:'🇫🇷',BE:'🇧🇪',CH:'🇨🇭',DE:'🇩🇪',ES:'🇪🇸',IT:'🇮🇹',NL:'🇳🇱',PT:'🇵🇹',GB:'🇬🇧',PL:'🇵🇱',SE:'🇸🇪',NO:'🇳🇴',DK:'🇩🇰',FI:'🇫🇮',US:'🇺🇸',CA:'🇨🇦',LU:'🇱🇺',MA:'🇲🇦',DZ:'🇩🇿',TN:'🇹🇳',RO:'🇷🇴',TR:'🇹🇷',CZ:'🇨🇿',HU:'🇭🇺',SK:'🇸🇰',RS:'🇷🇸'};
 
-const STAT_CATS = [
-  {k:'goals',  fr:'Buts',    en:'Goals'},
-  {k:'assists',fr:'Passes',  en:'Assists'},
-  {k:'saves',  fr:'Arrêts',  en:'Saves'},
-  {k:'shots',  fr:'Tirs',    en:'Shots'},
-  {k:'score',  fr:'Score',   en:'Score'},
-  {k:'mvp',    fr:'MVP',     en:'MVP'}
-];
-
 const I18N = {
   fr:{
     login:'Connexion',logout:'Déconnexion',
-    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Résultats',nav_statistiques:'Statistiques',
+    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Résultats',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Compétition',lbl_fmt:'Format',lbl_pools:'Poules',lbl_weeks:'Semaines',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Classement — Aperçu',
     col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'M+',col_gl:'M-',col_diff:'Diff',
-    col_player:'Joueur',col_team_s:'Équipe',col_total:'Total',col_avg:'Moy.',
     week:'Sem.',all:'Tout',played:'Joués',sched:'À venir',
-    no_match:'Aucun match pour ce filtre.',no_team:'Aucune équipe.',no_stat:'Pas encore de statistiques.',
+    no_match:'Aucun match pour ce filtre.',no_team:'Aucune équipe.',
     lan_q:'LAN',roster:'Roster',
     adm_t:'Équipes',adm_p:'Joueurs',adm_r:'Résultats',adm_c:'Calendrier',
     f_name:'Nom équipe',f_tag:'Tag (ex: EXA)',f_logo:'URL Logo',f_pool:'Poule',
@@ -591,12 +555,11 @@ const I18N = {
   },
   en:{
     login:'Login',logout:'Logout',
-    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Results',nav_statistiques:'Statistics',
+    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Results',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Competition',lbl_fmt:'Format',lbl_pools:'Pools',lbl_weeks:'Weeks',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Standings — Overview',
     col_rank:'#',col_team:'Team',col_p:'P',col_w:'W',col_l:'L',col_pts:'Pts',col_gw:'GW',col_gl:'GL',col_diff:'Diff',
-    col_player:'Player',col_team_s:'Team',col_total:'Total',col_avg:'Avg',
     week:'Wk',all:'All',played:'Played',sched:'Upcoming',
-    no_match:'No matches for this filter.',no_team:'No teams found.',no_stat:'No statistics yet.',
+    no_match:'No matches for this filter.',no_team:'No teams found.',
     lan_q:'LAN',roster:'Roster',
     adm_t:'Teams',adm_p:'Players',adm_r:'Results',adm_c:'Schedule',
     f_name:'Team name',f_tag:'Tag (e.g. EXA)',f_logo:'Logo URL',f_pool:'Pool',
@@ -620,7 +583,6 @@ let isAdmin = false;
 let curUser = null;
 let sPool = 1, tPool = 1, rPool = 1, rWeek = 'all';
 let rTeam = '';
-let sCat = 'goals';
 let admSec = 'equipes';
 let editTeamId = null, editPlayerId = null;
 let admMatchPool = 1, admMatchWeek = 1;
@@ -629,7 +591,6 @@ let admMatchPool = 1, admMatchWeek = 1;
 let teamsMap = {};   // id → team
 let playersMap = {}; // id → player
 let matchesMap = {}; // id → match
-let statsArr = [];   // match stats
 
 // ════════════════════════════════════════════════
 // i18n
@@ -646,7 +607,7 @@ window.setLang = function(l) {
 
 function applyI18n() {
   document.querySelector('#btn-auth').textContent = curUser ? (curUser.displayName?.split(' ')[0] || t('logout')) : t('login');
-  const keys = ['accueil','classement','equipes','resultats','statistiques'];
+  const keys = ['accueil','classement','equipes','resultats'];
   keys.forEach(k => { const el = document.getElementById('nav-'+k); if(el) el.textContent = t('nav_'+k); });
   const map = {
     'lbl-live':'lbl_live','lbl-compet':'lbl_compet','lbl-fmt':'lbl_fmt','lbl-pools':'lbl_pools',
@@ -699,7 +660,6 @@ async function loadTab(tab) {
   else if (tab==='classement')   { await loadStandings(sPool); }
   else if (tab==='equipes')      { await loadTeams(tPool); }
   else if (tab==='resultats')    { initResultsWeekTabs(); await loadResults(); }
-  else if (tab==='statistiques') { initStatsCatNav(); await loadStats(sCat); }
   else if (tab==='admin')        { await loadAdm(admSec); }
 }
 
@@ -707,16 +667,14 @@ async function loadTab(tab) {
 // DATA FETCHERS
 // ════════════════════════════════════════════════
 async function fetchAll() {
-  const [ts, ps, ms, ss] = await Promise.all([
+  const [ts, ps, ms] = await Promise.all([
     getDocs(collection(db,'rl_teams')),
     getDocs(collection(db,'rl_players')),
-    getDocs(collection(db,'rl_matches')),
-    getDocs(collection(db,'rl_match_stats'))
+    getDocs(collection(db,'rl_matches'))
   ]);
   teamsMap = {}; ts.forEach(d => { teamsMap[d.id]={id:d.id,...d.data()}; });
   playersMap = {}; ps.forEach(d => { playersMap[d.id]={id:d.id,...d.data()}; });
   matchesMap = {}; ms.forEach(d => { matchesMap[d.id]={id:d.id,...d.data()}; });
-  statsArr = []; ss.forEach(d => { statsArr.push({id:d.id,...d.data()}); });
 }
 
 async function refreshTeams() {
@@ -731,11 +689,6 @@ async function refreshMatches() {
   const s = await getDocs(collection(db,'rl_matches'));
   matchesMap = {}; s.forEach(d => { matchesMap[d.id]={id:d.id,...d.data()}; });
 }
-async function refreshStats() {
-  const s = await getDocs(collection(db,'rl_match_stats'));
-  statsArr = []; s.forEach(d => { statsArr.push({id:d.id,...d.data()}); });
-}
-
 // ════════════════════════════════════════════════
 // STANDINGS LOGIC
 // ════════════════════════════════════════════════
@@ -753,8 +706,13 @@ function buildStandings(pool) {
     const h=map[m.homeTeamId], a=map[m.awayTeamId];
     if (!h||!a) return;
     h.played++; a.played++;
-    h.gw+=m.homeScore; h.gl+=m.awayScore;
-    a.gw+=m.awayScore; a.gl+=m.homeScore;
+    if (m.games && m.games.length) {
+      m.games.forEach(g => {
+        h.gw += (g.homeGoals||0); h.gl += (g.awayGoals||0);
+        a.gw += (g.awayGoals||0); a.gl += (g.homeGoals||0);
+      });
+    }
+    // wins/losses from homeScore/awayScore (still reliable)
     const hp=calcPts(m.homeScore,m.awayScore), ap=calcPts(m.awayScore,m.homeScore);
     h.pts=Math.round((h.pts+hp)*100)/100;
     a.pts=Math.round((a.pts+ap)*100)/100;
@@ -1012,27 +970,34 @@ function renderMatchCard(m) {
     ? `<span class="mc-badge played">${t('played')}</span>`
     : `<span class="mc-badge sched">${t('sched')}</span>`;
   const vod = played&&m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
-  const statsBtn = played ? `<button class="mc-expand-btn" onclick="toggleStats('${m.id}')">Stats ▾</button>` : `<span></span>`;
+  const statsBtn = played ? `<button class="mc-expand-btn" onclick="toggleStats('${m.id}')">Manches ▾</button>` : `<span></span>`;
 
-  // Build stats section
-  let statsHtml = '';
+  // Build game scores section
+  let gamesHtml = '';
   if (played) {
-    const mStats = statsArr.filter(s=>s.matchId===m.id);
-    const hStats = mStats.filter(s=>s.teamId===m.homeTeamId);
-    const aStats = mStats.filter(s=>s.teamId===m.awayTeamId);
-    const renderStatsRows = (rows) => rows.map(s=>{
-      const p = playersMap[s.playerId]||{};
-      return `<tr ${s.mvp?'class="mvp-row"':''}>
-        <td>${esc(p.pseudoRL||p.pseudoDiscord||'?')}${s.mvp?`<span class="mvp-chip">MVP</span>`:''}</td>
-        <td>${s.goals}</td><td>${s.assists}</td><td>${s.saves}</td><td>${s.shots}</td><td>${s.score||0}</td>
-      </tr>`;
-    }).join('');
-    const tblHead = `<tr><th style="text-align:left">Joueur</th><th>B</th><th>P</th><th>A</th><th>T</th><th>Sc</th></tr>`;
-    statsHtml = `<div class="mc-stats" id="stats-${m.id}">
-      ${hStats.length?`<div class="stats-mini-section"><div class="stats-mini-lbl">${esc(ht.name)}</div><table class="mini-tbl"><thead>${tblHead}</thead><tbody>${renderStatsRows(hStats)}</tbody></table></div>`:''}
-      ${aStats.length?`<div class="stats-mini-section"><div class="stats-mini-lbl">${esc(at.name)}</div><table class="mini-tbl"><thead>${tblHead}</thead><tbody>${renderStatsRows(aStats)}</tbody></table></div>`:''}
-      ${!hStats.length&&!aStats.length?`<div style="color:var(--text2);font-size:.8rem;padding:8px 0">Aucune statistique enregistrée.</div>`:''}
-    </div>`;
+    const games = m.games && m.games.length ? m.games : [];
+    if (games.length) {
+      const rows = games.map((g, i) => {
+        const hWin = (g.homeGoals||0) > (g.awayGoals||0);
+        const aWin = (g.awayGoals||0) > (g.homeGoals||0);
+        return `<div class="game-result-row">
+          <span class="gr-num">M${i+1}</span>
+          <span class="gr-score ${hWin?'gr-win':''}">${g.homeGoals||0}</span>
+          <span class="gr-dash">—</span>
+          <span class="gr-score ${aWin?'gr-win':''}">${g.awayGoals||0}</span>
+        </div>`;
+      }).join('');
+      const hTotalGoals = games.reduce((s,g)=>s+(g.homeGoals||0),0);
+      const aTotalGoals = games.reduce((s,g)=>s+(g.awayGoals||0),0);
+      gamesHtml = `<div class="mc-stats" id="stats-${m.id}">
+        <div class="games-detail">
+          ${rows}
+        </div>
+        <div class="games-total">Total buts : <strong>${hTotalGoals}</strong> — <strong>${aTotalGoals}</strong></div>
+      </div>`;
+    } else {
+      gamesHtml = `<div class="mc-stats" id="stats-${m.id}"><div style="color:var(--text2);font-size:.8rem;padding:4px 0">Détail des manches non disponible.</div></div>`;
+    }
   }
 
   return `<div class="match-card">
@@ -1055,7 +1020,7 @@ function renderMatchCard(m) {
       ${vod}
       ${statsBtn}
     </div>
-    ${statsHtml}
+    ${gamesHtml}
   </div>`;
 }
 
@@ -1063,76 +1028,6 @@ window.toggleStats = function(id) {
   const el = document.getElementById('stats-'+id);
   if (el) el.classList.toggle('open');
 };
-
-// ════════════════════════════════════════════════
-// TAB: STATISTIQUES
-// ════════════════════════════════════════════════
-function initStatsCatNav() {
-  const el = document.getElementById('scat-nav');
-  if (el.children.length) return;
-  el.innerHTML = STAT_CATS.map(c=>`
-    <button class="scat-btn${c.k===sCat?' active':''}" onclick="switchSCat('${c.k}')" id="sc-${c.k}">${lang==='fr'?c.fr:c.en}</button>
-  `).join('');
-}
-
-window.switchSCat = async function(cat) {
-  sCat=cat;
-  document.querySelectorAll('.scat-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('sc-'+cat)?.classList.add('active');
-  await loadStats(cat);
-};
-
-async function loadStats(cat) {
-  const wrap = document.getElementById('stats-wrap');
-  wrap.innerHTML = '<div class="loading"></div>';
-  await fetchAll();
-  if (!statsArr.length) { wrap.innerHTML=`<div class="empty">${t('no_stat')}</div>`; return; }
-
-  // Aggregate per player
-  const agg = {};
-  statsArr.forEach(s => {
-    if (!agg[s.playerId]) agg[s.playerId]={goals:0,assists:0,saves:0,shots:0,score:0,mvp:0,games:0};
-    agg[s.playerId].goals  += s.goals||0;
-    agg[s.playerId].assists+= s.assists||0;
-    agg[s.playerId].saves  += s.saves||0;
-    agg[s.playerId].shots  += s.shots||0;
-    agg[s.playerId].score  += s.score||0;
-    agg[s.playerId].mvp    += s.mvp?1:0;
-    agg[s.playerId].games  += 1;
-  });
-
-  const isMvp = cat==='mvp';
-  const isScore = cat==='score';
-  const rows = Object.entries(agg)
-    .map(([pid,v])=>({pid, val:isMvp?v.mvp:isScore?Math.round(v.score/v.games):v[cat], total:v[cat], games:v.games, ...v}))
-    .filter(r=>r.val>0)
-    .sort((a,b)=>b.val-a.val)
-    .slice(0,30);
-
-  if (!rows.length) { wrap.innerHTML=`<div class="empty">${t('no_stat')}</div>`; return; }
-
-  const catLabel = STAT_CATS.find(c=>c.k===cat)?.[lang==='fr'?'fr':'en']||cat;
-  const colLabel = isScore ? t('col_avg') : t('col_total');
-  wrap.innerHTML = `<div class="stats-tbl-wrap"><table class="stats-tbl">
-    <thead><tr>
-      <th>${t('col_rank')}</th><th>${t('col_player')}</th><th>${t('col_team_s')}</th>
-      <th>${colLabel} ${catLabel}</th><th>Matchs</th>
-    </tr></thead>
-    <tbody>${rows.map((r,i)=>{
-      const p = playersMap[r.pid]||{};
-      const team = teamsMap[p.teamId]||{};
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-      const av = p.photoUrl?`<img class="p-av" src="${p.photoUrl}" alt="" onerror="this.src=''">`:`<div class="p-av"></div>`;
-      return `<tr>
-        <td><span class="medal">${medal}</span>${!medal?i+1:''}</td>
-        <td><div class="pcell">${av}<div><div style="font-weight:600">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div><div style="font-size:.72rem;color:var(--text2)">${FLAGS[p.country]||''}</div></div></div></td>
-        <td style="color:var(--text2);font-size:.8rem">${esc(team.name||'—')}</td>
-        <td><span class="sval">${r.val}</span></td>
-        <td style="color:var(--text2)">${r.games}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
 
 // ════════════════════════════════════════════════
 // ADMIN
@@ -1488,97 +1383,147 @@ window.admFilterMatch = function() { _renderAdmMatches(); };
 window.resetMatch = async function(id) {
   if(!confirm('Remettre ce match à zéro ?')) return;
   try {
-    await updateDoc(doc(db,'rl_matches',id),{status:'scheduled',homeScore:null,awayScore:null,vodUrl:''});
-    // Delete stats
-    const toDelete=statsArr.filter(s=>s.matchId===id);
-    const batch=writeBatch(db);
-    toDelete.forEach(s=>batch.delete(doc(db,'rl_match_stats',s.id)));
-    await batch.commit();
+    await updateDoc(doc(db,'rl_matches',id),{status:'scheduled',homeScore:null,awayScore:null,games:[],vodUrl:''});
     toast('Match réinitialisé','ok');
     await admResults();
   } catch(e){toast(t('err_save'),'err');}
 };
 
 window.openMatchEntry = async function(matchId) {
-  const m=matchesMap[matchId]; if(!m) return;
-  const ht=teamsMap[m.homeTeamId]||{name:'?'};
-  const at=teamsMap[m.awayTeamId]||{name:'?'};
-  const hPlayers=Object.values(playersMap).filter(p=>p.teamId===m.homeTeamId);
-  const aPlayers=Object.values(playersMap).filter(p=>p.teamId===m.awayTeamId);
-  const existStats=statsArr.filter(s=>s.matchId===matchId);
+  const m = matchesMap[matchId]; if (!m) return;
+  const ht = teamsMap[m.homeTeamId]||{name:'?'};
+  const at = teamsMap[m.awayTeamId]||{name:'?'};
+  const existGames = (m.games && m.games.length) ? m.games : [];
 
-  const playerRow=(p,side)=>{
-    const ex=existStats.find(s=>s.playerId===p.id);
-    return `<tr>
-      <td>${esc(p.pseudoRL||p.pseudoDiscord||'?')}</td>
-      <td><input class="si-num" type="number" min="0" max="99" value="${ex?.goals||0}" data-pid="${p.id}" data-tid="${p.teamId}" data-f="goals"></td>
-      <td><input class="si-num" type="number" min="0" max="99" value="${ex?.assists||0}" data-pid="${p.id}" data-tid="${p.teamId}" data-f="assists"></td>
-      <td><input class="si-num" type="number" min="0" max="99" value="${ex?.saves||0}" data-pid="${p.id}" data-tid="${p.teamId}" data-f="saves"></td>
-      <td><input class="si-num" type="number" min="0" max="99" value="${ex?.shots||0}" data-pid="${p.id}" data-tid="${p.teamId}" data-f="shots"></td>
-      <td><input class="si-num si-sc" type="number" min="0" value="${ex?.score||0}" data-pid="${p.id}" data-tid="${p.teamId}" data-f="score"></td>
-      <td style="text-align:center"><input type="radio" class="mvp-rb" name="mvp" value="${p.id}" ${ex?.mvp?'checked':''}></td>
-    </tr>`;
+  const renderGameRows = () => {
+    const rows = document.getElementById('game-rows');
+    if (!rows) return;
+    const games = getGameRows();
+    rows.innerHTML = games.map((g, i) => `
+      <div class="game-row" data-idx="${i}">
+        <span class="game-row-num">M${i+1}</span>
+        <input class="score-inp sm" type="number" min="0" max="20" value="${g.homeGoals}" placeholder="0" data-side="home">
+        <span class="game-row-sep">—</span>
+        <input class="score-inp sm" type="number" min="0" max="20" value="${g.awayGoals}" placeholder="0" data-side="away">
+        <button class="btn-rm-game" onclick="removeGameRow(${i})" title="Supprimer">×</button>
+      </div>`).join('');
+    updateMatchScore();
   };
 
+  window._currentMatchGames = existGames.map(g => ({homeGoals: g.homeGoals||0, awayGoals: g.awayGoals||0}));
+  if (!window._currentMatchGames.length) window._currentMatchGames.push({homeGoals:0, awayGoals:0});
+
+  document.getElementById('mo-match-title').textContent = `${ht.name} vs ${at.name}`;
   document.getElementById('mo-match-body').innerHTML = `
-    <div class="score-entry">
-      <div class="se-team">
-        <div class="se-name">${esc(ht.name)}</div>
-        <input class="score-inp" id="si-home" type="number" min="0" max="7" value="${m.homeScore??''}" placeholder="0">
+    <div class="games-entry-wrap">
+      <div class="games-entry-hdr">
+        <span class="ge-team-name">${esc(ht.name)}</span>
+        <span></span>
+        <span class="ge-team-name" style="text-align:right">${esc(at.name)}</span>
       </div>
-      <div class="se-vs">VS</div>
-      <div class="se-team">
-        <div class="se-name">${esc(at.name)}</div>
-        <input class="score-inp" id="si-away" type="number" min="0" max="7" value="${m.awayScore??''}" placeholder="0">
-      </div>
+      <div id="game-rows"></div>
+      <button class="btn-add-game" onclick="addGameRow()">+ Manche</button>
+      <div class="ge-total" id="ge-total"></div>
     </div>
-    <div class="fg" style="margin-bottom:14px">
+    <div class="fg" style="margin:14px 0 0">
       <label>${t('f_vod')}</label>
       <input class="finput" id="si-vod" type="url" placeholder="https://youtube.com/..." value="${m.vodUrl||''}">
     </div>
-    ${hPlayers.length?`<div class="team-stats-sect"><div class="tss-hdr">${esc(ht.name)}</div>
-    <table class="siform"><thead><tr><th>Joueur</th><th>Buts</th><th>Passes</th><th>Arrêts</th><th>Tirs</th><th>Score</th><th>MVP</th></tr></thead>
-    <tbody>${hPlayers.map(p=>playerRow(p,'home')).join('')}</tbody></table></div>`:''}
-    ${aPlayers.length?`<div class="team-stats-sect"><div class="tss-hdr">${esc(at.name)}</div>
-    <table class="siform"><thead><tr><th>Joueur</th><th>Buts</th><th>Passes</th><th>Arrêts</th><th>Tirs</th><th>Score</th><th>MVP</th></tr></thead>
-    <tbody>${aPlayers.map(p=>playerRow(p,'away')).join('')}</tbody></table></div>`:''}
-    <div class="f-actions">
+    <div class="f-actions" style="margin-top:14px">
       <button class="btn-p" onclick="saveMatchResult('${matchId}')">💾 ${t('save')}</button>
       <button class="btn-s" onclick="closeModal('mo-match')">${t('cancel')}</button>
     </div>`;
+
+  renderGameRows();
+  // attach input listeners for live score update
+  document.getElementById('game-rows').addEventListener('input', () => {
+    syncGameRowsFromDOM();
+    updateMatchScore();
+  });
+
   openModal('mo-match');
 };
 
+window.getGameRows = function() { return window._currentMatchGames || []; };
+
+window.syncGameRowsFromDOM = function() {
+  const rows = document.querySelectorAll('#game-rows .game-row');
+  rows.forEach((row, i) => {
+    const h = parseInt(row.querySelector('[data-side="home"]').value)||0;
+    const a = parseInt(row.querySelector('[data-side="away"]').value)||0;
+    if (window._currentMatchGames[i]) {
+      window._currentMatchGames[i] = {homeGoals: h, awayGoals: a};
+    }
+  });
+};
+
+window.addGameRow = function() {
+  syncGameRowsFromDOM();
+  window._currentMatchGames.push({homeGoals:0, awayGoals:0});
+  const rows = document.getElementById('game-rows');
+  const i = window._currentMatchGames.length - 1;
+  const div = document.createElement('div');
+  div.className = 'game-row';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <span class="game-row-num">M${i+1}</span>
+    <input class="score-inp sm" type="number" min="0" max="20" value="0" placeholder="0" data-side="home">
+    <span class="game-row-sep">—</span>
+    <input class="score-inp sm" type="number" min="0" max="20" value="0" placeholder="0" data-side="away">
+    <button class="btn-rm-game" onclick="removeGameRow(${i})" title="Supprimer">×</button>`;
+  rows.appendChild(div);
+  updateMatchScore();
+  div.querySelector('[data-side="home"]').focus();
+};
+
+window.removeGameRow = function(idx) {
+  syncGameRowsFromDOM();
+  if (window._currentMatchGames.length <= 1) return;
+  window._currentMatchGames.splice(idx, 1);
+  // re-render
+  const rows = document.getElementById('game-rows');
+  if (!rows) return;
+  rows.innerHTML = window._currentMatchGames.map((g, i) => `
+    <div class="game-row" data-idx="${i}">
+      <span class="game-row-num">M${i+1}</span>
+      <input class="score-inp sm" type="number" min="0" max="20" value="${g.homeGoals}" placeholder="0" data-side="home">
+      <span class="game-row-sep">—</span>
+      <input class="score-inp sm" type="number" min="0" max="20" value="${g.awayGoals}" placeholder="0" data-side="away">
+      <button class="btn-rm-game" onclick="removeGameRow(${i})" title="Supprimer">×</button>
+    </div>`).join('');
+  updateMatchScore();
+};
+
+window.updateMatchScore = function() {
+  syncGameRowsFromDOM();
+  const games = window._currentMatchGames;
+  let hw = 0, aw = 0, hg = 0, ag = 0;
+  games.forEach(g => {
+    hg += g.homeGoals||0; ag += g.awayGoals||0;
+    if ((g.homeGoals||0) > (g.awayGoals||0)) hw++;
+    else if ((g.awayGoals||0) > (g.homeGoals||0)) aw++;
+  });
+  const el = document.getElementById('ge-total');
+  if (!el) return;
+  el.innerHTML = `<span class="ge-score ${hw>aw?'win':''}"><strong>${hw}</strong></span><span class="ge-sep">–</span><span class="ge-score ${aw>hw?'win':''}"><strong>${aw}</strong></span><span class="ge-goals">${hg} buts — ${ag} buts</span>`;
+};
+
 window.saveMatchResult = async function(matchId) {
-  const hs=parseInt(document.getElementById('si-home').value);
-  const as_=parseInt(document.getElementById('si-away').value);
-  const vod=document.getElementById('si-vod').value.trim();
-  if (isNaN(hs)||isNaN(as_)) { toast('Scores requis','err'); return; }
-  const mvpPid=document.querySelector('input[name="mvp"]:checked')?.value||null;
+  syncGameRowsFromDOM();
+  const games = (window._currentMatchGames||[]).filter(g => g.homeGoals != null && g.awayGoals != null);
+  if (!games.length) { toast('Ajoutez au moins une manche','err'); return; }
+  let homeScore = 0, awayScore = 0;
+  games.forEach(g => {
+    if ((g.homeGoals||0) > (g.awayGoals||0)) homeScore++;
+    else if ((g.awayGoals||0) > (g.homeGoals||0)) awayScore++;
+  });
+  const vod = document.getElementById('si-vod').value.trim();
   try {
-    // Update match
-    await updateDoc(doc(db,'rl_matches',matchId),{status:'played',homeScore:hs,awayScore:as_,vodUrl:vod});
-    // Delete old stats
-    const old=statsArr.filter(s=>s.matchId===matchId);
-    const batch=writeBatch(db);
-    old.forEach(s=>batch.delete(doc(db,'rl_match_stats',s.id)));
-    await batch.commit();
-    // Add new stats
-    const rows=document.querySelectorAll('.si-num[data-pid]');
-    const playerData={};
-    rows.forEach(inp=>{
-      const pid=inp.dataset.pid, tid=inp.dataset.tid, field=inp.dataset.f;
-      if(!playerData[pid]) playerData[pid]={playerId:pid,teamId:tid,matchId,goals:0,assists:0,saves:0,shots:0,score:0,mvp:false};
-      playerData[pid][field]=parseInt(inp.value)||0;
-    });
-    if(mvpPid&&playerData[mvpPid]) playerData[mvpPid].mvp=true;
-    const batch2=writeBatch(db);
-    Object.values(playerData).forEach(d=>batch2.set(doc(collection(db,'rl_match_stats')),d));
-    await batch2.commit();
+    await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod});
     toast(t('saved'),'ok');
     closeModal('mo-match');
     await admResults();
-  } catch(e){toast(t('err_save'),'err');console.error(e);}
+  } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 
 // ── Admin: Calendrier ────────────────────────────
