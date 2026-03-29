@@ -178,6 +178,7 @@ img{display:block}
 .status-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .stbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
 .stbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
+.vs-stream-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,129,255,.18);color:var(--rl-blue);border:1px solid rgba(0,129,255,.35);border-radius:4px;font-size:.68rem;font-weight:800;padding:2px 7px;letter-spacing:.03em}
 .match-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
 .match-card:hover{border-color:rgba(232,0,26,.35)}
 .mc-meta{display:flex;align-items:center;gap:8px;padding:7px 13px;border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text2)}
@@ -278,6 +279,13 @@ img{display:block}
 
 .btn-cal{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:3px 7px;border-radius:5px;font-size:.8rem;transition:all .2s}
 .btn-cal:hover{border-color:var(--rl-blue);color:var(--text)}
+.stream-toggle{display:block;cursor:pointer;margin-bottom:4px}
+.stream-toggle input{display:none}
+.stream-toggle-box{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;transition:all .2s}
+.stream-toggle input:checked~.stream-toggle-box{border-color:var(--rl-blue);background:rgba(0,129,255,.08)}
+.stream-toggle-icon{font-size:1.4rem;flex-shrink:0}
+.stream-toggle-title{font-weight:700;font-size:.85rem}
+.stream-toggle-sub{font-size:.72rem;color:var(--text2);margin-top:2px}
 
 /* Calendar admin */
 .cal-box{max-width:560px}
@@ -426,7 +434,7 @@ img{display:block}
       </div>
     </div>
     <div id="acc-scheduled-section" style="display:none">
-      <div class="vs-section-title">Matchs programmés</div>
+      <div class="vs-section-title">🎥 Prochains matchs sur la chaîne officielle</div>
       <div class="vs-grid" id="acc-scheduled-grid"></div>
     </div>
     <div class="acc-cards">
@@ -894,9 +902,9 @@ async function loadAccueil() {
     }).join('');
   });
 
-  // Scheduled matches (all matches with scheduledAt set, not played, sorted by date)
+  // Official stream matches only
   const scheduledMatches = Object.values(matchesMap)
-    .filter(m => m.scheduledAt && m.status !== 'played')
+    .filter(m => m.scheduledAt && m.status !== 'played' && m.officialStream)
     .sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
 
   const schedSection = document.getElementById('acc-scheduled-section');
@@ -913,7 +921,7 @@ async function loadAccueil() {
         return `<div class="vs-card">
           <div class="vs-card-meta">
             <span>S${m.week} · Gr.${m.group||'?'} · Poule ${m.pool}</span>
-            <span class="vs-card-date">${dateStr}</span>
+            <span style="display:flex;align-items:center;gap:8px"><span class="vs-stream-badge">🎥 Live</span><span class="vs-card-date">${dateStr}</span></span>
           </div>
           <div class="vs-body">
             <div class="vs-team">
@@ -1606,13 +1614,24 @@ window.openScheduleMatch = function(matchId) {
   const ht = teamsMap[m.homeTeamId]||{name:'?'};
   const at = teamsMap[m.awayTeamId]||{name:'?'};
   const cur = m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : '';
+  const streamed = m.officialStream ? 'checked' : '';
   document.getElementById('mo-match-title').textContent = `📅 ${ht.name} vs ${at.name}`;
   document.getElementById('mo-match-body').innerHTML = `
     <div class="fg" style="margin-bottom:14px">
       <label>Date et heure du match</label>
       <input class="finput" id="sc-date" type="datetime-local" value="${cur}">
     </div>
-    <div class="f-actions">
+    <label class="stream-toggle">
+      <input type="checkbox" id="sc-stream" ${streamed}>
+      <div class="stream-toggle-box">
+        <span class="stream-toggle-icon">🎥</span>
+        <div>
+          <div class="stream-toggle-title">Stream officiel Springs E-Sport</div>
+          <div class="stream-toggle-sub">Afficher ce match sur la page d'accueil</div>
+        </div>
+      </div>
+    </label>
+    <div class="f-actions" style="margin-top:16px">
       <button class="btn-p" onclick="saveSchedule('${matchId}')">💾 Enregistrer</button>
       <button class="btn-s" onclick="closeModal('mo-match')">Annuler</button>
     </div>`;
@@ -1622,8 +1641,9 @@ window.openScheduleMatch = function(matchId) {
 window.saveSchedule = async function(matchId) {
   const val = document.getElementById('sc-date').value;
   if (!val) { toast('Date requise','err'); return; }
+  const officialStream = document.getElementById('sc-stream').checked;
   try {
-    await updateDoc(doc(db,'rl_matches',matchId),{scheduledAt: new Date(val).toISOString()});
+    await updateDoc(doc(db,'rl_matches',matchId),{scheduledAt: new Date(val).toISOString(), officialStream});
     toast('Date enregistrée','ok');
     closeModal('mo-match');
     await admResults();
