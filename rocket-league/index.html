@@ -1303,21 +1303,54 @@ window.saveMatchResult = async function(matchId) {
 
 // ── Admin: Calendrier ────────────────────────────
 function admCalendar() {
-  const allTeams=[...SCHEDULE[1].teams,...SCHEDULE[2].teams];
   document.getElementById('adm-content').innerHTML=`
     <div class="cal-box">
-      <div class="stitle">${t('init_cal')}</div>
+      <div class="stitle">Initialiser les équipes</div>
       <div class="cal-info">
-        <p>${t('init_warn')}</p>
+        <p>Crée les 32 équipes (Poule 1 + Poule 2) depuis le planning. Les équipes déjà existantes sont ignorées.</p>
         <p style="margin-top:10px"><strong>Poule 1 (${SCHEDULE[1].teams.length} équipes) :</strong></p>
         <div class="name-chips">${SCHEDULE[1].teams.map(n=>`<span class="chip">${esc(n)}</span>`).join('')}</div>
         <p style="margin-top:10px"><strong>Poule 2 (${SCHEDULE[2].teams.length} équipes) :</strong></p>
         <div class="name-chips">${SCHEDULE[2].teams.map(n=>`<span class="chip">${esc(n)}</span>`).join('')}</div>
       </div>
+      <button class="btn-p" onclick="initTeams()" id="btn-init-teams">🏟️ Créer les équipes</button>
+      <div id="init-teams-result"></div>
+      <div class="stitle" style="margin-top:24px">${t('init_cal')}</div>
+      <div class="cal-info"><p>${t('init_warn')}</p></div>
       <button class="btn-p" onclick="initCalendar()">🚀 ${t('init_confirm')||t('init_cal')}</button>
       <div id="init-result"></div>
     </div>`;
 }
+
+window.initTeams = async function() {
+  const btn = document.getElementById('btn-init-teams');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    await refreshTeams();
+    const existingNames = new Set(Object.values(teamsMap).map(t => t.name.trim().toLowerCase()));
+    const batch = writeBatch(db);
+    let created = 0, skipped = 0;
+    for (const [pool, pd] of Object.entries(SCHEDULE)) {
+      for (const name of pd.teams) {
+        if (existingNames.has(name.trim().toLowerCase())) { skipped++; continue; }
+        batch.set(doc(collection(db,'rl_teams')), {
+          name: name.trim(), pool: parseInt(pool), tag: '', logoUrl: '', createdAt: serverTimestamp()
+        });
+        created++;
+      }
+    }
+    await batch.commit();
+    await refreshTeams();
+    const msg = document.getElementById('init-teams-result');
+    msg.className = 'init-msg ok';
+    msg.textContent = `✓ ${created} équipes créées.${skipped ? ` ${skipped} déjà existantes ignorées.` : ''}`;
+  } catch(e) {
+    const msg = document.getElementById('init-teams-result');
+    msg.className = 'init-msg err';
+    msg.textContent = 'Erreur : ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '🏟️ Créer les équipes';
+};
 
 window.initCalendar = async function() {
   const btn=document.querySelector('#adm-content .btn-p');
