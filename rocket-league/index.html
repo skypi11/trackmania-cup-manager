@@ -1330,12 +1330,243 @@ function admCalendar() {
       </div>
       <button class="btn-p" onclick="initTeams()" id="btn-init-teams">🏟️ Créer les équipes</button>
       <div id="init-teams-result"></div>
+      <div class="stitle" style="margin-top:24px">Initialiser les joueurs</div>
+      <div class="cal-info"><p>Crée tous les joueurs depuis le formulaire d'inscription (${PLAYERS_DATA.reduce((s,t)=>s+t.players.length,0)} joueurs, 31 équipes). Les joueurs déjà existants sont ignorés.</p></div>
+      <button class="btn-p" onclick="initPlayers()" id="btn-init-players">👥 Créer les joueurs</button>
+      <div id="init-players-result"></div>
       <div class="stitle" style="margin-top:24px">${t('init_cal')}</div>
       <div class="cal-info"><p>${t('init_warn')}</p></div>
       <button class="btn-p" onclick="initCalendar()">🚀 ${t('init_confirm')||t('init_cal')}</button>
       <div id="init-result"></div>
     </div>`;
 }
+
+const PLAYERS_DATA = [
+  {team:'LIONERA ESPORT',players:[
+    {discord:'Le M',pseudoRL:'MaasteerrzZ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/MaasteerrzZ/overview'},
+    {discord:'Le S',pseudoRL:'Stormṁ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Stormṁ/overview'},
+    {discord:'Magiik',pseudoRL:'Magiik .',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Magiik%20./overview'},
+    {discord:'Dreek',pseudoRL:'Dreeq',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198959361908/overview'},
+  ]},
+  {team:'Horus esport',players:[
+    {discord:'kyloren65000',pseudoRL:'kyloren64000',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Kyloren64000/overview'},
+    {discord:'k1ra_rl',pseudoRL:'nosidop',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/nosidop/overview'},
+    {discord:'volcaaa.',pseudoRL:'volcaaa.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Volcaaa./overview'},
+    {discord:'nxsi.nb1',pseudoRL:'clark.µ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/clark.%C2%B5/overview'},
+  ]},
+  {team:'NLS Vision',players:[
+    {discord:'hayden0670',pseudoRL:'HaydeN_RL',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/HaydeN_RL/overview'},
+    {discord:'ryze6194',pseudoRL:'TR l Ryze',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/TR%20l%20Ryze/overview'},
+    {discord:'zyroxxzz',pseudoRL:'ZyrOx',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198975345135/overview'},
+    {discord:'xMax1m3x',pseudoRL:'Twitch_xMax1m3x',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Twitch_xMax1m3x/overview'},
+  ]},
+  {team:'Noctiq Esports',players:[
+    {discord:'kenzg_',pseudoRL:'Kenz ケ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Kenz%20%E3%82%B1/overview'},
+    {discord:'Qex',pseudoRL:'Qex.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198261848930/overview'},
+    {discord:'ostrum',pseudoRL:'ost',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198367991752/overview'},
+    {discord:'zemstalinho',pseudoRL:'Zemstalinho',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Zemstalinho/overview'},
+    {discord:'Bensai',pseudoRL:'bensai.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/bensai./overview'},
+  ]},
+  {team:'Exaltia Espada',players:[
+    {discord:'rxqza.',pseudoRL:'Reqza.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198869204404/overview'},
+    {discord:'pat7___',pseudoRL:'Pat7',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/P%C3%A0t7%20%E3%83%84/overview'},
+    {discord:'soldatryan',pseudoRL:'Ryan',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561199014767010/overview'},
+    {discord:'Webou',pseudoRL:'Webou',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Webbouu/overview'},
+  ]},
+  {team:'Toon Esport',players:[
+    {discord:'wylo_nexto',pseudoRL:'μHexiacμ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/%CE%BCHexiac%CE%BC/overview'},
+    {discord:'eruprime',pseudoRL:'eru prime-',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198876915921/overview'},
+    {discord:'teken09',pseudoRL:'TeKeN_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/TeKeN_-/overview'},
+    {discord:'nnekos',pseudoRL:'nekos',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198898043893/overview'},
+  ]},
+  {team:'Aran Esport',players:[
+    {discord:'Bachiiraa',pseudoRL:'Meguruu.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Meguruu./overview'},
+    {discord:'Fiftyie',pseudoRL:'Fiftyie',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/FIFTYIE/overview'},
+    {discord:'Neyto',pseudoRL:'Neyto',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Neyto%20-_-/mmr?playlist=11'},
+    {discord:'lapotyk',pseudoRL:'Adopted Cherry',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Adopted%20cherry/mmr?playlist=11'},
+  ]},
+  {team:'EVYL ESPORT',players:[
+    {discord:'knighthd',pseudoRL:'Knight-HD',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198015642335/overview'},
+    {discord:'Franix',pseudoRL:'Franix.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198851963163/overview'},
+    {discord:'m8lari.',pseudoRL:'Lari.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561199014056197/overview'},
+    {discord:'algo.rl',pseudoRL:'ALGØ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198936868030/overview'},
+  ]},
+  {team:'Celestia Esport',players:[
+    {discord:'looping_59',pseudoRL:'Looping',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198161071828/overview'},
+    {discord:'kalyypso',pseudoRL:'Kalyypso.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/kalyypso./overview'},
+    {discord:'baptoufr',pseudoRL:'Baptou',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Baptouuu./overview'},
+    {discord:'Tto',pseudoRL:'TT0.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/TT0./overview'},
+  ]},
+  {team:'Aveon Esport',players:[
+    {discord:'mentarl',pseudoRL:'Menta.µ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Menta.%C2%B5/overview'},
+    {discord:'1tryzer',pseudoRL:'mars-puissant639',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/mars-puissant639/overview'},
+    {discord:'noctarll_',pseudoRL:'noctarll_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198357038893/overview'},
+    {discord:'drakyy_.',pseudoRL:'FairyDraky',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/FairyDraky/overview'},
+  ]},
+  {team:'Little Gigantes',players:[
+    {discord:'azuros_',pseudoRL:'azuros_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561199014571997/mmr?playlist=11'},
+    {discord:'juninhorl',pseudoRL:'JuninhoRL',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/JuninhoRL/overview'},
+    {discord:'wowx3',pseudoRL:'WOWX3',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/WOWX3/overview'},
+    {discord:'toinou1XX',pseudoRL:'ToinouXx_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/ToinouXx_/overview'},
+  ]},
+  {team:'Delta Mythics Minotaure',players:[
+    {discord:'bucheron44',pseudoRL:'Bucheron44',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Bucheron44/overview'},
+    {discord:'1tersport',pseudoRL:'1tersport',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/1tersport/overview'},
+    {discord:'terrain_.',pseudoRL:'terrain_メ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/terrain_%E3%83%A1/overview'},
+    {discord:'usoopmarto_94130',pseudoRL:'Maktoufoh',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Maktoufoh/overview'},
+  ]},
+  {team:'Ascend E-Sport',players:[
+    {discord:'Vey-San',pseudoRL:'Vey-San',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Vey-San/overview'},
+    {discord:'Sanskye',pseudoRL:'Sanskye',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Sanskye/overview'},
+    {discord:'Van_Dyyk_',pseudoRL:'gardien-N1',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/gardien-N1/overview'},
+    {discord:'Sniip',pseudoRL:'sniiip_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/sniiip_/overview'},
+  ]},
+  {team:'VENUM E-SPORT',players:[
+    {discord:'cosmoze_',pseudoRL:'CøsmøZe',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/C%C3%B8sm%C3%B8Ze/overview'},
+    {discord:'sysco52',pseudoRL:'Sysco-52',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Sysco-52/overview'},
+    {discord:'saso_riz',pseudoRL:'zdr sasori',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/xbl/zdr%20sasori/overview'},
+    {discord:'msstick',pseudoRL:'MssTck',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198354213915/overview'},
+  ]},
+  {team:'Kuro neko 2',players:[
+    {discord:'Strikex',pseudoRL:'STRIKEX_.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/STRIKEX_./overview'},
+    {discord:'Nyr',pseudoRL:'nµr',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/n%C2%B5r/overview'},
+    {discord:'Piraterie',pseudoRL:'Piraterie ツ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Piraterie%20%E3%83%84/overview'},
+    {discord:'Ipsyion',pseudoRL:'Ipsyion',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Ipsyion/overview'},
+  ]},
+  {team:'Zx9 Gaming',players:[
+    {discord:'ampoinou',pseudoRL:'Tralors',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198314316281/overview'},
+    {discord:'blacklotus81',pseudoRL:'lotus!',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198323530884/overview'},
+    {discord:'onlyonesneax',pseudoRL:'Haewon 사랑',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Haewon%20%EC%82%AC%EB%9E%91/overview'},
+    {discord:'zzyk0',pseudoRL:'Zzyk0',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Zzyk0/overview'},
+  ]},
+  {team:'Helios Esport',players:[
+    {discord:'oihan.',pseudoRL:'OihanGaming',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/OihanGaming/overview'},
+    {discord:'sliress',pseudoRL:'Sliress',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Sliress%20-NO%20CHAT/overview'},
+    {discord:'bretzsgn1409',pseudoRL:'Bretzrl',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/Bretzrl/overview'},
+    {discord:'newp0w',pseudoRL:'NynpowerShot',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198797829671/overview'},
+  ]},
+  {team:'Team TXR',players:[
+    {discord:'scary_4lpha',pseudoRL:'scarynho',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/psn/scarynho/overview'},
+    {discord:'godzz_',pseudoRL:'GodZzinho',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/GodZzinho/overview'},
+    {discord:'sifiel',pseudoRL:'Sifielinho',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Sifiel/overview'},
+    {discord:'teamtxr',pseudoRL:'Smd_.07',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Smd_.07/overview'},
+  ]},
+  {team:'ALPHORIA ESPORT',players:[
+    {discord:'zoro_02100',pseudoRL:'Zorojuro_02',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/ZoroJuro_02/overview'},
+    {discord:'Yoda-RL',pseudoRL:'Yoda-RL',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Yoda-RL/overview'},
+    {discord:'Waazz.',pseudoRL:'Waazz.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Waazz./overview'},
+    {discord:'tenshi0878',pseudoRL:'Luffytaroo',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198289570598/overview'},
+  ]},
+  {team:'Pandaria Esport ACA',players:[
+    {discord:'rhyte',pseudoRL:'Rhyte',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198444307929/overview'},
+    {discord:'primito_',pseudoRL:'Primitø.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198293883794/overview'},
+    {discord:'yamichiwan',pseudoRL:'Yami 黒',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198185228282/overview'},
+    {discord:'mavriikz',pseudoRL:'mavriikzkami',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/mavriikzkami/overview'},
+  ]},
+  {team:'Crossbar Esport',players:[
+    {discord:'MattLaPatate63',pseudoRL:'MattLaPatate63',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/MattLaPatate63/overview'},
+    {discord:'baisemortt_91443',pseudoRL:'nono-220507',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/nono-220507/overview'},
+    {discord:'eos_trunks',pseudoRL:'EoS_Trunks',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/EoS_Trunks/overview'},
+    {discord:'naarrowww',pseudoRL:'Naarrow',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Naarrow/overview'},
+    {discord:'dumzii',pseudoRL:'Duumzii',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Duumzii/overview'},
+  ]},
+  {team:'Delta Mythics',players:[
+    {discord:'_freeze26',pseudoRL:'Frêeze-_-',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Fr%C3%AAeze-_-/overview'},
+    {discord:'.reepty',pseudoRL:'Reeptyヤ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Reepty%E3%83%A4/overview'},
+    {discord:'.j0cks.',pseudoRL:'J0ckS.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198212630897/overview'},
+    {discord:'maycko',pseudoRL:'mhka',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561199039428116/overview'},
+  ]},
+  {team:'ITOW ESPORT',players:[
+    {discord:'Zowkii',pseudoRL:'zowkii',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198194357991/overview'},
+    {discord:'Mesco',pseudoRL:'Mesco7.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Mesco7./overview'},
+    {discord:'yxss',pseudoRL:'Yxss07',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Yxss07/overview'},
+    {discord:'redeathy',pseudoRL:'redeathys',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/redeathys/overview'},
+  ]},
+  {team:'IP e-sport',players:[
+    {discord:'portosrl',pseudoRL:'Portos',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198327477501/overview'},
+    {discord:'natlop',pseudoRL:'El Natlop',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/El%20Natlop/overview'},
+    {discord:'asm0.',pseudoRL:'Asm0.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Asm0./overview'},
+    {discord:'X_Razer',pseudoRL:'X_Razer',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/X_Razer/overview'},
+  ]},
+  {team:'NightWolves Eclipse',players:[
+    {discord:'coco7241',pseudoRL:'Cofeats',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Cofeats/overview'},
+    {discord:'trendzr',pseudoRL:'Trendz .',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Trendz%20./overview'},
+    {discord:'irzorikow',pseudoRL:'IrZø',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/IrZ%C3%B8/overview'},
+    {discord:'evory_77',pseudoRL:'Evory_99.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Evory_99./overview'},
+  ]},
+  {team:'Tomioka',players:[
+    {discord:'rayzerl',pseudoRL:'Little Mx!',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198074025087/overview'},
+    {discord:'noxx_26',pseudoRL:'N7Xxµ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/N7Xx%C2%B5/overview'},
+    {discord:'jesuisungrosporc',pseudoRL:'CochonXsauvage',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/CochonXsauvage/mmr?playlist=11'},
+    {discord:'teyko28',pseudoRL:'Teykô',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Teyk%C3%B4./overview'},
+  ]},
+  {team:'Evyl Iota',players:[
+    {discord:'bryyyy__',pseudoRL:'Bryyyy',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198285467100/overview'},
+    {discord:'matatore',pseudoRL:'Mata.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/Matatore/overview'},
+    {discord:'chiff.',pseudoRL:'chiff.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198888306302/overview'},
+    {discord:'rayzax',pseudoRL:'Rayzax_',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Rayzax_/overview'},
+  ]},
+  {team:"Tenss'Minions V7",players:[
+    {discord:'imsmoo_',pseudoRL:'Imsmoo',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198328808830/overview'},
+    {discord:'tenss.',pseudoRL:'tenssito.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/tenssito./overview'},
+    {discord:'_vasick',pseudoRL:'vasick',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561199019121061/overview'},
+    {discord:'valga9',pseudoRL:'have 0 aura',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/have%200%20aura/overview'},
+    {discord:'wyrqzz',pseudoRL:'wxrqzz!',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198010982800/overview'},
+  ]},
+  {team:'FlopyFlop',players:[
+    {discord:'zimo27',pseudoRL:'zimo .',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/zimo%20./overview'},
+    {discord:'ndraac',pseudoRL:'NdRaac',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/NdRaac/overview'},
+    {discord:'celestinho08',pseudoRL:'Celestinho.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Celestinho./overview'},
+    {discord:'noxl78',pseudoRL:'EL NoxLitO',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/EL%20NoxLitO/mmr?playlist=11'},
+  ]},
+  {team:'Team VDR',players:[
+    {discord:'v1ruz404',pseudoRL:'ViRuZ',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198216147864/overview'},
+    {discord:'dorianfcov',pseudoRL:'DorianFcov.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/DorianFcov./mmr?playlist=11'},
+    {discord:'.vulfur',pseudoRL:'Reyza',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Vulfur/overview'},
+    {discord:'raphany7',pseudoRL:'raphany7-',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/raphany7/overview'},
+  ]},
+  {team:'Kuro Neko 1',players:[
+    {discord:'Joyko',pseudoRL:'† Sylvya †',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198356826140/overview'},
+    {discord:'Blankajr',pseudoRL:'Blanka.',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/steam/76561198029701590/overview'},
+    {discord:'Flaykow',pseudoRL:'bes iris',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/Bes%20iris/overview'},
+    {discord:'AOTIK',pseudoRL:'ΛӨƬIIK',trackerUrl:'https://rocketleague.tracker.network/rocket-league/profile/epic/AOTIIK%20%E3%82%B7/overview'},
+  ]},
+];
+
+window.initPlayers = async function() {
+  const btn = document.getElementById('btn-init-players');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    await refreshTeams(); await refreshPlayers();
+    const nameToId = {};
+    Object.values(teamsMap).forEach(t => { nameToId[t.name.trim().toLowerCase()] = t.id; });
+    const existDiscords = new Set(Object.values(playersMap).map(p => p.pseudoDiscord?.toLowerCase()));
+    const batch = writeBatch(db);
+    let created = 0, skipped = 0, missing = [];
+    for (const td of PLAYERS_DATA) {
+      const teamId = nameToId[td.team.trim().toLowerCase()];
+      if (!teamId) { missing.push(td.team); continue; }
+      for (const p of td.players) {
+        if (existDiscords.has(p.discord.toLowerCase())) { skipped++; continue; }
+        batch.set(doc(collection(db,'rl_players')), {
+          pseudoDiscord: p.discord, pseudoRL: p.pseudoRL, trackerUrl: p.trackerUrl,
+          teamId, createdAt: serverTimestamp()
+        });
+        created++;
+      }
+    }
+    await batch.commit();
+    await refreshPlayers();
+    const msg = document.getElementById('init-players-result');
+    msg.className = 'init-msg ok';
+    msg.textContent = `✓ ${created} joueurs créés.${skipped?` ${skipped} déjà existants ignorés.`:''}${missing.length?` Équipes non trouvées : ${missing.join(', ')}.`:''}`;
+  } catch(e) {
+    document.getElementById('init-players-result').className='init-msg err';
+    document.getElementById('init-players-result').textContent='Erreur : '+e.message;
+    console.error(e);
+  }
+  btn.disabled=false; btn.textContent='👥 Créer les joueurs';
+};
 
 window.initTeams = async function() {
   const btn = document.getElementById('btn-init-teams');
