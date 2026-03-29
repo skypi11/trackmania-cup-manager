@@ -215,14 +215,23 @@ img{display:block}
 .mc-away-loser-side{background:linear-gradient(to left,rgba(0,0,0,.15),transparent)}
 .mc-stats{display:none;padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
 .mc-stats.open{display:block}
-/* ── GAME RESULTS DISPLAY ── */
-.games-detail{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
-.game-result-row{display:flex;align-items:center;gap:8px;font-size:.78rem}
-.gr-num{color:var(--text3);font-size:.68rem;font-weight:700;width:24px}
-.gr-score{font-weight:800;font-size:.88rem;color:var(--text3);width:18px;text-align:center}
-.gr-score.gr-win{color:var(--text)}
-.gr-dash{color:var(--text3);font-size:.8rem}
-.games-total{font-size:.72rem;color:var(--text2);padding-top:6px;border-top:1px solid var(--border)}
+/* ── GAME CHIPS (scores inline) ── */
+.games-inline{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.game-chip{font-size:.67rem;font-weight:800;padding:2px 7px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.game-chip.gc-h{border-color:rgba(0,200,100,.4);color:#0c8;background:rgba(0,200,100,.06)}
+.game-chip.gc-a{border-color:rgba(239,68,68,.35);color:#ef4444;background:rgba(239,68,68,.05)}
+
+/* ── MATCH HISTORY (dans fiche équipe) ── */
+.mh-list{display:flex;flex-direction:column;gap:4px}
+.mh-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:6px;font-size:.79rem;cursor:default}
+.mh-result{font-size:.64rem;font-weight:800;padding:2px 7px;border-radius:3px;flex-shrink:0;letter-spacing:.04em;border:1px solid}
+.mh-w{background:rgba(0,200,100,.1);color:#0c8;border-color:rgba(0,200,100,.3)}
+.mh-l{background:rgba(239,68,68,.08);color:#ef4444;border-color:rgba(239,68,68,.25)}
+.mh-week{font-size:.66rem;color:var(--text3);font-weight:700;flex-shrink:0;width:22px}
+.mh-opp{flex:1;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mh-score{font-weight:800;flex-shrink:0}
+.mh-sw{color:#0c8}.mh-sl{color:#ef4444}
+.mh-goals{font-size:.68rem;color:var(--text3);flex-shrink:0}
 
 /* ── ADMIN ── */
 .adm-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -368,6 +377,31 @@ img{display:block}
 #toast.show{transform:translateY(0);opacity:1}
 #toast.ok{border-color:#0c8;color:#0c8}
 #toast.err{border-color:#ef4444;color:#ef4444}
+
+/* ── SKELETON LOADERS ── */
+.skel{display:block;background:linear-gradient(90deg,var(--bg3) 25%,rgba(255,255,255,.04) 50%,var(--bg3) 75%);background-size:400% 100%;animation:skel-anim 1.6s ease infinite;border-radius:4px}
+@keyframes skel-anim{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+.skel-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2)}
+.skel-row:last-child{border-bottom:none}
+
+/* ── RESPONSIVE MOBILE ── */
+@media(max-width:540px){
+  .hdr-season{display:none}
+  .mc-body{grid-template-columns:1fr 68px 1fr;padding:10px 10px;gap:6px}
+  .mc-name{font-size:.78rem}
+  .mc-score-val{font-size:1.3rem}
+  .mc-logo{width:28px;height:28px}
+  .teams-grid{grid-template-columns:1fr 1fr}
+  .stbl{min-width:460px}
+  .vs-grid{grid-template-columns:1fr}
+  .hero-title{font-size:1.5rem}
+  .res-filters{gap:6px}
+  .modal{max-height:95vh}
+}
+@media(max-width:360px){
+  .teams-grid{grid-template-columns:1fr}
+  .mc-body{grid-template-columns:1fr 58px 1fr}
+}
 </style>
 </head>
 <body>
@@ -552,6 +586,14 @@ img{display:block}
   </div>
 </div>
 
+<!-- Modal Fiche Joueur (publique) -->
+<div class="modal-ov" id="mo-player-view" onclick="closeModal('mo-player-view')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><h2 id="mo-pv-title">Joueur</h2><button class="btn-x" onclick="closeModal('mo-player-view')">×</button></div>
+    <div class="modal-body" id="mo-pv-body"></div>
+  </div>
+</div>
+
 <div class="modal-ov" id="mo-team-edit" onclick="closeModal('mo-team-edit')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-hdr"><h2 id="mo-team-edit-title">Modifier l'équipe</h2><button class="btn-x" onclick="closeModal('mo-team-edit')">×</button></div>
@@ -586,6 +628,38 @@ import {
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
+
+// ════════════════════════════════════════════════
+// SKELETON HELPERS
+// ════════════════════════════════════════════════
+function skelRows(n=10) {
+  const ws=[90,120,80,140,110,95,130,100,120,85];
+  return `<div class="stbl-wrap" style="border-radius:var(--r);overflow:hidden">${[...Array(n)].map((_,i)=>`<div class="skel-row">
+    <span class="skel" style="width:20px;height:12px;flex-shrink:0"></span>
+    <div style="display:flex;align-items:center;gap:8px;flex:1">
+      <span class="skel" style="width:26px;height:26px;border-radius:4px;flex-shrink:0"></span>
+      <span class="skel" style="width:${ws[i%ws.length]}px;height:12px"></span>
+    </div>
+    ${['24px','24px','24px','36px','24px','24px','28px','50px'].map(w=>`<span class="skel" style="width:${w};height:12px;flex-shrink:0"></span>`).join('')}
+  </div>`).join('')}</div>`;
+}
+function skelTeams(n=8) {
+  const ws=[65,80,55,75,60,70,85,50];
+  return `<div class="teams-grid">${[...Array(n)].map((_,i)=>`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+    <div style="background:var(--bg3);padding:24px 20px;display:flex;align-items:center;justify-content:center;min-height:120px;border-bottom:1px solid var(--border)"><span class="skel" style="width:76px;height:76px;border-radius:8px"></span></div>
+    <div style="padding:14px 16px"><span class="skel" style="width:${ws[i%ws.length]}%;height:14px;margin-bottom:8px"></span><span class="skel" style="width:40%;height:10px;display:block"></span></div>
+  </div>`).join('')}</div>`;
+}
+function skelMatches(n=3) {
+  return [...Array(n)].map(()=>`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden">
+    <div style="padding:7px 13px;border-bottom:1px solid var(--border)"><span class="skel" style="width:160px;height:10px;display:inline-block"></span></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 1fr;padding:14px 18px;gap:12px;align-items:center">
+      <div style="display:flex;align-items:center;gap:9px"><span class="skel" style="width:34px;height:34px;border-radius:5px;flex-shrink:0"></span><span class="skel" style="width:90px;height:12px"></span></div>
+      <span class="skel" style="width:60px;height:28px;border-radius:6px;margin:0 auto;display:block"></span>
+      <div style="display:flex;align-items:center;gap:9px;justify-content:flex-end"><span class="skel" style="width:90px;height:12px"></span><span class="skel" style="width:34px;height:34px;border-radius:5px;flex-shrink:0"></span></div>
+    </div>
+  </div>`).join('');
+}
 
 // ════════════════════════════════════════════════
 // CONSTANTS
@@ -959,11 +1033,14 @@ window.switchSP = async function(p) { setGlobalPool(p); await loadStandings(p); 
 
 async function loadStandings(pool) {
   const wrap = document.getElementById('standings-wrap');
-  wrap.innerHTML = '<div class="loading"></div>';
+  wrap.innerHTML = skelRows(10);
   await fetchAll();
   const rows = buildStandings(pool);
   if (!rows.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
-  wrap.innerHTML = `<div class="stbl-wrap stbl-fade"><table class="stbl">
+  wrap.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button class="btn-s" style="font-size:.76rem;display:flex;align-items:center;gap:5px" onclick="exportStandingsCSV(${pool})">📥 CSV</button>
+  </div>
+  <div class="stbl-wrap stbl-fade"><table class="stbl">
     <thead><tr>
       <th>${t('col_rank')}</th><th>${t('col_team')}</th>
       <th title="Matchs joués">${t('col_p')}</th>
@@ -1002,7 +1079,7 @@ window.switchTP = async function(p) { setGlobalPool(p); await loadTeams(p); };
 
 async function loadTeams(pool) {
   const wrap = document.getElementById('teams-wrap');
-  wrap.innerHTML = '<div class="loading"></div>';
+  wrap.innerHTML = skelTeams(8);
   await fetchAll();
   const teams = Object.values(teamsMap).filter(t=>t.pool===pool)
     .sort((a,b)=>a.name.localeCompare(b.name));
@@ -1042,14 +1119,27 @@ window.openTeamModal = async function(teamId) {
   const body = document.getElementById('mo-team-body');
   body.innerHTML = '<div class="loading"></div>';
   openModal('mo-team');
+
   const players = Object.values(playersMap).filter(p=>p.teamId===teamId);
-  // Sort: capitaine first, then titulaire, sub, coach, fondateur, manager
   const roleOrder = {capitaine:0,titulaire:1,sub:2,coach:3,fondateur:4,manager:5};
   players.sort((a,b)=>(roleOrder[a.role]??1)-(roleOrder[b.role]??1));
+
   const logo = team.logoUrl
     ? `<img src="${team.logoUrl}" alt="" style="width:68px;height:68px;object-fit:contain;border-radius:8px;background:var(--bg2)">`
     : `<div style="width:68px;height:68px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3)">?</div>`;
   const roleLabel = {capitaine:'Capitaine',titulaire:'Titulaire',sub:'Sub',coach:'Coach',fondateur:'Fondateur',manager:'Manager'};
+
+  // Standings data
+  const standings = buildStandings(team.pool);
+  const tStats = standings.find(s=>s.id===teamId);
+  const rank = tStats ? standings.indexOf(tStats)+1 : null;
+
+  // Match history (5 derniers)
+  const teamMatches = Object.values(matchesMap)
+    .filter(m=>m.status==='played'&&(m.homeTeamId===teamId||m.awayTeamId===teamId))
+    .sort((a,b)=>(b.week-a.week)||(b.id>a.id?-1:1))
+    .slice(0,5);
+
   let rosterHtml = `<div class="empty" style="padding:14px">${t('no_players')}</div>`;
   if (players.length) {
     rosterHtml = `<table class="roster-tbl">
@@ -1057,31 +1147,130 @@ window.openTeamModal = async function(teamId) {
       <tbody>${players.map(p=>{
         const roleCls = p.role ? `role-badge role-${p.role}` : '';
         const roleTxt = p.role ? (roleLabel[p.role]||p.role) : '—';
-        return `<tr>
+        return `<tr onclick="openPlayerView('${p.id}')" style="cursor:pointer" title="Voir la fiche">
           <td><img class="p-ava" src="${p.photoUrl||''}" onerror="this.src=''" alt=""></td>
           <td style="font-weight:700">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</td>
           <td>${roleCls?`<span class="${roleCls}">${roleTxt}</span>`:roleTxt}</td>
           <td style="color:var(--text2);font-size:.76rem">${esc(p.pseudoDiscord||'—')}</td>
-          <td>${p.trackerUrl?`<a class="p-link" href="${p.trackerUrl}" target="_blank" rel="noopener">Tracker ↗</a>`:'—'}</td>
+          <td>${p.trackerUrl?`<a class="p-link" href="${p.trackerUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Tracker ↗</a>`:'—'}</td>
           <td>${FLAGS[p.country]||p.country||'—'}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
   }
-  const wins = Object.values(matchesMap).filter(m=>m.status==='played'&&(m.homeTeamId===teamId||m.awayTeamId===teamId)&&((m.homeTeamId===teamId&&m.homeScore>m.awayScore)||(m.awayTeamId===teamId&&m.awayScore>m.homeScore))).length;
-  const played = Object.values(matchesMap).filter(m=>m.status==='played'&&(m.homeTeamId===teamId||m.awayTeamId===teamId)).length;
+
+  let matchHistoryHtml = '';
+  if (teamMatches.length) {
+    matchHistoryHtml = `<div class="stitle" style="font-size:.82rem;margin:18px 0 10px">Résultats récents</div>
+    <div class="mh-list">${teamMatches.map(m=>{
+      const isH = m.homeTeamId===teamId;
+      const opp = teamsMap[isH?m.awayTeamId:m.homeTeamId]||{name:'?'};
+      const myS = isH?m.homeScore:m.awayScore;
+      const opS = isH?m.awayScore:m.homeScore;
+      const won = myS > opS;
+      let myG=0, opG=0;
+      (m.games||[]).forEach(g=>{myG+=(isH?g.homeGoals:g.awayGoals)||0;opG+=(isH?g.awayGoals:g.homeGoals)||0;});
+      return `<div class="mh-row">
+        <span class="mh-result ${won?'mh-w':'mh-l'}">${won?'V':'D'}</span>
+        <span class="mh-week">S${m.week}</span>
+        <span class="mh-opp">${esc(opp.name)}</span>
+        <span class="mh-score ${won?'mh-sw':'mh-sl'}">${myS} — ${opS}</span>
+        ${myG||opG?`<span class="mh-goals">(${myG}–${opG})</span>`:''}
+      </div>`;
+    }).join('')}</div>`;
+  }
+
   body.innerHTML = `
     <div class="team-hero">${logo}<div>
       <div class="th-name">${esc(team.name)}</div>
       <div class="th-tag">${esc(team.tag||'')}</div>
       <div class="th-meta">
         <span class="th-meta-chip">Poule ${team.pool}</span>
+        ${rank?`<span class="th-meta-chip">#${rank}${tStats?` · ${tStats.pts.toFixed(1)} pts`:''}</span>`:''}
         <span class="th-meta-chip">${players.length} joueur${players.length!==1?'s':''}</span>
-        ${played?`<span class="th-meta-chip">${wins}V / ${played-wins}D</span>`:''}
+        ${tStats&&tStats.played?`<span class="th-meta-chip">${tStats.wins}V/${tStats.losses}D</span>`:''}
       </div>
     </div></div>
-    <div class="stitle" style="font-size:.82rem;margin-bottom:10px">${t('roster')}</div>
-    ${rosterHtml}`;
+    <div class="stitle" style="font-size:.82rem;margin-bottom:10px">${t('roster')} <span style="font-size:.72rem;color:var(--text3);font-weight:400">(cliquer pour la fiche)</span></div>
+    ${rosterHtml}
+    ${matchHistoryHtml}`;
+};
+
+// ════════════════════════════════════════════════
+// FICHE JOUEUR PUBLIQUE
+// ════════════════════════════════════════════════
+window.openPlayerView = function(playerId) {
+  const p = playersMap[playerId]; if (!p) return;
+  const team = p.teamId ? teamsMap[p.teamId] : null;
+  document.getElementById('mo-pv-title').textContent = p.pseudoRL||p.pseudoDiscord||'Joueur';
+  const roleLabel = {capitaine:'Capitaine',titulaire:'Titulaire',sub:'Sub',coach:'Coach',fondateur:'Fondateur',manager:'Manager'};
+  const roleCls = p.role ? `role-badge role-${p.role}` : '';
+  // Stats équipe pour ce joueur
+  let statsHtml = '';
+  if (team) {
+    const tMs = Object.values(matchesMap).filter(m=>m.status==='played'&&(m.homeTeamId===p.teamId||m.awayTeamId===p.teamId));
+    if (tMs.length) {
+      const wins = tMs.filter(m=>(m.homeTeamId===p.teamId&&m.homeScore>m.awayScore)||(m.awayTeamId===p.teamId&&m.awayScore>m.homeScore)).length;
+      let myGoals=0, oppGoals=0;
+      tMs.forEach(m=>{
+        const isH=m.homeTeamId===p.teamId;
+        (m.games||[]).forEach(g=>{myGoals+=(isH?g.homeGoals:g.awayGoals)||0;oppGoals+=(isH?g.awayGoals:g.homeGoals)||0;});
+      });
+      statsHtml = `<div class="stitle" style="font-size:.82rem;margin-bottom:10px">Stats saison (équipe)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:900">${tMs.length}</div>
+          <div style="font-size:.62rem;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Matchs</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:900;color:#0c8">${wins}V/${tMs.length-wins}D</div>
+          <div style="font-size:.62rem;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Résultats</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:900;color:var(--rl-blue)">${myGoals>0?myGoals+'–'+oppGoals:'—'}</div>
+          <div style="font-size:.62rem;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:3px">Buts</div>
+        </div>
+      </div>`;
+    }
+  }
+  const photo = p.photoUrl
+    ? `<img src="${esc(p.photoUrl)}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0" alt="" onerror="this.src=''">`
+    : `<div style="width:68px;height:68px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);flex-shrink:0">?</div>`;
+  document.getElementById('mo-pv-body').innerHTML = `
+    <div class="team-hero">
+      ${photo}
+      <div>
+        <div class="th-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          ${roleCls?`<span class="${roleCls}">${roleLabel[p.role]||p.role}</span>`:''}
+          ${p.country?`<span class="th-meta-chip">${FLAGS[p.country]||p.country} ${p.country}</span>`:''}
+        </div>
+        <div class="th-meta" style="margin-top:5px">
+          ${team?`<span class="th-meta-chip">${esc(team.name)} · P${team.pool}</span>`:'<span class="th-meta-chip" style="color:var(--text3)">Agent libre</span>'}
+          ${p.pseudoDiscord?`<span class="th-meta-chip">💬 ${esc(p.pseudoDiscord)}</span>`:''}
+        </div>
+      </div>
+    </div>
+    ${statsHtml}
+    ${p.trackerUrl?`<a href="${esc(p.trackerUrl)}" target="_blank" rel="noopener" class="btn-s" style="display:inline-flex;align-items:center;gap:7px;font-size:.82rem;text-decoration:none">📊 Voir sur Tracker ↗</a>`:''}`;
+  openModal('mo-player-view');
+};
+
+// ════════════════════════════════════════════════
+// EXPORT CSV CLASSEMENT
+// ════════════════════════════════════════════════
+window.exportStandingsCSV = function(pool) {
+  const rows = buildStandings(pool);
+  const headers = ['Rang','Équipe','Tag','J','V','D','Pts','B+','B-','Diff'];
+  const lines = [headers.join(';')];
+  rows.forEach((t,i) => {
+    const diff = t.gw - t.gl;
+    lines.push([i+1,`"${t.name}"`,`"${t.tag||''}"`,t.played,t.wins,t.losses,t.pts.toFixed(1),t.gw,t.gl,(diff>0?'+':'')+diff].join(';'));
+  });
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`classement-poule${pool}.csv`; a.click();
+  URL.revokeObjectURL(url);
 };
 
 // ════════════════════════════════════════════════
@@ -1126,7 +1315,7 @@ function updateTeamFilter() {
 
 async function loadResults() {
   const wrap = document.getElementById('results-wrap');
-  wrap.innerHTML = '<div class="loading"></div>';
+  wrap.innerHTML = skelMatches(4);
   await fetchAll();
   updateTeamFilter();
   let matches = Object.values(matchesMap).filter(m=>m.pool===gPool);
@@ -1195,34 +1384,16 @@ function renderMatchCard(m) {
     goalSummary = `<span class="mc-goals">${hg} — ${ag} buts</span>`;
   }
   const vod = played&&m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
-  const statsBtn = played ? `<button class="mc-expand-btn" onclick="toggleStats('${m.id}')">Manches ▾</button>` : `<span></span>`;
 
-  // Build game scores section
-  let gamesHtml = '';
-  if (played) {
-    const games = m.games && m.games.length ? m.games : [];
-    if (games.length) {
-      const rows = games.map((g, i) => {
-        const hWin = (g.homeGoals||0) > (g.awayGoals||0);
-        const aWin = (g.awayGoals||0) > (g.homeGoals||0);
-        return `<div class="game-result-row">
-          <span class="gr-num">M${i+1}</span>
-          <span class="gr-score ${hWin?'gr-win':''}">${g.homeGoals||0}</span>
-          <span class="gr-dash">—</span>
-          <span class="gr-score ${aWin?'gr-win':''}">${g.awayGoals||0}</span>
-        </div>`;
-      }).join('');
-      const hTotalGoals = games.reduce((s,g)=>s+(g.homeGoals||0),0);
-      const aTotalGoals = games.reduce((s,g)=>s+(g.awayGoals||0),0);
-      gamesHtml = `<div class="mc-stats" id="stats-${m.id}">
-        <div class="games-detail">
-          ${rows}
-        </div>
-        <div class="games-total">Total buts : <strong>${hTotalGoals}</strong> — <strong>${aTotalGoals}</strong></div>
-      </div>`;
-    } else {
-      gamesHtml = `<div class="mc-stats" id="stats-${m.id}"><div style="color:var(--text2);font-size:.8rem;padding:4px 0">Détail des manches non disponible.</div></div>`;
-    }
+  // Scores inline par manche
+  let gamesInline = '';
+  if (played && m.games && m.games.length) {
+    gamesInline = `<div class="games-inline">${m.games.map((g,i)=>{
+      const h=g.homeGoals||0, a=g.awayGoals||0;
+      return `<span class="game-chip${h>a?' gc-h':a>h?' gc-a':''}" title="Manche ${i+1}">${h}–${a}</span>`;
+    }).join('')}</div>`;
+  } else if (played) {
+    gamesInline = `<span style="font-size:.72rem;color:var(--text3);font-style:italic">—</span>`;
   }
 
   return `<div class="match-card${homeWon?' home-win':awayWon?' away-win':''}">
@@ -1245,16 +1416,10 @@ function renderMatchCard(m) {
     </div>
     <div class="mc-foot">
       ${vod}
-      ${statsBtn}
+      ${gamesInline}
     </div>
-    ${gamesHtml}
   </div>`;
 }
-
-window.toggleStats = function(id) {
-  const el = document.getElementById('stats-'+id);
-  if (el) el.classList.toggle('open');
-};
 
 // ════════════════════════════════════════════════
 // ADMIN
