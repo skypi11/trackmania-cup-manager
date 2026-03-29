@@ -536,7 +536,8 @@ onAuthStateChanged(auth, async user => {
     try {
       const d = await getDoc(doc(db,'admins',user.uid));
       isAdmin = d.exists();
-    } catch { isAdmin = false; }
+      console.log('[RL] uid:', user.uid, '| admin doc exists:', isAdmin);
+    } catch(e) { console.error('[RL] admin check failed:', e); isAdmin = false; }
   } else {
     btn.textContent = t('login');
     btn.classList.remove('on');
