@@ -544,7 +544,7 @@ onAuthStateChanged(auth, async user => {
     isAdmin = false;
   }
   const navAdm = document.getElementById('nav-admin');
-  navAdm.style.display = isAdmin ? '' : 'none';
+  navAdm.style.display = isAdmin ? 'inline-block' : 'none';
   if (curTab === 'admin' && !isAdmin) goTab('accueil');
 });
 
