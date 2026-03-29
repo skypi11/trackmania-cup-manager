@@ -17,6 +17,8 @@
   --red:   #E8001A;
   --red-d: #B00015;
   --red-g: rgba(232,0,26,0.12);
+  --rl-blue: #0081FF;
+  --rl-blue-g: rgba(0,129,255,0.12);
   --border:#2a2a2a;
   --r:     8px;
 }
@@ -29,12 +31,15 @@ input,select,textarea{cursor:text}
 img{display:block}
 
 /* ── HEADER ── */
-.hdr{background:var(--bg2);border-bottom:2px solid var(--red);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100}
-.hdr-l{display:flex;align-items:center;gap:10px}
-.hdr-logo{height:32px;object-fit:contain}
-.hdr-brand{font-size:.9rem;font-weight:800;letter-spacing:.04em}
+.hdr{background:var(--bg2);border-bottom:2px solid var(--red);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;gap:8px}
+.hdr-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.hdr-logo{height:32px;object-fit:contain;flex-shrink:0}
+.hdr-brand{font-size:.9rem;font-weight:800;letter-spacing:.04em;white-space:nowrap}
 .hdr-brand span{color:var(--red)}
 .hdr-season{font-size:.68rem;color:var(--text2);background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border);white-space:nowrap}
+.hdr-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.btn-back{display:flex;align-items:center;gap:5px;color:var(--text2);font-size:.76rem;font-weight:700;text-decoration:none;padding:4px 9px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);transition:all .2s;white-space:nowrap;flex-shrink:0}
+.btn-back:hover{color:var(--text);border-color:var(--text2);text-decoration:none}
 .hdr-r{display:flex;align-items:center;gap:8px}
 .btn-lang{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:3px 9px;border-radius:5px;font-size:.72rem;font-weight:700;transition:all .2s}
 .btn-lang.active,.btn-lang:hover{border-color:var(--red);color:var(--text)}
@@ -111,12 +116,14 @@ img{display:block}
 .stbl tr.top8 td{background:var(--red-g)}
 
 /* ── TEAMS ── */
-.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
-.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .2s}
-.team-card:hover{border-color:var(--red);transform:translateY(-2px)}
-.team-card img{width:64px;height:64px;object-fit:contain;border-radius:7px;margin:0 auto 10px;background:var(--bg3)}
-.tc-name{font-weight:700;font-size:.82rem;margin-bottom:5px}
-.tc-tag{font-size:.72rem;color:var(--text2);background:var(--bg3);display:inline-block;padding:2px 8px;border-radius:4px;font-weight:600}
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.team-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(232,0,26,.04));pointer-events:none;opacity:0;transition:opacity .25s}
+.team-card:hover{border-color:var(--red);transform:translateY(-3px);box-shadow:0 8px 24px rgba(232,0,26,.12)}
+.team-card:hover::after{opacity:1}
+.team-card img{width:80px;height:80px;object-fit:contain;border-radius:8px;margin:0 auto 12px;background:var(--bg3)}
+.tc-name{font-weight:700;font-size:.9rem;margin-bottom:6px;line-height:1.3}
+.tc-tag{font-size:.72rem;color:var(--text2);background:var(--bg3);display:inline-block;padding:3px 9px;border-radius:10px;font-weight:700;letter-spacing:.04em}
 
 /* ── MODAL ── */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px}
@@ -256,6 +263,32 @@ img{display:block}
 .init-msg.ok{background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.2)}
 .init-msg.err{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
 
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--bg2) 0%,#180808 50%,#081428 100%);border:1px solid var(--border);border-radius:12px;padding:32px 28px;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 85% 50%,rgba(232,0,26,.1) 0%,transparent 55%),radial-gradient(ellipse at 15% 80%,rgba(0,129,255,.07) 0%,transparent 50%);pointer-events:none}
+.hero-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;z-index:1}
+.hero-badge{display:inline-block;background:var(--red);color:#fff;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:10px;margin-bottom:10px}
+.hero-title{font-size:2.2rem;font-weight:900;line-height:1.1;margin-bottom:8px;letter-spacing:-.02em}
+.hero-title span{color:var(--red)}
+.hero-sub{font-size:.82rem;color:var(--text2);max-width:320px;line-height:1.5}
+.hero-stats{display:flex;gap:0;flex-wrap:wrap;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0}
+.hstat{text-align:center;padding:14px 20px;border-right:1px solid var(--border)}
+.hstat:last-child{border-right:none}
+.hstat-val{font-size:1.4rem;font-weight:900;color:var(--text);display:block;line-height:1.1}
+.hstat-lbl{font-size:.6rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-top:4px}
+@media(max-width:760px){.hero{padding:22px 18px}.hero-title{font-size:1.6rem}.hero-stats{width:100%}.hstat{flex:1;padding:10px}.hstat-val{font-size:1.1rem}}
+@media(max-width:420px){.hero-stats{display:grid;grid-template-columns:repeat(3,1fr)}}
+
+/* ── WEEK SECTION HEADER (résultats) ── */
+.week-section{margin-bottom:28px}
+.week-section-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+.week-section-title{font-size:.9rem;font-weight:800;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.week-section-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--red);border-radius:2px;flex-shrink:0}
+.week-section-count{font-size:.72rem;color:var(--text2);font-weight:600;background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
+
+/* ── STANDINGS SEPARATOR ── */
+.stbl-sep td{padding:0 !important;height:2px;background:rgba(232,0,26,.4) !important;border:none !important}
+
 /* Utilities */
 .loading{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--text2);font-size:.85rem;gap:10px}
 .loading::before{content:'';width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
@@ -271,9 +304,11 @@ img{display:block}
 
 <header class="hdr">
   <div class="hdr-l">
+    <a href="../" class="btn-back">← Accueil</a>
+    <div class="hdr-sep"></div>
     <img src="../assets/springs-logo.png" alt="Springs" class="hdr-logo">
     <span class="hdr-brand">SPRINGS <span>E-SPORT</span></span>
-    <span class="hdr-season">Springs League Series — Saison 2</span>
+    <span class="hdr-season">Springs League Series — S2</span>
   </div>
   <div class="hdr-r">
     <button class="btn-lang active" id="btn-fr" onclick="setLang('fr')">FR</button>
@@ -295,6 +330,22 @@ img{display:block}
 
   <!-- ACCUEIL -->
   <section class="tab active" id="tab-accueil">
+    <div class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-badge">Saison 2 · 2026</div>
+          <h1 class="hero-title">Springs League <span>Series</span></h1>
+          <p class="hero-sub">La ligue Rocket League compétitive francophone Springs E-Sport</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><span class="hstat-val">32</span><span class="hstat-lbl">Équipes</span></div>
+          <div class="hstat"><span class="hstat-val">2</span><span class="hstat-lbl">Poules</span></div>
+          <div class="hstat"><span class="hstat-val">5</span><span class="hstat-lbl">Semaines</span></div>
+          <div class="hstat"><span class="hstat-val">BO7</span><span class="hstat-lbl">Format</span></div>
+          <div class="hstat"><span class="hstat-val">1 600€</span><span class="hstat-lbl">Dotation</span></div>
+        </div>
+      </div>
+    </div>
     <div class="acc-top">
       <div class="stream-wrap">
         <div class="stream-hdr">
@@ -536,7 +587,6 @@ onAuthStateChanged(auth, async user => {
     try {
       const d = await getDoc(doc(db,'admins',user.uid));
       isAdmin = d.exists();
-      console.log('[RL] uid:', user.uid, '| admin doc exists:', isAdmin);
     } catch(e) { console.error('[RL] admin check failed:', e); isAdmin = false; }
   } else {
     btn.textContent = t('login');
@@ -657,7 +707,7 @@ async function loadAccueil() {
       const rank=i+1;
       const cls=rank===1?'g':rank===2?'s':rank===3?'b':'';
       const logo=t.logoUrl?`<img src="${t.logoUrl}" style="width:20px;height:20px;object-fit:contain;border-radius:3px;background:var(--bg3)">`:'';
-      return `<div class="prev-row${i<8?' top8':''}">
+      return `<div class="prev-row${i<8&&t.played>0?' top8':''}">
         <span class="prev-rank ${cls}">${rank}</span>
         <span style="display:flex;align-items:center;gap:6px">${logo}${esc(t.name)}</span>
         <span class="prev-pts">${t.pts.toFixed(1)}</span>
@@ -697,15 +747,17 @@ async function loadStandings(pool) {
       const rank=i+1;
       const logo=t2.logoUrl?`<img class="tlogo-sm" src="${t2.logoUrl}" alt="">`:`<div class="tlogo-sm"></div>`;
       const diff=t2.gw-t2.gl;
-      const lan=rank<=8?`<span class="lan-badge">${t('lan_q')}</span>`:'';
-      return `<tr class="${rank<=8?'top8':''}">
+      const inLan=rank<=8&&t2.played>0;
+      const lan=inLan?`<span class="lan-badge">${t('lan_q')}</span>`:'';
+      const sep=rank===8&&rows.length>8?`<tr class="stbl-sep"><td colspan="9"></td></tr>`:'';
+      return `<tr class="${inLan?'top8':''}">
         <td class="rk">${rank}</td>
         <td><div class="t-cell">${logo}<span><div class="tname">${esc(t2.name)} ${lan}</div><div class="ttag">${esc(t2.tag||'')}</div></span></div></td>
         <td>${t2.played}</td><td>${t2.wins}</td><td>${t2.losses}</td>
         <td class="pts-cell">${t2.pts.toFixed(1)}</td>
         <td>${t2.gw}</td><td>${t2.gl}</td>
         <td style="color:${diff>0?'#0c8':diff<0?'#ef4444':''}">${diff>0?'+':''}${diff}</td>
-      </tr>`;
+      </tr>${sep}`;
     }).join('')}</tbody>
   </table></div>`;
 }
@@ -796,7 +848,21 @@ async function loadResults() {
   if (rWeek!=='all') matches = matches.filter(m=>m.week===rWeek);
   matches.sort((a,b)=>{ if(a.week!==b.week) return a.week-b.week; return a.group?.localeCompare(b.group||'')||0; });
   if (!matches.length) { wrap.innerHTML=`<div class="empty">${t('no_match')}</div>`; return; }
-  wrap.innerHTML = matches.map(m=>renderMatchCard(m)).join('');
+  if (rWeek === 'all') {
+    const byWeek = {};
+    matches.forEach(m => { const w=m.week||0; if(!byWeek[w])byWeek[w]=[]; byWeek[w].push(m); });
+    wrap.innerHTML = Object.keys(byWeek).sort((a,b)=>a-b).map(w => {
+      const wm = byWeek[w];
+      const played = wm.filter(m=>m.status==='played').length;
+      const info = played ? `${played}/${wm.length} joués` : `${wm.length} match${wm.length>1?'s':''}`;
+      return `<div class="week-section">
+        <div class="week-section-hdr"><span class="week-section-title">${t('week')} ${w}</span><span class="week-section-count">${info}</span></div>
+        ${wm.map(m=>renderMatchCard(m)).join('')}
+      </div>`;
+    }).join('');
+  } else {
+    wrap.innerHTML = matches.map(m=>renderMatchCard(m)).join('');
+  }
 }
 
 function renderMatchCard(m) {
