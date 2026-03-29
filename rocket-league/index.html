@@ -175,6 +175,9 @@ img{display:block}
 .week-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .wbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
 .wbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
+.status-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.stbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
+.stbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
 .match-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
 .match-card:hover{border-color:rgba(232,0,26,.35)}
 .mc-meta{display:flex;align-items:center;gap:8px;padding:7px 13px;border-bottom:1px solid var(--border);font-size:.7rem;color:var(--text2)}
@@ -194,8 +197,21 @@ img{display:block}
 .mc-schedule{font-size:.68rem;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:4px}
 .mc-badge.played{background:rgba(0,200,100,.1);color:#0c8}
 .mc-badge.sched{background:rgba(255,255,255,.05);color:var(--text2)}
+.mc-badge.prog{background:rgba(0,129,255,.12);color:var(--rl-blue)}
 .mc-expand-btn{background:none;border:none;color:var(--text2);font-size:.74rem;font-weight:600;padding:0;transition:color .2s}
 .mc-expand-btn:hover{color:var(--text)}
+.mc-team.mc-winner .mc-name{color:#fff;font-weight:800}
+.mc-team.mc-loser .mc-name{color:var(--text3)}
+.mc-team.mc-winner .mc-logo{opacity:1}
+.mc-team.mc-loser .mc-logo{opacity:0.45;filter:grayscale(40%)}
+.sc-win{color:#fff}
+.sc-lose{color:var(--text3)}
+.match-card.home-win{border-left:3px solid rgba(0,200,100,.5)}
+.match-card.away-win{border-right:3px solid rgba(0,200,100,.5)}
+.mc-winner-side{background:linear-gradient(to right,rgba(0,200,100,.07),transparent)}
+.mc-loser-side{background:linear-gradient(to right,rgba(0,0,0,.15),transparent)}
+.mc-away-winner-side{background:linear-gradient(to left,rgba(0,200,100,.07),transparent)}
+.mc-away-loser-side{background:linear-gradient(to left,rgba(0,0,0,.15),transparent)}
 .mc-stats{display:none;padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
 .mc-stats.open{display:block}
 /* ── GAME RESULTS DISPLAY ── */
@@ -295,6 +311,21 @@ img{display:block}
 .acc-card-hdr{background:var(--bg3);padding:9px 14px;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border)}
 .acc-match-row{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.78rem}
 .acc-match-row:last-child{border-bottom:none}
+.vs-section-title{font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.vs-section-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--rl-blue);border-radius:2px}
+.vs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px}
+.vs-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .2s}
+.vs-card:hover{border-color:rgba(0,129,255,.4)}
+.vs-card-meta{padding:7px 12px;border-bottom:1px solid var(--border);font-size:.67rem;color:var(--text2);display:flex;align-items:center;justify-content:space-between}
+.vs-card-date{color:var(--rl-blue);font-weight:700;font-size:.72rem}
+.vs-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:14px 12px}
+.vs-team{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.vs-team.away{align-items:center}
+.vs-logo{width:44px;height:44px;object-fit:contain;border-radius:7px;background:var(--bg3)}
+.vs-name{font-weight:700;font-size:.78rem;line-height:1.2}
+.vs-mid{display:flex;flex-direction:column;align-items:center;gap:3px}
+.vs-vs{font-size:.8rem;font-weight:900;color:var(--text3)}
+.vs-time{font-size:.9rem;font-weight:900;color:var(--text)}
 .amr-team{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .amr-team.away{text-align:right}
 .amr-team.amr-win{color:var(--text)}
@@ -351,7 +382,7 @@ img{display:block}
   <button class="nav-btn active" onclick="goTab('accueil')" id="nav-accueil">Accueil</button>
   <button class="nav-btn" onclick="goTab('classement')" id="nav-classement">Classement</button>
   <button class="nav-btn" onclick="goTab('equipes')" id="nav-equipes">Équipes</button>
-  <button class="nav-btn" onclick="goTab('resultats')" id="nav-resultats">Résultats</button>
+  <button class="nav-btn" onclick="goTab('resultats')" id="nav-resultats">Matchs</button>
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
@@ -394,6 +425,10 @@ img{display:block}
         </div>
       </div>
     </div>
+    <div id="acc-scheduled-section" style="display:none">
+      <div class="vs-section-title">Matchs programmés</div>
+      <div class="vs-grid" id="acc-scheduled-grid"></div>
+    </div>
     <div class="acc-cards">
       <div class="acc-card">
         <div class="acc-card-hdr">Derniers résultats</div>
@@ -435,6 +470,12 @@ img{display:block}
       <div class="ptoggle" style="margin-bottom:0">
         <button class="pbtn active" onclick="switchRP(1)" id="rp1">Poule 1</button>
         <button class="pbtn" onclick="switchRP(2)" id="rp2">Poule 2</button>
+      </div>
+      <div class="status-tabs" id="status-tabs">
+        <button class="stbtn active" onclick="switchRStatus('tous')" id="rst-tous">Tous</button>
+        <button class="stbtn" onclick="switchRStatus('joues')" id="rst-joues">Joués</button>
+        <button class="stbtn" onclick="switchRStatus('programmes')" id="rst-programmes">Programmés</button>
+        <button class="stbtn" onclick="switchRStatus('avenir')" id="rst-avenir">À venir</button>
       </div>
       <div class="week-tabs" id="week-tabs"></div>
       <select class="adm-sel" id="r-team-filter" onchange="switchRTeam(this.value)" style="margin-left:auto"><option value="">Toutes les équipes</option></select>
@@ -571,7 +612,7 @@ const FLAGS = {FR:'🇫🇷',BE:'🇧🇪',CH:'🇨🇭',DE:'🇩🇪',ES:'🇪�
 const I18N = {
   fr:{
     login:'Connexion',logout:'Déconnexion',
-    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Résultats',
+    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Compétition',lbl_fmt:'Format',lbl_pools:'Poules',lbl_weeks:'Semaines',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Classement — Aperçu',
     col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'M+',col_gl:'M-',col_diff:'Diff',
     week:'Sem.',all:'Tout',played:'Joués',sched:'À venir',
@@ -590,7 +631,7 @@ const I18N = {
   },
   en:{
     login:'Login',logout:'Logout',
-    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Results',
+    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Matches',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Competition',lbl_fmt:'Format',lbl_pools:'Pools',lbl_weeks:'Weeks',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Standings — Overview',
     col_rank:'#',col_team:'Team',col_p:'P',col_w:'W',col_l:'L',col_pts:'Pts',col_gw:'GW',col_gl:'GL',col_diff:'Diff',
     week:'Wk',all:'All',played:'Played',sched:'Upcoming',
@@ -618,6 +659,7 @@ let isAdmin = false;
 let curUser = null;
 let gPool = 1, rWeek = 'all';
 let rTeam = '';
+let rStatus = 'tous';
 let admSec = 'equipes';
 let editTeamId = null, editPlayerId = null;
 let admMatchPool = 1, admMatchWeek = 1;
@@ -850,6 +892,48 @@ async function loadAccueil() {
       </div>`;
     }).join('');
   });
+
+  // Scheduled matches (all matches with scheduledAt set, not played, sorted by date)
+  const scheduledMatches = Object.values(matchesMap)
+    .filter(m => m.scheduledAt && m.status !== 'played')
+    .sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+
+  const schedSection = document.getElementById('acc-scheduled-section');
+  const schedGrid = document.getElementById('acc-scheduled-grid');
+  if (schedSection && schedGrid) {
+    if (scheduledMatches.length) {
+      schedSection.style.display = '';
+      schedGrid.innerHTML = scheduledMatches.map(m => {
+        const ht = teamsMap[m.homeTeamId]||{name:'?',logoUrl:''};
+        const at = teamsMap[m.awayTeamId]||{name:'?',logoUrl:''};
+        const d = new Date(m.scheduledAt);
+        const dateStr = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+        const timeStr = d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="vs-card">
+          <div class="vs-card-meta">
+            <span>S${m.week} · Gr.${m.group||'?'} · Poule ${m.pool}</span>
+            <span class="vs-card-date">${dateStr}</span>
+          </div>
+          <div class="vs-body">
+            <div class="vs-team">
+              ${ht.logoUrl?`<img class="vs-logo" src="${esc(ht.logoUrl)}" alt="" onerror="this.src=''">`:`<div class="vs-logo"></div>`}
+              <span class="vs-name">${esc(ht.name)}</span>
+            </div>
+            <div class="vs-mid">
+              <span class="vs-vs">VS</span>
+              <span class="vs-time">${timeStr}</span>
+            </div>
+            <div class="vs-team away">
+              ${at.logoUrl?`<img class="vs-logo" src="${esc(at.logoUrl)}" alt="" onerror="this.src=''">`:`<div class="vs-logo"></div>`}
+              <span class="vs-name">${esc(at.name)}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      schedSection.style.display = 'none';
+    }
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1015,6 +1099,13 @@ window.switchRTeam = async function(teamId) {
   await loadResults();
 };
 
+window.switchRStatus = async function(status) {
+  rStatus = status;
+  document.querySelectorAll('.stbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('rst-'+status)?.classList.add('active');
+  await loadResults();
+};
+
 function updateTeamFilter() {
   const sel = document.getElementById('r-team-filter');
   if (!sel) return;
@@ -1032,6 +1123,9 @@ async function loadResults() {
   let matches = Object.values(matchesMap).filter(m=>m.pool===gPool);
   if (rWeek!=='all') matches = matches.filter(m=>m.week===rWeek);
   if (rTeam) matches = matches.filter(m=>m.homeTeamId===rTeam||m.awayTeamId===rTeam);
+  if (rStatus === 'joues') matches = matches.filter(m=>m.status==='played');
+  else if (rStatus === 'programmes') matches = matches.filter(m=>m.status!=='played' && m.scheduledAt);
+  else if (rStatus === 'avenir') matches = matches.filter(m=>m.status!=='played' && !m.scheduledAt);
   matches.sort((a,b)=>{
     // Joués en premier
     if (a.status==='played' && b.status!=='played') return -1;
@@ -1074,13 +1168,17 @@ function renderMatchCard(m) {
   const ht = teamsMap[m.homeTeamId]||{name:'?',logoUrl:''};
   const at = teamsMap[m.awayTeamId]||{name:'?',logoUrl:''};
   const played = m.status==='played';
+  const homeWon = played && m.homeScore > m.awayScore;
+  const awayWon = played && m.awayScore > m.homeScore;
   const scheduleInfo = !played && m.scheduledAt ? formatSchedule(m.scheduledAt) : null;
   const score = played
-    ? `<div class="mc-score-val"><span>${m.homeScore}</span><span class="sep"> - </span><span>${m.awayScore}</span></div>`
+    ? `<div class="mc-score-val"><span class="${homeWon?'sc-win':'sc-lose'}">${m.homeScore}</span><span class="sep"> - </span><span class="${awayWon?'sc-win':'sc-lose'}">${m.awayScore}</span></div>`
     : `<div class="mc-pending">vs</div>`;
   const badge = played
     ? `<span class="mc-badge played">${t('played')}</span>`
-    : `<span class="mc-badge sched">${t('sched')}</span>`;
+    : m.scheduledAt
+      ? `<span class="mc-badge prog">Programmé</span>`
+      : `<span class="mc-badge sched">À venir</span>`;
   let goalSummary = '';
   if (played && m.games && m.games.length) {
     const hg = m.games.reduce((s,g)=>s+(g.homeGoals||0),0);
@@ -1118,7 +1216,7 @@ function renderMatchCard(m) {
     }
   }
 
-  return `<div class="match-card">
+  return `<div class="match-card${homeWon?' home-win':awayWon?' away-win':''}">
     <div class="mc-meta">
       <span>S${m.week} · Gr.${m.group} · Poule ${m.pool}</span>
       ${badge}
@@ -1126,12 +1224,12 @@ function renderMatchCard(m) {
       ${scheduleInfo ? `<span class="mc-schedule">📅 ${scheduleInfo}</span>` : ''}
     </div>
     <div class="mc-body">
-      <div class="mc-team">
+      <div class="mc-team${homeWon?' mc-winner':played?' mc-loser':''}${played?(homeWon?' mc-winner-side':' mc-loser-side'):''}">
         <img class="mc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
         <span class="mc-name">${esc(ht.name)}</span>
       </div>
       <div class="mc-score">${score}</div>
-      <div class="mc-team away">
+      <div class="mc-team away${awayWon?' mc-winner':played?' mc-loser':''}${played?(awayWon?' mc-away-winner-side':' mc-away-loser-side'):''}">
         <img class="mc-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
         <span class="mc-name">${esc(at.name)}</span>
       </div>
