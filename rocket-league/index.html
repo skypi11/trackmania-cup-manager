@@ -1143,67 +1143,82 @@ window.deletePlayer = async function(id) {
 };
 
 // ── Admin: Résultats ─────────────────────────────
-async function admResults() {
-  await fetchAll();
-  const wrap = document.getElementById('adm-content');
-  const poolOpts=`<option value="1">Poule 1</option><option value="2">Poule 2</option>`;
-  const weekOpts=[`<option value="1">Semaine 1</option>`,`<option value="2">Semaine 2</option>`,`<option value="3">Semaine 3</option>`,`<option value="4">Semaine 4</option>`,`<option value="5">Semaine 5</option>`].join('');
+function _renderAdmMatches() {
+  const pool   = document.getElementById('ar-pool')?.value  || 'all';
+  const week   = document.getElementById('ar-week')?.value  || 'all';
+  const teamId = document.getElementById('ar-team')?.value  || '';
+  const status = document.getElementById('ar-status')?.value|| 'pending';
 
-  const renderMatchList = (pool=admMatchPool, week=admMatchWeek) => {
-    const matches = Object.values(matchesMap)
-      .filter(m=>m.pool===pool&&m.week===week)
-      .sort((a,b)=>a.group?.localeCompare(b.group||'')||0);
-    if (!matches.length) return `<div class="empty">Aucun match — initialisez d'abord le calendrier.</div>`;
-    return matches.map(m=>{
-      const ht=teamsMap[m.homeTeamId]||{name:'?'};
-      const at=teamsMap[m.awayTeamId]||{name:'?'};
-      const played=m.status==='played';
-      return `<div class="adm-item">
-        <div class="adm-item-l">
-          <div><div class="adm-item-name">${esc(ht.name)} vs ${esc(at.name)}</div>
-          <div class="adm-item-meta">Gr.${m.group} · ${played?`${m.homeScore}-${m.awayScore} ✓`:'À jouer'}</div></div>
-        </div>
-        <div class="adm-item-r">
-          <button class="btn-res" onclick="openMatchEntry('${m.id}')">${played?'✏ Modifier':'+ Saisir'}</button>
-          ${played?`<button class="btn-d" onclick="resetMatch('${m.id}')">↺</button>`:''}
-        </div>
-      </div>`;
-    }).join('');
-  };
+  let matches = Object.values(matchesMap);
+  if (pool   !== 'all') matches = matches.filter(m => m.pool  === parseInt(pool));
+  if (week   !== 'all') matches = matches.filter(m => m.week  === parseInt(week));
+  if (teamId)           matches = matches.filter(m => m.homeTeamId===teamId || m.awayTeamId===teamId);
+  if (status === 'pending') matches = matches.filter(m => m.status !== 'played');
+  else if (status === 'played') matches = matches.filter(m => m.status === 'played');
 
-  wrap.innerHTML = `
-    <div class="adm-filter">
-      <select class="adm-sel" id="ar-pool" onchange="admFilterMatch()">${poolOpts}</select>
-      <select class="adm-sel" id="ar-week" onchange="admFilterMatch()">${weekOpts}</select>
-    </div>
-    <div class="adm-list" id="match-list">${renderMatchList()}</div>`;
-  document.getElementById('ar-pool').value=String(admMatchPool);
-  document.getElementById('ar-week').value=String(admMatchWeek);
-}
+  matches.sort((a,b) => a.pool-b.pool || a.week-b.week || (a.group||'').localeCompare(b.group||''));
 
-window.admFilterMatch = function() {
-  admMatchPool=parseInt(document.getElementById('ar-pool').value);
-  admMatchWeek=parseInt(document.getElementById('ar-week').value);
-  const matches=Object.values(matchesMap).filter(m=>m.pool===admMatchPool&&m.week===admMatchWeek)
-    .sort((a,b)=>a.group?.localeCompare(b.group||'')||0);
-  const list=document.getElementById('match-list');
-  if(!matches.length){list.innerHTML=`<div class="empty">Aucun match — initialisez d'abord le calendrier.</div>`;return;}
-  list.innerHTML=matches.map(m=>{
-    const ht=teamsMap[m.homeTeamId]||{name:'?'};
-    const at=teamsMap[m.awayTeamId]||{name:'?'};
-    const played=m.status==='played';
+  const list = document.getElementById('match-list');
+  if (!list) return;
+  if (!matches.length) {
+    list.innerHTML = `<div class="empty">${status==='pending'?'Tous les matchs ont été saisis !':'Aucun match trouvé.'}</div>`;
+    return;
+  }
+  list.innerHTML = matches.map(m => {
+    const ht = teamsMap[m.homeTeamId]||{name:'?'};
+    const at = teamsMap[m.awayTeamId]||{name:'?'};
+    const played = m.status === 'played';
+    const badge = played
+      ? `<span style="color:#22c55e;font-size:.8rem">✓ ${m.homeScore}-${m.awayScore}</span>`
+      : `<span style="color:#f59e0b;font-size:.8rem">⏳ À saisir</span>`;
     return `<div class="adm-item">
       <div class="adm-item-l">
-        <div><div class="adm-item-name">${esc(ht.name)} vs ${esc(at.name)}</div>
-        <div class="adm-item-meta">Gr.${m.group} · ${played?`${m.homeScore}-${m.awayScore} ✓`:'À jouer'}</div></div>
+        <div>
+          <div class="adm-item-name">${esc(ht.name)} <span style="color:var(--text2)">vs</span> ${esc(at.name)}</div>
+          <div class="adm-item-meta">P${m.pool} · S${m.week} · Gr.${m.group||'?'} &nbsp;${badge}</div>
+        </div>
       </div>
       <div class="adm-item-r">
-        <button class="btn-res" onclick="openMatchEntry('${m.id}')">${played?'✏ Modifier':'+ Saisir'}</button>
-        ${played?`<button class="btn-d" onclick="resetMatch('${m.id}')">↺</button>`:''}
+        <button class="btn-res" onclick="openMatchEntry('${m.id}')">${played?'✏':'+ Saisir'}</button>
+        ${played?`<button class="btn-d" title="Réinitialiser" onclick="resetMatch('${m.id}')">↺</button>`:''}
       </div>
     </div>`;
   }).join('');
-};
+}
+
+async function admResults() {
+  await fetchAll();
+  const wrap = document.getElementById('adm-content');
+  const teamOpts = `<option value="">Toutes les équipes</option>`
+    + Object.values(teamsMap).sort((a,b)=>a.pool-b.pool||a.name.localeCompare(b.name))
+        .map(t=>`<option value="${t.id}">P${t.pool} · ${esc(t.name)}</option>`).join('');
+
+  wrap.innerHTML = `
+    <div class="adm-filter" style="flex-wrap:wrap;gap:8px">
+      <select class="adm-sel" id="ar-status" onchange="_renderAdmMatches()" style="font-weight:600">
+        <option value="pending">⏳ À saisir</option>
+        <option value="played">✓ Saisis</option>
+        <option value="all">Tous</option>
+      </select>
+      <select class="adm-sel" id="ar-team" onchange="_renderAdmMatches()">${teamOpts}</select>
+      <select class="adm-sel" id="ar-pool" onchange="_renderAdmMatches()">
+        <option value="all">Toutes les poules</option>
+        <option value="1">Poule 1</option>
+        <option value="2">Poule 2</option>
+      </select>
+      <select class="adm-sel" id="ar-week" onchange="_renderAdmMatches()">
+        <option value="all">Toutes les semaines</option>
+        <option value="1">Semaine 1</option><option value="2">Semaine 2</option>
+        <option value="3">Semaine 3</option><option value="4">Semaine 4</option>
+        <option value="5">Semaine 5</option>
+      </select>
+    </div>
+    <div class="adm-list" id="match-list"></div>`;
+  window._renderAdmMatches = _renderAdmMatches;
+  _renderAdmMatches();
+}
+
+window.admFilterMatch = function() { _renderAdmMatches(); };
 
 window.resetMatch = async function(id) {
   if(!confirm('Remettre ce match à zéro ?')) return;
