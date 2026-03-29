@@ -601,7 +601,7 @@
         }
     </style>
 </head>
-<body class="guest-mode">
+<body>
 
 <header>
     <div class="logo-wrap">
@@ -610,11 +610,10 @@
     <div class="header-actions">
         <button class="save-btn" id="saveBtn" onclick="saveContent()" data-i18n="nav.admin.save">💾 Sauvegarder</button>
         <button class="lang-toggle" onclick="toggleLang()" id="langToggleBtn" title="Switch to English">EN</button>
-        <button class="account-btn" id="accountBtn" onclick="openAccount()" data-i18n="nav.account">Mon compte</button>
     </div>
 </header>
 
-<div class="admin-hint" data-i18n="nav.admin.hint">✏️ Cliquez sur les textes pour les modifier</div>
+<div class="admin-hint" id="adminHint" data-i18n="nav.admin.hint">✏️ Cliquez sur les textes pour les modifier</div>
 
 <main class="hero">
     <div class="hero-title">
@@ -662,27 +661,11 @@
 
     </div>
 
-    <!-- CTA inscription — guests only -->
-    <div class="join-cta">
-        <div class="join-cta-inner">
-            <div class="join-cta-icon">🏆</div>
-            <div class="join-cta-text">
-                <h3 data-i18n="cta.title">Rejoins la compétition</h3>
-                <p data-i18n="cta.desc">Crée ton profil joueur pour apparaître dans les classements, suivre tes stats et t'inscrire aux prochaines éditions.</p>
-                <div class="join-cta-steps">
-                    <div class="join-cta-step"><span>🔑</span><span data-i18n="cta.step1">Connexion Google</span></div>
-                    <div class="join-cta-step"><span>✏️</span><span data-i18n="cta.step2">Choix du pseudo</span></div>
-                    <div class="join-cta-step"><span>🎮</span><span data-i18n="cta.step3">Prêt à jouer</span></div>
-                </div>
-            </div>
-            <button class="join-cta-btn" onclick="openAccount()" data-i18n="cta.btn">Créer mon profil →</button>
-        </div>
-    </div>
 
 </main>
 
-<!-- ===== Account Modal ===== -->
-<div class="modal-overlay" id="accountModal">
+<!-- ===== Account Modal (admin only — accessed via TM site) ===== -->
+<div class="modal-overlay" id="accountModal" style="display:none">
     <div class="modal">
 
         <!-- VIEW: Auth — shown when not logged in -->
@@ -813,14 +796,8 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import {
-        getFirestore, doc, getDoc, setDoc, addDoc,
-        collection, query, where, getDocs, updateDoc
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-    import {
-        getAuth, GoogleAuthProvider, signInWithPopup,
-        signOut, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
     import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
     import { t, setLang, getLang, initLang } from "./shared/i18n.js";
 
@@ -838,12 +815,6 @@
     const db   = getFirestore(app);
     const auth = getAuth(app);
 
-    const provider = new GoogleAuthProvider();
-    let currentUser = null;
-    let isAdminUser = false;
-    let hasProfile  = false;
-    let authReady = false;
-
     const FIELDS = ['hero-title-pre', 'hero-title-hl', 'hero-subtitle', 'tm-tag', 'tm-description', 'tm-event', 'tm-btn', 'rl-tag', 'rl-description', 'rl-event', 'rl-btn'];
 
     // ── i18n ──────────────────────────────────────────────────────────────────
@@ -854,51 +825,25 @@
             const val = t(key);
             if (val) el.textContent = val;
         });
-        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-            const key = el.getAttribute('data-i18n-placeholder');
-            const val = t(key);
-            if (val) el.placeholder = val;
-        });
-        // Update lang toggle button
         const lang = getLang();
         const btn = document.getElementById('langToggleBtn');
         if (btn) {
             btn.textContent = lang === 'fr' ? 'EN' : 'FR';
             btn.title = lang === 'fr' ? 'Switch to English' : 'Passer en français';
         }
-        // Update html lang attribute
         document.documentElement.lang = lang;
-        // Re-render dynamic content
-        renderDynamicContent();
-        // Keep editable fields in sync with admin mode (don't overwrite Firestore content)
-    }
-
-    function renderDynamicContent() {
-        // Re-render the tm-event default text if it hasn't been loaded from Firestore
         const tmEvent = document.getElementById('tm-event');
         if (tmEvent && tmEvent.getAttribute('data-default') === 'true') {
             tmEvent.textContent = t('tm.event.default');
         }
-        // Update account btn if deactivated (guest)
-        if (!currentUser) {
-            const accountBtn = document.getElementById('accountBtn');
-            if (accountBtn && !accountBtn.classList.contains('player-active') && !accountBtn.classList.contains('admin-active')) {
-                accountBtn.textContent = t('nav.account');
-            }
-        }
-        // Update save btn
         const saveBtn = document.getElementById('saveBtn');
         if (saveBtn && saveBtn.textContent !== t('msg.saved')) {
             saveBtn.textContent = t('nav.admin.save');
         }
-        // Update admin hint
-        const adminHint = document.querySelector('.admin-hint');
-        if (adminHint) adminHint.textContent = t('nav.admin.hint');
     }
 
     window.toggleLang = () => {
-        const newLang = getLang() === 'fr' ? 'en' : 'fr';
-        setLang(newLang);
+        setLang(getLang() === 'fr' ? 'en' : 'fr');
         applyI18n();
     };
 
@@ -942,256 +887,27 @@
         setTimeout(() => { btn.textContent = t('nav.admin.save'); }, 2000);
     };
 
-    // ── Auth state ────────────────────────────────────────────────────────────
+    // ── Auth (détection admin automatique via session TM) ────────────────────
 
     onAuthStateChanged(auth, async user => {
-        currentUser = user;
-        authReady = true;
-        if (!user) { deactivateUI(); return; }
-
-        // Check if admin
-        try {
-            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
-            isAdminUser = adminSnap.exists();
-        } catch {
-            isAdminUser = false;
-        }
-
-        if (isAdminUser) {
-            hasProfile = true;
-            activateAdminUI();
-            closeAccount();
+        if (!user) {
+            document.body.classList.remove('admin-mode');
+            document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
             return;
         }
-
-        // Check if player has a profile
         try {
-            const partData = await loadParticipant(user.uid);
-            if (partData) {
-                hasProfile = true;
-                activatePlayerUI(partData.pseudo || user.displayName || 'Joueur');
-                closeAccount();
-            } else {
-                // Première connexion Google : demander le pseudo
-                hasProfile = false;
-                activatePlayerUI(user.displayName || 'Joueur');
-                document.getElementById('accountModal').classList.add('open');
-                document.getElementById('setupPseudo').value = user.displayName || '';
-                showView('view-setup');
+            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+            if (adminSnap.exists()) {
+                document.body.classList.add('admin-mode');
+                document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
             }
-        } catch {
-            hasProfile = true;
-            activatePlayerUI(user.displayName || 'Joueur');
-            closeAccount();
-        }
-    });
-
-    // Charge le profil : essaie d'abord par UID (nouveau), puis par champ userId (ancien) avec migration auto
-    async function loadParticipant(uid) {
-        const directSnap = await getDoc(doc(db, 'participants', uid));
-        if (directSnap.exists()) return directSnap.data();
-        // Fallback ancien système (addDoc avec ID aléatoire)
-        const q = query(collection(db, 'participants'), where('userId', '==', uid));
-        const snap = await getDocs(q);
-        if (snap.empty) return null;
-        const data = snap.docs[0].data();
-        // Migration automatique vers le nouveau doc UID
-        await setDoc(doc(db, 'participants', uid), data, { merge: true });
-        return data;
-    }
-
-    function activateAdminUI() {
-        activateAnyUserUI();
-        document.body.classList.add('admin-mode');
-        const btn = document.getElementById('accountBtn');
-        btn.textContent = t('admin.title');
-        btn.className = 'account-btn admin-active';
-        document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
-    }
-
-    function activatePlayerUI(pseudo) {
-        activateAnyUserUI();
-        const btn = document.getElementById('accountBtn');
-        btn.textContent = `👤 ${pseudo}`;
-        btn.className = 'account-btn player-active';
-    }
-
-    function deactivateUI() {
-        isAdminUser = false;
-        document.body.classList.remove('admin-mode');
-        document.body.classList.add('guest-mode');
-        const btn = document.getElementById('accountBtn');
-        btn.textContent = t('nav.account');
-        btn.className = 'account-btn';
-        document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
-    }
-
-    function activateAnyUserUI() {
-        document.body.classList.remove('guest-mode');
-    }
-
-    // ── Modal ─────────────────────────────────────────────────────────────────
-
-    window.openAccount = () => {
-        document.getElementById('accountModal').classList.add('open');
-        if (!currentUser) {
-            showView('view-auth');
-        } else if (isAdminUser) {
-            showView('view-admin');
-        } else if (!hasProfile) {
-            // User logged in but never completed setup
-            document.getElementById('setupPseudo').value = currentUser.displayName || '';
-            showView('view-setup');
-        } else {
-            loadProfileView();
-            showView('view-profile');
-        }
-    };
-
-    window.openAdminProfile = () => { loadProfileView(); showView('view-profile'); };
-
-    window.closeAccount = () => {
-        // Block accidental close during first-time profile setup
-        if (currentUser && !hasProfile) return;
-        document.getElementById('accountModal').classList.remove('open');
-        document.getElementById('profileError').style.display = 'none';
-        document.getElementById('profileSuccess').style.display = 'none';
-    };
-
-    function showView(id) {
-        ['view-auth', 'view-setup', 'view-profile', 'view-admin'].forEach(v => {
-            document.getElementById(v).style.display = v === id ? 'block' : 'none';
-        });
-    }
-
-    // Click outside to close
-    document.getElementById('accountModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('accountModal')) closeAccount();
-    });
-
-    // ── Google Sign-In ────────────────────────────────────────────────────────
-
-    window.handleGoogleSignIn = async () => {
-        const btn = document.getElementById('googleSignInBtn');
-        btn.disabled = true; btn.textContent = t('auth.connecting');
-        try {
-            await signInWithPopup(auth, provider);
-            // onAuthStateChanged prend le relais
-        } catch(err) {
-            if (err.code !== 'auth/popup-closed-by-user') {
-                const el = document.getElementById('googleError');
-                el.textContent = t('auth.error');
-                el.style.display = 'block';
-            }
-            btn.disabled = false;
-            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.1l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.5l6.2 5.2C36.9 36.2 44 31 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> ${t('auth.google')}`;
-        }
-    };
-
-    // ── First-time profile setup ───────────────────────────────────────────────
-
-    window.handleSetupSave = async (e) => {
-        e.preventDefault();
-        const pseudo = document.getElementById('setupPseudo').value.trim();
-        const team   = document.getElementById('setupTeam').value.trim();
-        const games  = [];
-        if (document.getElementById('setupGameTM').checked) games.push('trackmania');
-        if (document.getElementById('setupGameRL').checked) games.push('rocket-league');
-
-        const btn = document.getElementById('setupSubmitBtn');
-        btn.disabled = true; btn.textContent = 'Enregistrement...';
-        try {
-            const uid = currentUser.uid;
-            const createdAt = new Date().toISOString();
-            const pseudoTM = games.includes('trackmania') ? pseudo : '';
-            const pseudoRL = games.includes('rocket-league') ? pseudo : '';
-            await setDoc(doc(db, 'participants', uid), {
-                pseudo, pseudoTM, pseudoRL, team, games,
-                email: currentUser.email, userId: uid, createdAt
-            }, { merge: true });
-            hasProfile = true;
-            activatePlayerUI(pseudo);
-            closeAccount();
-        } catch {
-            document.getElementById('setupError').textContent = t('msg.error');
-            document.getElementById('setupError').style.display = 'block';
-        } finally {
-            btn.disabled = false; btn.textContent = t('profile.save');
-        }
-    };
-
-    // ── Profile ───────────────────────────────────────────────────────────────
-
-    window.togglePseudoFields = () => {
-        document.getElementById('profPseudoTMGroup').style.display = document.getElementById('profGameTM').checked ? '' : 'none';
-        document.getElementById('profPseudoRLGroup').style.display = document.getElementById('profGameRL').checked ? '' : 'none';
-    };
-
-    function loadProfileView() {
-        if (!currentUser) return;
-        loadParticipant(currentUser.uid).then(d => {
-            if (!d) return;
-            document.getElementById('profTeam').value    = d.team   || '';
-            document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
-            document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
-            document.getElementById('profPseudoTM').value = d.pseudoTM || d.pseudo || '';
-            document.getElementById('profPseudoRL').value = d.pseudoRL || '';
-            document.getElementById('profEmail').textContent = `${t('profile.email')} ${currentUser.email}`;
-            togglePseudoFields();
-        }).catch(() => {});
-    }
-
-    window.handleProfileSave = async (e) => {
-        e.preventDefault();
-        const team     = document.getElementById('profTeam').value.trim();
-        const pseudoTM = document.getElementById('profPseudoTM').value.trim();
-        const pseudoRL = document.getElementById('profPseudoRL').value.trim();
-        const games  = [];
-        if (document.getElementById('profGameTM').checked) games.push('trackmania');
-        if (document.getElementById('profGameRL').checked) games.push('rocket-league');
-        const pseudo = pseudoTM || pseudoRL || '';
-
-        const btn = document.getElementById('profileSubmitBtn');
-        btn.disabled = true; btn.textContent = 'Enregistrement...';
-
-        try {
-            const docRef = doc(db, 'participants', currentUser.uid);
-            await setDoc(docRef, { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid }, { merge: true });
-
-            activatePlayerUI(pseudo || currentUser.displayName);
-
-            document.getElementById('profileSuccess').textContent = t('profile.saved');
-            document.getElementById('profileSuccess').style.display = 'block';
-            document.getElementById('profileError').style.display = 'none';
-            setTimeout(() => closeAccount(), 1500);
-        } catch {
-            document.getElementById('profileError').textContent = t('profile.error');
-            document.getElementById('profileError').style.display = 'block';
-        } finally {
-            btn.disabled = false; btn.textContent = t('profile.save');
-        }
-    };
-
-    // ── Logout ────────────────────────────────────────────────────────────────
-
-    window.handleLogout = async () => {
-        await signOut(auth);
-        hasProfile = false;
-        document.getElementById('accountModal').classList.remove('open');
-    };
-
-    // ── Gestion des clics sur les cards ──────────────────────────────────────
-    document.querySelectorAll('.game-card').forEach(card => {
-        card.addEventListener('click', e => {
-            // Admin connecté : les éditables gèrent stopPropagation — navigation libre
-            // Non connecté ou joueur : navigation libre (la page cible est publique)
-        });
+        } catch {}
     });
 
     // Clic sur un élément éditable en admin : ne pas propager vers la carte
     document.querySelectorAll('.editable').forEach(el => {
         el.addEventListener('click', e => {
-            if (isAdminUser) {
+            if (document.body.classList.contains('admin-mode')) {
                 e.stopPropagation();
                 e.preventDefault();
             }

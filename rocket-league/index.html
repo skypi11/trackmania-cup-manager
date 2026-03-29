@@ -337,7 +337,6 @@ img{display:block}
   <div class="hdr-r">
     <button class="btn-lang active" id="btn-fr" onclick="setLang('fr')">FR</button>
     <button class="btn-lang" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="btn-auth" id="btn-auth" onclick="doAuth()">Connexion</button>
   </div>
 </header>
 
@@ -350,16 +349,6 @@ img{display:block}
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
-<div id="no-profile-banner-wrap" style="max-width:1200px;margin:12px auto 0;padding:0 20px;display:none">
-  <div class="no-profile-banner">
-    <span class="npb-icon">⚠️</span>
-    <div class="npb-text">
-      <strong>Compte non lié à un profil joueur</strong>
-      Ton compte Google n'est pas encore associé à un joueur. Communique cet identifiant à un admin :<br>
-      <span class="npb-uid" id="npb-uid" onclick="copyUID()" title="Cliquer pour copier"></span>
-    </div>
-  </div>
-</div>
 <div class="main">
 
   <!-- ACCUEIL -->
@@ -472,6 +461,9 @@ img{display:block}
 </div>
 
 <div id="toast"></div>
+
+<!-- Accès admin discret — seuls les admins savent que c'est là -->
+<button id="admin-login-btn" onclick="doAuth()" title="Admin" style="position:fixed;bottom:10px;right:12px;background:none;border:none;color:rgba(255,255,255,0.08);font-size:.72rem;cursor:pointer;padding:4px 6px;border-radius:4px;transition:color .2s;z-index:50" onmouseenter="this.style.color='rgba(255,255,255,0.3)'" onmouseleave="this.style.color='rgba(255,255,255,0.08)'">🔒</button>
 
 <script type="module">
 import { db, auth, app } from '../shared/firebase-config.js';
@@ -614,44 +606,24 @@ function applyI18n() {
 // ════════════════════════════════════════════════
 onAuthStateChanged(auth, async user => {
   curUser = user;
-  const btn = document.getElementById('btn-auth');
-  const banner = document.getElementById('no-profile-banner-wrap');
   if (user) {
-    btn.textContent = user.displayName?.split(' ')[0] || t('logout');
-    btn.classList.add('on');
     try {
       const d = await getDoc(doc(db,'admins',user.uid));
       isAdmin = d.exists();
     } catch(e) { isAdmin = false; }
-    // Check if user is linked to a player profile
-    try {
-      const q = await getDocs(query(collection(db,'rl_players'), where('userId','==',user.uid), limit(1)));
-      if (q.empty && !isAdmin) {
-        document.getElementById('npb-uid').textContent = user.uid;
-        banner.style.display = 'block';
-      } else {
-        banner.style.display = 'none';
-      }
-    } catch(e) { banner.style.display = 'none'; }
   } else {
-    btn.textContent = t('login');
-    btn.classList.remove('on');
     isAdmin = false;
-    banner.style.display = 'none';
   }
   const navAdm = document.getElementById('nav-admin');
   navAdm.style.display = isAdmin ? 'inline-block' : 'none';
+  // Masquer le bouton 🔒 si déjà connecté
+  const adminBtn = document.getElementById('admin-login-btn');
+  if (adminBtn) adminBtn.style.display = user ? 'none' : '';
   if (curTab === 'admin' && !isAdmin) goTab('accueil');
 });
 
-window.copyUID = function() {
-  const uid = document.getElementById('npb-uid').textContent;
-  navigator.clipboard.writeText(uid).then(()=>toast('UID copié !','ok'));
-};
-
 window.doAuth = async function() {
-  if (curUser) { await signOut(auth); toast(t('logout'),'ok'); }
-  else { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e){ toast(e.message,'err'); } }
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { if(e.code!=='auth/popup-closed-by-user') toast(e.message,'err'); }
 };
 
 // ════════════════════════════════════════════════
