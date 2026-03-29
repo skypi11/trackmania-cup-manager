@@ -483,19 +483,6 @@
                     <label><span data-i18n="profile.team">Équipe</span> <span style="color:rgba(255,255,255,0.3);font-weight:400" data-i18n="profile.team.optional">(optionnel)</span></label>
                     <input type="text" id="setupTeam" data-i18n-placeholder="profile.team.ph" placeholder="Ton équipe">
                 </div>
-                <div class="form-group">
-                    <label data-i18n="profile.games">Je joue à</label>
-                    <div class="games-check">
-                        <label class="game-check-label">
-                            <input type="checkbox" id="setupGameTM" checked>
-                            <div><div class="game-label-text">Trackmania</div><div class="game-label-sub">Racing</div></div>
-                        </label>
-                        <label class="game-check-label">
-                            <input type="checkbox" id="setupGameRL">
-                            <div><div class="game-label-text">Rocket League</div><div class="game-label-sub">Football</div></div>
-                        </label>
-                    </div>
-                </div>
                 <div class="modal-btns">
                     <button type="submit" class="btn-primary" id="setupSubmitBtn" data-i18n="profile.save">Enregistrer</button>
                 </div>
@@ -512,25 +499,8 @@
                     <input type="text" id="profTeam">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="profile.games">Je joue à</label>
-                    <div class="games-check">
-                        <label class="game-check-label">
-                            <input type="checkbox" id="profGameTM" onchange="togglePseudoFields()">
-                            <div><div class="game-label-text">Trackmania</div><div class="game-label-sub">Racing</div></div>
-                        </label>
-                        <label class="game-check-label">
-                            <input type="checkbox" id="profGameRL" onchange="togglePseudoFields()">
-                            <div><div class="game-label-text">Rocket League</div><div class="game-label-sub">Football</div></div>
-                        </label>
-                    </div>
-                </div>
-                <div id="profPseudoTMGroup" class="form-group" style="display:none">
                     <label data-i18n="profile.pseudo.tm">Pseudo Trackmania</label>
                     <input type="text" id="profPseudoTM" data-i18n-placeholder="profile.pseudo.tm.ph" placeholder="Votre pseudo Trackmania">
-                </div>
-                <div id="profPseudoRLGroup" class="form-group" style="display:none">
-                    <label data-i18n="profile.pseudo.rl">Pseudo Rocket League</label>
-                    <input type="text" id="profPseudoRL" data-i18n-placeholder="profile.pseudo.rl.ph" placeholder="Votre pseudo Rocket League">
                 </div>
                 <p class="form-note" id="profEmail"></p>
                 <div class="modal-btns">
@@ -782,19 +752,15 @@
         e.preventDefault();
         const pseudo = document.getElementById('setupPseudo').value.trim();
         const team   = document.getElementById('setupTeam').value.trim();
-        const games  = [];
-        if (document.getElementById('setupGameTM').checked) games.push('trackmania');
-        if (document.getElementById('setupGameRL').checked) games.push('rocket-league');
+        const games  = ['trackmania'];
 
         const btn = document.getElementById('setupSubmitBtn');
         btn.disabled = true; btn.textContent = 'Enregistrement...';
         try {
             const uid = currentUser.uid;
             const createdAt = new Date().toISOString();
-            const pseudoTM = games.includes('trackmania') ? pseudo : '';
-            const pseudoRL = games.includes('rocket-league') ? pseudo : '';
             await addDoc(collection(db, 'participants'), {
-                pseudo, pseudoTM, pseudoRL, team, games,
+                pseudo, pseudoTM: pseudo, pseudoRL: '', team, games,
                 email: currentUser.email, userId: uid, createdAt
             });
             document.body.classList.remove('guest-mode');
@@ -809,24 +775,14 @@
         }
     };
 
-    // Profile view
-    window.togglePseudoFields = () => {
-        document.getElementById('profPseudoTMGroup').style.display = document.getElementById('profGameTM').checked ? '' : 'none';
-        document.getElementById('profPseudoRLGroup').style.display = document.getElementById('profGameRL').checked ? '' : 'none';
-    };
-
     function loadProfileView() {
         if (!currentUser) return;
         getDocs(query(collection(db, 'participants'), where('userId', '==', currentUser.uid))).then(snap => {
             if (snap.empty) return;
             const d = snap.docs[0].data();
-            document.getElementById('profTeam').value   = d.team   || '';
-            document.getElementById('profGameTM').checked = (d.games || []).includes('trackmania');
-            document.getElementById('profGameRL').checked = (d.games || []).includes('rocket-league');
+            document.getElementById('profTeam').value    = d.team     || '';
             document.getElementById('profPseudoTM').value = d.pseudoTM || d.pseudo || '';
-            document.getElementById('profPseudoRL').value = d.pseudoRL || '';
             document.getElementById('profEmail').textContent = `${t('profile.email')} ${currentUser.email}`;
-            togglePseudoFields();
         });
     }
 
@@ -834,11 +790,8 @@
         e.preventDefault();
         const team     = document.getElementById('profTeam').value.trim();
         const pseudoTM = document.getElementById('profPseudoTM').value.trim();
-        const pseudoRL = document.getElementById('profPseudoRL').value.trim();
-        const games  = [];
-        if (document.getElementById('profGameTM').checked) games.push('trackmania');
-        if (document.getElementById('profGameRL').checked) games.push('rocket-league');
-        const pseudo = pseudoTM || pseudoRL || '';
+        const games    = ['trackmania'];
+        const pseudo   = pseudoTM;
 
         const btn = document.getElementById('profileSubmitBtn');
         btn.disabled = true; btn.textContent = 'Enregistrement...';
@@ -846,9 +799,9 @@
             const q    = query(collection(db, 'participants'), where('userId', '==', currentUser.uid));
             const snap = await getDocs(q);
             if (snap.empty) {
-                await addDoc(collection(db, 'participants'), { pseudo, pseudoTM, pseudoRL, team, games, email: currentUser.email, userId: currentUser.uid, createdAt: new Date().toISOString() });
+                await addDoc(collection(db, 'participants'), { pseudo, pseudoTM, pseudoRL: '', team, games, email: currentUser.email, userId: currentUser.uid, createdAt: new Date().toISOString() });
             } else {
-                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, pseudoTM, pseudoRL, team, games })));
+                await Promise.all(snap.docs.map(d => updateDoc(d.ref, { pseudo, pseudoTM, team, games })));
             }
             document.getElementById('accountBtn').textContent = `👤 ${pseudo || currentUser.displayName}`;
             document.getElementById('profileSuccess').textContent = t('profile.saved');
