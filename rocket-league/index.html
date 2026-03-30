@@ -129,10 +129,10 @@ img{display:block}
 .fl{background:rgba(239,68,68,.12);color:#ef4444}
 
 /* ── TEAMS ── */
-.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,320px);gap:14px;justify-content:center}
+.teams-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
 
 /* Card horizontale */
-.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;display:flex;flex-direction:row;position:relative}
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;display:flex;flex-direction:row;position:relative;width:320px;flex-shrink:0}
 .team-card:hover{border-color:rgba(0,129,255,.55);transform:translateY(-3px);box-shadow:0 16px 44px rgba(0,0,0,.65),0 0 0 1px rgba(0,129,255,.2),0 0 28px rgba(0,129,255,.08)}
 .team-card.tc-lan{border-color:rgba(255,184,0,.2)}
 .team-card.tc-lan:hover{border-color:rgba(255,184,0,.6);box-shadow:0 16px 44px rgba(0,0,0,.65),0 0 0 1px rgba(255,184,0,.25),0 0 28px rgba(255,184,0,.1)}
