@@ -111,7 +111,7 @@ img{display:block}
 .stbl-fade{position:relative}
 .stbl-fade::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(to right,transparent,var(--bg2));pointer-events:none;border-radius:0 12px 12px 0}
 @media(min-width:700px){.stbl-fade::after{display:none}}
-.stbl{width:100%;border-collapse:collapse;min-width:580px}
+.stbl{width:100%;border-collapse:collapse;min-width:700px}
 .stbl thead tr{background:var(--bg3)}
 .stbl th{padding:10px 14px;text-align:left;font-size:.63rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)}
 .stbl th.th-pts{color:var(--rl-blue)}
@@ -152,6 +152,28 @@ img{display:block}
 .stbl-sep-inner{position:relative;display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(255,184,0,.05);border-top:1px solid rgba(255,184,0,.2);border-bottom:1px solid rgba(255,184,0,.2)}
 .stbl-sep-txt{font-size:.6rem;font-weight:800;color:#FFB800;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap}
 .stbl-sep-line{flex:1;height:1px;background:rgba(255,184,0,.15)}
+/* Progression rang */
+.prog-up{color:#0c8;font-size:.6rem;font-weight:800;line-height:1}
+.prog-dn{color:#ef4444;font-size:.6rem;font-weight:800;line-height:1}
+.prog-eq{color:var(--text3);font-size:.6rem;font-weight:600;line-height:1}
+/* Prochain match */
+.nxt-cell{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.nxt-logo{width:20px;height:20px;border-radius:4px;object-fit:contain;background:var(--bg3);flex-shrink:0;border:1px solid var(--border)}
+.nxt-name{color:var(--text2);font-size:.72rem;max-width:88px;overflow:hidden;text-overflow:ellipsis}
+.nxt-week{color:var(--text3);font-size:.63rem;font-weight:700;padding:1px 5px;background:var(--bg3);border-radius:3px}
+/* Podium widget */
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-bottom:22px}
+.pod-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all .2s;width:150px;text-align:center}
+.pod-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.pod-1{background:linear-gradient(160deg,rgba(255,184,0,.1),var(--bg2));border-color:rgba(255,184,0,.35);width:170px;padding:18px 14px}
+.pod-2{background:linear-gradient(160deg,rgba(192,192,192,.07),var(--bg2));border-color:rgba(192,192,192,.22)}
+.pod-3{background:linear-gradient(160deg,rgba(205,127,50,.07),var(--bg2));border-color:rgba(205,127,50,.22)}
+.pod-crown{font-size:1.3rem;line-height:1}
+.pod-logo{width:50px;height:50px;object-fit:contain;border-radius:8px;background:var(--bg3)}
+.pod-logo-ph{width:50px;height:50px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text3)}
+.pod-name{font-size:.8rem;font-weight:800;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod-pts{font-size:1rem;font-weight:900;color:var(--rl-blue)}
+.pod-wl{font-size:.68rem;color:var(--text3);font-weight:600}
 
 /* ── TEAMS ── */
 .teams-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
@@ -588,7 +610,7 @@ img{display:block}
   .mc-score-val{font-size:1.3rem}
   .mc-logo{width:28px;height:28px}
   .teams-grid{grid-template-columns:1fr 1fr}
-  .stbl{min-width:460px}
+  .stbl{min-width:560px}
   .vs-grid{grid-template-columns:1fr}
   .hero-title{font-size:1.5rem}
   .res-filters{padding:10px 10px;gap:8px}
@@ -1266,6 +1288,45 @@ async function loadStandings(pool) {
   const rows = buildStandings(pool);
   if (!rows.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
 
+  // ── Progression (localStorage) ──
+  const lsKey = `springs_standings_p${pool}`;
+  const prevRanks = JSON.parse(localStorage.getItem(lsKey)||'{}');
+  const currRanks = {};
+  rows.forEach((t2,i) => { currRanks[t2.id] = i+1; });
+  localStorage.setItem(lsKey, JSON.stringify(currRanks));
+
+  // ── Prochain match par équipe ──
+  const upcoming = Object.values(matchesMap).filter(m=>m.status!=='played'&&m.pool===pool);
+  upcoming.sort((a,b)=>(a.week-b.week)||((a.scheduledAt||'')>(b.scheduledAt||'')?1:-1));
+  const nextMatchMap = {};
+  upcoming.forEach(m=>{
+    if (!nextMatchMap[m.homeTeamId]) nextMatchMap[m.homeTeamId]=m;
+    if (!nextMatchMap[m.awayTeamId]) nextMatchMap[m.awayTeamId]=m;
+  });
+
+  // ── Podium Top 3 ──
+  const podTeams = rows.slice(0,3);
+  let podHtml = '';
+  if (podTeams.length >= 2) {
+    // Ordre d'affichage : 2e | 1er | 3e
+    const podOrder = [podTeams[1], podTeams[0], podTeams[2]].filter(Boolean);
+    const podClass  = ['pod-2','pod-1','pod-3'];
+    const podCrowns = ['🥈','👑','🥉'];
+    podHtml = `<div class="podium-wrap">${podOrder.map((pt,i)=>{
+      const lEl = pt.logoUrl
+        ? `<img class="pod-logo" src="${esc(pt.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+        : `<div class="pod-logo-ph">?</div>`;
+      return `<div class="${podClass[i]} pod-card" onclick="openTeamModal('${pt.id}')">
+        <div class="pod-crown">${podCrowns[i]}</div>
+        ${lEl}
+        <div class="pod-name">${esc(pt.name)}</div>
+        <div class="pod-pts">${pt.pts.toFixed(1)} pts</div>
+        <div class="pod-wl">${pt.wins}V / ${pt.losses}D</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  // ── Lignes du tableau ──
   const tbody = rows.map((t2,i) => {
     const rank = i+1;
     const inLan = rank<=8&&t2.played>0;
@@ -1274,6 +1335,17 @@ async function loadStandings(pool) {
     // Badge rang
     const rkCls = rank===1?'rk1':rank===2?'rk2':rank===3?'rk3':inLan?'rk-lan':'rk-n';
     const rkBadge = `<span class="rk-badge ${rkCls}">${rank}</span>`;
+
+    // Indicateur progression
+    let progHtml = '';
+    if (prevRanks[t2.id] !== undefined) {
+      const delta = prevRanks[t2.id] - rank; // positif = monté
+      progHtml = delta>0
+        ? `<span class="prog-up">▲${delta}</span>`
+        : delta<0
+          ? `<span class="prog-dn">▼${Math.abs(delta)}</span>`
+          : `<span class="prog-eq">—</span>`;
+    }
 
     // Logo
     const logo = t2.logoUrl
@@ -1288,12 +1360,25 @@ async function loadStandings(pool) {
     const diffCls = diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero';
     const diffStr = diff>0?`+${diff}`:String(diff);
 
+    // Prochain match
+    const nxt = nextMatchMap[t2.id];
+    let nxtHtml = `<span style="color:var(--text3);font-size:.72rem">—</span>`;
+    if (nxt) {
+      const opp = teamsMap[nxt.homeTeamId===t2.id ? nxt.awayTeamId : nxt.homeTeamId];
+      if (opp) {
+        const nLogo = opp.logoUrl
+          ? `<img class="nxt-logo" src="${esc(opp.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+          : `<div class="nxt-logo"></div>`;
+        nxtHtml = `<div class="nxt-cell">${nLogo}<span class="nxt-name">${esc(opp.name)}</span><span class="nxt-week">S${nxt.week}</span></div>`;
+      }
+    }
+
     const sep = rank===8&&rows.length>8
-      ? `<tr class="stbl-sep"><td colspan="10"><div class="stbl-sep-inner"><span class="stbl-sep-line"></span><span class="stbl-sep-txt">🏆 TOP 8 — QUALIFIÉS LAN</span><span class="stbl-sep-line"></span></div></td></tr>`
+      ? `<tr class="stbl-sep"><td colspan="11"><div class="stbl-sep-inner"><span class="stbl-sep-line"></span><span class="stbl-sep-txt">🏆 TOP 8 — QUALIFIÉS LAN</span><span class="stbl-sep-line"></span></div></td></tr>`
       : '';
 
     return `<tr class="${inLan?'top8':''}" onclick="openTeamModal('${t2.id}')">
-      <td class="rk">${rkBadge}</td>
+      <td class="rk"><div style="display:flex;flex-direction:column;align-items:center;gap:2px">${rkBadge}${progHtml}</div></td>
       <td><div class="t-cell">${logo}<div><div class="tname">${esc(t2.name)}</div><div class="ttag">${esc(t2.tag||'')}</div></div></div></td>
       <td style="text-align:center">${t2.played}</td>
       <td style="text-align:center;color:#0c8;font-weight:700">${t2.wins}</td>
@@ -1303,10 +1388,12 @@ async function loadStandings(pool) {
       <td style="text-align:center">${t2.gl}</td>
       <td style="text-align:center" class="${diffCls}">${diffStr}</td>
       <td><div class="form-cell">${formCell}</div></td>
+      <td>${nxtHtml}</td>
     </tr>${sep}`;
   }).join('');
 
   wrap.innerHTML = `
+    ${podHtml}
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
       <button class="btn-s" style="font-size:.76rem;display:flex;align-items:center;gap:5px" onclick="exportStandingsCSV(${pool})">📥 CSV</button>
     </div>
@@ -1322,6 +1409,7 @@ async function loadStandings(pool) {
         <th style="text-align:center" title="Buts encaissés">${t('col_gl')}</th>
         <th style="text-align:center" title="Différentiel">${t('col_diff')}</th>
         <th>Forme</th>
+        <th>Prochain</th>
       </tr></thead>
       <tbody>${tbody}</tbody>
     </table></div>`;
