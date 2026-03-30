@@ -1250,7 +1250,7 @@ async function loadAccueil() {
   const recentPlayed = Object.values(matchesMap)
     .filter(m=>m.status==='played')
     .sort((a,b)=>(b.week-a.week)||((b.scheduledAt||'')>(a.scheduledAt||'')?1:-1))
-    .slice(0,5);
+    .slice(0,7);
 
   const el_recent = document.getElementById('acc-recent');
   if (el_recent) {
