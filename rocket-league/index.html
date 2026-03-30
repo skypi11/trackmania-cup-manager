@@ -1248,7 +1248,7 @@ async function loadAccueil() {
 
   // ── Résultats récents (mini-cards avec logos) ──
   const recentPlayed = Object.values(matchesMap)
-    .filter(m=>m.status==='played')
+    .filter(m=>m.status==='played'&&(m.homeScore>0||m.awayScore>0||m.forfeit))
     .sort((a,b)=>(b.week-a.week)||((b.scheduledAt||'')>(a.scheduledAt||'')?1:-1))
     .slice(0,7);
 
@@ -2687,17 +2687,21 @@ window.openMatchEntry = async function(matchId) {
       <button class="btn-add-game" onclick="addGameRow()">+ Manche</button>
       <div class="ge-total" id="ge-total"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;margin-top:14px">
-      <div class="fg">
-        <label>📅 Date et heure</label>
-        <input class="finput" id="si-date" type="datetime-local" value="${m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : ''}">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px">
+      <div style="font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📅 Planification</div>
+      <div style="display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px">
+        <div class="fg">
+          <label>Date et heure</label>
+          <input class="finput" id="si-date" type="datetime-local" value="${m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : ''}">
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding-bottom:7px;white-space:nowrap">
+          <input type="checkbox" id="si-stream" ${m.officialStream?'checked':''}>
+          <span style="font-size:.78rem;font-weight:700">🎥 Stream officiel</span>
+        </label>
       </div>
-      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding-bottom:7px;white-space:nowrap">
-        <input type="checkbox" id="si-stream" ${m.officialStream?'checked':''}>
-        <span style="font-size:.78rem;font-weight:700">🎥 Stream officiel</span>
-      </label>
+      <button class="btn-s" style="margin-top:10px;width:100%" onclick="saveMatchSchedule('${matchId}')">📅 Enregistrer la date uniquement</button>
     </div>
-    <div class="fg" style="margin-top:10px">
+    <div class="fg" style="margin-top:12px">
       <label>${t('f_vod')}</label>
       <input class="finput" id="si-vod" type="url" placeholder="https://youtube.com/..." value="${m.vodUrl||''}">
     </div>
@@ -2709,7 +2713,7 @@ window.openMatchEntry = async function(matchId) {
       </div>
     </div>
     <div class="f-actions" style="margin-top:14px">
-      <button class="btn-p" onclick="saveMatchResult('${matchId}')">💾 ${t('save')}</button>
+      <button class="btn-p" onclick="saveMatchResult('${matchId}')">✓ Enregistrer le résultat</button>
       <button class="btn-s" onclick="closeModal('mo-match')">${t('cancel')}</button>
     </div>`;
 
@@ -2791,6 +2795,21 @@ window.updateMatchScore = function() {
   if (!el) return;
   const goalsLbl = (hg > 0 || ag > 0) ? `<span class="ge-goals">${hg} bts — ${ag} bts</span>` : '';
   el.innerHTML = `<span class="ge-score ${hw>aw?'win':''}"><strong>${hw}</strong></span><span class="ge-sep">–</span><span class="ge-score ${aw>hw?'win':''}"><strong>${aw}</strong></span>${goalsLbl}`;
+};
+
+window.saveMatchSchedule = async function(matchId) {
+  const dateVal = document.getElementById('si-date')?.value;
+  const officialStream = document.getElementById('si-stream')?.checked || false;
+  if (!dateVal) { toast('Aucune date saisie','err'); return; }
+  try {
+    await updateDoc(doc(db,'rl_matches',matchId),{
+      scheduledAt: new Date(dateVal).toISOString(),
+      officialStream
+    });
+    toast('Date enregistrée','ok');
+    closeModal('mo-match');
+    await admResults();
+  } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 
 window.saveMatchResult = async function(matchId) {
