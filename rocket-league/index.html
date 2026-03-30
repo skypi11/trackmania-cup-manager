@@ -350,10 +350,10 @@ img{display:block}
 .adm-filter-grp{display:flex;align-items:center;gap:7px}
 .adm-filter-lbl{font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
 /* ── ADMIN MATCH CARDS ── */
-.adm-match-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;transition:border-color .2s}
+.adm-match-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;transition:all .2s;cursor:pointer}
 .adm-match-card.amc-pending{border-left:3px solid rgba(245,158,11,.5)}
 .adm-match-card.amc-played{border-left:3px solid rgba(0,200,100,.4)}
-.adm-match-card:hover{border-color:rgba(245,158,11,.35)}
+.adm-match-card:hover{border-color:rgba(245,158,11,.5);background:#2a2a2a;transform:translateY(-1px)}
 .amc-body{display:grid;grid-template-columns:1fr 110px 1fr;align-items:center;padding:10px 14px;gap:8px}
 .amc-team{display:flex;align-items:center;gap:8px}
 .amc-team.away{flex-direction:row-reverse;text-align:right}
@@ -2133,12 +2133,9 @@ function _renderAdmMatches() {
         ? `<span class="amc-score">${m.homeScore} – ${m.awayScore}</span>`
         : `<span class="amc-vs">VS</span>`;
       const schedDisp = !played && m.scheduledAt ? `<span>📅 ${formatSchedule(m.scheduledAt)}</span>` : '';
-      const mainBtn = played
-        ? `<button class="amc-btn-main edit" onclick="openMatchEntry('${m.id}')">✏ Modifier</button>`
-        : `<button class="amc-btn-main" onclick="openMatchEntry('${m.id}')">+ Saisir</button>`;
-      const schedBtn = !played ? `<button class="amc-btn-icon" onclick="openScheduleMatch('${m.id}')" title="Planifier">📅</button>` : '';
-      const resetBtn = played ? `<button class="amc-btn-icon" onclick="resetMatch('${m.id}')" title="Réinitialiser">↺</button>` : '';
-      return `<div class="adm-match-card ${played?'amc-played':'amc-pending'}">
+      const schedBtn = !played ? `<button class="amc-btn-icon" onclick="event.stopPropagation();openScheduleMatch('${m.id}')" title="Planifier">📅</button>` : '';
+      const resetBtn = played ? `<button class="amc-btn-icon" onclick="event.stopPropagation();resetMatch('${m.id}')" title="Réinitialiser">↺</button>` : '';
+      return `<div class="adm-match-card ${played?'amc-played':'amc-pending'}" onclick="openMatchEntry('${m.id}')">
         <div class="amc-body">
           <div class="amc-team">
             <img class="amc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
@@ -2152,7 +2149,7 @@ function _renderAdmMatches() {
         </div>
         <div class="amc-foot">
           <div class="amc-meta"><span>P${m.pool} · Gr.${m.group||'?'}</span>${schedDisp}</div>
-          <div class="amc-actions">${schedBtn}${resetBtn}${mainBtn}</div>
+          <div class="amc-actions">${schedBtn}${resetBtn}</div>
         </div>
       </div>`;
     }).join('');
