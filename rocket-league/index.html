@@ -205,13 +205,17 @@ img{display:block}
 .p-link{color:var(--rl-blue);font-size:.72rem;font-weight:700}
 .p-link:hover{color:#60b4ff}
 
-/* ── RESULTS ── */
-.res-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center}
+/* ── RESULTS FILTERS ── */
+.res-filters{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-label{font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;min-width:48px}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
 .week-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.wbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
+.wbtn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
 .wbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
 .status-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.stbtn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
+.stbtn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:16px;font-size:.78rem;font-weight:700;transition:all .2s}
 .stbtn.active{background:var(--rl-blue);border-color:var(--rl-blue);color:#fff}
 .vs-stream-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,129,255,.18);color:var(--rl-blue);border:1px solid rgba(0,129,255,.35);border-radius:4px;font-size:.68rem;font-weight:800;padding:2px 7px;letter-spacing:.03em}
 .match-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
@@ -248,6 +252,12 @@ img{display:block}
 .mc-loser-side{background:linear-gradient(to right,rgba(0,0,0,.15),transparent)}
 .mc-away-winner-side{background:linear-gradient(to left,rgba(0,200,100,.07),transparent)}
 .mc-away-loser-side{background:linear-gradient(to left,rgba(0,0,0,.15),transparent)}
+/* ── COMPACT MATCH CARD (non joué) ── */
+.match-card.match-compact{margin-bottom:6px}
+.match-card.match-compact:hover{border-color:rgba(0,129,255,.3)}
+.match-card.match-compact .mc-body{padding:9px 14px;grid-template-columns:1fr 130px 1fr}
+.mc-c-center{display:flex;flex-direction:column;align-items:center;gap:3px}
+.mc-c-date{font-size:.67rem;color:var(--text2);white-space:nowrap;text-align:center;margin-top:1px}
 .mc-stats{display:none;padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
 .mc-stats.open{display:block}
 /* ── GAME CHIPS (scores inline) ── */
@@ -444,7 +454,9 @@ img{display:block}
   .stbl{min-width:460px}
   .vs-grid{grid-template-columns:1fr}
   .hero-title{font-size:1.5rem}
-  .res-filters{gap:6px}
+  .res-filters{padding:10px 10px;gap:8px}
+  .filter-label{min-width:auto}
+  .filter-sep{display:none}
   .modal{max-height:95vh}
 }
 @media(max-width:360px){
@@ -561,18 +573,35 @@ img{display:block}
   <!-- RÉSULTATS -->
   <section class="tab" id="tab-resultats">
     <div class="res-filters">
-      <div class="ptoggle" style="margin-bottom:0">
-        <button class="pbtn active" onclick="switchRP(1)" id="rp1">Poule 1</button>
-        <button class="pbtn" onclick="switchRP(2)" id="rp2">Poule 2</button>
+      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-label">Poule</span>
+          <div class="ptoggle" style="margin-bottom:0">
+            <button class="pbtn active" onclick="switchRP(1)" id="rp1">Poule 1</button>
+            <button class="pbtn" onclick="switchRP(2)" id="rp2">Poule 2</button>
+          </div>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <span class="filter-label">Statut</span>
+          <div class="status-tabs" id="status-tabs">
+            <button class="stbtn active" onclick="switchRStatus('tous')" id="rst-tous">Tous</button>
+            <button class="stbtn" onclick="switchRStatus('joues')" id="rst-joues">Joués</button>
+            <button class="stbtn" onclick="switchRStatus('programmes')" id="rst-programmes">Programmés</button>
+            <button class="stbtn" onclick="switchRStatus('avenir')" id="rst-avenir">À venir</button>
+          </div>
+        </div>
       </div>
-      <div class="status-tabs" id="status-tabs">
-        <button class="stbtn active" onclick="switchRStatus('tous')" id="rst-tous">Tous</button>
-        <button class="stbtn" onclick="switchRStatus('joues')" id="rst-joues">Joués</button>
-        <button class="stbtn" onclick="switchRStatus('programmes')" id="rst-programmes">Programmés</button>
-        <button class="stbtn" onclick="switchRStatus('avenir')" id="rst-avenir">À venir</button>
+      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-label">Semaine</span>
+          <div class="week-tabs" id="week-tabs"></div>
+        </div>
+        <div class="filter-group" style="margin-left:auto">
+          <span class="filter-label">Équipe</span>
+          <select class="adm-sel" id="r-team-filter" onchange="switchRTeam(this.value)"><option value="">Toutes</option></select>
+        </div>
       </div>
-      <div class="week-tabs" id="week-tabs"></div>
-      <select class="adm-sel" id="r-team-filter" onchange="switchRTeam(this.value)" style="margin-left:auto"><option value="">Toutes les équipes</option></select>
     </div>
     <div id="results-wrap"><div class="loading"></div></div>
   </section>
@@ -1491,48 +1520,66 @@ function renderMatchCard(m) {
   const played = m.status==='played';
   const homeWon = played && m.homeScore > m.awayScore;
   const awayWon = played && m.awayScore > m.homeScore;
-  const scheduleInfo = !played && m.scheduledAt ? formatSchedule(m.scheduledAt) : null;
-  const score = played
-    ? `<div class="mc-score-val"><span class="${homeWon?'sc-win':'sc-lose'}">${m.homeScore}</span><span class="sep"> - </span><span class="${awayWon?'sc-win':'sc-lose'}">${m.awayScore}</span></div>`
-    : `<div class="mc-pending">vs</div>`;
-  const badge = played
-    ? `<span class="mc-badge played">${t('played')}</span>`
-    : m.scheduledAt
+
+  // ── COMPACT CARD (non joué) ──
+  if (!played) {
+    const badge = m.scheduledAt
       ? `<span class="mc-badge prog">Programmé</span>`
       : `<span class="mc-badge sched">À venir</span>`;
+    const dateStr = m.scheduledAt
+      ? `<span class="mc-c-date">📅 ${formatSchedule(m.scheduledAt)}</span>`
+      : '';
+    return `<div class="match-card match-compact">
+      <div class="mc-body">
+        <div class="mc-team">
+          <img class="mc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
+          <span class="mc-name">${esc(ht.name)}</span>
+        </div>
+        <div class="mc-c-center">
+          ${badge}
+          <span style="font-size:.85rem;font-weight:900;color:var(--text3)">vs</span>
+          ${dateStr}
+        </div>
+        <div class="mc-team away">
+          <img class="mc-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
+          <span class="mc-name">${esc(at.name)}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── RICH CARD (joué) ──
+  const score = `<div class="mc-score-val"><span class="${homeWon?'sc-win':'sc-lose'}">${m.homeScore}</span><span class="sep"> - </span><span class="${awayWon?'sc-win':'sc-lose'}">${m.awayScore}</span></div>`;
   let goalSummary = '';
-  if (played && m.games && m.games.length) {
+  if (m.games && m.games.length) {
     const hg = m.games.reduce((s,g)=>s+(g.homeGoals||0),0);
     const ag = m.games.reduce((s,g)=>s+(g.awayGoals||0),0);
     goalSummary = `<span class="mc-goals">${hg} — ${ag} buts</span>`;
   }
-  const vod = played&&m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
-
-  // Scores inline par manche
+  const vod = m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
   let gamesInline = '';
-  if (played && m.games && m.games.length) {
+  if (m.games && m.games.length) {
     gamesInline = `<div class="games-inline">${m.games.map((g,i)=>{
       const h=g.homeGoals||0, a=g.awayGoals||0;
       return `<span class="game-chip${h>a?' gc-h':a>h?' gc-a':''}" title="Manche ${i+1}">${h}–${a}</span>`;
     }).join('')}</div>`;
-  } else if (played) {
+  } else {
     gamesInline = `<span style="font-size:.72rem;color:var(--text3);font-style:italic">—</span>`;
   }
 
   return `<div class="match-card${homeWon?' home-win':awayWon?' away-win':''}">
     <div class="mc-meta">
-      <span>S${m.week} · Gr.${m.group} · Poule ${m.pool}</span>
-      ${badge}
+      <span>Gr.${m.group}</span>
+      <span class="mc-badge played">${t('played')}</span>
       ${goalSummary}
-      ${scheduleInfo ? `<span class="mc-schedule">📅 ${scheduleInfo}</span>` : ''}
     </div>
     <div class="mc-body">
-      <div class="mc-team${homeWon?' mc-winner':played?' mc-loser':''}${played?(homeWon?' mc-winner-side':' mc-loser-side'):''}">
+      <div class="mc-team${homeWon?' mc-winner':' mc-loser'}${homeWon?' mc-winner-side':' mc-loser-side'}">
         <img class="mc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
         <span class="mc-name">${esc(ht.name)}</span>
       </div>
       <div class="mc-score">${score}</div>
-      <div class="mc-team away${awayWon?' mc-winner':played?' mc-loser':''}${played?(awayWon?' mc-away-winner-side':' mc-away-loser-side'):''}">
+      <div class="mc-team away${awayWon?' mc-winner':' mc-loser'}${awayWon?' mc-away-winner-side':' mc-away-loser-side'}">
         <img class="mc-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
         <span class="mc-name">${esc(at.name)}</span>
       </div>
