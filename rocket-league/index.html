@@ -129,19 +129,47 @@ img{display:block}
 .fl{background:rgba(239,68,68,.12);color:#ef4444}
 
 /* ── TEAMS ── */
-.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
-.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .25s;overflow:hidden;display:flex;flex-direction:column}
-.team-card:hover{border-color:rgba(232,0,26,.5);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px rgba(232,0,26,.15)}
-.tc-logo-area{background:var(--bg3);padding:24px 20px;display:flex;align-items:center;justify-content:center;position:relative;min-height:120px;border-bottom:1px solid var(--border)}
-.tc-logo-area img{width:76px;height:76px;object-fit:contain;border-radius:8px}
-.tc-logo-placeholder{width:76px;height:76px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);font-weight:900}
-.tc-pool{position:absolute;top:9px;right:9px;background:rgba(232,0,26,.15);color:var(--red);font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.07em;border:1px solid rgba(232,0,26,.25)}
-.tc-rank{position:absolute;top:9px;left:9px;background:rgba(0,0,0,.5);color:var(--text2);font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.05em}
-.tc-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
-.tc-name{font-weight:800;font-size:.92rem;line-height:1.3;color:var(--text)}
-.tc-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
-.tc-tag{font-size:.68rem;color:var(--text2);font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-.tc-count{font-size:.68rem;color:var(--text2);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+/* Card horizontale */
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;display:flex;flex-direction:row;position:relative}
+.team-card:hover{border-color:rgba(0,129,255,.55);transform:translateY(-3px);box-shadow:0 16px 44px rgba(0,0,0,.65),0 0 0 1px rgba(0,129,255,.2),0 0 28px rgba(0,129,255,.08)}
+.team-card.tc-lan{border-color:rgba(255,184,0,.2)}
+.team-card.tc-lan:hover{border-color:rgba(255,184,0,.6);box-shadow:0 16px 44px rgba(0,0,0,.65),0 0 0 1px rgba(255,184,0,.25),0 0 28px rgba(255,184,0,.1)}
+
+/* Zone logo gauche */
+.tc-logo-wrap{width:90px;flex-shrink:0;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;overflow:hidden;border-right:1px solid var(--border);padding:14px 0}
+.tc-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(0,129,255,.25) 0%,transparent 70%);pointer-events:none;transition:opacity .3s}
+.team-card.tc-lan .tc-glow{background:radial-gradient(circle at 50% 55%,rgba(255,184,0,.25) 0%,transparent 70%)}
+.team-card:hover .tc-glow{opacity:1.6}
+.tc-logo-img{width:54px;height:54px;object-fit:contain;border-radius:8px;position:relative;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.tc-logo-ph{width:54px;height:54px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text3);position:relative;z-index:1}
+.tc-rank-lbl{font-size:.68rem;font-weight:900;color:var(--text2);position:relative;z-index:1;letter-spacing:.02em}
+.tc-rank-lbl.rk-gold{color:#ffd700}.tc-rank-lbl.rk-silver{color:#c0c0c0}.tc-rank-lbl.rk-bronze{color:#cd7f32}
+
+/* Zone info droite */
+.tc-info{flex:1;padding:11px 13px;display:flex;flex-direction:column;gap:0;min-width:0}
+.tc-info-top{display:flex;align-items:flex-start;justify-content:space-between;gap:5px;margin-bottom:1px}
+.tc-name-v2{font-weight:800;font-size:.9rem;line-height:1.25;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tc-badges{display:flex;gap:3px;flex-shrink:0;align-items:center;margin-top:1px}
+.tc-pool-badge{font-size:.57rem;font-weight:800;padding:2px 6px;border-radius:3px;background:rgba(232,0,26,.1);color:var(--red);border:1px solid rgba(232,0,26,.2);letter-spacing:.06em}
+.tc-lan-badge{font-size:.57rem;font-weight:800;padding:2px 6px;border-radius:3px;background:rgba(255,184,0,.12);color:#FFB800;border:1px solid rgba(255,184,0,.3);letter-spacing:.06em}
+.tc-tag-v2{font-size:.63rem;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+/* Stats row */
+.tc-stats{display:flex;align-items:center;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.tc-sv{font-size:.85rem;font-weight:900;color:var(--rl-blue)}
+.tc-sl{font-size:.6rem;color:var(--text2);font-weight:600;margin-left:1px}
+.tc-sep{color:var(--text3);font-size:.7rem}
+.tc-wv{color:#0c8}
+/* Form mini */
+.tc-form{display:flex;gap:2px;margin-top:auto;padding-top:4px}
+.tc-fd{display:inline-block;width:14px;height:14px;line-height:14px;text-align:center;border-radius:2px;font-size:.5rem;font-weight:900}
+.tc-fw{background:rgba(0,200,100,.15);color:#0c8}
+.tc-fl{background:rgba(239,68,68,.1);color:#ef4444}
+.tc-count-v2{font-size:.62rem;color:var(--text2);margin-left:auto;background:rgba(255,255,255,.04);padding:1px 7px;border-radius:8px;border:1px solid var(--border);align-self:flex-end}
+
+/* Legacy — conservés pour roster-tbl etc. */
+.tc-logo-area,.tc-logo-placeholder,.tc-pool,.tc-rank,.tc-body,.tc-name,.tc-footer,.tc-tag,.tc-count{}
 
 /* ── ROLE BADGES ── */
 .role-badge{font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.05em;text-transform:uppercase;border:1px solid;white-space:nowrap;flex-shrink:0}
@@ -1122,28 +1150,64 @@ function buildTeamCards(poolNum) {
     .sort((a,b)=>a.name.localeCompare(b.name));
   if (!teams.length) return '';
   const standings = buildStandings(poolNum);
-  const rankMap = {};
-  standings.forEach((s,i) => { rankMap[s.id] = i+1; });
+  const statsMap = {};
+  standings.forEach((s,i) => { statsMap[s.id] = {...s, rank: i+1}; });
+
   return `<div class="teams-grid">${teams.map(team=>{
     const pCount = Object.values(playersMap).filter(p=>p.teamId===team.id).length;
+    const s = statsMap[team.id];
+    const rank = s?.rank;
+    const isLan = rank && rank <= 8 && s.played > 0;
+
+    // Logo
     const logoEl = team.logoUrl
-      ? `<img src="${esc(team.logoUrl)}" alt="${esc(team.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-      : '';
-    const placeholder = `<div class="tc-logo-placeholder" style="${team.logoUrl?'display:none':''}">?</div>`;
-    const rank = rankMap[team.id];
-    const rankBadge = rank ? `<span class="tc-rank">#${rank}</span>` : '';
-    return `<div class="team-card" onclick="openTeamModal('${team.id}')">
-      <div class="tc-logo-area">
-        ${logoEl}${placeholder}
-        ${rankBadge}
-        <span class="tc-pool">P${team.pool}</span>
+      ? `<img class="tc-logo-img" src="${esc(team.logoUrl)}" alt="${esc(team.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+         <div class="tc-logo-ph" style="display:none">?</div>`
+      : `<div class="tc-logo-ph">?</div>`;
+
+    // Rank label avec couleur
+    const rankCls = rank===1?'rk-gold':rank===2?'rk-silver':rank===3?'rk-bronze':'';
+    const rankLbl = rank ? `<span class="tc-rank-lbl ${rankCls}">#${rank}</span>` : '';
+
+    // Badges
+    const lanBadge = isLan ? `<span class="tc-lan-badge">LAN</span>` : '';
+    const poolBadge = `<span class="tc-pool-badge">P${team.pool}</span>`;
+
+    // Stats
+    let statsHtml = '';
+    if (s && s.played > 0) {
+      const diff = s.gw - s.gl;
+      statsHtml = `<div class="tc-stats">
+        <span class="tc-sv">${s.pts.toFixed(1)}</span><span class="tc-sl">pts</span>
+        <span class="tc-sep">·</span>
+        <span class="tc-sv tc-wv">${s.wins}V</span><span class="tc-sl">/${s.losses}D</span>
+        <span class="tc-sep">·</span>
+        <span class="tc-sv" style="color:${diff>0?'#0c8':diff<0?'#ef4444':'var(--text2)'}">${diff>0?'+':''}${diff}</span><span class="tc-sl">diff</span>
+      </div>`;
+    } else {
+      statsHtml = `<div class="tc-stats"><span style="font-size:.72rem;color:var(--text3)">Pas encore joué</span></div>`;
+    }
+
+    // Forme (5 derniers)
+    const form = s?.form || [];
+    const formHtml = form.length
+      ? `<div class="tc-form">${form.slice(-5).map(r=>`<span class="tc-fd ${r==='W'?'tc-fw':'tc-fl'}">${r}</span>`).join('')}<span class="tc-count-v2">${pCount}👤</span></div>`
+      : `<div class="tc-form"><span class="tc-count-v2">${pCount} joueur${pCount!==1?'s':''}</span></div>`;
+
+    return `<div class="team-card${isLan?' tc-lan':''}" onclick="openTeamModal('${team.id}')">
+      <div class="tc-logo-wrap">
+        <div class="tc-glow"></div>
+        ${logoEl}
+        ${rankLbl}
       </div>
-      <div class="tc-body">
-        <div class="tc-name">${esc(team.name)}</div>
-        <div class="tc-footer">
-          <span class="tc-tag">${esc(team.tag||'—')}</span>
-          <span class="tc-count">${pCount} joueur${pCount!==1?'s':''}</span>
+      <div class="tc-info">
+        <div class="tc-info-top">
+          <span class="tc-name-v2">${esc(team.name)}</span>
+          <div class="tc-badges">${lanBadge}${poolBadge}</div>
         </div>
+        <div class="tc-tag-v2">${esc(team.tag||'—')}</div>
+        ${statsHtml}
+        ${formHtml}
       </div>
     </div>`;
   }).join('')}</div>`;
