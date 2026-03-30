@@ -610,6 +610,7 @@ img{display:block}
         <div class="filter-group">
           <span class="filter-label">Poule</span>
           <div class="ptoggle" style="margin-bottom:0">
+            <button class="pbtn" onclick="switchRP(0)" id="rp0">Toutes</button>
             <button class="pbtn active" onclick="switchRP(1)" id="rp1">Poule 1</button>
             <button class="pbtn" onclick="switchRP(2)" id="rp2">Poule 2</button>
           </div>
@@ -860,7 +861,7 @@ let lang = 'fr';
 let curTab = 'accueil';
 let isAdmin = false;
 let curUser = null;
-let gPool = 1, tPool = 0, rWeek = 'all';
+let gPool = 1, tPool = 0, rPool = 1, rWeek = 'all';
 let rTeam = '';
 let rStatus = 'tous';
 let admSec = 'equipes';
@@ -1469,7 +1470,14 @@ function initResultsWeekTabs() {
   el.innerHTML = btns.join('');
 }
 
-window.switchRP = async function(p) { setGlobalPool(p); rTeam=''; updateTeamFilter(); await loadResults(); };
+window.switchRP = async function(p) {
+  rPool = p;
+  ['rp0','rp1','rp2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', el.id === 'rp'+p);
+  });
+  rTeam=''; updateTeamFilter(); await loadResults();
+};
 window.switchRW = async function(w) {
   rWeek=w;
   document.querySelectorAll('.wbtn').forEach(b=>b.classList.remove('active'));
@@ -1492,7 +1500,7 @@ window.switchRStatus = async function(status) {
 function updateTeamFilter() {
   const sel = document.getElementById('r-team-filter');
   if (!sel) return;
-  const teams = Object.values(teamsMap).filter(t=>t.pool===gPool).sort((a,b)=>a.name.localeCompare(b.name));
+  const teams = Object.values(teamsMap).filter(t=>rPool===0||t.pool===rPool).sort((a,b)=>a.name.localeCompare(b.name));
   sel.innerHTML = `<option value="">Toutes les équipes</option>` +
     teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
   sel.value = rTeam;
@@ -1503,7 +1511,7 @@ async function loadResults() {
   wrap.innerHTML = skelMatches(4);
   await fetchAll();
   updateTeamFilter();
-  let matches = Object.values(matchesMap).filter(m=>m.pool===gPool);
+  let matches = Object.values(matchesMap).filter(m=>rPool===0||m.pool===rPool);
   if (rWeek!=='all') matches = matches.filter(m=>m.week===rWeek);
   if (rTeam) matches = matches.filter(m=>m.homeTeamId===rTeam||m.awayTeamId===rTeam);
   if (rStatus === 'joues') matches = matches.filter(m=>m.status==='played');
