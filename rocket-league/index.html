@@ -110,10 +110,10 @@ img{display:block}
 .feat-time{font-size:.9rem;font-weight:900}
 .feat-date{padding:4px 12px;font-size:.65rem;color:var(--text2);text-align:center;border-top:1px solid var(--border)}
 /* Résultats mini-cards */
-.rmc{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;padding:9px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;cursor:pointer;transition:all .2s}
-.rmc:hover{border-color:rgba(0,129,255,.3);border-left-color:rgba(0,129,255,.5)}
-.rmc.rmc-hw{border-left-color:rgba(0,200,100,.5)}
-.rmc.rmc-aw{border-left-color:rgba(239,68,68,.4)}
+.rmc{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-right:3px solid var(--border);border-radius:10px;padding:9px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;cursor:pointer;transition:all .2s}
+.rmc:hover{border-color:rgba(0,129,255,.3)}
+.rmc.rmc-hw{border-left-color:rgba(0,200,100,.5);border-right-color:rgba(239,68,68,.4)}
+.rmc.rmc-aw{border-left-color:rgba(239,68,68,.4);border-right-color:rgba(0,200,100,.5)}
 .rmc-team{display:flex;align-items:center;gap:7px;min-width:0}
 .rmc-team.away{flex-direction:row-reverse}
 .rmc-logo{width:26px;height:26px;object-fit:contain;border-radius:5px;background:var(--bg3);flex-shrink:0;border:1px solid var(--border)}
@@ -1289,11 +1289,13 @@ async function loadAccueil() {
       const ht=teamsMap[m.homeTeamId]||{name:'?'}, at=teamsMap[m.awayTeamId]||{name:'?'};
       const hLogo=ht.logoUrl?`<img class="umc-logo" src="${esc(ht.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="umc-logo"></div>`;
       const aLogo=at.logoUrl?`<img class="umc-logo" src="${esc(at.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="umc-logo"></div>`;
-      let timeHtml = '<span class="umc-vs">VS</span>';
+      let timeHtml;
       if (m.scheduledAt) {
         const d=new Date(m.scheduledAt);
         timeHtml = `<span class="umc-time">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
                     <span class="umc-week">${d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})}</span>`;
+      } else {
+        timeHtml = `<span class="umc-vs">VS</span><span class="umc-week" style="color:var(--text3);font-style:italic">À planifier</span>`;
       }
       return `<div class="umc">
         <div class="umc-team">${hLogo}<span class="umc-name">${esc(ht.name)}</span></div>
