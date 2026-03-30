@@ -107,26 +107,51 @@ img{display:block}
 .prev-pts{font-weight:700;color:var(--red);font-size:.78rem}
 
 /* ── STANDINGS ── */
-.stbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto}
+.stbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;overflow-x:auto}
 .stbl-fade{position:relative}
-.stbl-fade::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(to right,transparent,var(--bg2));pointer-events:none;border-radius:0 var(--r) var(--r) 0}
+.stbl-fade::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(to right,transparent,var(--bg2));pointer-events:none;border-radius:0 12px 12px 0}
 @media(min-width:700px){.stbl-fade::after{display:none}}
 .stbl{width:100%;border-collapse:collapse;min-width:580px}
-.stbl th{background:var(--bg3);padding:9px 11px;text-align:left;font-size:.68rem;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.stbl td{padding:9px 11px;border-bottom:1px solid var(--border);font-size:.83rem}
+.stbl thead tr{background:var(--bg3)}
+.stbl th{padding:10px 14px;text-align:left;font-size:.63rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)}
+.stbl th.th-pts{color:var(--rl-blue)}
+.stbl td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.84rem;vertical-align:middle}
 .stbl tr:last-child td{border-bottom:none}
-.stbl tr:hover td{background:rgba(255,255,255,.02)}
-.stbl .rk{font-weight:700;color:var(--text2);width:32px}
-.t-cell{display:flex;align-items:center;gap:9px}
-.tlogo-sm{width:26px;height:26px;border-radius:4px;object-fit:contain;background:var(--bg3)}
-.tname{font-weight:600}
-.ttag{font-size:.72rem;color:var(--text2)}
-.pts-cell{font-weight:700;color:var(--rl-blue)}
-.lan-badge{background:var(--red-g);color:var(--red);font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em}
-.stbl tr.top8 td{background:var(--red-g)}
-.form-dot{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:.58rem;font-weight:800;margin-right:2px}
-.fw{background:rgba(0,200,100,.15);color:#0c8}
-.fl{background:rgba(239,68,68,.12);color:#ef4444}
+.stbl tr:hover td{background:rgba(255,255,255,.025);cursor:pointer}
+.stbl .rk{width:40px;text-align:center}
+/* Rang badges */
+.rk-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:.75rem;font-weight:800}
+.rk-badge.rk1{background:linear-gradient(135deg,#b8860b,#ffd700);color:#000}
+.rk-badge.rk2{background:linear-gradient(135deg,#888,#c0c0c0);color:#000}
+.rk-badge.rk3{background:linear-gradient(135deg,#804000,#cd7f32);color:#fff}
+.rk-badge.rk-lan{background:rgba(232,0,26,.12);border:1px solid rgba(232,0,26,.25);color:var(--red)}
+.rk-badge.rk-n{background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
+/* Équipe */
+.t-cell{display:flex;align-items:center;gap:10px}
+.tlogo-sm{width:32px;height:32px;border-radius:6px;object-fit:contain;background:var(--bg3);border:1px solid var(--border);flex-shrink:0}
+.tname{font-weight:700;font-size:.86rem}
+.ttag{font-size:.68rem;color:var(--text3);font-weight:600;letter-spacing:.05em;margin-top:1px}
+/* Points */
+.pts-cell{font-weight:900;color:var(--rl-blue);font-size:.95rem}
+/* LAN badge inline */
+.lan-badge{background:linear-gradient(90deg,rgba(232,0,26,.15),rgba(232,0,26,.08));color:var(--red);font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.06em;border:1px solid rgba(232,0,26,.25);vertical-align:middle;margin-left:5px}
+/* Rows */
+.stbl tr.top8 td{background:rgba(232,0,26,.03)}
+.stbl tr.top8:hover td{background:rgba(232,0,26,.06)}
+/* Diff */
+.diff-pos{color:#0c8;font-weight:700}
+.diff-neg{color:#ef4444;font-weight:700}
+.diff-zero{color:var(--text3)}
+/* Forme */
+.form-cell{display:flex;gap:3px;align-items:center}
+.form-dot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;font-size:.6rem;font-weight:800}
+.fw{background:rgba(0,200,100,.15);color:#0c8;border:1px solid rgba(0,200,100,.2)}
+.fl{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.15)}
+/* Séparateur LAN */
+.stbl-sep td{padding:0 !important;height:0 !important;border:none !important;position:relative}
+.stbl-sep-inner{position:relative;display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(255,184,0,.05);border-top:1px solid rgba(255,184,0,.2);border-bottom:1px solid rgba(255,184,0,.2)}
+.stbl-sep-txt{font-size:.6rem;font-weight:800;color:#FFB800;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap}
+.stbl-sep-line{flex:1;height:1px;background:rgba(255,184,0,.15)}
 
 /* ── TEAMS ── */
 .teams-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
@@ -515,8 +540,7 @@ img{display:block}
 .week-section-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--red);border-radius:2px;flex-shrink:0}
 .week-section-count{font-size:.72rem;color:var(--text2);font-weight:600;background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
 
-/* ── STANDINGS SEPARATOR ── */
-.stbl-sep td{padding:0 !important;height:2px;background:rgba(232,0,26,.4) !important;border:none !important}
+/* STANDINGS SEPARATOR already defined above */
 
 /* ── NO-PROFILE BANNER ── */
 .no-profile-banner{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px}
@@ -1241,39 +1265,66 @@ async function loadStandings(pool) {
   await fetchAll();
   const rows = buildStandings(pool);
   if (!rows.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
-  wrap.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-    <button class="btn-s" style="font-size:.76rem;display:flex;align-items:center;gap:5px" onclick="exportStandingsCSV(${pool})">📥 CSV</button>
-  </div>
-  <div class="stbl-wrap stbl-fade"><table class="stbl">
-    <thead><tr>
-      <th>${t('col_rank')}</th><th>${t('col_team')}</th>
-      <th title="Matchs joués">${t('col_p')}</th>
-      <th title="Victoires">${t('col_w')}</th>
-      <th title="Défaites">${t('col_l')}</th>
-      <th title="Points">${t('col_pts')}</th>
-      <th title="Buts marqués">${t('col_gw')}</th>
-      <th title="Buts encaissés">${t('col_gl')}</th>
-      <th title="Différentiel de buts">${t('col_diff')}</th>
-      <th>Forme</th>
-    </tr></thead>
-    <tbody>${rows.map((t2,i)=>{
-      const rank=i+1;
-      const logo=t2.logoUrl?`<img class="tlogo-sm" src="${t2.logoUrl}" alt="">`:`<div class="tlogo-sm"></div>`;
-      const diff=t2.gw-t2.gl;
-      const inLan=rank<=8&&t2.played>0;
-      const lan=inLan?`<span class="lan-badge">${t('lan_q')}</span>`:'';
-      const sep=rank===8&&rows.length>8?`<tr class="stbl-sep"><td colspan="10"></td></tr>`:'';
-      return `<tr class="${inLan?'top8':''}" onclick="openTeamModal('${t2.id}')" style="cursor:pointer">
-        <td class="rk">${rank}</td>
-        <td><div class="t-cell">${logo}<span><div class="tname">${esc(t2.name)} ${lan}</div><div class="ttag">${esc(t2.tag||'')}</div></span></div></td>
-        <td>${t2.played}</td><td>${t2.wins}</td><td>${t2.losses}</td>
-        <td class="pts-cell">${t2.pts.toFixed(1)}</td>
-        <td>${t2.gw}</td><td>${t2.gl}</td>
-        <td style="color:${diff>0?'#0c8':diff<0?'#ef4444':''}">${diff>0?'+':''}${diff}</td>
-        <td>${(t2.form.slice(-5).map(r=>`<span class="form-dot ${r==='W'?'fw':'fl'}">${r}</span>`).join(''))|| '<span style="color:var(--text3);font-size:.72rem">—</span>'}</td>
-      </tr>${sep}`;
-    }).join('')}</tbody>
-  </table></div>`;
+
+  const tbody = rows.map((t2,i) => {
+    const rank = i+1;
+    const inLan = rank<=8&&t2.played>0;
+    const diff = t2.gw - t2.gl;
+
+    // Badge rang
+    const rkCls = rank===1?'rk1':rank===2?'rk2':rank===3?'rk3':inLan?'rk-lan':'rk-n';
+    const rkBadge = `<span class="rk-badge ${rkCls}">${rank}</span>`;
+
+    // Logo
+    const logo = t2.logoUrl
+      ? `<img class="tlogo-sm" src="${t2.logoUrl}" alt="" onerror="this.style.opacity='.2'">`
+      : `<div class="tlogo-sm"></div>`;
+
+    // Forme (5 derniers)
+    const form = t2.form.slice(-5).map(r=>`<span class="form-dot ${r==='W'?'fw':'fl'}">${r}</span>`).join('');
+    const formCell = form || `<span style="color:var(--text3);font-size:.72rem">—</span>`;
+
+    // Diff couleur
+    const diffCls = diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero';
+    const diffStr = diff>0?`+${diff}`:String(diff);
+
+    const sep = rank===8&&rows.length>8
+      ? `<tr class="stbl-sep"><td colspan="10"><div class="stbl-sep-inner"><span class="stbl-sep-line"></span><span class="stbl-sep-txt">🏆 TOP 8 — QUALIFIÉS LAN</span><span class="stbl-sep-line"></span></div></td></tr>`
+      : '';
+
+    return `<tr class="${inLan?'top8':''}" onclick="openTeamModal('${t2.id}')">
+      <td class="rk">${rkBadge}</td>
+      <td><div class="t-cell">${logo}<div><div class="tname">${esc(t2.name)}</div><div class="ttag">${esc(t2.tag||'')}</div></div></div></td>
+      <td style="text-align:center">${t2.played}</td>
+      <td style="text-align:center;color:#0c8;font-weight:700">${t2.wins}</td>
+      <td style="text-align:center;color:#ef4444;font-weight:700">${t2.losses}</td>
+      <td class="pts-cell" style="text-align:center">${t2.pts.toFixed(1)}</td>
+      <td style="text-align:center">${t2.gw}</td>
+      <td style="text-align:center">${t2.gl}</td>
+      <td style="text-align:center" class="${diffCls}">${diffStr}</td>
+      <td><div class="form-cell">${formCell}</div></td>
+    </tr>${sep}`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn-s" style="font-size:.76rem;display:flex;align-items:center;gap:5px" onclick="exportStandingsCSV(${pool})">📥 CSV</button>
+    </div>
+    <div class="stbl-wrap stbl-fade"><table class="stbl">
+      <thead><tr>
+        <th class="rk">${t('col_rank')}</th>
+        <th>${t('col_team')}</th>
+        <th style="text-align:center" title="Matchs joués">${t('col_p')}</th>
+        <th style="text-align:center" title="Victoires">${t('col_w')}</th>
+        <th style="text-align:center" title="Défaites">${t('col_l')}</th>
+        <th class="th-pts" style="text-align:center" title="Points">${t('col_pts')}</th>
+        <th style="text-align:center" title="Buts marqués">${t('col_gw')}</th>
+        <th style="text-align:center" title="Buts encaissés">${t('col_gl')}</th>
+        <th style="text-align:center" title="Différentiel">${t('col_diff')}</th>
+        <th>Forme</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table></div>`;
 }
 
 // ════════════════════════════════════════════════
