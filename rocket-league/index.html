@@ -523,7 +523,8 @@ img{display:block}
   <!-- ÉQUIPES -->
   <section class="tab" id="tab-equipes">
     <div class="ptoggle">
-      <button class="pbtn active" onclick="switchTP(1)" id="tp1">Poule 1</button>
+      <button class="pbtn active" onclick="switchTP(0)" id="tp0">Toutes</button>
+      <button class="pbtn" onclick="switchTP(1)" id="tp1">Poule 1</button>
       <button class="pbtn" onclick="switchTP(2)" id="tp2">Poule 2</button>
     </div>
     <div id="teams-wrap"><div class="loading"></div></div>
@@ -769,7 +770,7 @@ let lang = 'fr';
 let curTab = 'accueil';
 let isAdmin = false;
 let curUser = null;
-let gPool = 1, rWeek = 'all';
+let gPool = 1, tPool = 0, rWeek = 'all';
 let rTeam = '';
 let rStatus = 'tous';
 let admSec = 'equipes';
@@ -848,7 +849,7 @@ window.goTab = function(tab) {
 async function loadTab(tab) {
   if (tab==='accueil')       { await loadAccueil(); }
   else if (tab==='classement')   { await loadStandings(gPool); }
-  else if (tab==='equipes')      { await loadTeams(gPool); }
+  else if (tab==='equipes')      { await loadTeams(tPool); }
   else if (tab==='resultats')    {
     initResultsWeekTabs();
     if (rWeek === 'all') {
@@ -1056,7 +1057,7 @@ async function loadAccueil() {
 // ════════════════════════════════════════════════
 function setGlobalPool(p) {
   gPool = p;
-  ['sp1','sp2','tp1','tp2','rp1','rp2'].forEach(id => {
+  ['sp1','sp2','rp1','rp2'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('active', el.id.endsWith(String(p)));
   });
@@ -1107,19 +1108,23 @@ async function loadStandings(pool) {
 // ════════════════════════════════════════════════
 // TAB: ÉQUIPES
 // ════════════════════════════════════════════════
-window.switchTP = async function(p) { setGlobalPool(p); await loadTeams(p); };
+window.switchTP = async function(p) {
+  tPool = p;
+  ['tp0','tp1','tp2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'tp'+p);
+  });
+  await loadTeams(p);
+};
 
-async function loadTeams(pool) {
-  const wrap = document.getElementById('teams-wrap');
-  wrap.innerHTML = skelTeams(8);
-  await fetchAll();
-  const teams = Object.values(teamsMap).filter(t=>t.pool===pool)
+function buildTeamCards(poolNum) {
+  const teams = Object.values(teamsMap).filter(t=>t.pool===poolNum)
     .sort((a,b)=>a.name.localeCompare(b.name));
-  if (!teams.length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
-  const standings = buildStandings(pool);
+  if (!teams.length) return '';
+  const standings = buildStandings(poolNum);
   const rankMap = {};
-  standings.forEach((t,i) => { rankMap[t.id] = i+1; });
-  wrap.innerHTML = `<div class="teams-grid">${teams.map(team=>{
+  standings.forEach((s,i) => { rankMap[s.id] = i+1; });
+  return `<div class="teams-grid">${teams.map(team=>{
     const pCount = Object.values(playersMap).filter(p=>p.teamId===team.id).length;
     const logoEl = team.logoUrl
       ? `<img src="${esc(team.logoUrl)}" alt="${esc(team.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
@@ -1142,6 +1147,28 @@ async function loadTeams(pool) {
       </div>
     </div>`;
   }).join('')}</div>`;
+}
+
+async function loadTeams(pool) {
+  const wrap = document.getElementById('teams-wrap');
+  wrap.innerHTML = skelTeams(pool === 0 ? 16 : 8);
+  await fetchAll();
+  if (!Object.values(teamsMap).length) { wrap.innerHTML=`<div class="empty">${t('no_team')}</div>`; return; }
+  if (pool === 0) {
+    const n1 = Object.values(teamsMap).filter(t=>t.pool===1).length;
+    const n2 = Object.values(teamsMap).filter(t=>t.pool===2).length;
+    wrap.innerHTML = `
+      <div style="margin-bottom:28px">
+        <div class="stitle">Poule 1 <span style="font-size:.72rem;color:var(--text2);font-weight:400;margin-left:4px">${n1} équipe${n1!==1?'s':''}</span></div>
+        ${buildTeamCards(1)||`<div class="empty">${t('no_team')}</div>`}
+      </div>
+      <div>
+        <div class="stitle">Poule 2 <span style="font-size:.72rem;color:var(--text2);font-weight:400;margin-left:4px">${n2} équipe${n2!==1?'s':''}</span></div>
+        ${buildTeamCards(2)||`<div class="empty">${t('no_team')}</div>`}
+      </div>`;
+  } else {
+    wrap.innerHTML = buildTeamCards(pool) || `<div class="empty">${t('no_team')}</div>`;
+  }
 }
 
 window.openTeamModal = async function(teamId) {
