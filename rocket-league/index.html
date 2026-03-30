@@ -258,6 +258,35 @@ img{display:block}
 .match-card.match-compact .mc-body{padding:9px 14px;grid-template-columns:1fr 130px 1fr}
 .mc-c-center{display:flex;flex-direction:column;align-items:center;gap:3px}
 .mc-c-date{font-size:.67rem;color:var(--text2);white-space:nowrap;text-align:center;margin-top:1px}
+
+/* ── PLAYED MATCH CARDS GRID ── */
+.played-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.mcp-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;width:300px;flex-shrink:0;overflow:hidden;transition:all .3s cubic-bezier(.2,.8,.2,1);cursor:default}
+.mcp-card:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.55)}
+.mcp-card.hw{border-left:3px solid rgba(0,200,100,.55)}
+.mcp-card.aw{border-right:3px solid rgba(0,200,100,.55)}
+.mcp-body{display:grid;grid-template-columns:1fr 76px 1fr;padding:18px 12px 14px;gap:6px;align-items:center}
+.mcp-body.hw-bg{background:linear-gradient(to right,rgba(0,200,100,.06) 0%,transparent 55%)}
+.mcp-body.aw-bg{background:linear-gradient(to left,rgba(0,200,100,.06) 0%,transparent 55%)}
+.mcp-team{display:flex;flex-direction:column;align-items:center;gap:8px}
+.mcp-logo-wrap{position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.mcp-glow{position:absolute;inset:-10px;border-radius:50%;pointer-events:none}
+.mcp-card.hw .mcp-home .mcp-glow{background:radial-gradient(circle,rgba(0,200,100,.28) 0%,transparent 68%)}
+.mcp-card.aw .mcp-away .mcp-glow{background:radial-gradient(circle,rgba(0,200,100,.28) 0%,transparent 68%)}
+.mcp-logo{width:64px;height:64px;object-fit:contain;border-radius:8px;position:relative;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.mcp-name{font-size:.78rem;font-weight:700;text-align:center;line-height:1.2;max-width:120px;word-break:break-word}
+.mcp-team.winner .mcp-name{color:#fff;font-weight:800}
+.mcp-team.loser .mcp-name{color:var(--text3)}
+.mcp-team.loser .mcp-logo{opacity:.4;filter:grayscale(50%) drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+.mcp-center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mcp-score-val{font-size:2.2rem;font-weight:900;letter-spacing:.04em;line-height:1}
+.mcp-sc-w{color:#fff}
+.mcp-sc-l{color:var(--text3)}
+.mcp-sep-txt{color:var(--text3);font-size:1.4rem;font-weight:300;line-height:1}
+.mcp-gr{font-size:.62rem;color:var(--text3);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.mcp-foot{padding:7px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:6px}
+@media(max-width:700px){.mcp-card{width:100%}}
+@media(max-width:540px){.mcp-body{padding:14px 10px 10px}.mcp-logo{width:52px;height:52px}.mcp-logo-wrap{width:52px;height:52px}.mcp-score-val{font-size:1.8rem}}
 .mc-stats{display:none;padding:12px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
 .mc-stats.open{display:block}
 /* ── GAME CHIPS (scores inline) ── */
@@ -1489,15 +1518,21 @@ async function loadResults() {
     matches.forEach(m => { const w=m.week||0; if(!byWeek[w])byWeek[w]=[]; byWeek[w].push(m); });
     wrap.innerHTML = Object.keys(byWeek).sort((a,b)=>a-b).map(w => {
       const wm = byWeek[w];
-      const played = wm.filter(m=>m.status==='played').length;
-      const info = played ? `${played}/${wm.length} joués` : `${wm.length} match${wm.length>1?'s':''}`;
+      const playedMs = wm.filter(m=>m.status==='played');
+      const pendingMs = wm.filter(m=>m.status!=='played');
+      const info = playedMs.length ? `${playedMs.length}/${wm.length} joués` : `${wm.length} match${wm.length>1?'s':''}`;
+      const playedHtml = playedMs.length ? `<div class="played-grid">${playedMs.map(m=>renderMatchCard(m)).join('')}</div>` : '';
+      const pendingHtml = pendingMs.map(m=>renderMatchCard(m)).join('');
       return `<div class="week-section">
         <div class="week-section-hdr"><span class="week-section-title">${t('week')} ${w}</span><span class="week-section-count">${info}</span></div>
-        ${wm.map(m=>renderMatchCard(m)).join('')}
+        ${playedHtml}${pendingHtml}
       </div>`;
     }).join('');
   } else {
-    wrap.innerHTML = matches.map(m=>renderMatchCard(m)).join('');
+    const playedMs = matches.filter(m=>m.status==='played');
+    const pendingMs = matches.filter(m=>m.status!=='played');
+    const playedHtml = playedMs.length ? `<div class="played-grid">${playedMs.map(m=>renderMatchCard(m)).join('')}</div>` : '';
+    wrap.innerHTML = playedHtml + pendingMs.map(m=>renderMatchCard(m)).join('');
   }
 }
 
@@ -1548,14 +1583,7 @@ function renderMatchCard(m) {
     </div>`;
   }
 
-  // ── RICH CARD (joué) ──
-  const score = `<div class="mc-score-val"><span class="${homeWon?'sc-win':'sc-lose'}">${m.homeScore}</span><span class="sep"> - </span><span class="${awayWon?'sc-win':'sc-lose'}">${m.awayScore}</span></div>`;
-  let goalSummary = '';
-  if (m.games && m.games.length) {
-    const hg = m.games.reduce((s,g)=>s+(g.homeGoals||0),0);
-    const ag = m.games.reduce((s,g)=>s+(g.awayGoals||0),0);
-    goalSummary = `<span class="mc-goals">${hg} — ${ag} buts</span>`;
-  }
+  // ── PLAYED CARD (grille style esport) ──
   const vod = m.vodUrl ? `<a class="vod-btn" href="${m.vodUrl}" target="_blank" rel="noopener">▶ VOD</a>` : `<span></span>`;
   let gamesInline = '';
   if (m.games && m.games.length) {
@@ -1566,27 +1594,33 @@ function renderMatchCard(m) {
   } else {
     gamesInline = `<span style="font-size:.72rem;color:var(--text3);font-style:italic">—</span>`;
   }
-
-  return `<div class="match-card${homeWon?' home-win':awayWon?' away-win':''}">
-    <div class="mc-meta">
-      <span>Gr.${m.group}</span>
-      <span class="mc-badge played">${t('played')}</span>
-      ${goalSummary}
-    </div>
-    <div class="mc-body">
-      <div class="mc-team${homeWon?' mc-winner':' mc-loser'}${homeWon?' mc-winner-side':' mc-loser-side'}">
-        <img class="mc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
-        <span class="mc-name">${esc(ht.name)}</span>
+  const bgCls = homeWon ? 'hw-bg' : awayWon ? 'aw-bg' : '';
+  return `<div class="mcp-card${homeWon?' hw':awayWon?' aw':''}">
+    <div class="mcp-body ${bgCls}">
+      <div class="mcp-team mcp-home ${homeWon?'winner':'loser'}">
+        <div class="mcp-logo-wrap">
+          <div class="mcp-glow"></div>
+          <img class="mcp-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
+        </div>
+        <span class="mcp-name">${esc(ht.name)}</span>
       </div>
-      <div class="mc-score">${score}</div>
-      <div class="mc-team away${awayWon?' mc-winner':' mc-loser'}${awayWon?' mc-away-winner-side':' mc-away-loser-side'}">
-        <img class="mc-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
-        <span class="mc-name">${esc(at.name)}</span>
+      <div class="mcp-center">
+        <span class="mcp-gr">Gr.${m.group}</span>
+        <div class="mcp-score-val">
+          <span class="${homeWon?'mcp-sc-w':'mcp-sc-l'}">${m.homeScore}</span><span class="mcp-sep-txt"> - </span><span class="${awayWon?'mcp-sc-w':'mcp-sc-l'}">${m.awayScore}</span>
+        </div>
+      </div>
+      <div class="mcp-team mcp-away ${awayWon?'winner':'loser'}">
+        <div class="mcp-logo-wrap">
+          <div class="mcp-glow"></div>
+          <img class="mcp-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
+        </div>
+        <span class="mcp-name">${esc(at.name)}</span>
       </div>
     </div>
-    <div class="mc-foot">
-      ${vod}
+    <div class="mcp-foot">
       ${gamesInline}
+      ${vod}
     </div>
   </div>`;
 }
