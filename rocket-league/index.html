@@ -129,7 +129,7 @@ img{display:block}
 .fl{background:rgba(239,68,68,.12);color:#ef4444}
 
 /* ── TEAMS ── */
-.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,320px);gap:14px;justify-content:center}
 
 /* Card horizontale */
 .team-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;display:flex;flex-direction:row;position:relative}
@@ -138,12 +138,12 @@ img{display:block}
 .team-card.tc-lan:hover{border-color:rgba(255,184,0,.6);box-shadow:0 16px 44px rgba(0,0,0,.65),0 0 0 1px rgba(255,184,0,.25),0 0 28px rgba(255,184,0,.1)}
 
 /* Zone logo gauche */
-.tc-logo-wrap{width:90px;flex-shrink:0;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;overflow:hidden;border-right:1px solid var(--border);padding:14px 0}
+.tc-logo-wrap{width:128px;flex-shrink:0;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;border-right:1px solid var(--border);padding:18px 0}
 .tc-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(0,129,255,.25) 0%,transparent 70%);pointer-events:none;transition:opacity .3s}
 .team-card.tc-lan .tc-glow{background:radial-gradient(circle at 50% 55%,rgba(255,184,0,.25) 0%,transparent 70%)}
 .team-card:hover .tc-glow{opacity:1.6}
-.tc-logo-img{width:54px;height:54px;object-fit:contain;border-radius:8px;position:relative;z-index:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
-.tc-logo-ph{width:54px;height:54px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text3);position:relative;z-index:1}
+.tc-logo-img{width:100px;height:100px;object-fit:contain;border-radius:10px;position:relative;z-index:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}
+.tc-logo-ph{width:100px;height:100px;background:var(--bg2);border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2.4rem;color:var(--text3);position:relative;z-index:1}
 .tc-rank-lbl{font-size:.68rem;font-weight:900;color:var(--text2);position:relative;z-index:1;letter-spacing:.02em}
 .tc-rank-lbl.rk-gold{color:#ffd700}.tc-rank-lbl.rk-silver{color:#c0c0c0}.tc-rank-lbl.rk-bronze{color:#cd7f32}
 
