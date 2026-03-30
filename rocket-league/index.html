@@ -1831,7 +1831,7 @@ async function admTeams() {
     </div>
     <div class="adm-teams-grid">
       ${sorted.map(t2=>`
-        <div class="adm-team-card">
+        <div class="adm-team-card" onclick="editTeam('${t2.id}')" style="cursor:pointer">
           <img class="adm-tc-logo" src="${t2.logoUrl||''}" alt="" onerror="this.style.opacity='.2'">
           <div class="adm-tc-info">
             <div class="adm-tc-name">${esc(t2.name)}</div>
@@ -1840,10 +1840,7 @@ async function admTeams() {
               ${t2.tag?`<span class="adm-tc-tag">${esc(t2.tag)}</span>`:''}
             </div>
           </div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
-            <button class="btn-e" onclick="editTeam('${t2.id}')">✏</button>
-            <button class="btn-d" onclick="deleteTeam('${t2.id}')">✕</button>
-          </div>
+          <button class="btn-d" onclick="event.stopPropagation();deleteTeam('${t2.id}')">✕</button>
         </div>`).join('')||`<div class="empty" style="grid-column:1/-1">${t('no_team')}</div>`}
     </div>`;
 }
@@ -1920,7 +1917,7 @@ async function admPlayers() {
     const avatar = p.photoUrl
       ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
       : `<div class="adm-pa-ph">👤</div>`;
-    return `<div class="adm-player-card">
+    return `<div class="adm-player-card" onclick="editPlayer('${p.id}')" style="cursor:pointer">
       ${avatar}
       <div class="adm-pi">
         <div class="adm-pi-top">
@@ -1933,10 +1930,7 @@ async function admPlayers() {
           ${p.age?`<span>${p.age} ans</span>`:''}
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn-e" onclick="editPlayer('${p.id}')">✏</button>
-        <button class="btn-d" onclick="deletePlayer('${p.id}')">✕</button>
-      </div>
+      <button class="btn-d" onclick="event.stopPropagation();deletePlayer('${p.id}')">✕</button>
     </div>`;
   };
   const renderList = (teamFilter='') => {
@@ -1993,7 +1987,7 @@ window.filterPlayerList = function(teamId) {
     const avatar = p.photoUrl
       ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
       : `<div class="adm-pa-ph">👤</div>`;
-    return `<div class="adm-player-card">
+    return `<div class="adm-player-card" onclick="editPlayer('${p.id}')" style="cursor:pointer">
       ${avatar}
       <div class="adm-pi">
         <div class="adm-pi-top">
@@ -2006,10 +2000,7 @@ window.filterPlayerList = function(teamId) {
           ${p.age?`<span>${p.age} ans</span>`:''}
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn-e" onclick="editPlayer('${p.id}')">✏</button>
-        <button class="btn-d" onclick="deletePlayer('${p.id}')">✕</button>
-      </div>
+      <button class="btn-d" onclick="event.stopPropagation();deletePlayer('${p.id}')">✕</button>
     </div>`;
   }).join('')||`<div class="empty">${t('no_players')}</div>`;
 };
@@ -2133,7 +2124,6 @@ function _renderAdmMatches() {
         ? `<span class="amc-score">${m.homeScore} – ${m.awayScore}</span>`
         : `<span class="amc-vs">VS</span>`;
       const schedDisp = !played && m.scheduledAt ? `<span>📅 ${formatSchedule(m.scheduledAt)}</span>` : '';
-      const schedBtn = !played ? `<button class="amc-btn-icon" onclick="event.stopPropagation();openScheduleMatch('${m.id}')" title="Planifier">📅</button>` : '';
       const resetBtn = played ? `<button class="amc-btn-icon" onclick="event.stopPropagation();resetMatch('${m.id}')" title="Réinitialiser">↺</button>` : '';
       return `<div class="adm-match-card ${played?'amc-played':'amc-pending'}" onclick="openMatchEntry('${m.id}')">
         <div class="amc-body">
@@ -2149,7 +2139,7 @@ function _renderAdmMatches() {
         </div>
         <div class="amc-foot">
           <div class="amc-meta"><span>P${m.pool} · Gr.${m.group||'?'}</span>${schedDisp}</div>
-          <div class="amc-actions">${schedBtn}${resetBtn}</div>
+          ${resetBtn ? `<div class="amc-actions">${resetBtn}</div>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -2292,6 +2282,16 @@ window.openMatchEntry = async function(matchId) {
       <label>📅 Date et heure du match</label>
       <input class="finput" id="si-date" type="datetime-local" value="${m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : ''}">
     </div>
+    <label class="stream-toggle" style="margin-top:10px">
+      <input type="checkbox" id="si-stream" ${m.officialStream?'checked':''}>
+      <div class="stream-toggle-box">
+        <span class="stream-toggle-icon">🎥</span>
+        <div>
+          <div class="stream-toggle-title">Stream officiel Springs E-Sport</div>
+          <div class="stream-toggle-sub">Afficher ce match sur la page d'accueil</div>
+        </div>
+      </div>
+    </label>
     <div class="fg" style="margin:14px 0 0">
       <label>${t('f_vod')}</label>
       <input class="finput" id="si-vod" type="url" placeholder="https://youtube.com/..." value="${m.vodUrl||''}">
@@ -2386,8 +2386,9 @@ window.saveMatchResult = async function(matchId) {
   });
   const vod = document.getElementById('si-vod').value.trim();
   const dateVal = document.getElementById('si-date')?.value;
+  const officialStream = document.getElementById('si-stream')?.checked || false;
   try {
-    await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod, ...(dateVal?{scheduledAt:new Date(dateVal).toISOString()}:{})});
+    await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod, officialStream, ...(dateVal?{scheduledAt:new Date(dateVal).toISOString()}:{})});
     toast(t('saved'),'ok');
     closeModal('mo-match');
     await admResults();
