@@ -2014,6 +2014,14 @@ async function loadResults() {
   }
 }
 
+// Convertit une ISO string en valeur locale pour input datetime-local (évite le décalage UTC)
+function toLocalDT(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function formatSchedule(iso) {
   const d = new Date(iso);
   const now = Date.now();
@@ -2550,7 +2558,25 @@ function _renderAdmMatches() {
   }).join('');
 }
 
-async function admResults() {
+function _saveAdmFilters() {
+  return {
+    status: document.getElementById('ar-status')?.value || 'pending',
+    pool:   document.getElementById('ar-pool')?.value   || 'all',
+    week:   document.getElementById('ar-week')?.value   || 'all',
+    team:   document.getElementById('ar-team')?.value   || '',
+  };
+}
+function _restoreAdmFilters(f) {
+  if (!f) return;
+  const s=document.getElementById('ar-status'), p=document.getElementById('ar-pool'),
+        w=document.getElementById('ar-week'), t=document.getElementById('ar-team');
+  if(s&&f.status) s.value=f.status;
+  if(p&&f.pool)   p.value=f.pool;
+  if(w&&f.week)   w.value=f.week;
+  if(t&&f.team)   t.value=f.team;
+}
+
+async function admResults(savedFilters) {
   await fetchAll();
   const wrap = document.getElementById('adm-content');
   const teamOpts = `<option value="">Toutes les équipes</option>`
@@ -2590,16 +2616,18 @@ async function admResults() {
     </div>
     <div id="match-list"></div>`;
   window._renderAdmMatches = _renderAdmMatches;
+  _restoreAdmFilters(savedFilters);
   _renderAdmMatches();
 }
 
 window.admFilterMatch = function() { _renderAdmMatches(); };
 
 window.openScheduleMatch = function(matchId) {
+  window._admFiltersSaved = _saveAdmFilters();
   const m = matchesMap[matchId]; if(!m) return;
   const ht = teamsMap[m.homeTeamId]||{name:'?'};
   const at = teamsMap[m.awayTeamId]||{name:'?'};
-  const cur = m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : '';
+  const cur = toLocalDT(m.scheduledAt);
   const streamed = m.officialStream ? 'checked' : '';
   document.getElementById('mo-match-title').textContent = `📅 ${ht.name} vs ${at.name}`;
   document.getElementById('mo-match-body').innerHTML = `
@@ -2632,7 +2660,7 @@ window.saveSchedule = async function(matchId) {
     await updateDoc(doc(db,'rl_matches',matchId),{scheduledAt: new Date(val).toISOString(), officialStream});
     toast('Date enregistrée','ok');
     closeModal('mo-match');
-    await admResults();
+    await admResults(window._admFiltersSaved);
   } catch(e){toast(t('err_save'),'err');}
 };
 
@@ -2641,11 +2669,12 @@ window.resetMatch = async function(id) {
   try {
     await updateDoc(doc(db,'rl_matches',id),{status:'scheduled',homeScore:null,awayScore:null,games:[],vodUrl:''});
     toast('Match réinitialisé','ok');
-    await admResults();
+    await admResults(window._admFiltersSaved);
   } catch(e){toast(t('err_save'),'err');}
 };
 
 window.openMatchEntry = async function(matchId) {
+  window._admFiltersSaved = _saveAdmFilters();
   const m = matchesMap[matchId]; if (!m) return;
   const ht = teamsMap[m.homeTeamId]||{name:'?'};
   const at = teamsMap[m.awayTeamId]||{name:'?'};
@@ -2692,7 +2721,7 @@ window.openMatchEntry = async function(matchId) {
       <div style="display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px">
         <div class="fg">
           <label>Date et heure</label>
-          <input class="finput" id="si-date" type="datetime-local" value="${m.scheduledAt ? new Date(m.scheduledAt).toISOString().slice(0,16) : ''}">
+          <input class="finput" id="si-date" type="datetime-local" value="${toLocalDT(m.scheduledAt)}">
         </div>
         <label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding-bottom:7px;white-space:nowrap">
           <input type="checkbox" id="si-stream" ${m.officialStream?'checked':''}>
@@ -2808,7 +2837,7 @@ window.saveMatchSchedule = async function(matchId) {
     });
     toast('Date enregistrée','ok');
     closeModal('mo-match');
-    await admResults();
+    await admResults(window._admFiltersSaved);
   } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 
@@ -2828,7 +2857,7 @@ window.saveMatchResult = async function(matchId) {
     await updateDoc(doc(db,'rl_matches',matchId),{status:'played', homeScore, awayScore, games, vodUrl:vod, officialStream, forfeit:false, forfeitTeamId:null, ...(dateVal?{scheduledAt:new Date(dateVal).toISOString()}:{})});
     toast(t('saved'),'ok');
     closeModal('mo-match');
-    await admResults();
+    await admResults(window._admFiltersSaved);
   } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 
@@ -2849,7 +2878,7 @@ window.declareForfeit = async function(matchId, loserTeamId) {
     });
     toast(`Forfait ${loser.name} enregistré`,'ok');
     closeModal('mo-match');
-    await admResults();
+    await admResults(window._admFiltersSaved);
   } catch(e) { toast(t('err_save'),'err'); console.error(e); }
 };
 
