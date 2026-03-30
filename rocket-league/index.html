@@ -1272,16 +1272,14 @@ async function loadAccueil() {
     }).join('') : `<div class="empty" style="padding:12px">Aucun résultat pour l'instant</div>`;
   }
 
-  // ── À venir : semaine la plus proche avec des matchs non joués ──
-  const pendingAll = Object.values(matchesMap).filter(m=>m.status!=='played');
-  const nextWeek = pendingAll.length ? Math.min(...pendingAll.map(m=>m.week)) : null;
-  const upcoming = pendingAll
-    .filter(m=>m.week===nextWeek)
-    .sort((a,b)=>((a.scheduledAt||'')>(b.scheduledAt||'')?1:-1))
-    .slice(0,5);
+  // ── À venir : matchs avec une date planifiée, triés par date croissante ──
+  const upcoming = Object.values(matchesMap)
+    .filter(m=>m.status!=='played' && m.scheduledAt)
+    .sort((a,b)=>new Date(a.scheduledAt)-new Date(b.scheduledAt))
+    .slice(0,6);
 
   const titleEl = document.getElementById('acc-upcoming-title');
-  if (titleEl && nextWeek) titleEl.textContent = `Semaine ${nextWeek} — À venir`;
+  if (titleEl) titleEl.textContent = 'Prochains matchs planifiés';
 
   const el_upcoming = document.getElementById('acc-upcoming');
   if (el_upcoming) {
@@ -1289,14 +1287,10 @@ async function loadAccueil() {
       const ht=teamsMap[m.homeTeamId]||{name:'?'}, at=teamsMap[m.awayTeamId]||{name:'?'};
       const hLogo=ht.logoUrl?`<img class="umc-logo" src="${esc(ht.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="umc-logo"></div>`;
       const aLogo=at.logoUrl?`<img class="umc-logo" src="${esc(at.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="umc-logo"></div>`;
-      let timeHtml;
-      if (m.scheduledAt) {
-        const d=new Date(m.scheduledAt);
-        timeHtml = `<span class="umc-time">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
-                    <span class="umc-week">${d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})}</span>`;
-      } else {
-        timeHtml = `<span class="umc-vs">VS</span><span class="umc-week" style="color:var(--text3);font-style:italic">À planifier</span>`;
-      }
+      const d=new Date(m.scheduledAt);
+      const timeHtml = `<span class="umc-week" style="margin-bottom:1px">S${m.week}</span>
+                        <span class="umc-time">${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
+                        <span class="umc-week">${d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})}</span>`;
       return `<div class="umc">
         <div class="umc-team">${hLogo}<span class="umc-name">${esc(ht.name)}</span></div>
         <div class="umc-mid">${timeHtml}</div>
