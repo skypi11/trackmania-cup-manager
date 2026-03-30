@@ -110,8 +110,10 @@ img{display:block}
 .feat-time{font-size:.9rem;font-weight:900}
 .feat-date{padding:4px 12px;font-size:.65rem;color:var(--text2);text-align:center;border-top:1px solid var(--border)}
 /* Résultats mini-cards */
-.rmc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s}
-.rmc:hover{border-color:rgba(0,129,255,.3)}
+.rmc{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:10px;padding:9px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;cursor:pointer;transition:all .2s}
+.rmc:hover{border-color:rgba(0,129,255,.3);border-left-color:rgba(0,129,255,.5)}
+.rmc.rmc-hw{border-left-color:rgba(0,200,100,.5)}
+.rmc.rmc-aw{border-left-color:rgba(239,68,68,.4)}
 .rmc-team{display:flex;align-items:center;gap:7px;min-width:0}
 .rmc-team.away{flex-direction:row-reverse}
 .rmc-logo{width:26px;height:26px;object-fit:contain;border-radius:5px;background:var(--bg3);flex-shrink:0;border:1px solid var(--border)}
@@ -137,9 +139,10 @@ img{display:block}
 .acc-hl-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s}
 .acc-hl-card:hover{border-color:rgba(0,129,255,.35);transform:translateY(-2px)}
 .acc-hl-icon{font-size:1.2rem;margin-bottom:4px}
-.acc-hl-val{font-size:1.15rem;font-weight:900;color:var(--rl-blue)}
-.acc-hl-lbl{font-size:.58rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:2px 0}
-.acc-hl-team{font-size:.7rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-hl-val{font-size:1.3rem;font-weight:900;color:var(--rl-blue);line-height:1}
+.acc-hl-lbl{font-size:.68rem;color:var(--text2);font-weight:600;margin:3px 0 1px}
+.acc-hl-sub{font-size:.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.acc-hl-team{font-size:.72rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 /* Classement aperçu redesign */
 .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:640px){.preview-grid{grid-template-columns:1fr}}
@@ -869,6 +872,14 @@ img{display:block}
   </div>
 </div>
 
+<!-- Modal Détail Match (public) -->
+<div class="modal-ov" id="mo-match-detail" onclick="closeModal('mo-match-detail')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><h2 id="mo-md-title">Résultat</h2><button class="btn-x" onclick="closeModal('mo-match-detail')">×</button></div>
+    <div class="modal-body" id="mo-md-body"></div>
+  </div>
+</div>
+
 <!-- Modal Saisie Match -->
 <div class="modal-ov" id="mo-match" onclick="closeModal('mo-match')">
   <div class="modal wide" onclick="event.stopPropagation()">
@@ -1250,7 +1261,7 @@ async function loadAccueil() {
       const hW=m.homeScore>m.awayScore;
       const hLogo=ht.logoUrl?`<img class="rmc-logo" src="${esc(ht.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="rmc-logo"></div>`;
       const aLogo=at.logoUrl?`<img class="rmc-logo" src="${esc(at.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="rmc-logo"></div>`;
-      return `<div class="rmc" onclick="openTeamModal('${hW?ht.id:at.id}')">
+      return `<div class="rmc ${hW?'rmc-hw':'rmc-aw'}" onclick="openMatchDetail('${m.id}')">
         <div class="rmc-team">${hLogo}<span class="rmc-name${hW?'':' dim'}">${esc(ht.name)}</span></div>
         <div class="rmc-mid">
           <span class="rmc-score">${m.homeScore} – ${m.awayScore}</span>
@@ -1261,12 +1272,11 @@ async function loadAccueil() {
     }).join('') : `<div class="empty" style="padding:12px">Aucun résultat pour l'instant</div>`;
   }
 
-  // ── À venir (mini-cards avec logos + horaire) ──
-  const allWeeks = [...new Set(Object.values(matchesMap).map(m=>m.week))].sort((a,b)=>a-b);
-  const playedWeeks = [...new Set(Object.values(matchesMap).filter(m=>m.status==='played').map(m=>m.week))];
-  const nextWeek = allWeeks.find(w=>!playedWeeks.includes(w)) || allWeeks[allWeeks.length-1];
-  const upcoming = Object.values(matchesMap)
-    .filter(m=>m.status!=='played'&&m.week===nextWeek)
+  // ── À venir : semaine la plus proche avec des matchs non joués ──
+  const pendingAll = Object.values(matchesMap).filter(m=>m.status!=='played');
+  const nextWeek = pendingAll.length ? Math.min(...pendingAll.map(m=>m.week)) : null;
+  const upcoming = pendingAll
+    .filter(m=>m.week===nextWeek)
     .sort((a,b)=>((a.scheduledAt||'')>(b.scheduledAt||'')?1:-1))
     .slice(0,5);
 
@@ -1313,12 +1323,13 @@ async function loadAccueil() {
       {icon:'🏆',val:topWins.wins,lbl:'Plus de victoires',team:topWins,sub:'au total'},
     ];
     hlWrap.innerHTML = hl.map(h=>{
-      const logo=h.team.logoUrl?`<img src="${esc(h.team.logoUrl)}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;background:var(--bg3);margin:0 auto 4px" onerror="this.style.opacity='.2'">`:'';
+      const logo=h.team.logoUrl?`<img src="${esc(h.team.logoUrl)}" style="width:26px;height:26px;object-fit:contain;border-radius:5px;background:var(--bg3);margin:0 auto 3px" onerror="this.style.opacity='.2'">`:'';
       return `<div class="acc-hl-card" onclick="openTeamModal('${h.team.id}')">
         <div class="acc-hl-icon">${h.icon}</div>
-        ${logo}
         <div class="acc-hl-val">${h.val}</div>
-        <div class="acc-hl-lbl">${h.sub}</div>
+        <div class="acc-hl-lbl">${h.lbl}</div>
+        <div class="acc-hl-sub">${h.sub}</div>
+        ${logo}
         <div class="acc-hl-team">${esc(h.team.name)}</div>
       </div>`;
     }).join('');
@@ -1659,6 +1670,73 @@ async function loadTeams(pool) {
     wrap.innerHTML = buildTeamCards(pool) || `<div class="empty">${t('no_team')}</div>`;
   }
 }
+
+// ════════════════════════════════════════════════
+// MODAL DÉTAIL MATCH (public)
+// ════════════════════════════════════════════════
+window.openMatchDetail = function(matchId) {
+  const m = matchesMap[matchId]; if (!m) return;
+  const ht = teamsMap[m.homeTeamId]||{name:'?'}, at = teamsMap[m.awayTeamId]||{name:'?'};
+  const hW = m.homeScore > m.awayScore;
+  const hLogo = ht.logoUrl?`<img src="${esc(ht.logoUrl)}" style="width:64px;height:64px;object-fit:contain;border-radius:10px;background:var(--bg3)" onerror="this.style.opacity='.2'">`:`<div style="width:64px;height:64px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)"></div>`;
+  const aLogo = at.logoUrl?`<img src="${esc(at.logoUrl)}" style="width:64px;height:64px;object-fit:contain;border-radius:10px;background:var(--bg3)" onerror="this.style.opacity='.2'">`:`<div style="width:64px;height:64px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)"></div>`;
+
+  // Manches
+  let manchesHtml = '';
+  if (m.games && m.games.length) {
+    manchesHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px">
+      <span class="manches-lbl">Manches</span>
+      ${m.games.map((g,i)=>{
+        const h=g.homeGoals||0, a=g.awayGoals||0;
+        const hWm=h>a;
+        return `<span class="game-chip ${hWm?'gc-w':'gc-l'}" title="Manche ${i+1}">${h}–${a}</span>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // Buts totaux
+  const hg = m.games?m.games.reduce((s,g)=>s+(g.homeGoals||0),0):0;
+  const ag = m.games?m.games.reduce((s,g)=>s+(g.awayGoals||0),0):0;
+
+  // Date
+  let dateLine = '';
+  if (m.scheduledAt) {
+    const d = new Date(m.scheduledAt);
+    dateLine = `<div style="font-size:.72rem;color:var(--text3);margin-top:4px">${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})} · ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  }
+
+  // Forfait
+  const forfeitBadge = m.forfeit
+    ? `<div style="margin-top:8px"><span style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-size:.65rem;font-weight:800;padding:3px 10px;border-radius:4px;letter-spacing:.05em">FORFAIT</span></div>`
+    : '';
+
+  document.getElementById('mo-md-title').textContent = `S${m.week} · Poule ${m.pool}`;
+  document.getElementById('mo-md-body').innerHTML = `
+    <div style="text-align:center;padding:8px 0 16px">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:0 16px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          ${hLogo}
+          <span style="font-weight:${hW?'800':'500'};font-size:.9rem;color:${hW?'var(--text)':'var(--text2)'}">${esc(ht.name)}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-size:2.4rem;font-weight:900;line-height:1;letter-spacing:-.02em">${m.homeScore} – ${m.awayScore}</div>
+          ${hg||ag?`<div style="font-size:.7rem;color:var(--text3)">${hg}–${ag} buts totaux</div>`:''}
+          ${manchesHtml}
+          ${forfeitBadge}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          ${aLogo}
+          <span style="font-weight:${hW?'500':'800'};font-size:.9rem;color:${hW?'var(--text2)':'var(--text)'}">${esc(at.name)}</span>
+        </div>
+      </div>
+      ${dateLine}
+      <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+        <button class="btn-s" onclick="openTeamModal('${ht.id}');closeModal('mo-match-detail')">Voir ${esc(ht.name)}</button>
+        <button class="btn-s" onclick="openTeamModal('${at.id}');closeModal('mo-match-detail')">Voir ${esc(at.name)}</button>
+      </div>
+    </div>`;
+  openModal('mo-match-detail');
+};
 
 window.openTeamModal = async function(teamId) {
   const team = teamsMap[teamId];
