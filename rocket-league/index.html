@@ -324,7 +324,7 @@ img{display:block}
 .finput:focus{outline:none;border-color:var(--red)}
 .finput option{background:var(--bg3)}
 .fhint{font-size:.68rem;color:var(--text3)}
-.f-actions{display:flex;gap:9px;margin-top:4px;grid-column:1/-1}
+.f-actions{display:flex;flex-direction:row;align-items:center;gap:9px;margin-top:4px;grid-column:1/-1}
 .btn-p{background:var(--red);border:none;color:#fff;padding:7px 18px;border-radius:6px;font-size:.82rem;font-weight:700;transition:background .2s}
 .btn-p:hover{background:var(--red-d)}
 .btn-s{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;font-size:.82rem;font-weight:700;transition:all .2s}
@@ -345,6 +345,68 @@ img{display:block}
 .adm-sep{height:1px;background:var(--border);margin:16px 0}
 .adm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .adm-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:.8rem}
+/* ── ADMIN FILTERS BAR ── */
+.adm-filters-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;align-items:center}
+.adm-filter-grp{display:flex;align-items:center;gap:7px}
+.adm-filter-lbl{font-size:.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+/* ── ADMIN MATCH CARDS ── */
+.adm-match-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;transition:border-color .2s}
+.adm-match-card.amc-pending{border-left:3px solid rgba(245,158,11,.5)}
+.adm-match-card.amc-played{border-left:3px solid rgba(0,200,100,.4)}
+.adm-match-card:hover{border-color:rgba(245,158,11,.35)}
+.amc-body{display:grid;grid-template-columns:1fr 110px 1fr;align-items:center;padding:10px 14px;gap:8px}
+.amc-team{display:flex;align-items:center;gap:8px}
+.amc-team.away{flex-direction:row-reverse;text-align:right}
+.amc-logo{width:32px;height:32px;object-fit:contain;border-radius:5px;background:var(--bg2);flex-shrink:0}
+.amc-name{font-weight:700;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.amc-center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+.amc-score{font-size:1.4rem;font-weight:900;color:#fff;white-space:nowrap}
+.amc-vs{font-size:.72rem;color:var(--text3);font-weight:700;letter-spacing:.06em}
+.amc-foot{padding:7px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(0,0,0,.12)}
+.amc-meta{font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.amc-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.amc-btn-main{background:var(--red);border:none;color:#fff;padding:5px 13px;border-radius:5px;font-size:.76rem;font-weight:700;transition:all .2s;white-space:nowrap}
+.amc-btn-main:hover{background:var(--red-d)}
+.amc-btn-main.edit{background:rgba(0,129,255,.15);border:1px solid rgba(0,129,255,.3);color:var(--rl-blue)}
+.amc-btn-main.edit:hover{background:var(--rl-blue);color:#fff}
+.amc-btn-icon{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:5px;font-size:.8rem;transition:all .2s}
+.amc-btn-icon:hover{border-color:var(--text2);color:var(--text)}
+.badge-pending{display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3);font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:3px}
+.badge-ok{display:inline-flex;align-items:center;gap:3px;background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.2);font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:3px}
+.adm-week-hdr{display:flex;align-items:center;gap:10px;margin:20px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.adm-week-hdr:first-child{margin-top:0}
+.adm-week-title{font-size:.88rem;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.adm-week-title::before{content:'';display:inline-block;width:3px;height:14px;background:#f59e0b;border-radius:2px;flex-shrink:0}
+.adm-week-count{font-size:.68rem;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;color:var(--text2)}
+/* ── ADMIN TEAMS GRID ── */
+.adm-teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:640px){.adm-teams-grid{grid-template-columns:1fr}}
+.adm-team-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;transition:border-color .2s}
+.adm-team-card:hover{border-color:rgba(245,158,11,.3)}
+.adm-tc-logo{width:44px;height:44px;object-fit:contain;border-radius:7px;background:var(--bg2);flex-shrink:0;border:1px solid var(--border)}
+.adm-tc-info{flex:1;min-width:0}
+.adm-tc-name{font-weight:700;font-size:.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-tc-meta{display:flex;gap:6px;margin-top:5px;align-items:center}
+.pool-badge{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase}
+.pool-badge.p1{background:rgba(0,129,255,.15);color:var(--rl-blue);border:1px solid rgba(0,129,255,.3)}
+.pool-badge.p2{background:rgba(255,107,53,.15);color:#FF6B35;border:1px solid rgba(255,107,53,.3)}
+.adm-tc-tag{font-size:.7rem;color:var(--text2);font-weight:600}
+/* ── ADMIN PLAYERS CARDS ── */
+.adm-player-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:11px;transition:border-color .2s;margin-bottom:7px}
+.adm-player-card:hover{border-color:rgba(245,158,11,.3)}
+.adm-pa{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--bg2);flex-shrink:0;border:2px solid var(--border)}
+.adm-pa-ph{width:40px;height:40px;border-radius:50%;background:var(--bg2);flex-shrink:0;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text3)}
+.adm-pi{flex:1;min-width:0}
+.adm-pi-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.adm-pi-name{font-weight:700;font-size:.86rem}
+.role-bdg{font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.role-bdg.capitaine{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.role-bdg.titulaire{background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.2)}
+.role-bdg.sub{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2)}
+.role-bdg.coach{background:rgba(0,129,255,.12);color:var(--rl-blue);border:1px solid rgba(0,129,255,.25)}
+.role-bdg.fondateur{background:rgba(232,0,26,.12);color:var(--red);border:1px solid rgba(232,0,26,.25)}
+.role-bdg.manager{background:rgba(139,92,246,.12);color:#8b5cf6;border:1px solid rgba(139,92,246,.25)}
+.adm-pi-sub{font-size:.72rem;color:var(--text2);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* ── GAME ENTRY ── */
 .games-entry-wrap{margin-bottom:8px}
@@ -1747,6 +1809,7 @@ async function loadAdm(sec) {
 async function admTeams() {
   await refreshTeams();
   const wrap = document.getElementById('adm-content');
+  const sorted = Object.values(teamsMap).sort((a,b)=>a.pool-b.pool||a.name.localeCompare(b.name));
   wrap.innerHTML = `
     <div class="stitle">${t('add_t')}</div>
     <div class="form-grid" id="team-form">
@@ -1756,25 +1819,32 @@ async function admTeams() {
       <div class="fg"><label>${t('f_pool')}</label>
         <select class="finput" id="tf-pool"><option value="1">Poule 1</option><option value="2">Poule 2</option></select>
       </div>
-      <div class="fg full f-actions">
+      <div class="f-actions" style="grid-column:1/-1">
         <button class="btn-p" onclick="saveTeam()">💾 ${t('save')}</button>
         <button class="btn-s" onclick="clearTeamForm()">✕ ${t('cancel')}</button>
       </div>
     </div>
     <div class="adm-sep"></div>
-    <div class="stitle">Équipes existantes</div>
-    <div class="adm-list">
-      ${Object.values(teamsMap).sort((a,b)=>a.pool-b.pool||a.name.localeCompare(b.name)).map(t2=>`
-        <div class="adm-item">
-          <div class="adm-item-l">
-            <img class="adm-item-logo" src="${t2.logoUrl||''}" alt="" onerror="this.src=''">
-            <div><div class="adm-item-name">${esc(t2.name)}</div><div class="adm-item-meta">Poule ${t2.pool} · ${esc(t2.tag||'')}</div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="stitle" style="margin:0">Équipes existantes</div>
+      <span style="font-size:.72rem;color:var(--text2)">${sorted.length} équipes</span>
+    </div>
+    <div class="adm-teams-grid">
+      ${sorted.map(t2=>`
+        <div class="adm-team-card">
+          <img class="adm-tc-logo" src="${t2.logoUrl||''}" alt="" onerror="this.style.opacity='.2'">
+          <div class="adm-tc-info">
+            <div class="adm-tc-name">${esc(t2.name)}</div>
+            <div class="adm-tc-meta">
+              <span class="pool-badge p${t2.pool}">Poule ${t2.pool}</span>
+              ${t2.tag?`<span class="adm-tc-tag">${esc(t2.tag)}</span>`:''}
+            </div>
           </div>
-          <div class="adm-item-r">
+          <div style="display:flex;gap:6px;flex-shrink:0">
             <button class="btn-e" onclick="editTeam('${t2.id}')">✏</button>
             <button class="btn-d" onclick="deleteTeam('${t2.id}')">✕</button>
           </div>
-        </div>`).join('')||`<div class="empty">${t('no_team')}</div>`}
+        </div>`).join('')||`<div class="empty" style="grid-column:1/-1">${t('no_team')}</div>`}
     </div>`;
 }
 
@@ -1844,27 +1914,37 @@ async function admPlayers() {
     Object.values(teamsMap).sort((a,b)=>a.name.localeCompare(b.name))
     .map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
 
+  const renderPlayerCard = (p) => {
+    const tm = teamsMap[p.teamId]||{};
+    const rc = (p.role||'').toLowerCase();
+    const avatar = p.photoUrl
+      ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
+      : `<div class="adm-pa-ph">👤</div>`;
+    return `<div class="adm-player-card">
+      ${avatar}
+      <div class="adm-pi">
+        <div class="adm-pi-top">
+          <span class="adm-pi-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</span>
+          ${p.role?`<span class="role-bdg ${rc}">${p.role.toUpperCase()}</span>`:''}
+        </div>
+        <div class="adm-pi-sub">
+          <span>${esc(tm.name||'— Agent libre —')}</span>
+          ${FLAGS[p.country]?`<span>${FLAGS[p.country]}</span>`:''}
+          ${p.age?`<span>${p.age} ans</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn-e" onclick="editPlayer('${p.id}')">✏</button>
+        <button class="btn-d" onclick="deletePlayer('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  };
   const renderList = (teamFilter='') => {
     let ps = Object.values(playersMap);
     if (teamFilter) ps = ps.filter(p=>p.teamId===teamFilter);
     ps.sort((a,b)=>(a.pseudoRL||'').localeCompare(b.pseudoRL||''));
     if (!ps.length) return `<div class="empty">${t('no_players')}</div>`;
-    return ps.map(p=>{
-      const tm = teamsMap[p.teamId]||{};
-      const roleColors={capitaine:'#f59e0b',titulaire:'#0c8',sub:'#94a3b8',coach:'#0081FF',fondateur:'#E8001A',manager:'#8b5cf6'};
-    const roleColor=roleColors[p.role]||'var(--text2)';
-    return `<div class="adm-item">
-        <div class="adm-item-l">
-          <img class="adm-item-logo" style="border-radius:50%" src="${p.photoUrl||''}" alt="" onerror="this.src=''">
-          <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}${p.role?` <span style="font-size:.62rem;font-weight:800;color:${roleColor};margin-left:4px">${p.role.toUpperCase()}</span>`:''}</div>
-          <div class="adm-item-meta">${esc(tm.name||'—')} · ${FLAGS[p.country]||''} ${p.age||''}</div></div>
-        </div>
-        <div class="adm-item-r">
-          <button class="btn-e" onclick="editPlayer('${p.id}')">✏</button>
-          <button class="btn-d" onclick="deletePlayer('${p.id}')">✕</button>
-        </div>
-      </div>`;
-    }).join('');
+    return ps.map(renderPlayerCard).join('');
   };
 
   wrap.innerHTML = `
@@ -1885,36 +1965,48 @@ async function admPlayers() {
           <option value="manager">Manager</option>
         </select>
       </div>
-      <div class="fg full"><label>${t('f_photo')}</label><input class="finput" id="pf-photo" placeholder="https://..." type="url"></div>
       <div class="fg full"><label>${t('f_team')}</label><select class="finput" id="pf-team"><option value="">${t('f_team')}...</option>${teamOpts}</select></div>
+      <div class="fg full"><label>${t('f_photo')}</label><input class="finput" id="pf-photo" placeholder="https://..." type="url"></div>
       <div class="fg full"><label>Google UID <span style="font-size:.68rem;color:var(--text3);font-weight:400">(pour lier le compte Google du joueur)</span></label><input class="finput" id="pf-uid" placeholder="Coller l'UID du joueur..." style="font-family:monospace;font-size:.76rem"></div>
-      <div class="fg full f-actions">
+      <div class="f-actions" style="grid-column:1/-1">
         <button class="btn-p" onclick="savePlayer()">💾 ${t('save')}</button>
         <button class="btn-s" onclick="clearPlayerForm()">✕ ${t('cancel')}</button>
       </div>
     </div>
     <div class="adm-sep"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div class="stitle" style="margin:0">Joueurs enregistrés</div>
-      <select class="adm-sel" onchange="filterPlayerList(this.value)">${filterOpts}</select>
+      <div class="stitle" style="margin:0">Joueurs enregistrés <span style="font-size:.72rem;color:var(--text2);font-weight:400">(${Object.keys(playersMap).length})</span></div>
+      <div class="adm-filter-grp">
+        <span class="adm-filter-lbl">Équipe</span>
+        <select class="adm-sel" onchange="filterPlayerList(this.value)">${filterOpts}</select>
+      </div>
     </div>
-    <div class="adm-list" id="player-list">${renderList()}</div>`;
+    <div id="player-list">${renderList()}</div>`;
 }
 
 window.filterPlayerList = function(teamId) {
   const ps = Object.values(playersMap).filter(p=>!teamId||p.teamId===teamId)
     .sort((a,b)=>(a.pseudoRL||'').localeCompare(b.pseudoRL||''));
-  const roleColors={capitaine:'#f59e0b',titulaire:'#0c8',sub:'#94a3b8',coach:'#0081FF',fondateur:'#E8001A',manager:'#8b5cf6'};
   document.getElementById('player-list').innerHTML = ps.map(p=>{
     const tm=teamsMap[p.teamId]||{};
-    const roleColor=roleColors[p.role]||'var(--text2)';
-    return `<div class="adm-item">
-      <div class="adm-item-l">
-        <img class="adm-item-logo" style="border-radius:50%" src="${p.photoUrl||''}" alt="" onerror="this.src=''">
-        <div><div class="adm-item-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}${p.role?` <span style="font-size:.62rem;font-weight:800;color:${roleColor};margin-left:4px">${p.role.toUpperCase()}</span>`:''}</div>
-        <div class="adm-item-meta">${esc(tm.name||'—')} · ${FLAGS[p.country]||''} ${p.age||''}</div></div>
+    const rc=(p.role||'').toLowerCase();
+    const avatar = p.photoUrl
+      ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
+      : `<div class="adm-pa-ph">👤</div>`;
+    return `<div class="adm-player-card">
+      ${avatar}
+      <div class="adm-pi">
+        <div class="adm-pi-top">
+          <span class="adm-pi-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</span>
+          ${p.role?`<span class="role-bdg ${rc}">${p.role.toUpperCase()}</span>`:''}
+        </div>
+        <div class="adm-pi-sub">
+          <span>${esc(tm.name||'— Agent libre —')}</span>
+          ${FLAGS[p.country]?`<span>${FLAGS[p.country]}</span>`:''}
+          ${p.age?`<span>${p.age} ans</span>`:''}
+        </div>
       </div>
-      <div class="adm-item-r">
+      <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn-e" onclick="editPlayer('${p.id}')">✏</button>
         <button class="btn-d" onclick="deletePlayer('${p.id}')">✕</button>
       </div>
@@ -2011,7 +2103,6 @@ function _renderAdmMatches() {
   if (teamId)           matches = matches.filter(m => m.homeTeamId===teamId || m.awayTeamId===teamId);
   if (status === 'pending') matches = matches.filter(m => m.status !== 'played');
   else if (status === 'played') matches = matches.filter(m => m.status === 'played');
-
   matches.sort((a,b) => a.pool-b.pool || a.week-b.week || (a.group||'').localeCompare(b.group||''));
 
   const list = document.getElementById('match-list');
@@ -2020,27 +2111,52 @@ function _renderAdmMatches() {
     list.innerHTML = `<div class="empty">${status==='pending'?'Tous les matchs ont été saisis !':'Aucun match trouvé.'}</div>`;
     return;
   }
-  list.innerHTML = matches.map(m => {
-    const ht = teamsMap[m.homeTeamId]||{name:'?'};
-    const at = teamsMap[m.awayTeamId]||{name:'?'};
-    const played = m.status === 'played';
-    const badge = played
-      ? `<span style="color:#22c55e;font-size:.8rem">✓ ${m.homeScore}-${m.awayScore}</span>`
-      : `<span style="color:#f59e0b;font-size:.8rem">⏳ À saisir</span>`;
-    const schedDisp = !played && m.scheduledAt ? ` · 📅 ${formatSchedule(m.scheduledAt)}` : '';
-    return `<div class="adm-item">
-      <div class="adm-item-l">
-        <div>
-          <div class="adm-item-name">${esc(ht.name)} <span style="color:var(--text2)">vs</span> ${esc(at.name)}</div>
-          <div class="adm-item-meta">P${m.pool} · S${m.week} · Gr.${m.group||'?'} &nbsp;${badge}${schedDisp}</div>
+
+  // Grouper par semaine
+  const byWeek = {};
+  matches.forEach(m => { const w=m.week||0; if(!byWeek[w])byWeek[w]=[]; byWeek[w].push(m); });
+
+  list.innerHTML = Object.keys(byWeek).sort((a,b)=>a-b).map(w => {
+    const wm = byWeek[w];
+    const pendingCount = wm.filter(m=>m.status!=='played').length;
+    const countLabel = pendingCount > 0
+      ? `<span style="color:#f59e0b">${pendingCount} à saisir</span>`
+      : `<span style="color:#0c8">${wm.length} saisis ✓</span>`;
+    const cards = wm.map(m => {
+      const ht = teamsMap[m.homeTeamId]||{name:'?',logoUrl:''};
+      const at = teamsMap[m.awayTeamId]||{name:'?',logoUrl:''};
+      const played = m.status === 'played';
+      const badge = played
+        ? `<span class="badge-ok">✓ Saisi</span>`
+        : `<span class="badge-pending">⏳ À saisir</span>`;
+      const scoreOrVs = played
+        ? `<span class="amc-score">${m.homeScore} – ${m.awayScore}</span>`
+        : `<span class="amc-vs">VS</span>`;
+      const schedDisp = !played && m.scheduledAt ? `<span>📅 ${formatSchedule(m.scheduledAt)}</span>` : '';
+      const mainBtn = played
+        ? `<button class="amc-btn-main edit" onclick="openMatchEntry('${m.id}')">✏ Modifier</button>`
+        : `<button class="amc-btn-main" onclick="openMatchEntry('${m.id}')">+ Saisir</button>`;
+      const schedBtn = !played ? `<button class="amc-btn-icon" onclick="openScheduleMatch('${m.id}')" title="Planifier">📅</button>` : '';
+      const resetBtn = played ? `<button class="amc-btn-icon" onclick="resetMatch('${m.id}')" title="Réinitialiser">↺</button>` : '';
+      return `<div class="adm-match-card ${played?'amc-played':'amc-pending'}">
+        <div class="amc-body">
+          <div class="amc-team">
+            <img class="amc-logo" src="${ht.logoUrl||''}" alt="" onerror="this.src=''">
+            <span class="amc-name">${esc(ht.name)}</span>
+          </div>
+          <div class="amc-center">${badge}${scoreOrVs}</div>
+          <div class="amc-team away">
+            <img class="amc-logo" src="${at.logoUrl||''}" alt="" onerror="this.src=''">
+            <span class="amc-name">${esc(at.name)}</span>
+          </div>
         </div>
-      </div>
-      <div class="adm-item-r">
-        <button class="btn-res" onclick="openMatchEntry('${m.id}')">${played?'✏':'+ Saisir'}</button>
-        ${!played?`<button class="btn-cal" onclick="openScheduleMatch('${m.id}')" title="Planifier">📅</button>`:''}
-        ${played?`<button class="btn-d" title="Réinitialiser" onclick="resetMatch('${m.id}')">↺</button>`:''}
-      </div>
-    </div>`;
+        <div class="amc-foot">
+          <div class="amc-meta"><span>P${m.pool} · Gr.${m.group||'?'}</span>${schedDisp}</div>
+          <div class="amc-actions">${schedBtn}${resetBtn}${mainBtn}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="adm-week-hdr"><span class="adm-week-title">Semaine ${w}</span><span class="adm-week-count">${countLabel}</span></div>${cards}`;
   }).join('');
 }
 
@@ -2050,28 +2166,39 @@ async function admResults() {
   const teamOpts = `<option value="">Toutes les équipes</option>`
     + Object.values(teamsMap).sort((a,b)=>a.pool-b.pool||a.name.localeCompare(b.name))
         .map(t=>`<option value="${t.id}">P${t.pool} · ${esc(t.name)}</option>`).join('');
-
   wrap.innerHTML = `
-    <div class="adm-filter" style="flex-wrap:wrap;gap:8px">
-      <select class="adm-sel" id="ar-status" onchange="_renderAdmMatches()" style="font-weight:600">
-        <option value="pending">⏳ À saisir</option>
-        <option value="played">✓ Saisis</option>
-        <option value="all">Tous</option>
-      </select>
-      <select class="adm-sel" id="ar-team" onchange="_renderAdmMatches()">${teamOpts}</select>
-      <select class="adm-sel" id="ar-pool" onchange="_renderAdmMatches()">
-        <option value="all">Toutes les poules</option>
-        <option value="1">Poule 1</option>
-        <option value="2">Poule 2</option>
-      </select>
-      <select class="adm-sel" id="ar-week" onchange="_renderAdmMatches()">
-        <option value="all">Toutes les semaines</option>
-        <option value="1">Semaine 1</option><option value="2">Semaine 2</option>
-        <option value="3">Semaine 3</option><option value="4">Semaine 4</option>
-        <option value="5">Semaine 5</option>
-      </select>
+    <div class="adm-filters-bar">
+      <div class="adm-filter-grp">
+        <span class="adm-filter-lbl">Statut</span>
+        <select class="adm-sel" id="ar-status" onchange="_renderAdmMatches()" style="font-weight:600">
+          <option value="pending">⏳ À saisir</option>
+          <option value="played">✓ Saisis</option>
+          <option value="all">Tous</option>
+        </select>
+      </div>
+      <div class="adm-filter-grp">
+        <span class="adm-filter-lbl">Poule</span>
+        <select class="adm-sel" id="ar-pool" onchange="_renderAdmMatches()">
+          <option value="all">Toutes</option>
+          <option value="1">Poule 1</option>
+          <option value="2">Poule 2</option>
+        </select>
+      </div>
+      <div class="adm-filter-grp">
+        <span class="adm-filter-lbl">Semaine</span>
+        <select class="adm-sel" id="ar-week" onchange="_renderAdmMatches()">
+          <option value="all">Toutes</option>
+          <option value="1">Sem. 1</option><option value="2">Sem. 2</option>
+          <option value="3">Sem. 3</option><option value="4">Sem. 4</option>
+          <option value="5">Sem. 5</option>
+        </select>
+      </div>
+      <div class="adm-filter-grp" style="margin-left:auto">
+        <span class="adm-filter-lbl">Équipe</span>
+        <select class="adm-sel" id="ar-team" onchange="_renderAdmMatches()">${teamOpts}</select>
+      </div>
     </div>
-    <div class="adm-list" id="match-list"></div>`;
+    <div id="match-list"></div>`;
   window._renderAdmMatches = _renderAdmMatches;
   _renderAdmMatches();
 }
