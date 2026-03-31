@@ -1,8 +1,12 @@
+import { inject } from '@vercel/analytics';
 import { app, db } from '../shared/firebase-config.js';
 import { t, setLang, getLang, initLang } from '../shared/i18n.js';
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { state } from './modules/state.js';
+
+// Initialize Vercel Analytics
+inject();
 import { buildRankingStats, displayGeneralRanking, displayStats } from './modules/display-rankings.js';
 import { displayMapsTimeline } from './modules/display-maps.js';
 import { displayHome, displayNextEditionBanner } from './modules/display-home.js';

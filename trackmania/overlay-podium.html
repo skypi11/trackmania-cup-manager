@@ -217,8 +217,12 @@
 <div id="no-data" style="display:none">Aucun résultat de finale disponible</div>
 
 <script type="module">
+import { inject } from '@vercel/analytics';
 import { db, pName, getPoints } from '../shared/firebase-config.js';
 import { collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+// Initialize Vercel Analytics
+inject();
 
 const params = new URLSearchParams(window.location.search);
 const cupId = params.get('cup') || 'monthly';
