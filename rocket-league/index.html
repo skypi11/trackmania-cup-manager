@@ -1273,7 +1273,10 @@ async function loadTab(tab) {
 // ════════════════════════════════════════════════
 // DATA FETCHERS
 // ════════════════════════════════════════════════
-async function fetchAll() {
+let _dataFetched = false;
+
+async function fetchAll(force = false) {
+  if (_dataFetched && !force) return;
   const [ts, ps, ms] = await Promise.all([
     getDocs(collection(db,'rl_teams')),
     getDocs(collection(db,'rl_players')),
@@ -1282,6 +1285,7 @@ async function fetchAll() {
   teamsMap = {}; ts.forEach(d => { teamsMap[d.id]={id:d.id,...d.data()}; });
   playersMap = {}; ps.forEach(d => { playersMap[d.id]={id:d.id,...d.data()}; });
   matchesMap = {}; ms.forEach(d => { matchesMap[d.id]={id:d.id,...d.data()}; });
+  _dataFetched = true;
 }
 
 async function refreshTeams() {
@@ -2679,7 +2683,7 @@ function _restoreAdmFilters(f) {
 }
 
 async function admResults(savedFilters) {
-  await fetchAll();
+  await refreshMatches();
   const wrap = document.getElementById('adm-content');
   const teamOpts = `<option value="">Toutes les équipes</option>`
     + Object.values(teamsMap).sort((a,b)=>a.pool-b.pool||a.name.localeCompare(b.name))
