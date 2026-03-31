@@ -666,11 +666,15 @@
 
 
 <script type="module">
+    import { inject } from '@vercel/analytics';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
     import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
     import { t, setLang, getLang, initLang } from "./shared/i18n.js";
+
+    // Initialize Vercel Analytics
+    inject();
 
     const firebaseConfig = {
         apiKey: "AIzaSyBx4Goq8VR1I2MFf9L2wJm2TBaV-l_cCps",
