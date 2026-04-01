@@ -458,42 +458,39 @@ img{display:block}
 .pred-week-lbl{font-size:.88rem;font-weight:800;display:flex;align-items:center;gap:8px}
 .pred-week-lbl::before{content:'';display:inline-block;width:3px;height:14px;background:var(--rl-blue);border-radius:2px;flex-shrink:0}
 .pred-week-cnt{font-size:.68rem;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;color:var(--text2)}
-.pred-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
-@media(max-width:960px){.pred-cards-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.pred-cards-grid{grid-template-columns:1fr}}
+/* Grille : largeur fixe par carte, auto-fill */
+.pred-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,220px));gap:8px;margin-bottom:8px}
+/* Carte */
 .pred-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
-.pred-card:hover{border-color:rgba(0,129,255,.25)}
-.pred-card.pred-card-played{border-color:rgba(255,255,255,.06)}
-.pred-meta{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.15)}
-.pred-pool-badge{font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:3px;background:rgba(232,0,26,.1);color:var(--red);border:1px solid rgba(232,0,26,.2);letter-spacing:.05em}
-.pred-week-chip{font-size:.6rem;font-weight:700;color:var(--text3);padding:1px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:3px}
-.pred-date-chip{font-size:.64rem;color:var(--text2);margin-left:auto}
-.pred-lock-chip{font-size:.6rem;color:var(--text3);margin-left:auto}
-.pred-played-chip{font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.25);margin-left:auto}
-.pred-body{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;padding:10px 10px 8px;gap:4px}
-.pred-side{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
-.pred-logo{width:38px;height:38px;object-fit:contain;border-radius:6px;background:var(--bg3)}
-.pred-logo-ph{width:38px;height:38px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--text3);font-weight:800}
-.pred-time{font-size:.95rem;font-weight:900;color:var(--rl-blue);line-height:1;text-align:center}
-.pred-name{font-size:.75rem;font-weight:700;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pred-side.pred-side-win .pred-name{color:#fff;font-weight:800}
-.pred-side.pred-side-loss .pred-name{color:var(--text3)}
-.pred-side.pred-side-loss .pred-logo{opacity:.5;filter:grayscale(40%)}
-.pred-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
-.pred-score-val{font-size:1.4rem;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+.pred-meta{display:flex;align-items:center;gap:5px;padding:6px 10px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.15)}
+.pred-pool-badge{font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:3px;background:rgba(232,0,26,.1);color:var(--red);border:1px solid rgba(232,0,26,.2);letter-spacing:.05em;white-space:nowrap}
+.pred-week-chip{font-size:.58rem;font-weight:700;color:var(--text3);padding:1px 5px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;white-space:nowrap}
+.pred-date-chip{font-size:.62rem;color:var(--rl-blue);font-weight:700;margin-left:auto;white-space:nowrap}
+.pred-lock-chip{font-size:.6rem;color:var(--text3);margin-left:auto;white-space:nowrap}
+.pred-played-chip{font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.25);margin-left:auto}
+/* Body : deux moitiés cliquables + centre */
+.pred-body{display:grid;grid-template-columns:1fr 50px 1fr;align-items:stretch}
+/* Moitiés cliquables */
+.pred-side{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px 8px 12px;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;transition:background .18s;width:100%;text-align:center;-webkit-appearance:none}
+.pred-side:not(.pred-locked):hover{background:rgba(0,129,255,.08)}
+.pred-side:not(.pred-locked):focus-visible{outline:2px solid var(--rl-blue);outline-offset:-2px}
+.pred-side.pred-voted{background:rgba(0,129,255,.1)}
+.pred-side.pred-voted .pred-name{color:var(--rl-blue);font-weight:800}
+.pred-side.pred-locked{cursor:default}
+/* Logos */
+.pred-logo{width:46px;height:46px;object-fit:contain;border-radius:7px;background:var(--bg3)}
+.pred-logo-ph{width:46px;height:46px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text3);font-weight:800}
+/* Indicateur vote */
+.pred-vote-check{font-size:.62rem;font-weight:800;color:var(--rl-blue);letter-spacing:.02em}
+.pred-login-hint-card{padding:3px 10px 8px;text-align:center;font-size:.62rem;color:var(--text3)}
+/* Nom équipe */
+.pred-name{font-size:.73rem;font-weight:700;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .15s}
+/* Centre */
+.pred-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-left:1px solid var(--border);border-right:1px solid var(--border);padding:6px 2px}
+.pred-time{font-size:.9rem;font-weight:900;color:var(--rl-blue);line-height:1;text-align:center}
+.pred-vs-txt{font-size:.5rem;font-weight:700;color:var(--text3);letter-spacing:.06em;opacity:.5}
+.pred-score-val{font-size:1.3rem;font-weight:900;letter-spacing:.04em;white-space:nowrap}
 .pred-score-sep{color:var(--text3)}
-.pred-vs-txt{font-size:.55rem;font-weight:700;color:var(--text3);letter-spacing:.05em;opacity:.6}
-.pred-sched-txt{font-size:.6rem;font-weight:700;color:var(--rl-blue);text-align:center;white-space:nowrap;line-height:1.35;max-width:58px;word-break:break-word}
-.pred-vbtn{padding:5px 10px;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border);transition:all .18s;white-space:nowrap;cursor:pointer}
-.pred-vbtn-default{background:var(--bg3);color:var(--text2);border-color:var(--border)}
-.pred-vbtn-default:hover{border-color:var(--rl-blue);color:var(--rl-blue);background:rgba(0,129,255,.08)}
-.pred-vbtn-active{background:rgba(0,129,255,.15);color:var(--rl-blue);border-color:rgba(0,129,255,.4);font-weight:800}
-.pred-vbtn-locked{background:transparent;color:var(--text3);border-color:var(--border);cursor:default;font-size:.66rem}
-.pred-vbtn-noauth{background:transparent;color:var(--text3);border-color:var(--border);cursor:default;font-size:.62rem;padding:5px 7px}
-.pred-vbtn-correct{background:rgba(0,200,100,.1);color:#0c8;border-color:rgba(0,200,100,.3);cursor:default}
-.pred-vbtn-wrong{background:rgba(239,68,68,.08);color:#ef4444;border-color:rgba(239,68,68,.25);cursor:default}
-.pred-vbtn-winner{background:rgba(255,255,255,.04);color:var(--text3);border-color:var(--border);cursor:default;font-size:.66rem}
-.pred-vbtn-loser{background:transparent;color:var(--text3);border-color:transparent;cursor:default;font-size:.66rem;opacity:.4}
 .pred-bars-wrap{padding:5px 12px 10px;display:flex;flex-direction:column;gap:3px}
 .pred-bars-row{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;gap:7px}
 .pred-pct{font-size:.72rem;font-weight:800;color:var(--text2);text-align:right;white-space:nowrap}
@@ -3999,7 +3996,7 @@ function renderPredictionCard(m) {
   const counts = _predGetCounts(m.id);
   const now = new Date();
   const scheduled = m.scheduledAt ? new Date(m.scheduledAt) : null;
-  const isLocked = scheduled && now >= scheduled;
+  const isLocked = !!(scheduled && now >= scheduled);
   const total = counts.total;
   const homePct = total ? Math.round(counts.home / total * 100) : 50;
   const awayPct = total ? 100 - homePct : 50;
@@ -4011,55 +4008,57 @@ function renderPredictionCard(m) {
     ? `<img class="pred-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">`
     : `<div class="pred-logo-ph">${esc((tA.name||'?')[0])}</div>`;
 
-  const showBars = isLocked || myVote;
-  let bottomHtml = '';
-  if (showBars) {
-    const hPctCls = myVote==='home' ? ' pred-pct-voted' : '';
-    const aPctCls = myVote==='away' ? ' pred-pct-voted' : '';
-    bottomHtml = `
-      <div class="pred-bars-wrap">
-        <div class="pred-bars-row">
-          <span class="pred-pct${hPctCls}">${homePct}%</span>
-          <div class="pred-bar-bg"><div class="pred-bar-h" style="width:${homePct}%"></div></div>
-          <span class="pred-pct pred-pct-r${aPctCls}">${awayPct}%</span>
-        </div>
-        <div class="pred-votes-count">${total} vote${total!==1?'s':''}</div>
-      </div>`;
-  } else if (curUser) {
-    bottomHtml = `<div class="pred-first">Sois le premier à voter !</div>`;
-  }
-
-  const poolLabel = m.pool ? `Poule ${m.pool}` : '';
   const timeStr = scheduled
     ? scheduled.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
     : '';
+
+  const hCls = `pred-side${myVote==='home'?' pred-voted':''}${isLocked?' pred-locked':''}`;
+  const aCls = `pred-side${myVote==='away'?' pred-voted':''}${isLocked?' pred-locked':''}`;
+  const hCheck = myVote==='home' ? `<div class="pred-vote-check">✓ Voté</div>` : '';
+  const aCheck = myVote==='away' ? `<div class="pred-vote-check">✓ Voté</div>` : '';
+  const canVote = !!(curUser && !isLocked);
+
+  const hSide = canVote
+    ? `<button class="${hCls}" onclick="votePrediction('${m.id}','home')" title="Voter ${esc(tH.name)}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hCheck}</button>`
+    : `<div class="${hCls}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hCheck}</div>`;
+  const aSide = canVote
+    ? `<button class="${aCls}" onclick="votePrediction('${m.id}','away')" title="Voter ${esc(tA.name)}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aCheck}</button>`
+    : `<div class="${aCls}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aCheck}</div>`;
+
+  let bottomHtml = '';
+  if (isLocked || myVote) {
+    const hPCls = myVote==='home' ? ' pred-pct-voted' : '';
+    const aPCls = myVote==='away' ? ' pred-pct-voted' : '';
+    bottomHtml = `<div class="pred-bars-wrap">
+      <div class="pred-bars-row">
+        <span class="pred-pct${hPCls}">${homePct}%</span>
+        <div class="pred-bar-bg"><div class="pred-bar-h" style="width:${homePct}%"></div></div>
+        <span class="pred-pct pred-pct-r${aPCls}">${awayPct}%</span>
+      </div>
+      <div class="pred-votes-count">${total} vote${total!==1?'s':''}</div>
+    </div>`;
+  }
+
   const metaRight = isLocked
-    ? `<span class="pred-lock-chip" style="margin-left:auto">🔒 ${timeStr}</span>`
-    : timeStr ? `<span class="pred-date-chip" style="margin-left:auto">${timeStr}</span>` : '';
+    ? `<span class="pred-lock-chip">🔒 ${timeStr}</span>`
+    : timeStr ? `<span class="pred-date-chip">${timeStr}</span>` : '';
 
   return `
     <div class="pred-card">
       <div class="pred-meta">
-        ${poolLabel ? `<span class="pred-pool-badge">${esc(poolLabel)}</span>` : ''}
-        <span class="pred-week-chip">Sem.${m.week||'?'}</span>
+        ${m.pool ? `<span class="pred-pool-badge">P${m.pool}</span>` : ''}
+        <span class="pred-week-chip">S${m.week||'?'}</span>
         ${metaRight}
       </div>
       <div class="pred-body">
-        <div class="pred-side">
-          ${hLogo}
-          <div class="pred-name">${esc(tH.name)}</div>
-          ${_predVoteBtn(m.id,'home',myVote,isLocked,false,false)}
-        </div>
+        ${hSide}
         <div class="pred-center">
           ${timeStr ? `<div class="pred-time">${timeStr}</div>` : ''}
-          <div class="pred-vs-txt">VS</div>
+          <div class="pred-vs-txt">vs</div>
         </div>
-        <div class="pred-side">
-          ${aLogo}
-          <div class="pred-name">${esc(tA.name)}</div>
-          ${_predVoteBtn(m.id,'away',myVote,isLocked,false,false)}
-        </div>
+        ${aSide}
       </div>
+      ${!curUser && !isLocked ? `<div class="pred-login-hint-card">Connexion pour voter</div>` : ''}
       ${bottomHtml}
     </div>`;
 }
