@@ -48,6 +48,31 @@ img{display:block}
 .btn-discord.connected{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
 .btn-discord.connected:hover{background:var(--bg2);border-color:var(--border)}
 .btn-disc-av{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0}
+/* ── PROFIL MODAL ── */
+.prof-hero{display:flex;align-items:center;gap:16px;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);margin-bottom:20px}
+.prof-av{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
+.prof-av-placeholder{width:64px;height:64px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid var(--border);flex-shrink:0}
+.prof-hero-info{flex:1;min-width:0}
+.prof-name{font-size:1.1rem;font-weight:800;margin-bottom:3px}
+.prof-discord{font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.prof-team-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,129,255,.12);border:1px solid rgba(0,129,255,.25);border-radius:5px;padding:2px 8px;font-size:.72rem;font-weight:700;color:var(--rl-blue)}
+.prof-spectator-badge{display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:.72rem;color:var(--text2)}
+.prof-section{margin-bottom:20px}
+.prof-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.prof-field{margin-bottom:12px}
+.prof-field label{display:block;font-size:.72rem;color:var(--text2);margin-bottom:4px;font-weight:600}
+.prof-locked{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;font-size:.78rem}
+.prof-locked a{color:var(--rl-blue);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.prof-locked a:hover{text-decoration:underline}
+.prof-lock-icon{color:var(--text2);font-size:.85rem;flex-shrink:0}
+.prof-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.prof-stat{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.prof-stat-val{font-size:1.3rem;font-weight:800;line-height:1}
+.prof-stat-lbl{font-size:.65rem;color:var(--text2);margin-top:3px;text-transform:uppercase}
+.prof-stat-val.win{color:#0c8}
+.prof-stat-val.loss{color:#ef4444}
+.prof-actions{display:flex;gap:8px;margin-top:6px}
+/* ── USER MENU ── */
 .usr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:160px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .usr-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;font-size:.78rem;color:var(--text2);cursor:pointer;transition:background .15s;white-space:nowrap}
 .usr-menu-item:hover{background:var(--bg3);color:var(--text)}
@@ -885,6 +910,14 @@ img{display:block}
   </div>
 </div>
 
+<!-- Modal Profil utilisateur -->
+<div class="modal-ov" id="mo-profile" onclick="closeModal('mo-profile')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr"><h2>Mon profil</h2><button class="btn-x" onclick="closeModal('mo-profile')">×</button></div>
+    <div class="modal-body" id="mo-profile-body"></div>
+  </div>
+</div>
+
 <!-- Modal Détail Match (public) -->
 <div class="modal-ov" id="mo-match-detail" onclick="closeModal('mo-match-detail')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -1244,10 +1277,178 @@ window.doSignOut = async function() {
   await signOut(auth);
 };
 
-window.openProfile = function() {
+window.openProfile = async function() {
   _closeUserMenu();
-  // TODO: ouvrir modal profil
-  toast('Profil bientôt disponible', 'ok');
+  if (!curUser) return;
+  const body = document.getElementById('mo-profile-body');
+  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2)">Chargement...</div>';
+  openModal('mo-profile');
+
+  try {
+    await fetchAll();
+
+    // Cherche le profil joueur lié à cet uid
+    let playerDoc = null;
+    for (const p of Object.values(playersMap)) {
+      if (p.userId === curUser.uid) { playerDoc = p; break; }
+    }
+
+    // Sinon vérifie predictors
+    let predictorDoc = null;
+    if (!playerDoc) {
+      const snap = await getDoc(doc(db, 'rl_predictors', curUser.uid));
+      if (snap.exists()) predictorDoc = { id: snap.id, ...snap.data() };
+    }
+
+    const name = curUser.displayName || '?';
+    const photo = curUser.photoURL;
+
+    // Stats depuis les matchs (si joueur)
+    let played = 0, wins = 0, losses = 0;
+    if (playerDoc?.teamId) {
+      Object.values(matchesMap).forEach(m => {
+        if (m.status !== 'played') return;
+        const isHome = m.homeTeamId === playerDoc.teamId;
+        const isAway = m.awayTeamId === playerDoc.teamId;
+        if (!isHome && !isAway) return;
+        played++;
+        const teamScore = isHome ? m.homeScore : m.awayScore;
+        const oppScore  = isHome ? m.awayScore  : m.homeScore;
+        if (teamScore > oppScore) wins++; else losses++;
+      });
+    }
+
+    // Équipe
+    const team = playerDoc?.teamId ? teamsMap[playerDoc.teamId] : null;
+
+    // Pseudo RL depuis tracker URL
+    function extractPseudoRL(url) {
+      if (!url) return '';
+      const m = url.match(/\/profile\/(?:epic|steam|ps4|xbox|switch)\/([^/]+)\//i);
+      if (!m) return '';
+      try { return decodeURIComponent(m[1]); } catch { return m[1]; }
+    }
+    const pseudoRL = playerDoc?.pseudoRL || extractPseudoRL(playerDoc?.trackerUrl) || '';
+    const trackerLocked = !!(playerDoc?.trackerUrl);
+
+    // Rôle label
+    const roleLabels = { titulaire:'Titulaire', capitaine:'Capitaine', sub:'Substitut', coach:'Coach' };
+
+    body.innerHTML = `
+      <!-- Hero -->
+      <div class="prof-hero">
+        ${photo ? `<img class="prof-av" src="${photo}" alt="">` : '<div class="prof-av-placeholder">👤</div>'}
+        <div class="prof-hero-info">
+          <div class="prof-name">${esc(name)}</div>
+          <div class="prof-discord">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.031.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            ${esc(name)}
+          </div>
+          ${playerDoc && team ? `<span class="prof-team-badge">${esc(team.tag||team.name)} · ${roleLabels[playerDoc.role]||playerDoc.role||'—'}</span>`
+            : `<span class="prof-spectator-badge">👁 Spectateur</span>`}
+        </div>
+      </div>
+
+      ${playerDoc ? `
+      <!-- Infos de jeu -->
+      <div class="prof-section">
+        <div class="prof-section-title">Infos de jeu</div>
+        <div class="prof-field">
+          <label>Pseudo RL in-game</label>
+          <input class="finput" id="pf-rl" value="${esc(pseudoRL)}" placeholder="Ton pseudo Rocket League">
+        </div>
+        <div class="prof-field">
+          <label>Tracker</label>
+          ${trackerLocked
+            ? `<div class="prof-locked">
+                <span class="prof-lock-icon">🔒</span>
+                <a href="${esc(playerDoc.trackerUrl)}" target="_blank" rel="noopener">${esc(playerDoc.trackerUrl)}</a>
+                <button class="btn-s" style="font-size:.68rem;flex-shrink:0" onclick="requestTrackerChange()">Demander modif.</button>
+               </div>`
+            : `<div style="display:flex;gap:6px">
+                <input class="finput" id="pf-tracker" placeholder="https://rocketleague.tracker.network/..." type="url" style="flex:1">
+                <button class="btn-s" onclick="saveTrackerUrl('${playerDoc.id}')">Enregistrer</button>
+               </div>
+               <div style="font-size:.68rem;color:var(--text2);margin-top:4px">⚠ Une fois enregistré, non modifiable sans demande admin</div>`
+          }
+        </div>
+      </div>
+
+      <!-- Infos personnelles -->
+      <div class="prof-section">
+        <div class="prof-section-title">Infos personnelles</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="prof-field">
+            <label>Pays</label>
+            <input class="finput" id="pf-country" value="${esc(playerDoc.country||'')}" placeholder="FR" maxlength="3" style="text-transform:uppercase">
+          </div>
+          <div class="prof-field">
+            <label>Date de naissance</label>
+            <input class="finput" id="pf-dob" type="date" value="${esc(playerDoc.dateOfBirth||'')}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats équipe -->
+      <div class="prof-section">
+        <div class="prof-section-title">Statistiques équipe</div>
+        <div class="prof-stats-row">
+          <div class="prof-stat"><div class="prof-stat-val">${played}</div><div class="prof-stat-lbl">Matchs</div></div>
+          <div class="prof-stat"><div class="prof-stat-val win">${wins}</div><div class="prof-stat-lbl">Victoires</div></div>
+          <div class="prof-stat"><div class="prof-stat-val loss">${losses}</div><div class="prof-stat-lbl">Défaites</div></div>
+        </div>
+      </div>
+
+      <div class="prof-actions">
+        <button class="btn-p" onclick="saveProfile('${playerDoc.id}')">Enregistrer</button>
+        <button class="btn-s" onclick="closeModal('mo-profile')">Annuler</button>
+      </div>
+      ` : `
+      <div style="text-align:center;padding:16px 0;color:var(--text2);font-size:.85rem">
+        Tu n'es pas encore enregistré comme joueur RL.<br>
+        <span style="font-size:.75rem">Ton compte spectateur est actif — les prédictions arrivent bientôt !</span>
+      </div>
+      `}
+    `;
+  } catch(e) {
+    console.error('Profile load error:', e);
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">Erreur de chargement</div>';
+  }
+};
+
+window.saveProfile = async function(playerId) {
+  const rlVal   = document.getElementById('pf-rl')?.value.trim();
+  const country = document.getElementById('pf-country')?.value.trim().toUpperCase();
+  const dob     = document.getElementById('pf-dob')?.value;
+  try {
+    const updates = {};
+    if (rlVal)   updates.pseudoRL    = rlVal;
+    if (country) updates.country     = country;
+    if (dob)     updates.dateOfBirth = dob;
+    await updateDoc(doc(db, 'rl_players', playerId), updates);
+    // Met à jour le cache local
+    if (playersMap[playerId]) Object.assign(playersMap[playerId], updates);
+    toast('Profil enregistré', 'ok');
+    closeModal('mo-profile');
+  } catch(e) { toast('Erreur lors de la sauvegarde', 'err'); console.error(e); }
+};
+
+window.saveTrackerUrl = async function(playerId) {
+  const url = document.getElementById('pf-tracker')?.value.trim();
+  if (!url) { toast('URL vide', 'err'); return; }
+  try {
+    new URL(url); // validation basique
+  } catch { toast('URL invalide', 'err'); return; }
+  try {
+    await updateDoc(doc(db, 'rl_players', playerId), { trackerUrl: url });
+    if (playersMap[playerId]) playersMap[playerId].trackerUrl = url;
+    toast('Tracker enregistré', 'ok');
+    openProfile(); // rafraîchit la modal
+  } catch(e) { toast('Erreur lors de la sauvegarde', 'err'); console.error(e); }
+};
+
+window.requestTrackerChange = function() {
+  toast('Contacte un admin sur Discord pour modifier ton tracker', 'ok');
 };
 
 function _toggleUserMenu() {
