@@ -3270,15 +3270,16 @@ function admCalendar() {
 }
 
 // ── Admin: Liaison Discord ────────────────────────────────────────────
+let _discPreds = {}; // cache predictors pour linkAllExact
+
 async function admDiscord() {
   const wrap = document.getElementById('adm-content');
   wrap.innerHTML = '<div style="padding:20px;color:var(--text2)">Chargement...</div>';
   await fetchAll();
 
-  // Charge les comptes Discord (rl_predictors)
   const predSnap = await getDocs(collection(db, 'rl_predictors'));
-  const predictors = {};
-  predSnap.forEach(d => { predictors[d.id] = { id: d.id, ...d.data() }; });
+  _discPreds = {};
+  predSnap.forEach(d => { _discPreds[d.id] = { id: d.id, ...d.data() }; });
 
   const players = Object.values(playersMap).sort((a,b) => {
     const ta = teamsMap[a.teamId]?.name || '';
@@ -3288,9 +3289,8 @@ async function admDiscord() {
 
   const linked   = players.filter(p => p.userId);
   const unlinked = players.filter(p => !p.userId);
-  const freePreds = Object.values(predictors);
+  const freePreds = Object.values(_discPreds);
 
-  // Similarity score : exact → 2, includes → 1, else 0
   function score(player, pred) {
     const a = (player.pseudoDiscord||'').toLowerCase();
     const b = (pred.discordUsername||'').toLowerCase();
@@ -3300,122 +3300,169 @@ async function admDiscord() {
     return 0;
   }
 
+  // Compter les matchs exacts disponibles
+  const exactCount = unlinked.filter(p =>
+    freePreds.some(pr => (pr.discordUsername||'').toLowerCase() === (p.pseudoDiscord||'').toLowerCase())
+  ).length;
+
   function playerRow(p) {
     const team = teamsMap[p.teamId];
-    const roleLabels = { titulaire:'Titulaire', capitaine:'Capitaine', sub:'Sub', coach:'Coach' };
-    // Trier les predictors par similarité avec pseudoDiscord
+    const roleLabels = { titulaire:'Tit.', capitaine:'Cap.', sub:'Sub', coach:'Coach', manager:'Mgr', fondateur:'Fond.' };
     const sorted = [...freePreds].sort((a,b) => score(p,b) - score(p,a));
     const opts = sorted.map(pr => {
       const s = score(p, pr);
-      const hint = s === 2 ? ' ✅ Match exact' : s === 1 ? ' 🔶 Similaire' : '';
+      const hint = s === 2 ? ' ✅' : s === 1 ? ' 🔶' : '';
       return `<option value="${esc(pr.id)}">${esc(pr.discordUsername)}${hint}</option>`;
     }).join('');
+    const searchKey = `${p.pseudoRL||''} ${p.pseudoDiscord||''} ${teamsMap[p.teamId]?.name||''}`.toLowerCase();
 
-    return `<tr id="row-${p.id}">
-      <td style="padding:10px 8px">
-        <div style="font-weight:700;font-size:.82rem">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div>
-        <div style="font-size:.68rem;color:var(--text2)">${esc(team?.name||'—')} · ${roleLabels[p.role]||p.role||'—'}</div>
+    return `<tr class="disc-row" data-search="${esc(searchKey)}">
+      <td style="padding:7px 8px;white-space:nowrap">
+        <span style="font-weight:700;font-size:.8rem">${esc(p.pseudoRL||'?')}</span>
+        <span style="font-size:.65rem;color:var(--text2);margin-left:5px">${esc(team?.name||'—')} · ${roleLabels[p.role]||p.role||''}</span>
       </td>
-      <td style="padding:10px 8px;font-size:.78rem;color:var(--text2)">${esc(p.pseudoDiscord||'—')}</td>
-      <td style="padding:10px 8px">
-        ${freePreds.length ? `
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <select class="finput" id="sel-${p.id}" style="flex:1;min-width:140px;font-size:.75rem;padding:4px 8px">
-              <option value="">— Choisir un compte —</option>
-              ${opts}
+      <td style="padding:7px 8px;font-size:.75rem;color:var(--text2);white-space:nowrap">${esc(p.pseudoDiscord||'—')}</td>
+      <td style="padding:7px 8px">
+        <div style="display:flex;gap:5px;align-items:center">
+          ${freePreds.length ? `
+            <select class="finput" id="sel-${p.id}" style="font-size:.72rem;padding:3px 6px;max-width:180px">
+              <option value="">— Choisir —</option>${opts}
             </select>
-            <button class="btn-p" style="font-size:.72rem;padding:4px 10px" onclick="linkPlayerDiscord('${p.id}')">Lier</button>
-          </div>
-          <div style="margin-top:5px;display:flex;gap:6px;align-items:center">
-            <input class="finput" id="uid-${p.id}" placeholder="UID manuel (discord_xxx)" style="flex:1;font-size:.72rem;padding:4px 8px">
-            <button class="btn-s" style="font-size:.72rem;padding:4px 8px" onclick="linkPlayerManual('${p.id}')">Forcer</button>
-          </div>` : `
-          <div style="display:flex;gap:6px">
-            <input class="finput" id="uid-${p.id}" placeholder="UID Discord (discord_xxx)" style="flex:1;font-size:.72rem;padding:4px 8px">
-            <button class="btn-s" style="font-size:.72rem;padding:4px 8px" onclick="linkPlayerManual('${p.id}')">Lier</button>
-          </div>`}
+            <button class="btn-p" style="font-size:.7rem;padding:3px 8px;white-space:nowrap" onclick="linkPlayerDiscord('${p.id}')">Lier</button>
+            <button class="btn-s" style="font-size:.7rem;padding:3px 6px" title="Saisir UID manuellement" onclick="toggleManualUid('${p.id}')">✏️</button>
+          ` : `
+            <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="toggleManualUid('${p.id}')">Saisir UID</button>
+          `}
+        </div>
+        <div id="manual-${p.id}" style="display:none;margin-top:4px;display:none;gap:4px">
+          <input class="finput" id="uid-${p.id}" placeholder="discord_000..." style="font-size:.7rem;padding:3px 6px;flex:1">
+          <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="linkPlayerManual('${p.id}')">OK</button>
+        </div>
       </td>
     </tr>`;
   }
 
   function linkedRow(p) {
     const team = teamsMap[p.teamId];
-    const pred = Object.values(predictors).find(pr => pr.uid === p.userId) ||
-                 freePreds.find(pr => pr.uid === p.userId);
+    const pred = _discPreds[p.userId];
     const discordName = pred?.discordUsername || p.discordId || p.userId?.replace('discord_','') || '?';
     const avatar = pred?.discordAvatar || p.discordAvatar || '';
-    return `<tr>
-      <td style="padding:8px;font-size:.8rem;font-weight:700">${esc(p.pseudoRL||'?')}</td>
-      <td style="padding:8px;font-size:.75rem;color:var(--text2)">${esc(team?.name||'—')}</td>
-      <td style="padding:8px">
-        <div style="display:flex;align-items:center;gap:6px">
-          ${avatar ? `<img src="${esc(avatar)}" style="width:18px;height:18px;border-radius:50%">` : ''}
-          <span style="font-size:.78rem;color:#0c8;font-weight:600">${esc(discordName)}</span>
-          <span style="font-size:.65rem;color:var(--text2)">✅ Lié</span>
+    const searchKey = `${p.pseudoRL||''} ${discordName} ${team?.name||''}`.toLowerCase();
+    return `<tr class="disc-row-linked" data-search="${esc(searchKey)}">
+      <td style="padding:7px 8px;font-size:.78rem;font-weight:700;white-space:nowrap">${esc(p.pseudoRL||'?')}</td>
+      <td style="padding:7px 8px;font-size:.72rem;color:var(--text2);white-space:nowrap">${esc(team?.name||'—')}</td>
+      <td style="padding:7px 8px">
+        <div style="display:flex;align-items:center;gap:5px">
+          ${avatar ? `<img src="${esc(avatar)}" style="width:16px;height:16px;border-radius:50%">` : ''}
+          <span style="font-size:.76rem;color:#0c8;font-weight:600">${esc(discordName)}</span>
         </div>
       </td>
-      <td style="padding:8px">
-        <button class="btn-s" style="font-size:.68rem;padding:2px 8px;color:#ef4444;border-color:#ef4444" onclick="unlinkPlayer('${p.id}')">Délier</button>
+      <td style="padding:7px 8px">
+        <button class="btn-s" style="font-size:.65rem;padding:2px 6px;color:#ef4444;border-color:#ef4444" onclick="unlinkPlayer('${p.id}')">Délier</button>
       </td>
     </tr>`;
   }
 
   wrap.innerHTML = `
-    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:#0c8">${linked.length}</div>
-        <div style="font-size:.68rem;color:var(--text2)">Liés</div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#0c8">${linked.length}</div>
+        <div style="font-size:.65rem;color:var(--text2)">Liés</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:#f59e0b">${unlinked.length}</div>
-        <div style="font-size:.68rem;color:var(--text2)">Non liés</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#f59e0b">${unlinked.length}</div>
+        <div style="font-size:.65rem;color:var(--text2)">Non liés</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:#5865F2">${freePreds.length}</div>
-        <div style="font-size:.68rem;color:var(--text2)">Comptes Discord en attente</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#5865F2">${freePreds.length}</div>
+        <div style="font-size:.65rem;color:var(--text2)">Discord en attente</div>
       </div>
+      ${exactCount > 0 ? `
+      <button class="btn-p" style="margin-left:auto" onclick="linkAllExact()">
+        ⚡ Lier ${exactCount} match${exactCount>1?'s':''} exact${exactCount>1?'s':''}
+      </button>` : ''}
     </div>
 
     ${unlinked.length ? `
-    <div class="stitle" style="margin-bottom:10px">⚠️ Joueurs non liés (${unlinked.length})</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="stitle" style="margin:0">⚠️ Non liés (${unlinked.length})</div>
+      <input class="finput" placeholder="🔍 Rechercher…" oninput="filterDiscordRows(this.value,'disc-row')"
+        style="flex:1;max-width:260px;font-size:.78rem;padding:4px 10px">
+    </div>
     <div style="overflow-x:auto;margin-bottom:24px">
       <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="font-size:.68rem;color:var(--text2);text-transform:uppercase">
-          <th style="padding:6px 8px;text-align:left">Joueur</th>
-          <th style="padding:6px 8px;text-align:left">pseudoDiscord</th>
-          <th style="padding:6px 8px;text-align:left">Lier à…</th>
+        <thead><tr style="font-size:.65rem;color:var(--text2);text-transform:uppercase;border-bottom:1px solid var(--border)">
+          <th style="padding:5px 8px;text-align:left">Joueur · Équipe</th>
+          <th style="padding:5px 8px;text-align:left">pseudoDiscord</th>
+          <th style="padding:5px 8px;text-align:left">Lier à…</th>
         </tr></thead>
-        <tbody style="font-size:.8rem">${unlinked.map(playerRow).join('')}</tbody>
+        <tbody>${unlinked.map(playerRow).join('')}</tbody>
       </table>
     </div>` : '<div style="color:#0c8;font-size:.85rem;margin-bottom:20px">✅ Tous les joueurs sont liés !</div>'}
 
     ${linked.length ? `
-    <div class="stitle" style="margin-bottom:10px">✅ Joueurs liés (${linked.length})</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="stitle" style="margin:0">✅ Liés (${linked.length})</div>
+      <input class="finput" placeholder="🔍 Rechercher…" oninput="filterDiscordRows(this.value,'disc-row-linked')"
+        style="flex:1;max-width:260px;font-size:.78rem;padding:4px 10px">
+    </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="font-size:.68rem;color:var(--text2);text-transform:uppercase">
-          <th style="padding:6px 8px;text-align:left">Joueur</th>
-          <th style="padding:6px 8px;text-align:left">Équipe</th>
-          <th style="padding:6px 8px;text-align:left">Compte Discord</th>
-          <th style="padding:6px 8px;text-align:left"></th>
+        <thead><tr style="font-size:.65rem;color:var(--text2);text-transform:uppercase;border-bottom:1px solid var(--border)">
+          <th style="padding:5px 8px;text-align:left">Joueur</th>
+          <th style="padding:5px 8px;text-align:left">Équipe</th>
+          <th style="padding:5px 8px;text-align:left">Discord</th>
+          <th style="padding:5px 8px"></th>
         </tr></thead>
-        <tbody style="font-size:.8rem">${linked.map(linkedRow).join('')}</tbody>
+        <tbody>${linked.map(linkedRow).join('')}</tbody>
       </table>
     </div>` : ''}
   `;
 }
 
+window.filterDiscordRows = function(val, cls) {
+  const q = val.toLowerCase();
+  document.querySelectorAll('.' + cls).forEach(tr => {
+    tr.style.display = tr.dataset.search?.includes(q) ? '' : 'none';
+  });
+};
+
+window.toggleManualUid = function(playerId) {
+  const el = document.getElementById('manual-' + playerId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+};
+
+window.linkAllExact = async function() {
+  const freePreds = Object.values(_discPreds);
+  const toLink = [];
+  for (const p of Object.values(playersMap)) {
+    if (p.userId) continue;
+    const match = freePreds.find(pr =>
+      (pr.discordUsername||'').toLowerCase() === (p.pseudoDiscord||'').toLowerCase()
+    );
+    if (match) toLink.push({ player: p, pred: match });
+  }
+  if (!toLink.length) { toast('Aucun match exact', 'err'); return; }
+  const batch = writeBatch(db);
+  for (const { player, pred } of toLink) {
+    batch.update(doc(db, 'rl_players', player.id), {
+      userId: pred.id, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '',
+    });
+    if (playersMap[player.id]) Object.assign(playersMap[player.id], { userId: pred.id, discordId: pred.discordId });
+  }
+  await batch.commit();
+  toast(`${toLink.length} joueur(s) liés automatiquement !`, 'ok');
+  await admDiscord();
+};
+
 window.linkPlayerDiscord = async function(playerId) {
-  const selEl = document.getElementById('sel-' + playerId);
-  const predUid = selEl?.value;
+  const predUid = document.getElementById('sel-' + playerId)?.value;
   if (!predUid) { toast('Sélectionne un compte Discord', 'err'); return; }
-  const predSnap = await getDoc(doc(db, 'rl_predictors', predUid));
-  if (!predSnap.exists()) { toast('Compte introuvable', 'err'); return; }
-  const pred = predSnap.data();
+  const pred = _discPreds[predUid];
+  if (!pred) { toast('Compte introuvable', 'err'); return; }
   await updateDoc(doc(db, 'rl_players', playerId), {
-    userId: predUid,
-    discordId: pred.discordId,
-    discordAvatar: pred.discordAvatar || '',
+    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '',
   });
   if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId });
   toast(`${pred.discordUsername} lié !`, 'ok');
@@ -3423,8 +3470,7 @@ window.linkPlayerDiscord = async function(playerId) {
 };
 
 window.linkPlayerManual = async function(playerId) {
-  const uidEl = document.getElementById('uid-' + playerId);
-  const uid = uidEl?.value.trim();
+  const uid = document.getElementById('uid-' + playerId)?.value.trim();
   if (!uid) { toast('UID vide', 'err'); return; }
   await updateDoc(doc(db, 'rl_players', playerId), { userId: uid });
   if (playersMap[playerId]) playersMap[playerId].userId = uid;
