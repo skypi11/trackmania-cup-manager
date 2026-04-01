@@ -458,8 +458,9 @@ img{display:block}
 .pred-week-lbl{font-size:.88rem;font-weight:800;display:flex;align-items:center;gap:8px}
 .pred-week-lbl::before{content:'';display:inline-block;width:3px;height:14px;background:var(--rl-blue);border-radius:2px;flex-shrink:0}
 .pred-week-cnt{font-size:.68rem;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;color:var(--text2)}
-.pred-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:6px}
-@media(max-width:640px){.pred-cards-grid{grid-template-columns:1fr}}
+.pred-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+@media(max-width:960px){.pred-cards-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.pred-cards-grid{grid-template-columns:1fr}}
 .pred-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
 .pred-card:hover{border-color:rgba(0,129,255,.25)}
 .pred-card.pred-card-played{border-color:rgba(255,255,255,.06)}
@@ -509,6 +510,43 @@ img{display:block}
 .pred-score-pct{font-size:2rem;font-weight:900;color:#0c8;margin-left:auto}
 .pred-login-banner{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:22px}
 .pred-login-banner p{color:var(--text2);font-size:.85rem;margin-bottom:12px}
+/* Date séparateur */
+.pred-date-sep{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
+.pred-date-sep:first-child{margin-top:0}
+.pred-date-lbl{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap}
+/* Compact played row */
+.pred-played-list{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.pred-cmpct{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-right:3px solid var(--border);border-radius:8px;transition:background .15s}
+.pred-cmpct.voted-home{border-left-color:var(--rl-blue)}
+.pred-cmpct.voted-away{border-right-color:var(--rl-blue)}
+.pred-cmpct-ico{font-size:.9rem;flex-shrink:0;width:20px;text-align:center}
+.pred-cmpct-logo{width:22px;height:22px;object-fit:contain;border-radius:4px;background:var(--bg3);flex-shrink:0}
+.pred-cmpct-name{font-size:.77rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.pred-cmpct-name.won{color:#fff;font-weight:700}
+.pred-cmpct-name.lost{color:var(--text3);font-weight:400}
+.pred-cmpct-score{font-size:.9rem;font-weight:900;white-space:nowrap;text-align:center;width:44px;flex-shrink:0}
+.pred-cmpct-meta{font-size:.6rem;color:var(--text3);white-space:nowrap;margin-left:4px;flex-shrink:0}
+/* Leaderboard */
+.pred-lb{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.pred-lb-hdr{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.pred-lb-title{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:8px}
+.pred-lb-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--rl-blue);border-radius:2px}
+.pred-lb-row{display:grid;grid-template-columns:28px 28px 1fr 58px 46px;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;transition:background .15s}
+.pred-lb-row:last-child{border-bottom:none}
+.pred-lb-row:hover{background:rgba(255,255,255,.02)}
+.pred-lb-row.pred-lb-me{background:rgba(0,129,255,.05)}
+.pred-lb-rank{font-weight:800;font-size:.8rem;text-align:center}
+.pred-lb-rk1{color:#ffd700}.pred-lb-rk2{color:#c0c0c0}.pred-lb-rk3{color:#cd7f32}.pred-lb-rkn{color:var(--text3)}
+.pred-lb-av{width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--bg3)}
+.pred-lb-av-ph{width:24px;height:24px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--text3)}
+.pred-lb-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem}
+.pred-lb-name.me{color:var(--rl-blue)}
+.pred-lb-score{font-size:.75rem;color:var(--text2);text-align:center;white-space:nowrap}
+.pred-lb-pct{font-weight:900;text-align:right;white-space:nowrap}
+.pred-lb-empty{padding:20px;text-align:center;color:var(--text3);font-size:.8rem}
+.pred-sec-title{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:.9rem;font-weight:700}
+.pred-sec-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--rl-blue);border-radius:2px;flex-shrink:0}
+.pred-sec-cnt{font-size:.68rem;font-weight:600;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}
 
 /* ── ADMIN ── */
 .adm-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -3908,28 +3946,7 @@ function renderPredictorBanner() {
       </div>`;
     return;
   }
-  // Calcul score si matchs joués
-  const myVotes = predictorsMap[curUser.uid]?.votes || {};
-  const playedWithVote = Object.values(matchesMap).filter(m =>
-    m.status === 'played' && myVotes[m.id]
-  );
-  if (!playedWithVote.length) { banner.innerHTML = ''; return; }
-  const correct = playedWithVote.filter(m => {
-    const v = myVotes[m.id];
-    if (v === 'home') return (m.homeScore||0) > (m.awayScore||0);
-    if (v === 'away') return (m.awayScore||0) > (m.homeScore||0);
-    return false;
-  }).length;
-  const pct = Math.round(correct / playedWithVote.length * 100);
-  banner.innerHTML = `
-    <div class="pred-score-banner">
-      <div class="pred-score-icon">🎯</div>
-      <div class="pred-score-info">
-        <div class="pred-score-val2">${correct} / ${playedWithVote.length} correctes</div>
-        <div class="pred-score-sub">Prédictions sur des matchs terminés</div>
-      </div>
-      <div class="pred-score-pct" style="color:${pct>=60?'#0c8':pct>=40?'#f59e0b':'#ef4444'}">${pct}%</div>
-    </div>`;
+  banner.innerHTML = '';
 }
 
 function _predGetCounts(matchId) {
@@ -3963,6 +3980,16 @@ function _predVoteBtn(matchId, side, myVote, isLocked, isPlayed, sideWon) {
     : `<button class="pred-vbtn pred-vbtn-default" onclick="votePrediction('${matchId}','${side}')">Voter</button>`;
 }
 
+function _predDateLabel(d) {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const matchStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = Math.round((matchStart - todayStart) / 86400000);
+  if (diff === 0) return "Aujourd'hui";
+  if (diff === 1) return 'Demain';
+  return d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+}
+
 function renderPredictionCard(m) {
   const tH = teamsMap[m.homeTeamId] || {name:'?'};
   const tA = teamsMap[m.awayTeamId] || {name:'?'};
@@ -3971,10 +3998,7 @@ function renderPredictionCard(m) {
   const counts = _predGetCounts(m.id);
   const now = new Date();
   const scheduled = m.scheduledAt ? new Date(m.scheduledAt) : null;
-  const isPlayed = m.status === 'played';
-  const isLocked = isPlayed || (scheduled && now >= scheduled);
-  const homeWon = isPlayed && (m.homeScore||0) > (m.awayScore||0);
-  const awayWon = isPlayed && (m.awayScore||0) > (m.homeScore||0);
+  const isLocked = scheduled && now >= scheduled;
   const total = counts.total;
   const homePct = total ? Math.round(counts.home / total * 100) : 50;
   const awayPct = total ? 100 - homePct : 50;
@@ -3985,13 +4009,6 @@ function renderPredictionCard(m) {
   const aLogo = tA.logoUrl
     ? `<img class="pred-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">`
     : `<div class="pred-logo-ph">${esc((tA.name||'?')[0])}</div>`;
-
-  let centerHtml;
-  if (isPlayed) {
-    centerHtml = `<div class="pred-score-val">${m.homeScore||0}<span class="pred-score-sep">–</span>${m.awayScore||0}</div>`;
-  } else {
-    centerHtml = `<div class="pred-vs-txt">VS</div>`;
-  }
 
   const showBars = isLocked || myVote;
   let bottomHtml = '';
@@ -4007,74 +4024,151 @@ function renderPredictionCard(m) {
         </div>
         <div class="pred-votes-count">${total} vote${total!==1?'s':''}</div>
       </div>`;
-  } else if (curUser && total === 0) {
+  } else if (curUser) {
     bottomHtml = `<div class="pred-first">Sois le premier à voter !</div>`;
   }
 
   const poolLabel = m.pool ? `Poule ${m.pool}` : '';
-  const metaRight = isPlayed
-    ? `<span class="pred-played-chip">✓ Joué</span>`
-    : isLocked
-    ? `<span class="pred-date-chip">${formatSchedule(m.scheduledAt)}</span><span class="pred-lock-chip" style="margin-left:4px">🔒</span>`
-    : scheduled ? `<span class="pred-date-chip">${formatSchedule(m.scheduledAt)}</span>` : '';
+  const lockBadge = isLocked ? `<span class="pred-lock-chip" style="margin-left:auto">🔒 Fermé</span>` : '';
 
   return `
-    <div class="pred-card${isPlayed?' pred-card-played':''}">
+    <div class="pred-card">
       <div class="pred-meta">
         ${poolLabel ? `<span class="pred-pool-badge">${esc(poolLabel)}</span>` : ''}
-        <span class="pred-week-chip">Sem. ${m.week||'?'}</span>
-        ${metaRight}
+        <span class="pred-week-chip">Sem.${m.week||'?'}</span>
+        ${lockBadge}
       </div>
       <div class="pred-body">
-        <div class="pred-side${homeWon?' pred-side-win':isPlayed&&!homeWon?' pred-side-loss':''}">
+        <div class="pred-side">
           ${hLogo}
           <div class="pred-name">${esc(tH.name)}</div>
-          ${_predVoteBtn(m.id,'home',myVote,isLocked,isPlayed,homeWon)}
+          ${_predVoteBtn(m.id,'home',myVote,isLocked,false,false)}
         </div>
-        <div class="pred-center">${centerHtml}</div>
-        <div class="pred-side${awayWon?' pred-side-win':isPlayed&&!awayWon?' pred-side-loss':''}">
+        <div class="pred-center"><div class="pred-vs-txt">VS</div></div>
+        <div class="pred-side">
           ${aLogo}
           <div class="pred-name">${esc(tA.name)}</div>
-          ${_predVoteBtn(m.id,'away',myVote,isLocked,isPlayed,awayWon)}
+          ${_predVoteBtn(m.id,'away',myVote,isLocked,false,false)}
         </div>
       </div>
       ${bottomHtml}
     </div>`;
 }
 
+function renderPlayedPredRow(m, myVote) {
+  const tH = teamsMap[m.homeTeamId] || {name:'?'};
+  const tA = teamsMap[m.awayTeamId] || {name:'?'};
+  const homeWon = (m.homeScore||0) > (m.awayScore||0);
+  const awayWon = (m.awayScore||0) > (m.homeScore||0);
+  const correct = (myVote==='home' && homeWon) || (myVote==='away' && awayWon);
+  const hLogo = tH.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tH.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tH.name||'?')[0])}</div>`;
+  const aLogo = tA.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tA.name||'?')[0])}</div>`;
+  const votedSide = myVote === 'home' ? 'voted-home' : 'voted-away';
+  return `
+    <div class="pred-cmpct ${votedSide}">
+      <span class="pred-cmpct-ico">${correct?'✅':'❌'}</span>
+      ${hLogo}
+      <span class="pred-cmpct-name${homeWon?' won':awayWon?' lost':''}">${esc(tH.name)}</span>
+      <span class="pred-cmpct-score">${m.homeScore||0}–${m.awayScore||0}</span>
+      <span class="pred-cmpct-name${awayWon?' won':homeWon?' lost':''}" style="text-align:right">${esc(tA.name)}</span>
+      ${aLogo}
+      <span class="pred-cmpct-meta">S${m.week||'?'}·P${m.pool||'?'}</span>
+    </div>`;
+}
+
+function renderPredLeaderboard() {
+  const playedMatches = Object.values(matchesMap).filter(m => m.status === 'played');
+  const entries = Object.values(predictorsMap).map(p => {
+    const votes = p.votes || {};
+    let total = 0, correct = 0;
+    playedMatches.forEach(m => {
+      if (!votes[m.id]) return;
+      total++;
+      const v = votes[m.id];
+      const hw = (m.homeScore||0) > (m.awayScore||0);
+      const aw = (m.awayScore||0) > (m.homeScore||0);
+      if ((v==='home'&&hw) || (v==='away'&&aw)) correct++;
+    });
+    return { p, total, correct, pct: total ? Math.round(correct/total*100) : 0 };
+  }).filter(e => e.total >= 1).sort((a,b) => b.pct-a.pct || b.total-a.total);
+
+  const rkCls = i => i===0?'pred-lb-rk1':i===1?'pred-lb-rk2':i===2?'pred-lb-rk3':'pred-lb-rkn';
+  const rkIcon = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+
+  const rows = entries.slice(0,15).map((e,i) => {
+    const name = e.p.discordUsername || '?';
+    const isMe = curUser && e.p.id === curUser.uid;
+    const av = e.p.discordAvatar
+      ? `<img class="pred-lb-av" src="${esc(e.p.discordAvatar)}" onerror="this.src='';">`
+      : `<div class="pred-lb-av-ph">${esc((name[0]||'?').toUpperCase())}</div>`;
+    const pctColor = e.pct>=60?'#0c8':e.pct>=40?'#f59e0b':'#ef4444';
+    return `<div class="pred-lb-row${isMe?' pred-lb-me':''}">
+      <div class="pred-lb-rank ${rkCls(i)}">${rkIcon(i)}</div>
+      ${av}
+      <div class="pred-lb-name${isMe?' me':''}">${esc(name)}${isMe?' <span style="font-size:.65rem;color:var(--text3)">(vous)</span>':''}</div>
+      <div class="pred-lb-score">${e.correct}/${e.total}</div>
+      <div class="pred-lb-pct" style="color:${pctColor}">${e.pct}%</div>
+    </div>`;
+  }).join('');
+
+  if (!entries.length) {
+    return `<div class="pred-lb"><div class="pred-lb-hdr"><div class="pred-lb-title">Classement des prédicteurs</div></div><div class="pred-lb-empty">Les classements apparaîtront après les premiers matchs joués.</div></div>`;
+  }
+  return `<div class="pred-lb">
+    <div class="pred-lb-hdr">
+      <div class="pred-lb-title">Classement des prédicteurs</div>
+      <div style="font-size:.63rem;color:var(--text3)">${entries.length} participant${entries.length>1?'s':''}</div>
+    </div>
+    ${rows}
+  </div>`;
+}
+
 function renderPredictions() {
   const el = document.getElementById('pred-content');
   if (!el) return;
-  const allMatches = Object.values(matchesMap)
-    .filter(m => m.homeTeamId && m.awayTeamId && m.scheduledAt)
-    .sort((a,b) => (a.week - b.week) || ((a.scheduledAt||'') > (b.scheduledAt||'') ? 1 : -1));
+  const now = new Date();
+  const myVotes = predictorsMap[curUser?.uid]?.votes || {};
 
-  if (!allMatches.length) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Aucun match programmé pour le moment.</div>';
-    return;
+  // Matchs à venir (scheduledAt dans le futur, non joués)
+  const upcoming = Object.values(matchesMap)
+    .filter(m => m.homeTeamId && m.awayTeamId && m.scheduledAt && m.status !== 'played' && new Date(m.scheduledAt) > now)
+    .sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+
+  // Mes résultats : matchs joués sur lesquels j'ai voté
+  const myPlayed = Object.values(matchesMap)
+    .filter(m => m.status === 'played' && m.scheduledAt && myVotes[m.id])
+    .sort((a,b) => new Date(b.scheduledAt) - new Date(a.scheduledAt));
+
+  let html = renderPredLeaderboard();
+
+  // Section À voter
+  html += `<div class="pred-sec-title">À voter <span class="pred-sec-cnt">${upcoming.length} match${upcoming.length!==1?'s':''}</span></div>`;
+  if (!upcoming.length) {
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--text2);font-size:.85rem;margin-bottom:20px">Aucun match programmé à venir.</div>`;
+  } else {
+    // Grouper par date
+    const byDate = {};
+    upcoming.forEach(m => {
+      const d = new Date(m.scheduledAt);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!byDate[key]) byDate[key] = { label: _predDateLabel(d), matches: [] };
+      byDate[key].matches.push(m);
+    });
+    Object.values(byDate).forEach(({ label, matches }) => {
+      html += `<div class="pred-date-sep"><span class="pred-date-lbl">${label}</span><span class="pred-week-cnt">${matches.length} match${matches.length>1?'s':''}</span></div>`;
+      html += `<div class="pred-cards-grid">${matches.map(m => renderPredictionCard(m)).join('')}</div>`;
+    });
   }
 
-  // Group by week
-  const byWeek = {};
-  allMatches.forEach(m => {
-    const w = m.week || 0;
-    if (!byWeek[w]) byWeek[w] = [];
-    byWeek[w].push(m);
-  });
-
-  let html = '';
-  Object.keys(byWeek).sort((a,b)=>a-b).forEach(week => {
-    const matches = byWeek[week];
-    const played = matches.filter(m=>m.status==='played').length;
-    html += `
-      <div class="pred-week-sep">
-        <span class="pred-week-lbl">Semaine ${week}</span>
-        <span class="pred-week-cnt">${played}/${matches.length} joués</span>
-      </div>
-      <div class="pred-cards-grid">
-        ${matches.map(m => renderPredictionCard(m)).join('')}
-      </div>`;
-  });
+  // Section Mes résultats
+  if (myPlayed.length) {
+    const correct = myPlayed.filter(m => {
+      const v = myVotes[m.id];
+      return (v==='home' && (m.homeScore||0)>(m.awayScore||0)) || (v==='away' && (m.awayScore||0)>(m.homeScore||0));
+    }).length;
+    html += `<div class="pred-sec-title" style="margin-top:24px">Mes résultats <span class="pred-sec-cnt">${correct}/${myPlayed.length} correctes</span></div>`;
+    html += `<div class="pred-played-list">${myPlayed.map(m => renderPlayedPredRow(m, myVotes[m.id])).join('')}</div>`;
+  }
 
   el.innerHTML = html;
 }
