@@ -526,11 +526,14 @@ img{display:block}
 .pred-cmpct{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-right:3px solid var(--border);border-radius:8px;transition:background .15s}
 .pred-cmpct.voted-home{border-left-color:var(--rl-blue)}
 .pred-cmpct.voted-away{border-right-color:var(--rl-blue)}
+.pred-cmpct.pred-wrong{background:rgba(239,68,68,.04)}
+.pred-cmpct.pred-wrong.voted-home{border-left-color:rgba(239,68,68,.45)}
+.pred-cmpct.pred-wrong.voted-away{border-right-color:rgba(239,68,68,.45)}
 .pred-cmpct-ico{font-size:.9rem;flex-shrink:0;width:20px;text-align:center}
 .pred-cmpct-logo{width:22px;height:22px;object-fit:contain;border-radius:4px;background:var(--bg3);flex-shrink:0}
 .pred-cmpct-name{font-size:.77rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
 .pred-cmpct-name.won{color:#fff;font-weight:700}
-.pred-cmpct-name.lost{color:var(--text3);font-weight:400}
+.pred-cmpct-name.lost{color:var(--text2);font-weight:400}
 .pred-cmpct-score{font-size:.9rem;font-weight:900;white-space:nowrap;text-align:center;width:44px;flex-shrink:0}
 .pred-cmpct-meta{font-size:.6rem;color:var(--text3);white-space:nowrap;margin-left:4px;flex-shrink:0}
 /* Leaderboard */
@@ -3937,6 +3940,7 @@ async function refreshPredictors() {
 async function loadPredictions() {
   try {
     await fetchAll();
+    await refreshMatches(); // toujours données fraîches pour les résultats
     if (curUser) {
       try { await refreshPredictors(); } catch(e) { console.warn('refreshPredictors failed:', e); }
     }
@@ -4101,7 +4105,7 @@ function renderPlayedPredRow(m, myVote) {
   const aLogo = tA.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tA.name||'?')[0])}</div>`;
   const votedSide = myVote === 'home' ? 'voted-home' : 'voted-away';
   return `
-    <div class="pred-cmpct ${votedSide}">
+    <div class="pred-cmpct ${votedSide}${!correct?' pred-wrong':''}">
       <span class="pred-cmpct-ico">${correct?'✅':'❌'}</span>
       ${hLogo}
       <span class="pred-cmpct-name${homeWon?' won':awayWon?' lost':''}">${esc(tH.name)}</span>
