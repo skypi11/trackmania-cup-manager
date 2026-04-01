@@ -470,10 +470,11 @@ img{display:block}
 .pred-date-chip{font-size:.64rem;color:var(--text2);margin-left:auto}
 .pred-lock-chip{font-size:.6rem;color:var(--text3);margin-left:auto}
 .pred-played-chip{font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.25);margin-left:auto}
-.pred-body{display:grid;grid-template-columns:1fr 60px 1fr;align-items:center;padding:14px 12px 10px;gap:4px}
-.pred-side{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
-.pred-logo{width:46px;height:46px;object-fit:contain;border-radius:7px;background:var(--bg3)}
-.pred-logo-ph{width:46px;height:46px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text3);font-weight:800}
+.pred-body{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;padding:10px 10px 8px;gap:4px}
+.pred-side{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.pred-logo{width:38px;height:38px;object-fit:contain;border-radius:6px;background:var(--bg3)}
+.pred-logo-ph{width:38px;height:38px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--text3);font-weight:800}
+.pred-time{font-size:.95rem;font-weight:900;color:var(--rl-blue);line-height:1;text-align:center}
 .pred-name{font-size:.75rem;font-weight:700;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pred-side.pred-side-win .pred-name{color:#fff;font-weight:800}
 .pred-side.pred-side-loss .pred-name{color:var(--text3)}
@@ -481,7 +482,7 @@ img{display:block}
 .pred-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
 .pred-score-val{font-size:1.4rem;font-weight:900;letter-spacing:.04em;white-space:nowrap}
 .pred-score-sep{color:var(--text3)}
-.pred-vs-txt{font-size:.7rem;font-weight:900;color:var(--text3);letter-spacing:.05em}
+.pred-vs-txt{font-size:.55rem;font-weight:700;color:var(--text3);letter-spacing:.05em;opacity:.6}
 .pred-sched-txt{font-size:.6rem;font-weight:700;color:var(--rl-blue);text-align:center;white-space:nowrap;line-height:1.35;max-width:58px;word-break:break-word}
 .pred-vbtn{padding:5px 10px;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border);transition:all .18s;white-space:nowrap;cursor:pointer}
 .pred-vbtn-default{background:var(--bg3);color:var(--text2);border-color:var(--border)}
@@ -493,7 +494,7 @@ img{display:block}
 .pred-vbtn-wrong{background:rgba(239,68,68,.08);color:#ef4444;border-color:rgba(239,68,68,.25);cursor:default}
 .pred-vbtn-winner{background:rgba(255,255,255,.04);color:var(--text3);border-color:var(--border);cursor:default;font-size:.66rem}
 .pred-vbtn-loser{background:transparent;color:var(--text3);border-color:transparent;cursor:default;font-size:.66rem;opacity:.4}
-.pred-bars-wrap{padding:6px 14px 12px;display:flex;flex-direction:column;gap:4px}
+.pred-bars-wrap{padding:5px 12px 10px;display:flex;flex-direction:column;gap:3px}
 .pred-bars-row{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;gap:7px}
 .pred-pct{font-size:.72rem;font-weight:800;color:var(--text2);text-align:right;white-space:nowrap}
 .pred-pct.pred-pct-r{text-align:left}
@@ -501,7 +502,7 @@ img{display:block}
 .pred-bar-bg{background:var(--bg3);border-radius:4px;height:5px;overflow:hidden}
 .pred-bar-h{height:5px;background:var(--rl-blue);border-radius:4px;transition:width .4s}
 .pred-votes-count{text-align:center;font-size:.62rem;color:var(--text3);font-weight:600;margin-top:1px}
-.pred-first{padding:6px 14px 12px;text-align:center;font-size:.67rem;color:var(--text3)}
+.pred-first{display:none}
 .pred-score-banner{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 .pred-score-icon{font-size:1.6rem;line-height:1;flex-shrink:0}
 .pred-score-info{flex:1;min-width:120px}
@@ -4029,14 +4030,19 @@ function renderPredictionCard(m) {
   }
 
   const poolLabel = m.pool ? `Poule ${m.pool}` : '';
-  const lockBadge = isLocked ? `<span class="pred-lock-chip" style="margin-left:auto">🔒 Fermé</span>` : '';
+  const timeStr = scheduled
+    ? scheduled.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+    : '';
+  const metaRight = isLocked
+    ? `<span class="pred-lock-chip" style="margin-left:auto">🔒 ${timeStr}</span>`
+    : timeStr ? `<span class="pred-date-chip" style="margin-left:auto">${timeStr}</span>` : '';
 
   return `
     <div class="pred-card">
       <div class="pred-meta">
         ${poolLabel ? `<span class="pred-pool-badge">${esc(poolLabel)}</span>` : ''}
         <span class="pred-week-chip">Sem.${m.week||'?'}</span>
-        ${lockBadge}
+        ${metaRight}
       </div>
       <div class="pred-body">
         <div class="pred-side">
@@ -4044,7 +4050,10 @@ function renderPredictionCard(m) {
           <div class="pred-name">${esc(tH.name)}</div>
           ${_predVoteBtn(m.id,'home',myVote,isLocked,false,false)}
         </div>
-        <div class="pred-center"><div class="pred-vs-txt">VS</div></div>
+        <div class="pred-center">
+          ${timeStr ? `<div class="pred-time">${timeStr}</div>` : ''}
+          <div class="pred-vs-txt">VS</div>
+        </div>
         <div class="pred-side">
           ${aLogo}
           <div class="pred-name">${esc(tA.name)}</div>
