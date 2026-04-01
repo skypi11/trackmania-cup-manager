@@ -506,8 +506,14 @@ img{display:block}
 .pred-score-val2{font-size:1.25rem;font-weight:900;color:var(--rl-blue)}
 .pred-score-sub{font-size:.72rem;color:var(--text2);margin-top:2px}
 .pred-score-pct{font-size:2rem;font-weight:900;color:#0c8;margin-left:auto}
-.pred-login-banner{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:22px}
-.pred-login-banner p{color:var(--text2);font-size:.85rem;margin-bottom:12px}
+.pred-login-banner{background:linear-gradient(135deg,rgba(88,101,242,.18) 0%,rgba(88,101,242,.06) 60%,transparent 100%);border:1px solid rgba(88,101,242,.35);border-radius:14px;padding:28px 24px 24px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden}
+.pred-login-banner::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(88,101,242,.2) 0%,transparent 70%);pointer-events:none}
+.pred-login-banner-icon{font-size:2.4rem;line-height:1;margin-bottom:10px}
+.pred-login-banner h3{font-size:1.15rem;font-weight:800;margin-bottom:6px;color:var(--text)}
+.pred-login-banner p{color:var(--text2);font-size:.85rem;margin-bottom:16px;line-height:1.5}
+.pred-login-perks{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.pred-login-perk{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text2);font-weight:600}
+.pred-login-perk-icon{color:#5865F2;font-size:.85rem}
 /* Date séparateur */
 .pred-date-sep{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
 .pred-date-sep:first-child{margin-top:0}
@@ -3936,9 +3942,18 @@ function renderPredictorBanner() {
   if (!curUser) {
     banner.innerHTML = `
       <div class="pred-login-banner">
-        <p>Connectez-vous avec Discord pour voter et suivre vos prédictions</p>
-        <button class="btn-discord" onclick="doAuth()">
-          <svg width="18" height="14" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+        <div class="pred-login-banner-icon">
+          <svg width="40" height="30" viewBox="0 0 127.14 96.36" fill="#5865F2"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+        </div>
+        <h3>Participez aux prédictions !</h3>
+        <p>Connectez-vous avec Discord et pronostiquez les résultats de chaque match.<br>Grimpez dans le classement et défiez la communauté Springs E-Sport.</p>
+        <div class="pred-login-perks">
+          <div class="pred-login-perk"><span class="pred-login-perk-icon">✦</span> Votez pour vos équipes</div>
+          <div class="pred-login-perk"><span class="pred-login-perk-icon">✦</span> Suivez votre score</div>
+          <div class="pred-login-perk"><span class="pred-login-perk-icon">✦</span> Classement communauté</div>
+        </div>
+        <button class="btn-discord" style="font-size:.88rem;padding:9px 22px;border-radius:8px" onclick="doAuth()">
+          <svg width="20" height="15" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
           Se connecter avec Discord
         </button>
       </div>`;
