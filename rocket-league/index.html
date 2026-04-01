@@ -46,8 +46,15 @@ img{display:block}
 .btn-discord{display:flex;align-items:center;gap:6px;background:#5865F2;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
 .btn-discord:hover{background:#4752C4}
 .btn-discord.connected{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
-.btn-discord.connected:hover{background:var(--bg2);border-color:var(--red)}
+.btn-discord.connected:hover{background:var(--bg2);border-color:var(--border)}
 .btn-disc-av{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.usr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:160px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.usr-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;font-size:.78rem;color:var(--text2);cursor:pointer;transition:background .15s;white-space:nowrap}
+.usr-menu-item:hover{background:var(--bg3);color:var(--text)}
+.usr-menu-item.danger{color:#ef4444}
+.usr-menu-item.danger:hover{background:rgba(239,68,68,.1);color:#ef4444}
+.usr-menu-sep{border:none;border-top:1px solid var(--border);margin:3px 0}
+.hdr-r{position:relative}
 
 /* ── LAYOUT SIDEBAR ── */
 .layout{display:flex;min-height:calc(100vh - 56px)}
@@ -1224,13 +1231,59 @@ onAuthStateChanged(auth, async user => {
   _updateAuthBtn();
 });
 
-window.doAuth = async function() {
+window.doAuth = function() {
   if (curUser) {
-    await signOut(auth);
+    _toggleUserMenu();
   } else {
     window.location.href = DISCORD_AUTH_URL;
   }
 };
+
+window.doSignOut = async function() {
+  _closeUserMenu();
+  await signOut(auth);
+};
+
+window.openProfile = function() {
+  _closeUserMenu();
+  // TODO: ouvrir modal profil
+  toast('Profil bientôt disponible', 'ok');
+};
+
+function _toggleUserMenu() {
+  let menu = document.getElementById('usr-menu');
+  if (menu) { _closeUserMenu(); return; }
+  const btn = document.getElementById('btn-auth');
+  const name = curUser?.displayName || '?';
+  const photo = curUser?.photoURL;
+  menu = document.createElement('div');
+  menu.id = 'usr-menu';
+  menu.className = 'usr-menu';
+  menu.innerHTML = `
+    <div class="usr-menu-item" style="pointer-events:none;opacity:.6;font-size:.72rem">
+      ${photo ? `<img class="btn-disc-av" src="${photo}" alt="">` : ''}
+      ${name}
+    </div>
+    <hr class="usr-menu-sep">
+    <div class="usr-menu-item" onclick="openProfile()">👤 Mon profil</div>
+    <hr class="usr-menu-sep">
+    <div class="usr-menu-item danger" onclick="doSignOut()">↩ Se déconnecter</div>
+  `;
+  btn.parentNode.appendChild(menu);
+  setTimeout(() => document.addEventListener('click', _menuOutsideClick), 0);
+}
+
+function _closeUserMenu() {
+  const menu = document.getElementById('usr-menu');
+  if (menu) menu.remove();
+  document.removeEventListener('click', _menuOutsideClick);
+}
+
+function _menuOutsideClick(e) {
+  const menu = document.getElementById('usr-menu');
+  const btn = document.getElementById('btn-auth');
+  if (menu && !menu.contains(e.target) && !btn.contains(e.target)) _closeUserMenu();
+}
 
 window.doAdminAuth = async function() {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { if(e.code!=='auth/popup-closed-by-user') toast(e.message,'err'); }
