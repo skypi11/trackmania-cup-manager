@@ -803,7 +803,7 @@ img{display:block}
   <button class="nav-btn" onclick="goTab('equipes')" id="nav-equipes">Équipes</button>
   <button class="nav-btn" onclick="goTab('resultats')" id="nav-resultats">Matchs</button>
   <button class="nav-btn" onclick="goTab('stats')" id="nav-stats">Stats</button>
-  <button class="nav-btn" onclick="goTab('predictions')" id="nav-predictions">🔮 Prédictions</button>
+  <button class="nav-btn" onclick="goTab('predictions')" id="nav-predictions">Prédictions</button>
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
@@ -1229,7 +1229,7 @@ const FLAGS = {FR:'🇫🇷',BE:'🇧🇪',CH:'🇨🇭',DE:'🇩🇪',ES:'🇪�
 const I18N = {
   fr:{
     login:'Connexion',logout:'Déconnexion',
-    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',nav_stats:'Stats',nav_predictions:'🔮 Prédictions',
+    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',nav_stats:'Stats',nav_predictions:'Prédictions',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Compétition',lbl_fmt:'Format',lbl_pools:'Poules',lbl_weeks:'Semaines',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Classement — Aperçu',
     col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'B+',col_gl:'B-',col_diff:'Diff',
     week:'Sem.',all:'Tout',played:'Joués',sched:'À venir',
@@ -1248,7 +1248,7 @@ const I18N = {
   },
   en:{
     login:'Login',logout:'Logout',
-    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Matches',nav_stats:'Stats',nav_predictions:'🔮 Predictions',
+    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Matches',nav_stats:'Stats',nav_predictions:'Predictions',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Competition',lbl_fmt:'Format',lbl_pools:'Pools',lbl_weeks:'Weeks',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Standings — Overview',
     col_rank:'#',col_team:'Team',col_p:'P',col_w:'W',col_l:'L',col_pts:'Pts',col_gw:'GW',col_gl:'GL',col_diff:'Diff',
     week:'Wk',all:'All',played:'Played',sched:'Upcoming',
@@ -3989,8 +3989,6 @@ function renderPredictionCard(m) {
   let centerHtml;
   if (isPlayed) {
     centerHtml = `<div class="pred-score-val">${m.homeScore||0}<span class="pred-score-sep">–</span>${m.awayScore||0}</div>`;
-  } else if (scheduled) {
-    centerHtml = `<div class="pred-vs-txt">VS</div><div class="pred-sched-txt">${formatSchedule(m.scheduledAt)}</div>`;
   } else {
     centerHtml = `<div class="pred-vs-txt">VS</div>`;
   }
@@ -4016,7 +4014,8 @@ function renderPredictionCard(m) {
   const poolLabel = m.pool ? `Poule ${m.pool}` : '';
   const metaRight = isPlayed
     ? `<span class="pred-played-chip">✓ Joué</span>`
-    : isLocked ? `<span class="pred-lock-chip">🔒 Fermé</span>`
+    : isLocked
+    ? `<span class="pred-date-chip">${formatSchedule(m.scheduledAt)}</span><span class="pred-lock-chip" style="margin-left:4px">🔒</span>`
     : scheduled ? `<span class="pred-date-chip">${formatSchedule(m.scheduledAt)}</span>` : '';
 
   return `
@@ -4047,7 +4046,7 @@ function renderPredictions() {
   const el = document.getElementById('pred-content');
   if (!el) return;
   const allMatches = Object.values(matchesMap)
-    .filter(m => m.homeTeamId && m.awayTeamId)
+    .filter(m => m.homeTeamId && m.awayTeamId && m.scheduledAt)
     .sort((a,b) => (a.week - b.week) || ((a.scheduledAt||'') > (b.scheduledAt||'') ? 1 : -1));
 
   if (!allMatches.length) {
