@@ -1101,6 +1101,8 @@ async function _onDiscordLogin(user, discordId, discordUsername, discordAvatar) 
         discordId,
         discordAvatar,
       });
+      // Invalide le cache pour que fetchAll recharge les données à jour
+      _dataFetched = false;
     } else {
       // Spectateur/prédicteur : profil minimal
       await setDoc(doc(db, 'rl_predictors', user.uid), {
@@ -2159,7 +2161,7 @@ window.openTeamModal = async function(teamId) {
         const roleCls = p.role ? `role-badge role-${p.role}` : '';
         const roleTxt = p.role ? (roleLabel[p.role]||p.role) : '—';
         return `<tr onclick="openPlayerView('${p.id}')" style="cursor:pointer" title="Voir la fiche">
-          <td><img class="p-ava" src="${p.photoUrl||''}" onerror="this.src=''" alt=""></td>
+          <td><img class="p-ava" src="${p.discordAvatar||p.photoUrl||''}" onerror="this.src=''" alt=""></td>
           <td style="font-weight:700">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</td>
           <td>${roleCls?`<span class="${roleCls}">${roleTxt}</span>`:roleTxt}</td>
           <td style="color:var(--text2);font-size:.76rem">${esc(p.pseudoDiscord||'—')}</td>
@@ -2244,8 +2246,8 @@ window.openPlayerView = function(playerId) {
       </div>`;
     }
   }
-  const photo = p.photoUrl
-    ? `<img src="${esc(p.photoUrl)}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0" alt="" onerror="this.src=''">`
+  const photo = (p.discordAvatar||p.photoUrl)
+    ? `<img src="${esc(p.discordAvatar||p.photoUrl)}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0" alt="" onerror="this.src=''">`
     : `<div style="width:68px;height:68px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);flex-shrink:0">?</div>`;
   document.getElementById('mo-pv-body').innerHTML = `
     <div class="team-hero">
@@ -2688,8 +2690,8 @@ async function admPlayers() {
   const renderPlayerCard = (p) => {
     const tm = teamsMap[p.teamId]||{};
     const rc = (p.role||'').toLowerCase();
-    const avatar = p.photoUrl
-      ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
+    const avatar = (p.discordAvatar||p.photoUrl)
+      ? `<img class="adm-pa" src="${p.discordAvatar||p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
       : `<div class="adm-pa-ph">👤</div>`;
     return `<div class="adm-player-card" onclick="editPlayer('${p.id}')" style="cursor:pointer">
       ${avatar}
@@ -2758,8 +2760,8 @@ window.filterPlayerList = function(teamId) {
   document.getElementById('player-list').innerHTML = ps.map(p=>{
     const tm=teamsMap[p.teamId]||{};
     const rc=(p.role||'').toLowerCase();
-    const avatar = p.photoUrl
-      ? `<img class="adm-pa" src="${p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
+    const avatar = (p.discordAvatar||p.photoUrl)
+      ? `<img class="adm-pa" src="${p.discordAvatar||p.photoUrl}" alt="" onerror="this.outerHTML='<div class=adm-pa-ph>👤</div>'">`
       : `<div class="adm-pa-ph">👤</div>`;
     return `<div class="adm-player-card" onclick="editPlayer('${p.id}')" style="cursor:pointer">
       ${avatar}
