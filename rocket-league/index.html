@@ -485,7 +485,12 @@ img{display:block}
 .pred-logo-ph{width:46px;height:46px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text3);font-weight:800}
 /* Indicateur vote */
 .pred-vote-check{font-size:.62rem;font-weight:800;color:var(--rl-blue);letter-spacing:.02em}
+.pred-vote-change{font-size:.58rem;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .pred-login-hint-card{padding:3px 10px 8px;text-align:center;font-size:.62rem;color:var(--text3)}
+.pred-team-stats{display:flex;align-items:center;gap:4px;font-size:.6rem;color:var(--text3);font-weight:600}
+.pred-form-dot{display:inline-block;width:8px;height:8px;border-radius:2px}
+.pred-form-w{background:rgba(0,200,100,.5)}
+.pred-form-l{background:rgba(239,68,68,.4)}
 /* Nom équipe */
 .pred-name{font-size:.73rem;font-weight:700;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .15s}
 /* Centre */
@@ -523,12 +528,8 @@ img{display:block}
 .pred-date-lbl{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap}
 /* Compact played row */
 .pred-played-list{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
-.pred-cmpct{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border);border-right:3px solid var(--border);border-radius:8px;transition:background .15s}
-.pred-cmpct.voted-home{border-left-color:var(--rl-blue)}
-.pred-cmpct.voted-away{border-right-color:var(--rl-blue)}
-.pred-cmpct.pred-wrong{background:rgba(239,68,68,.04)}
-.pred-cmpct.pred-wrong.voted-home{border-left-color:rgba(239,68,68,.45)}
-.pred-cmpct.pred-wrong.voted-away{border-right-color:rgba(239,68,68,.45)}
+.pred-cmpct{display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;transition:background .15s}
+.pred-cmpct.pred-wrong{background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.2)}
 .pred-cmpct-ico{font-size:.9rem;flex-shrink:0;width:20px;text-align:center}
 .pred-cmpct-logo{width:22px;height:22px;object-fit:contain;border-radius:4px;background:var(--bg3);flex-shrink:0}
 .pred-cmpct-name{font-size:.77rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
@@ -536,6 +537,7 @@ img{display:block}
 .pred-cmpct-name.lost{color:var(--text2);font-weight:400}
 .pred-cmpct-score{font-size:.9rem;font-weight:900;white-space:nowrap;text-align:center;width:44px;flex-shrink:0}
 .pred-cmpct-meta{font-size:.6rem;color:var(--text3);white-space:nowrap;margin-left:4px;flex-shrink:0}
+.pred-cmpct-voted-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,129,255,.12);border:1px solid rgba(0,129,255,.3);border-radius:4px;padding:2px 7px;font-size:.65rem;font-weight:800;color:var(--rl-blue);white-space:nowrap;flex-shrink:0}
 /* Leaderboard */
 .pred-lb{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
 .pred-lb-hdr{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
@@ -3979,6 +3981,45 @@ function renderPredictorBanner() {
   banner.innerHTML = '';
 }
 
+function _teamStats(teamId) {
+  const played = Object.values(matchesMap).filter(m =>
+    m.status === 'played' && (m.homeTeamId === teamId || m.awayTeamId === teamId)
+  ).sort((a,b) => new Date(a.scheduledAt||0) - new Date(b.scheduledAt||0));
+  let w = 0, l = 0;
+  const form = played.slice(-5).map(m => {
+    const isHome = m.homeTeamId === teamId;
+    const myScore = isHome ? (m.homeScore||0) : (m.awayScore||0);
+    const oppScore = isHome ? (m.awayScore||0) : (m.homeScore||0);
+    const win = myScore > oppScore;
+    if (win) w++; else l++;
+    return win;
+  });
+  // compte total V/D
+  played.forEach(m => {
+    const isHome = m.homeTeamId === teamId;
+    const myScore = isHome ? (m.homeScore||0) : (m.awayScore||0);
+    const oppScore = isHome ? (m.awayScore||0) : (m.homeScore||0);
+    if (myScore > oppScore) w++; else l++;
+  });
+  // recalc proprement
+  w = 0; l = 0;
+  played.forEach(m => {
+    const isHome = m.homeTeamId === teamId;
+    const win = isHome ? (m.homeScore||0) > (m.awayScore||0) : (m.awayScore||0) > (m.homeScore||0);
+    if (win) w++; else l++;
+  });
+  const formDots = form.map(win =>
+    `<span class="pred-form-dot pred-form-${win?'w':'l'}" title="${win?'V':'D'}"></span>`
+  ).join('');
+  return { w, l, played: played.length, formDots };
+}
+
+function _teamStatsHtml(teamId) {
+  const s = _teamStats(teamId);
+  if (!s.played) return `<div class="pred-team-stats" style="color:var(--text3)">Aucun match</div>`;
+  return `<div class="pred-team-stats"><span style="color:#0c8">${s.w}V</span><span style="color:var(--text3)">–</span><span style="color:#ef4444">${s.l}D</span>${s.formDots ? `<span style="margin-left:3px;display:flex;gap:2px;align-items:center">${s.formDots}</span>` : ''}</div>`;
+}
+
 function _predGetCounts(matchId) {
   let home = 0, away = 0;
   Object.values(predictorsMap).forEach(p => {
@@ -4046,19 +4087,30 @@ function renderPredictionCard(m) {
 
   const hCls = `pred-side${myVote==='home'?' pred-voted':''}${isLocked?' pred-locked':''}`;
   const aCls = `pred-side${myVote==='away'?' pred-voted':''}${isLocked?' pred-locked':''}`;
-  const hCheck = myVote==='home' ? `<div class="pred-vote-check">✓ Voté</div>` : '';
-  const aCheck = myVote==='away' ? `<div class="pred-vote-check">✓ Voté</div>` : '';
   const canVote = !!(curUser && !isLocked);
 
-  const hSide = canVote
-    ? `<button class="${hCls}" onclick="votePrediction('${m.id}','home')" title="Voter ${esc(tH.name)}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hCheck}</button>`
-    : `<div class="${hCls}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hCheck}</div>`;
-  const aSide = canVote
-    ? `<button class="${aCls}" onclick="votePrediction('${m.id}','away')" title="Voter ${esc(tA.name)}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aCheck}</button>`
-    : `<div class="${aCls}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aCheck}</div>`;
+  // Indicateur vote + "Changer" si applicable
+  const hVoteEl = myVote==='home'
+    ? `<div class="pred-vote-check">✓ Voté${canVote?` <span class="pred-vote-change" onclick="event.stopPropagation();votePrediction('${m.id}','away')">Changer</span>`:''}` + `</div>`
+    : '';
+  const aVoteEl = myVote==='away'
+    ? `<div class="pred-vote-check">✓ Voté${canVote?` <span class="pred-vote-change" onclick="event.stopPropagation();votePrediction('${m.id}','home')">Changer</span>`:''}` + `</div>`
+    : '';
 
+  // Stats équipes
+  const hStats = _teamStatsHtml(m.homeTeamId);
+  const aStats = _teamStatsHtml(m.awayTeamId);
+
+  const hSide = canVote
+    ? `<button class="${hCls}" onclick="votePrediction('${m.id}','home')" title="Voter ${esc(tH.name)}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hStats}${hVoteEl}</button>`
+    : `<div class="${hCls}">${hLogo}<div class="pred-name">${esc(tH.name)}</div>${hStats}${hVoteEl}</div>`;
+  const aSide = canVote
+    ? `<button class="${aCls}" onclick="votePrediction('${m.id}','away')" title="Voter ${esc(tA.name)}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aStats}${aVoteEl}</button>`
+    : `<div class="${aCls}">${aLogo}<div class="pred-name">${esc(tA.name)}</div>${aStats}${aVoteEl}</div>`;
+
+  // Barres : visibles après vote OU quand match verrouillé (commencé)
   let bottomHtml = '';
-  if (isLocked || myVote) {
+  if (myVote || isLocked) {
     const hPCls = myVote==='home' ? ' pred-pct-voted' : '';
     const aPCls = myVote==='away' ? ' pred-pct-voted' : '';
     bottomHtml = `<div class="pred-bars-wrap">
@@ -4098,22 +4150,20 @@ function renderPredictionCard(m) {
 function renderPendingPredRow(m, myVote) {
   const tH = teamsMap[m.homeTeamId] || {name:'?'};
   const tA = teamsMap[m.awayTeamId] || {name:'?'};
-  const votedHome = myVote === 'home';
-  const votedTeam = votedHome ? tH : tA;
-  const otherTeam = votedHome ? tA : tH;
-  const votedLogo = votedTeam.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(votedTeam.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((votedTeam.name||'?')[0])}</div>`;
-  const otherLogo = otherTeam.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(otherTeam.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((otherTeam.name||'?')[0])}</div>`;
+  const hLogo = tH.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tH.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tH.name||'?')[0])}</div>`;
+  const aLogo = tA.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tA.name||'?')[0])}</div>`;
   const scheduled = m.scheduledAt ? new Date(m.scheduledAt) : null;
   const timeStr = scheduled ? formatSchedule(m.scheduledAt) : '?';
-  const votedSide = votedHome ? 'voted-home' : 'voted-away';
+  const votedName = myVote === 'home' ? tH.name : tA.name;
   return `
-    <div class="pred-cmpct ${votedSide}">
+    <div class="pred-cmpct">
       <span class="pred-cmpct-ico">⏳</span>
-      ${votedLogo}
-      <span class="pred-cmpct-name" style="color:var(--rl-blue);font-weight:700">${esc(votedTeam.name)}</span>
-      <span class="pred-cmpct-score" style="font-size:.68rem;color:var(--text2);font-weight:600">vs</span>
-      <span class="pred-cmpct-name">${esc(otherTeam.name)}</span>
-      ${otherLogo}
+      ${hLogo}
+      <span class="pred-cmpct-name${myVote==='home'?' won':''}">${esc(tH.name)}</span>
+      <span class="pred-cmpct-score" style="font-size:.65rem;color:var(--text3);font-weight:700">vs</span>
+      <span class="pred-cmpct-name${myVote==='away'?' won':''}" style="text-align:right">${esc(tA.name)}</span>
+      ${aLogo}
+      <div class="pred-cmpct-voted-badge">✓ ${esc(votedName)}</div>
       <span class="pred-cmpct-meta">${timeStr}</span>
     </div>`;
 }
