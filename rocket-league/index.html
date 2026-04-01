@@ -452,6 +452,64 @@ img{display:block}
 .mh-sw{color:#0c8}.mh-sl{color:#ef4444}
 .mh-goals{font-size:.68rem;color:var(--text3);flex-shrink:0}
 
+/* ── PREDICTIONS ── */
+.pred-week-sep{display:flex;align-items:center;gap:12px;margin:22px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.pred-week-sep:first-child{margin-top:0}
+.pred-week-lbl{font-size:.88rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.pred-week-lbl::before{content:'';display:inline-block;width:3px;height:14px;background:var(--rl-blue);border-radius:2px;flex-shrink:0}
+.pred-week-cnt{font-size:.68rem;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;color:var(--text2)}
+.pred-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:6px}
+@media(max-width:640px){.pred-cards-grid{grid-template-columns:1fr}}
+.pred-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.pred-card:hover{border-color:rgba(0,129,255,.25)}
+.pred-card.pred-card-played{border-color:rgba(255,255,255,.06)}
+.pred-meta{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.15)}
+.pred-pool-badge{font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:3px;background:rgba(232,0,26,.1);color:var(--red);border:1px solid rgba(232,0,26,.2);letter-spacing:.05em}
+.pred-week-chip{font-size:.6rem;font-weight:700;color:var(--text3);padding:1px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:3px}
+.pred-date-chip{font-size:.64rem;color:var(--text2);margin-left:auto}
+.pred-lock-chip{font-size:.6rem;color:var(--text3);margin-left:auto}
+.pred-played-chip{font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:3px;background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.25);margin-left:auto}
+.pred-body{display:grid;grid-template-columns:1fr 60px 1fr;align-items:center;padding:14px 12px 10px;gap:4px}
+.pred-side{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.pred-logo{width:46px;height:46px;object-fit:contain;border-radius:7px;background:var(--bg3)}
+.pred-logo-ph{width:46px;height:46px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text3);font-weight:800}
+.pred-name{font-size:.75rem;font-weight:700;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pred-side.pred-side-win .pred-name{color:#fff;font-weight:800}
+.pred-side.pred-side-loss .pred-name{color:var(--text3)}
+.pred-side.pred-side-loss .pred-logo{opacity:.5;filter:grayscale(40%)}
+.pred-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.pred-score-val{font-size:1.4rem;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+.pred-score-sep{color:var(--text3)}
+.pred-vs-txt{font-size:.7rem;font-weight:900;color:var(--text3);letter-spacing:.05em}
+.pred-sched-txt{font-size:.6rem;font-weight:700;color:var(--rl-blue);text-align:center;white-space:nowrap;line-height:1.35;max-width:58px;word-break:break-word}
+.pred-vbtn{padding:5px 10px;border-radius:6px;font-size:.7rem;font-weight:700;border:1px solid var(--border);transition:all .18s;white-space:nowrap;cursor:pointer}
+.pred-vbtn-default{background:var(--bg3);color:var(--text2);border-color:var(--border)}
+.pred-vbtn-default:hover{border-color:var(--rl-blue);color:var(--rl-blue);background:rgba(0,129,255,.08)}
+.pred-vbtn-active{background:rgba(0,129,255,.15);color:var(--rl-blue);border-color:rgba(0,129,255,.4);font-weight:800}
+.pred-vbtn-locked{background:transparent;color:var(--text3);border-color:var(--border);cursor:default;font-size:.66rem}
+.pred-vbtn-noauth{background:transparent;color:var(--text3);border-color:var(--border);cursor:default;font-size:.62rem;padding:5px 7px}
+.pred-vbtn-correct{background:rgba(0,200,100,.1);color:#0c8;border-color:rgba(0,200,100,.3);cursor:default}
+.pred-vbtn-wrong{background:rgba(239,68,68,.08);color:#ef4444;border-color:rgba(239,68,68,.25);cursor:default}
+.pred-vbtn-winner{background:rgba(255,255,255,.04);color:var(--text3);border-color:var(--border);cursor:default;font-size:.66rem}
+.pred-vbtn-loser{background:transparent;color:var(--text3);border-color:transparent;cursor:default;font-size:.66rem;opacity:.4}
+.pred-bars-wrap{padding:6px 14px 12px;display:flex;flex-direction:column;gap:4px}
+.pred-bars-row{display:grid;grid-template-columns:36px 1fr 36px;align-items:center;gap:7px}
+.pred-pct{font-size:.72rem;font-weight:800;color:var(--text2);text-align:right;white-space:nowrap}
+.pred-pct.pred-pct-r{text-align:left}
+.pred-pct.pred-pct-voted{color:var(--rl-blue)}
+.pred-bar-bg{background:var(--bg3);border-radius:4px;height:5px;overflow:hidden}
+.pred-bar-h{height:5px;background:var(--rl-blue);border-radius:4px;transition:width .4s}
+.pred-votes-count{text-align:center;font-size:.62rem;color:var(--text3);font-weight:600;margin-top:1px}
+.pred-first{padding:6px 14px 12px;text-align:center;font-size:.67rem;color:var(--text3)}
+.pred-score-banner{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.pred-score-icon{font-size:1.6rem;line-height:1;flex-shrink:0}
+.pred-score-info{flex:1;min-width:120px}
+.pred-score-val2{font-size:1.25rem;font-weight:900;color:var(--rl-blue)}
+.pred-score-sub{font-size:.72rem;color:var(--text2);margin-top:2px}
+.pred-score-pct{font-size:2rem;font-weight:900;color:#0c8;margin-left:auto}
+.pred-login-banner{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;text-align:center;margin-bottom:22px}
+.pred-login-banner p{color:var(--text2);font-size:.85rem;margin-bottom:12px}
+
 /* ── ADMIN ── */
 .adm-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .adm-sub{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:5px 15px;border-radius:6px;font-size:.8rem;font-weight:700;transition:all .2s}
@@ -745,6 +803,7 @@ img{display:block}
   <button class="nav-btn" onclick="goTab('equipes')" id="nav-equipes">Équipes</button>
   <button class="nav-btn" onclick="goTab('resultats')" id="nav-resultats">Matchs</button>
   <button class="nav-btn" onclick="goTab('stats')" id="nav-stats">Stats</button>
+  <button class="nav-btn" onclick="goTab('predictions')" id="nav-predictions">🔮 Prédictions</button>
   <button class="nav-btn" onclick="goTab('admin')" id="nav-admin">⚙ Admin</button>
 </nav>
 
@@ -886,6 +945,12 @@ img{display:block}
   <section class="tab" id="tab-stats">
     <div class="stats-hl-grid" id="stats-highlights"></div>
     <div id="stats-table-wrap"><div class="loading"></div></div>
+  </section>
+
+  <!-- PREDICTIONS -->
+  <section class="tab" id="tab-predictions">
+    <div id="pred-banner"></div>
+    <div id="pred-content"><div class="loading"></div></div>
   </section>
 
   <!-- ADMIN -->
@@ -1164,7 +1229,7 @@ const FLAGS = {FR:'🇫🇷',BE:'🇧🇪',CH:'🇨🇭',DE:'🇩🇪',ES:'🇪�
 const I18N = {
   fr:{
     login:'Connexion',logout:'Déconnexion',
-    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',nav_stats:'Stats',
+    nav_accueil:'Accueil',nav_classement:'Classement',nav_equipes:'Équipes',nav_resultats:'Matchs',nav_stats:'Stats',nav_predictions:'🔮 Prédictions',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Compétition',lbl_fmt:'Format',lbl_pools:'Poules',lbl_weeks:'Semaines',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Classement — Aperçu',
     col_rank:'#',col_team:'Équipe',col_p:'J',col_w:'V',col_l:'D',col_pts:'Pts',col_gw:'B+',col_gl:'B-',col_diff:'Diff',
     week:'Sem.',all:'Tout',played:'Joués',sched:'À venir',
@@ -1183,7 +1248,7 @@ const I18N = {
   },
   en:{
     login:'Login',logout:'Logout',
-    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Matches',nav_stats:'Stats',
+    nav_accueil:'Home',nav_classement:'Standings',nav_equipes:'Teams',nav_resultats:'Matches',nav_stats:'Stats',nav_predictions:'🔮 Predictions',
     lbl_live:'LIVE — SPRINGS E-SPORT',lbl_compet:'Competition',lbl_fmt:'Format',lbl_pools:'Pools',lbl_weeks:'Weeks',lbl_lan:'LAN',lbl_pts:'Points',lbl_preview:'Standings — Overview',
     col_rank:'#',col_team:'Team',col_p:'P',col_w:'W',col_l:'L',col_pts:'Pts',col_gw:'GW',col_gl:'GL',col_diff:'Diff',
     week:'Wk',all:'All',played:'Played',sched:'Upcoming',
@@ -1218,9 +1283,10 @@ let editTeamId = null, editPlayerId = null;
 let admMatchPool = 1, admMatchWeek = 1;
 
 // Cache
-let teamsMap = {};   // id → team
-let playersMap = {}; // id → player
-let matchesMap = {}; // id → match
+let teamsMap = {};      // id → team
+let playersMap = {};    // id → player
+let matchesMap = {};    // id → match
+let predictorsMap = {}; // uid → {votes:{matchId:'home'|'away'}, ...}
 
 // ════════════════════════════════════════════════
 // i18n
@@ -1237,7 +1303,7 @@ window.setLang = function(l) {
 
 function applyI18n() {
   _updateAuthBtn();
-  const keys = ['accueil','classement','equipes','resultats','stats'];
+  const keys = ['accueil','classement','equipes','resultats','stats','predictions'];
   keys.forEach(k => { const el = document.getElementById('nav-'+k); if(el) el.textContent = t('nav_'+k); });
   const map = {
     'lbl-live':'lbl_live','lbl-compet':'lbl_compet','lbl-fmt':'lbl_fmt','lbl-pools':'lbl_pools',
@@ -1525,6 +1591,7 @@ async function loadTab(tab) {
     await loadResults();
   }
   else if (tab==='stats')        { await loadStats(); }
+  else if (tab==='predictions')  { await loadPredictions(); }
   else if (tab==='admin')        { await loadAdm(admSec); }
 }
 
@@ -3808,6 +3875,235 @@ window.initCalendar = async function() {
     document.getElementById('init-result').textContent='Erreur : '+e.message;
   }
   btn.disabled=false; btn.textContent='🚀 Initialiser';
+};
+
+// ════════════════════════════════════════════════
+// PREDICTIONS
+// ════════════════════════════════════════════════
+async function refreshPredictors() {
+  if (!curUser) return;
+  const s = await getDocs(collection(db, 'rl_predictors'));
+  predictorsMap = {};
+  s.forEach(d => { predictorsMap[d.id] = {id: d.id, ...d.data()}; });
+}
+
+async function loadPredictions() {
+  await fetchAll();
+  await refreshPredictors();
+  renderPredictorBanner();
+  renderPredictions();
+}
+
+function renderPredictorBanner() {
+  const banner = document.getElementById('pred-banner');
+  if (!banner) return;
+  if (!curUser) {
+    banner.innerHTML = `
+      <div class="pred-login-banner">
+        <p>Connectez-vous avec Discord pour voter et suivre vos prédictions</p>
+        <button class="btn-discord" onclick="doAuth()">
+          <svg width="18" height="14" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Se connecter avec Discord
+        </button>
+      </div>`;
+    return;
+  }
+  // Calcul score si matchs joués
+  const myVotes = predictorsMap[curUser.uid]?.votes || {};
+  const playedWithVote = Object.values(matchesMap).filter(m =>
+    m.status === 'played' && myVotes[m.id]
+  );
+  if (!playedWithVote.length) { banner.innerHTML = ''; return; }
+  const correct = playedWithVote.filter(m => {
+    const v = myVotes[m.id];
+    if (v === 'home') return (m.homeScore||0) > (m.awayScore||0);
+    if (v === 'away') return (m.awayScore||0) > (m.homeScore||0);
+    return false;
+  }).length;
+  const pct = Math.round(correct / playedWithVote.length * 100);
+  banner.innerHTML = `
+    <div class="pred-score-banner">
+      <div class="pred-score-icon">🎯</div>
+      <div class="pred-score-info">
+        <div class="pred-score-val2">${correct} / ${playedWithVote.length} correctes</div>
+        <div class="pred-score-sub">Prédictions sur des matchs terminés</div>
+      </div>
+      <div class="pred-score-pct" style="color:${pct>=60?'#0c8':pct>=40?'#f59e0b':'#ef4444'}">${pct}%</div>
+    </div>`;
+}
+
+function _predGetCounts(matchId) {
+  let home = 0, away = 0;
+  Object.values(predictorsMap).forEach(p => {
+    const v = p.votes?.[matchId];
+    if (v === 'home') home++;
+    else if (v === 'away') away++;
+  });
+  return { home, away, total: home + away };
+}
+
+function _predVoteBtn(matchId, side, myVote, isLocked, isPlayed, sideWon) {
+  const voted = myVote === side;
+  if (isPlayed) {
+    if (voted) return sideWon
+      ? `<div class="pred-vbtn pred-vbtn-correct">✅ Correct</div>`
+      : `<div class="pred-vbtn pred-vbtn-wrong">❌ Raté</div>`;
+    return sideWon
+      ? `<div class="pred-vbtn pred-vbtn-winner">Vainqueur</div>`
+      : `<div class="pred-vbtn pred-vbtn-loser">Défaite</div>`;
+  }
+  if (isLocked) {
+    return voted
+      ? `<div class="pred-vbtn pred-vbtn-active" style="cursor:default">✓ Voté</div>`
+      : `<div class="pred-vbtn pred-vbtn-locked">🔒 Fermé</div>`;
+  }
+  if (!curUser) return `<div class="pred-vbtn pred-vbtn-noauth">Connexion</div>`;
+  return voted
+    ? `<button class="pred-vbtn pred-vbtn-active" onclick="votePrediction('${matchId}','${side}')">✓ Voté</button>`
+    : `<button class="pred-vbtn pred-vbtn-default" onclick="votePrediction('${matchId}','${side}')">Voter</button>`;
+}
+
+function renderPredictionCard(m) {
+  const tH = teamsMap[m.homeTeamId] || {name:'?'};
+  const tA = teamsMap[m.awayTeamId] || {name:'?'};
+  const myVotes = predictorsMap[curUser?.uid]?.votes || {};
+  const myVote = myVotes[m.id] || null;
+  const counts = _predGetCounts(m.id);
+  const now = new Date();
+  const scheduled = m.scheduledAt ? new Date(m.scheduledAt) : null;
+  const isPlayed = m.status === 'played';
+  const isLocked = isPlayed || (scheduled && now >= scheduled);
+  const homeWon = isPlayed && (m.homeScore||0) > (m.awayScore||0);
+  const awayWon = isPlayed && (m.awayScore||0) > (m.homeScore||0);
+  const total = counts.total;
+  const homePct = total ? Math.round(counts.home / total * 100) : 50;
+  const awayPct = total ? 100 - homePct : 50;
+
+  const hLogo = tH.logoUrl
+    ? `<img class="pred-logo" src="${esc(tH.logoUrl)}" onerror="this.style.display='none'">`
+    : `<div class="pred-logo-ph">${esc((tH.name||'?')[0])}</div>`;
+  const aLogo = tA.logoUrl
+    ? `<img class="pred-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">`
+    : `<div class="pred-logo-ph">${esc((tA.name||'?')[0])}</div>`;
+
+  let centerHtml;
+  if (isPlayed) {
+    centerHtml = `<div class="pred-score-val">${m.homeScore||0}<span class="pred-score-sep">–</span>${m.awayScore||0}</div>`;
+  } else if (scheduled) {
+    centerHtml = `<div class="pred-vs-txt">VS</div><div class="pred-sched-txt">${formatSchedule(m.scheduledAt)}</div>`;
+  } else {
+    centerHtml = `<div class="pred-vs-txt">VS</div>`;
+  }
+
+  const showBars = isLocked || myVote;
+  let bottomHtml = '';
+  if (showBars) {
+    const hPctCls = myVote==='home' ? ' pred-pct-voted' : '';
+    const aPctCls = myVote==='away' ? ' pred-pct-voted' : '';
+    bottomHtml = `
+      <div class="pred-bars-wrap">
+        <div class="pred-bars-row">
+          <span class="pred-pct${hPctCls}">${homePct}%</span>
+          <div class="pred-bar-bg"><div class="pred-bar-h" style="width:${homePct}%"></div></div>
+          <span class="pred-pct pred-pct-r${aPctCls}">${awayPct}%</span>
+        </div>
+        <div class="pred-votes-count">${total} vote${total!==1?'s':''}</div>
+      </div>`;
+  } else if (curUser && total === 0) {
+    bottomHtml = `<div class="pred-first">Sois le premier à voter !</div>`;
+  }
+
+  const poolLabel = m.pool ? `Poule ${m.pool}` : '';
+  const metaRight = isPlayed
+    ? `<span class="pred-played-chip">✓ Joué</span>`
+    : isLocked ? `<span class="pred-lock-chip">🔒 Fermé</span>`
+    : scheduled ? `<span class="pred-date-chip">${formatSchedule(m.scheduledAt)}</span>` : '';
+
+  return `
+    <div class="pred-card${isPlayed?' pred-card-played':''}">
+      <div class="pred-meta">
+        ${poolLabel ? `<span class="pred-pool-badge">${esc(poolLabel)}</span>` : ''}
+        <span class="pred-week-chip">Sem. ${m.week||'?'}</span>
+        ${metaRight}
+      </div>
+      <div class="pred-body">
+        <div class="pred-side${homeWon?' pred-side-win':isPlayed&&!homeWon?' pred-side-loss':''}">
+          ${hLogo}
+          <div class="pred-name">${esc(tH.name)}</div>
+          ${_predVoteBtn(m.id,'home',myVote,isLocked,isPlayed,homeWon)}
+        </div>
+        <div class="pred-center">${centerHtml}</div>
+        <div class="pred-side${awayWon?' pred-side-win':isPlayed&&!awayWon?' pred-side-loss':''}">
+          ${aLogo}
+          <div class="pred-name">${esc(tA.name)}</div>
+          ${_predVoteBtn(m.id,'away',myVote,isLocked,isPlayed,awayWon)}
+        </div>
+      </div>
+      ${bottomHtml}
+    </div>`;
+}
+
+function renderPredictions() {
+  const el = document.getElementById('pred-content');
+  if (!el) return;
+  const allMatches = Object.values(matchesMap)
+    .filter(m => m.homeTeamId && m.awayTeamId)
+    .sort((a,b) => (a.week - b.week) || ((a.scheduledAt||'') > (b.scheduledAt||'') ? 1 : -1));
+
+  if (!allMatches.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">Aucun match programmé pour le moment.</div>';
+    return;
+  }
+
+  // Group by week
+  const byWeek = {};
+  allMatches.forEach(m => {
+    const w = m.week || 0;
+    if (!byWeek[w]) byWeek[w] = [];
+    byWeek[w].push(m);
+  });
+
+  let html = '';
+  Object.keys(byWeek).sort((a,b)=>a-b).forEach(week => {
+    const matches = byWeek[week];
+    const played = matches.filter(m=>m.status==='played').length;
+    html += `
+      <div class="pred-week-sep">
+        <span class="pred-week-lbl">Semaine ${week}</span>
+        <span class="pred-week-cnt">${played}/${matches.length} joués</span>
+      </div>
+      <div class="pred-cards-grid">
+        ${matches.map(m => renderPredictionCard(m)).join('')}
+      </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+window.votePrediction = async function(matchId, side) {
+  if (!curUser) { toast('Connectez-vous pour voter', 'err'); return; }
+  const m = matchesMap[matchId];
+  if (!m) return;
+  const scheduled = m.scheduledAt ? new Date(m.scheduledAt) : null;
+  if (scheduled && new Date() >= scheduled) { toast('Les votes sont fermés pour ce match', 'err'); return; }
+  if (m.status === 'played') { toast('Ce match est terminé', 'err'); return; }
+
+  const uid = curUser.uid;
+  const currentVotes = { ...(predictorsMap[uid]?.votes || {}) };
+  if (currentVotes[matchId] === side) {
+    delete currentVotes[matchId]; // dé-vote
+  } else {
+    currentVotes[matchId] = side;
+  }
+
+  try {
+    const ref = doc(db, 'rl_predictors', uid);
+    await setDoc(ref, { votes: currentVotes }, { merge: true });
+    if (!predictorsMap[uid]) predictorsMap[uid] = { id: uid };
+    predictorsMap[uid].votes = currentVotes;
+    renderPredictions();
+    renderPredictorBanner();
+  } catch(e) { toast('Erreur lors du vote', 'err'); console.error(e); }
 };
 
 // ════════════════════════════════════════════════
