@@ -939,6 +939,7 @@ img{display:block}
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-hdr"><h2 id="mo-player-title">Modifier le joueur</h2><button class="btn-x" onclick="closeModal('mo-player')">×</button></div>
     <div class="modal-body">
+      <div id="mp-discord-info" style="margin-bottom:14px"></div>
       <div class="form-grid">
         <div class="fg"><label>Pseudo RL</label><input class="finput" id="mp-rl" placeholder="SkyPi11"></div>
         <div class="fg"><label>Discord</label><input class="finput" id="mp-disc" placeholder="pseudo#0000"></div>
@@ -2818,6 +2819,23 @@ window.editPlayer = function(id) {
   document.getElementById('mp-team').value    = p.teamId||'';
   document.getElementById('mp-role').value    = p.role||'titulaire';
   document.getElementById('mp-uid').value     = p.userId||'';
+  // Statut Discord
+  const discInfo = document.getElementById('mp-discord-info');
+  if (p.userId && p.discordId) {
+    const avatar = p.discordAvatar ? `<img src="${esc(p.discordAvatar)}" style="width:20px;height:20px;border-radius:50%;margin-right:6px;vertical-align:middle">` : '';
+    discInfo.innerHTML = `<div style="display:flex;align-items:center;gap:8px;background:rgba(0,200,100,.08);border:1px solid rgba(0,200,100,.2);border-radius:7px;padding:7px 12px;font-size:.78rem">
+      ${avatar}<span style="color:#0c8;font-weight:600">✅ Discord lié</span>
+      <a href="https://discord.com/users/${esc(p.discordId)}" target="_blank" rel="noopener"
+         style="margin-left:auto;color:#5865F2;font-size:.72rem;text-decoration:none;border:1px solid #5865F2;border-radius:5px;padding:2px 8px;transition:background .2s"
+         onmouseover="this.style.background='rgba(88,101,242,.15)'" onmouseout="this.style.background=''">
+        💬 Ouvrir dans Discord
+      </a>
+    </div>`;
+  } else {
+    discInfo.innerHTML = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:7px;padding:7px 12px;font-size:.75rem;color:#f59e0b">
+      ⚠️ Pas encore lié à un compte Discord
+    </div>`;
+  }
   openModal('mo-player');
 };
 
@@ -3289,7 +3307,8 @@ async function admDiscord() {
 
   const linked   = players.filter(p => p.userId);
   const unlinked = players.filter(p => !p.userId);
-  const freePreds = Object.values(_discPreds);
+  const linkedUids = new Set(linked.map(p => p.userId).filter(Boolean));
+  const freePreds = Object.values(_discPreds).filter(pr => !linkedUids.has(pr.id));
 
   function score(player, pred) {
     const a = (player.pseudoDiscord||'').toLowerCase();
@@ -3434,7 +3453,8 @@ window.toggleManualUid = function(playerId) {
 };
 
 window.linkAllExact = async function() {
-  const freePreds = Object.values(_discPreds);
+  const linkedUids = new Set(Object.values(playersMap).filter(p=>p.userId).map(p=>p.userId));
+  const freePreds = Object.values(_discPreds).filter(pr => !linkedUids.has(pr.id));
   const toLink = [];
   for (const p of Object.values(playersMap)) {
     if (p.userId) continue;
