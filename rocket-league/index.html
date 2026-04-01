@@ -3935,10 +3935,18 @@ async function refreshPredictors() {
 }
 
 async function loadPredictions() {
-  await fetchAll();
-  await refreshPredictors();
-  renderPredictorBanner();
-  renderPredictions();
+  try {
+    await fetchAll();
+    if (curUser) {
+      try { await refreshPredictors(); } catch(e) { console.warn('refreshPredictors failed:', e); }
+    }
+    renderPredictorBanner();
+    renderPredictions();
+  } catch(e) {
+    console.error('loadPredictions error:', e);
+    const el = document.getElementById('pred-content');
+    if (el) el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text2)">Impossible de charger les prédictions.<br><span style="font-size:.75rem;color:var(--text3)">${e.message||''}</span></div>`;
+  }
 }
 
 function renderPredictorBanner() {
