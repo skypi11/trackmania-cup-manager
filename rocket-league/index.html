@@ -3593,16 +3593,36 @@ async function admDiscord() {
     </tr>`;
   }
 
-  // Panneau comptes Discord en attente
-  const freePredCards = freePreds.map(pr => {
+  // Panneau comptes Discord en attente — séparés en "à vérifier" et "vérifiés"
+  const freePendingNew     = freePreds.filter(pr => !pr.adminChecked);
+  const freePendingChecked = freePreds.filter(pr =>  pr.adminChecked);
+
+  function predCard(pr, checked) {
     const av = pr.discordAvatar
       ? `<img src="${esc(pr.discordAvatar)}" style="width:28px;height:28px;border-radius:50%">`
       : `<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">${(pr.discordUsername||'?')[0].toUpperCase()}</div>`;
+    if (checked) {
+      return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;white-space:nowrap;opacity:.45">
+        ${av}
+        <span style="font-size:.75rem;font-weight:600;color:var(--text2)">${esc(pr.discordUsername||'?')}</span>
+        <span style="font-size:.6rem;color:#0c8;border:1px solid rgba(0,204,136,.3);border-radius:3px;padding:1px 5px">✓ Vérifié</span>
+        <button onclick="unmarkPredChecked('${pr.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:.65rem;padding:0 2px" title="Remettre en attente">↩</button>
+      </div>`;
+    }
     return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;white-space:nowrap">
       ${av}
       <span style="font-size:.75rem;font-weight:600">${esc(pr.discordUsername||'?')}</span>
+      <button onclick="markPredChecked('${pr.id}')" style="background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2);font-size:.65rem;padding:2px 7px;transition:all .15s" onmouseover="this.style.borderColor='#0c8';this.style.color='#0c8'" onmouseout="this.style.borderColor='';this.style.color=''" title="Marquer comme vérifié — pas un joueur">Pas un joueur ✓</button>
     </div>`;
-  }).join('');
+  }
+
+  const freePredCards = `
+    ${freePendingNew.length ? freePendingNew.map(pr => predCard(pr, false)).join('') : '<span style="font-size:.75rem;color:#0c8">✅ Tous vérifiés</span>'}
+    ${freePendingChecked.length ? `
+      <div style="width:100%;height:1px;background:var(--border);margin:6px 0"></div>
+      ${freePendingChecked.map(pr => predCard(pr, true)).join('')}
+    ` : ''}
+  `;
 
   wrap.innerHTML = `
     <!-- Compteurs + action globale -->
@@ -3616,8 +3636,8 @@ async function admDiscord() {
         <div style="font-size:.65rem;color:var(--text2)">Non liés</div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-align:center">
-        <div style="font-size:1.3rem;font-weight:800;color:#5865F2">${freePreds.length}</div>
-        <div style="font-size:.65rem;color:var(--text2)">Discord en attente</div>
+        <div style="font-size:1.3rem;font-weight:800;color:${freePendingNew.length > 0 ? '#5865F2' : '#0c8'}">${freePendingNew.length}</div>
+        <div style="font-size:.65rem;color:var(--text2)">À vérifier${freePendingChecked.length ? ` <span style="color:var(--text3)">(+${freePendingChecked.length} vérifiés)</span>` : ''}</div>
       </div>
       ${exactCount > 0 ? `
       <button class="btn-p" style="margin-left:auto" onclick="linkAllExact()">
@@ -3752,6 +3772,18 @@ window.unlinkPlayer = async function(playerId) {
   await updateDoc(doc(db, 'rl_players', playerId), { userId: '', discordId: '', discordAvatar: '' });
   if (playersMap[playerId]) { playersMap[playerId].userId = ''; playersMap[playerId].discordId = ''; }
   toast('Lien supprimé', 'ok');
+  await admDiscord();
+};
+
+window.markPredChecked = async function(uid) {
+  await updateDoc(doc(db, 'rl_predictors', uid), { adminChecked: true });
+  if (_discPreds[uid]) _discPreds[uid].adminChecked = true;
+  await admDiscord();
+};
+
+window.unmarkPredChecked = async function(uid) {
+  await updateDoc(doc(db, 'rl_predictors', uid), { adminChecked: false });
+  if (_discPreds[uid]) _discPreds[uid].adminChecked = false;
   await admDiscord();
 };
 
