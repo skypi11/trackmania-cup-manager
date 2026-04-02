@@ -1181,7 +1181,7 @@ img{display:block}
 import { db, auth, app } from '../shared/firebase-config.js';
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp, writeBatch, getDoc, setDoc, query, where
+  doc, serverTimestamp, writeBatch, getDoc, setDoc, query, where, deleteField
 } from 'firebase/firestore';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInWithCustomToken, updateProfile } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
@@ -3844,12 +3844,24 @@ window.unmarkPredChecked = async function(uid) {
 window.resetPredSeason = async function() {
   if (!confirm('⚠️ Reset saison prédictions\n\nCeci va effacer tous les votes, mises de jetons et classements pour tous les prédicteurs.\n\nLes comptes Discord ne seront PAS supprimés.\n\nConfirmer ?')) return;
   try {
-    const snap = await getDocs(collection(db, 'rl_pred_season'));
+    const [seasonSnap, accSnap] = await Promise.all([
+      getDocs(collection(db, 'rl_pred_season')),
+      getDocs(collection(db, 'rl_predictors')),
+    ]);
     const batch = writeBatch(db);
-    snap.forEach(d => batch.delete(d.ref));
+    // Supprimer tous les docs rl_pred_season
+    seasonSnap.forEach(d => batch.delete(d.ref));
+    // Nettoyer les anciens champs saison encore présents dans rl_predictors (migration)
+    const seasonFieldsClear = { votes: deleteField(), jbets: deleteField(), jetons: deleteField(), jetonsWeekKey: deleteField(), points: deleteField() };
+    accSnap.forEach(d => {
+      const data = d.data();
+      if (data.votes || data.jbets || data.jetons || data.points) {
+        batch.update(d.ref, seasonFieldsClear);
+      }
+    });
     await batch.commit();
     predictorsMap = {};
-    toast(`Reset effectué — ${snap.size} document(s) supprimé(s)`, 'ok');
+    toast(`Reset effectué — données saison supprimées`, 'ok');
     await admDiscord();
   } catch(e) { toast('Erreur lors du reset', 'err'); console.error(e); }
 };
@@ -4163,18 +4175,27 @@ window.initCalendar = async function() {
 // Helper : ref Firestore vers les données de saison d'un prédicteur
 function _predSeasonRef(uid) { return doc(db, 'rl_pred_season', uid); }
 
+// Champs compte uniquement — on ignore explicitement les anciens champs saison
+// qui pourraient traîner dans rl_predictors (avant migration)
+const PRED_ACCOUNT_FIELDS = ['uid','discordId','discordUsername','discordAvatar','lastLogin','adminChecked','linkedPlayerId'];
+
+function _pickAccountFields(data) {
+  const out = {};
+  PRED_ACCOUNT_FIELDS.forEach(k => { if (k in data) out[k] = data[k]; });
+  return out;
+}
+
 async function refreshPredictors() {
   if (!curUser) return;
   try {
-    // Lit les deux collections en parallèle et les fusionne
     const [accSnap, seasonSnap] = await Promise.all([
       getDocs(collection(db, 'rl_predictors')),
       getDocs(collection(db, 'rl_pred_season')),
     ]);
     predictorsMap = {};
-    // Comptes (uid, discordUsername, avatar, adminChecked…)
-    accSnap.forEach(d => { predictorsMap[d.id] = { id: d.id, ...d.data() }; });
-    // Données saison (votes, jbets, jetons, points…) — merged par-dessus
+    // Comptes : on ne prend QUE les champs compte (pas les anciens votes/jbets)
+    accSnap.forEach(d => { predictorsMap[d.id] = { id: d.id, ..._pickAccountFields(d.data()) }; });
+    // Données saison — merged par-dessus
     seasonSnap.forEach(d => {
       if (!predictorsMap[d.id]) predictorsMap[d.id] = { id: d.id };
       Object.assign(predictorsMap[d.id], d.data());
@@ -4187,7 +4208,7 @@ async function refreshPredictors() {
         getDoc(_predSeasonRef(curUser.uid)),
       ]);
       const merged = { id: curUser.uid };
-      if (own.exists()) Object.assign(merged, own.data());
+      if (own.exists()) Object.assign(merged, _pickAccountFields(own.data()));
       if (ownSeason.exists()) Object.assign(merged, ownSeason.data());
       predictorsMap[curUser.uid] = merged;
     } catch(e2) { console.warn('refreshPredictors fallback failed:', e2); }
