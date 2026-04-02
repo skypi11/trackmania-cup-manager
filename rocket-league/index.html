@@ -1476,13 +1476,13 @@ window.openProfile = async function() {
       if (p.userId === curUser.uid) { playerDoc = p; break; }
     }
 
-    // Charge toujours les données predictors pour les stats de prédiction
-    let predictorDoc = null;
-    const predSnap = await getDoc(doc(db, 'rl_predictors', curUser.uid));
-    if (predSnap.exists()) predictorDoc = { id: predSnap.id, ...predSnap.data() };
+    // Charge les données de saison pour les stats de prédiction
+    let predictorSeasonDoc = null;
+    const predSeasonSnap = await getDoc(doc(db, 'rl_pred_season', curUser.uid));
+    if (predSeasonSnap.exists()) predictorSeasonDoc = { id: predSeasonSnap.id, ...predSeasonSnap.data() };
 
     // Calcul des stats de prédiction
-    const predVotes = predictorDoc?.votes || {};
+    const predVotes = predictorSeasonDoc?.votes || {};
     let predPts = 0, predVoted = 0, predCorrect = 0, predExact = 0;
     const playedMs = Object.values(matchesMap).filter(m => m.status === 'played');
     playedMs.forEach(m => {
@@ -3688,10 +3688,15 @@ async function admDiscord() {
         <div style="font-size:1.3rem;font-weight:800;color:${freePendingNew.length > 0 ? '#5865F2' : '#0c8'}">${freePendingNew.length}</div>
         <div style="font-size:.65rem;color:var(--text2)">À vérifier${freePendingChecked.length ? ` <span style="color:var(--text3)">(+${freePendingChecked.length} vérifiés)</span>` : ''}</div>
       </div>
-      ${exactCount > 0 ? `
-      <button class="btn-p" style="margin-left:auto" onclick="linkAllExact()">
-        ⚡ Lier ${exactCount} match${exactCount>1?'s':''} exact${exactCount>1?'s':''}
-      </button>` : ''}
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        ${exactCount > 0 ? `
+        <button class="btn-p" onclick="linkAllExact()">
+          ⚡ Lier ${exactCount} match${exactCount>1?'s':''} exact${exactCount>1?'s':''}
+        </button>` : ''}
+        <button onclick="resetPredSeason()" style="background:none;border:1px solid #ef4444;color:#ef4444;padding:6px 14px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer" title="Remet à zéro votes, mises et jetons pour tous les prédicteurs">
+          🗑️ Reset saison prédictions
+        </button>
+      </div>
     </div>
 
     <!-- Comptes Discord en attente (non encore liés) -->
@@ -3834,6 +3839,19 @@ window.unmarkPredChecked = async function(uid) {
   await updateDoc(doc(db, 'rl_predictors', uid), { adminChecked: false });
   if (_discPreds[uid]) _discPreds[uid].adminChecked = false;
   await admDiscord();
+};
+
+window.resetPredSeason = async function() {
+  if (!confirm('⚠️ Reset saison prédictions\n\nCeci va effacer tous les votes, mises de jetons et classements pour tous les prédicteurs.\n\nLes comptes Discord ne seront PAS supprimés.\n\nConfirmer ?')) return;
+  try {
+    const snap = await getDocs(collection(db, 'rl_pred_season'));
+    const batch = writeBatch(db);
+    snap.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    predictorsMap = {};
+    toast(`Reset effectué — ${snap.size} document(s) supprimé(s)`, 'ok');
+    await admDiscord();
+  } catch(e) { toast('Erreur lors du reset', 'err'); console.error(e); }
 };
 
 const PLAYERS_DATA = [
@@ -4141,19 +4159,37 @@ window.initCalendar = async function() {
 // ════════════════════════════════════════════════
 // PREDICTIONS
 // ════════════════════════════════════════════════
+
+// Helper : ref Firestore vers les données de saison d'un prédicteur
+function _predSeasonRef(uid) { return doc(db, 'rl_pred_season', uid); }
+
 async function refreshPredictors() {
   if (!curUser) return;
   try {
-    const s = await getDocs(collection(db, 'rl_predictors'));
+    // Lit les deux collections en parallèle et les fusionne
+    const [accSnap, seasonSnap] = await Promise.all([
+      getDocs(collection(db, 'rl_predictors')),
+      getDocs(collection(db, 'rl_pred_season')),
+    ]);
     predictorsMap = {};
-    s.forEach(d => { predictorsMap[d.id] = {id: d.id, ...d.data()}; });
+    // Comptes (uid, discordUsername, avatar, adminChecked…)
+    accSnap.forEach(d => { predictorsMap[d.id] = { id: d.id, ...d.data() }; });
+    // Données saison (votes, jbets, jetons, points…) — merged par-dessus
+    seasonSnap.forEach(d => {
+      if (!predictorsMap[d.id]) predictorsMap[d.id] = { id: d.id };
+      Object.assign(predictorsMap[d.id], d.data());
+    });
   } catch(e) {
-    // Règles Firebase trop restrictives pour lire toute la collection
-    // → fallback : lit au minimum le doc de l'utilisateur courant
     console.warn('refreshPredictors: lecture collection refusée, fallback doc perso', e.code);
     try {
-      const own = await getDoc(doc(db, 'rl_predictors', curUser.uid));
-      if (own.exists()) predictorsMap[curUser.uid] = { id: curUser.uid, ...own.data() };
+      const [own, ownSeason] = await Promise.all([
+        getDoc(doc(db, 'rl_predictors', curUser.uid)),
+        getDoc(_predSeasonRef(curUser.uid)),
+      ]);
+      const merged = { id: curUser.uid };
+      if (own.exists()) Object.assign(merged, own.data());
+      if (ownSeason.exists()) Object.assign(merged, ownSeason.data());
+      predictorsMap[curUser.uid] = merged;
     } catch(e2) { console.warn('refreshPredictors fallback failed:', e2); }
   }
 }
@@ -4302,8 +4338,7 @@ async function checkJetonReset(uid) {
   const key = getJetonWeekKey();
   const pred = predictorsMap[uid];
   if (pred?.jetonsWeekKey === key) return;
-  const ref = doc(db, 'rl_predictors', uid);
-  await setDoc(ref, { jetons: JETONS_PER_WEEK, jetonsWeekKey: key }, { merge: true });
+  await setDoc(_predSeasonRef(uid), { jetons: JETONS_PER_WEEK, jetonsWeekKey: key }, { merge: true });
   if (!predictorsMap[uid]) predictorsMap[uid] = { id: uid };
   predictorsMap[uid].jetons = JETONS_PER_WEEK;
   predictorsMap[uid].jetonsWeekKey = key;
@@ -4325,7 +4360,7 @@ async function resolveJetonBets(uid) {
     changed = true;
   }
   if (!changed) return;
-  await updateDoc(doc(db, 'rl_predictors', uid), { jbets });
+  await updateDoc(_predSeasonRef(uid), { jbets });
   predictorsMap[uid].jbets = jbets;
 }
 
@@ -4845,8 +4880,7 @@ window.confirmVotePred = async function(matchId) {
   }
 
   try {
-    const ref = doc(db, 'rl_predictors', uid);
-    await setDoc(ref, updates, { merge: true });
+    await setDoc(_predSeasonRef(uid), updates, { merge: true });
     if (!predictorsMap[uid]) predictorsMap[uid] = { id: uid };
     Object.assign(predictorsMap[uid], updates);
     closeModal('mo-vote-pred');
@@ -4872,8 +4906,7 @@ window.votePrediction = async function(matchId, side) {
   currentVotes[matchId] = { winner: side };
 
   try {
-    const ref = doc(db, 'rl_predictors', uid);
-    await setDoc(ref, { votes: currentVotes }, { merge: true });
+    await setDoc(_predSeasonRef(uid), { votes: currentVotes }, { merge: true });
     if (!predictorsMap[uid]) predictorsMap[uid] = { id: uid };
     predictorsMap[uid].votes = currentVotes;
     renderPredictions();
@@ -4899,8 +4932,7 @@ window.votePredictionScore = async function(matchId, score) {
   currentVotes[matchId] = { winner: _vWinner(existing), ...(newScore ? {score: newScore} : {}) };
 
   try {
-    const ref = doc(db, 'rl_predictors', uid);
-    await setDoc(ref, { votes: currentVotes }, { merge: true });
+    await setDoc(_predSeasonRef(uid), { votes: currentVotes }, { merge: true });
     predictorsMap[uid].votes = currentVotes;
     renderPredictions();
   } catch(e) { toast('Erreur lors du vote', 'err'); console.error(e); }
