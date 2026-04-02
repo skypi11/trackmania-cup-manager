@@ -2733,7 +2733,13 @@ async function loadStats() {
       pts: t.pts, gw: t.gw, gl: t.gl,
       diff: t.gw-t.gl, w: t.wins, form: fW(t)
     }[statsSortKey] ?? t.pts);
-    return statsSortAsc ? val(a)-val(b) : val(b)-val(a);
+    const primary = statsSortAsc ? val(a)-val(b) : val(b)-val(a);
+    if (primary !== 0) return primary;
+    // Tiebreaker : pts → diff → buts marqués (identique au classement)
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    const diffA = a.gw-a.gl, diffB = b.gw-b.gl;
+    if (diffB !== diffA) return diffB - diffA;
+    return b.gw - a.gw;
   });
 
   const th = (key, label, title='') => {
