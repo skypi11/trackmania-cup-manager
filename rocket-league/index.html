@@ -1276,6 +1276,7 @@ async function _onDiscordLogin(user, discordId, discordUsername, discordAvatar) 
         userId: user.uid,
         discordId,
         discordAvatar,
+        discordUsername,
       });
       // Invalide le cache pour que fetchAll recharge les données à jour
       _dataFetched = false;
@@ -3624,7 +3625,7 @@ async function admDiscord() {
   function linkedRow(p) {
     const team = teamsMap[p.teamId];
     const pred = _discPreds[p.userId];
-    const discordName = pred?.discordUsername || p.discordId || p.userId?.replace('discord_','') || '?';
+    const discordName = p.discordUsername || pred?.discordUsername || p.discordId || p.userId?.replace('discord_','') || '?';
     const avatar = pred?.discordAvatar || p.discordAvatar || '';
     const searchKey = `${p.pseudoRL||''} ${discordName} ${team?.name||''}`.toLowerCase();
     return `<tr class="disc-row-linked" data-search="${esc(searchKey)}">
@@ -3786,9 +3787,9 @@ window.linkPlayerDirect = async function(playerId, predUid) {
   const pred = _discPreds[predUid];
   if (!pred) { toast('Compte introuvable', 'err'); return; }
   await updateDoc(doc(db, 'rl_players', playerId), {
-    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '',
+    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '', discordUsername: pred.discordUsername || '',
   });
-  if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId });
+  if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId, discordUsername: pred.discordUsername });
   toast(`${pred.discordUsername} lié !`, 'ok');
   await admDiscord();
 };
@@ -3799,9 +3800,9 @@ window.linkPlayerDiscord = async function(playerId) {
   const pred = _discPreds[predUid];
   if (!pred) { toast('Compte introuvable', 'err'); return; }
   await updateDoc(doc(db, 'rl_players', playerId), {
-    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '',
+    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '', discordUsername: pred.discordUsername || '',
   });
-  if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId });
+  if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId, discordUsername: pred.discordUsername });
   toast(`${pred.discordUsername} lié !`, 'ok');
   await admDiscord();
 };
