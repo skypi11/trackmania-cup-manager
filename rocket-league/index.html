@@ -3495,35 +3495,79 @@ async function admDiscord() {
     const team = teamsMap[p.teamId];
     const roleLabels = { titulaire:'Tit.', capitaine:'Cap.', sub:'Sub', coach:'Coach', manager:'Mgr', fondateur:'Fond.' };
     const sorted = [...freePreds].sort((a,b) => score(p,b) - score(p,a));
-    const opts = sorted.map(pr => {
-      const s = score(p, pr);
-      const hint = s === 2 ? ' ✅' : s === 1 ? ' 🔶' : '';
-      return `<option value="${esc(pr.id)}">${esc(pr.discordUsername)}${hint}</option>`;
-    }).join('');
-    const searchKey = `${p.pseudoRL||''} ${p.pseudoDiscord||''} ${teamsMap[p.teamId]?.name||''}`.toLowerCase();
+    const best = sorted[0];
+    const bestScore = best ? score(p, best) : 0;
+    const av = pr => pr?.discordAvatar
+      ? `<img src="${esc(pr.discordAvatar)}" style="width:18px;height:18px;border-radius:50%;flex-shrink:0">`
+      : `<div style="width:18px;height:18px;border-radius:50%;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;flex-shrink:0">${(pr?.discordUsername||'?')[0].toUpperCase()}</div>`;
+    const searchKey = `${p.pseudoRL||''} ${p.pseudoDiscord||''} ${team?.name||''}`.toLowerCase();
+
+    // Zone de suggestion selon le score
+    let suggestHtml = '';
+    if (!freePreds.length) {
+      suggestHtml = `<span style="font-size:.72rem;color:var(--text3)">Aucun compte dispo</span>`;
+    } else if (bestScore === 2) {
+      // Match exact — bouton direct
+      suggestHtml = `
+        <div style="display:flex;align-items:center;gap:6px">
+          ${av(best)}
+          <span style="font-size:.78rem;font-weight:700;color:#0c8">${esc(best.discordUsername)}</span>
+          <span style="font-size:.65rem;color:#0c8;border:1px solid rgba(0,204,136,.4);border-radius:4px;padding:1px 5px">✅ exact</span>
+          <button class="btn-p" style="font-size:.7rem;padding:3px 10px;margin-left:2px" onclick="linkPlayerDirect('${p.id}','${esc(best.id)}')">Lier</button>
+          <button class="btn-s" style="font-size:.7rem;padding:3px 6px" title="Choisir un autre" onclick="toggleAltSel('${p.id}')">▾</button>
+          <button class="btn-s" style="font-size:.65rem;padding:2px 5px;color:var(--text3)" onclick="toggleManualUid('${p.id}')" title="UID manuel">✏️</button>
+        </div>`;
+    } else if (bestScore === 1) {
+      // Match partiel — suggestion avec confirmation
+      suggestHtml = `
+        <div style="display:flex;align-items:center;gap:6px">
+          ${av(best)}
+          <span style="font-size:.78rem;font-weight:600;color:#f59e0b">${esc(best.discordUsername)}</span>
+          <span style="font-size:.65rem;color:#f59e0b;border:1px solid rgba(245,158,11,.4);border-radius:4px;padding:1px 5px">🔶 approx</span>
+          <button class="btn-p" style="font-size:.7rem;padding:3px 10px;margin-left:2px" onclick="linkPlayerDirect('${p.id}','${esc(best.id)}')">Lier</button>
+          <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="toggleAltSel('${p.id}')">Autre ▾</button>
+          <button class="btn-s" style="font-size:.65rem;padding:2px 5px;color:var(--text3)" onclick="toggleManualUid('${p.id}')" title="UID manuel">✏️</button>
+        </div>`;
+    } else {
+      // Aucun match — dropdown compact d'emblée
+      const opts = sorted.map(pr => `<option value="${esc(pr.id)}">${esc(pr.discordUsername)}</option>`).join('');
+      suggestHtml = `
+        <div style="display:flex;gap:5px;align-items:center">
+          <select class="finput" id="sel-${p.id}" style="font-size:.72rem;padding:3px 6px;max-width:180px">
+            <option value="">— Choisir —</option>${opts}
+          </select>
+          <button class="btn-p" style="font-size:.7rem;padding:3px 8px" onclick="linkPlayerDiscord('${p.id}')">Lier</button>
+          <button class="btn-s" style="font-size:.65rem;padding:2px 5px;color:var(--text3)" onclick="toggleManualUid('${p.id}')" title="UID manuel">✏️</button>
+        </div>`;
+    }
+
+    // Dropdown alternatif (caché par défaut, pour changer de suggestion)
+    const altOpts = sorted.map(pr => `<option value="${esc(pr.id)}">${esc(pr.discordUsername)}</option>`).join('');
+    const altDropdown = bestScore > 0 ? `
+      <div id="alt-${p.id}" style="display:none;margin-top:5px;display:none;gap:5px;align-items:center">
+        <select class="finput" id="sel-${p.id}" style="font-size:.72rem;padding:3px 6px;max-width:200px">
+          <option value="">— Choisir —</option>${altOpts}
+        </select>
+        <button class="btn-p" style="font-size:.7rem;padding:3px 8px" onclick="linkPlayerDiscord('${p.id}')">Lier</button>
+      </div>` : '';
+
+    // Champ UID manuel (caché)
+    const manualHtml = `
+      <div id="manual-${p.id}" style="display:none;margin-top:5px;display:none;gap:4px;align-items:center">
+        <input class="finput" id="uid-${p.id}" placeholder="discord_000..." style="font-size:.7rem;padding:3px 6px;flex:1;max-width:200px">
+        <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="linkPlayerManual('${p.id}')">OK</button>
+      </div>`;
 
     return `<tr class="disc-row" data-search="${esc(searchKey)}">
-      <td style="padding:7px 8px;white-space:nowrap">
-        <span style="font-weight:700;font-size:.8rem">${esc(p.pseudoRL||'?')}</span>
-        <span style="font-size:.65rem;color:var(--text2);margin-left:5px">${esc(team?.name||'—')} · ${roleLabels[p.role]||p.role||''}</span>
+      <td style="padding:8px 8px;white-space:nowrap">
+        <div style="font-weight:700;font-size:.8rem">${esc(p.pseudoRL||'?')}</div>
+        <div style="font-size:.65rem;color:var(--text2)">${esc(team?.name||'—')} · ${roleLabels[p.role]||p.role||''}</div>
       </td>
-      <td style="padding:7px 8px;font-size:.75rem;color:var(--text2);white-space:nowrap">${esc(p.pseudoDiscord||'—')}</td>
-      <td style="padding:7px 8px">
-        <div style="display:flex;gap:5px;align-items:center">
-          ${freePreds.length ? `
-            <select class="finput" id="sel-${p.id}" style="font-size:.72rem;padding:3px 6px;max-width:180px">
-              <option value="">— Choisir —</option>${opts}
-            </select>
-            <button class="btn-p" style="font-size:.7rem;padding:3px 8px;white-space:nowrap" onclick="linkPlayerDiscord('${p.id}')">Lier</button>
-            <button class="btn-s" style="font-size:.7rem;padding:3px 6px" title="Saisir UID manuellement" onclick="toggleManualUid('${p.id}')">✏️</button>
-          ` : `
-            <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="toggleManualUid('${p.id}')">Saisir UID</button>
-          `}
-        </div>
-        <div id="manual-${p.id}" style="display:none;margin-top:4px;display:none;gap:4px">
-          <input class="finput" id="uid-${p.id}" placeholder="discord_000..." style="font-size:.7rem;padding:3px 6px;flex:1">
-          <button class="btn-s" style="font-size:.7rem;padding:3px 6px" onclick="linkPlayerManual('${p.id}')">OK</button>
-        </div>
+      <td style="padding:8px 8px;font-size:.72rem;color:var(--text2);white-space:nowrap">${esc(p.pseudoDiscord||'—')}</td>
+      <td style="padding:8px 8px">
+        ${suggestHtml}
+        ${altDropdown}
+        ${manualHtml}
       </td>
     </tr>`;
   }
@@ -3549,8 +3593,20 @@ async function admDiscord() {
     </tr>`;
   }
 
+  // Panneau comptes Discord en attente
+  const freePredCards = freePreds.map(pr => {
+    const av = pr.discordAvatar
+      ? `<img src="${esc(pr.discordAvatar)}" style="width:28px;height:28px;border-radius:50%">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">${(pr.discordUsername||'?')[0].toUpperCase()}</div>`;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;white-space:nowrap">
+      ${av}
+      <span style="font-size:.75rem;font-weight:600">${esc(pr.discordUsername||'?')}</span>
+    </div>`;
+  }).join('');
+
   wrap.innerHTML = `
-    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+    <!-- Compteurs + action globale -->
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;text-align:center">
         <div style="font-size:1.3rem;font-weight:800;color:#0c8">${linked.length}</div>
         <div style="font-size:.65rem;color:var(--text2)">Liés</div>
@@ -3569,6 +3625,15 @@ async function admDiscord() {
       </button>` : ''}
     </div>
 
+    <!-- Comptes Discord en attente (non encore liés) -->
+    ${freePreds.length ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:.7rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+        Comptes Discord connectés non liés à un joueur
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${freePredCards}</div>
+    </div>` : ''}
+
     ${unlinked.length ? `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div class="stitle" style="margin:0">⚠️ Non liés (${unlinked.length})</div>
@@ -3580,7 +3645,7 @@ async function admDiscord() {
         <thead><tr style="font-size:.65rem;color:var(--text2);text-transform:uppercase;border-bottom:1px solid var(--border)">
           <th style="padding:5px 8px;text-align:left">Joueur · Équipe</th>
           <th style="padding:5px 8px;text-align:left">pseudoDiscord</th>
-          <th style="padding:5px 8px;text-align:left">Lier à…</th>
+          <th style="padding:5px 8px;text-align:left">Suggestion / Liaison</th>
         </tr></thead>
         <tbody>${unlinked.map(playerRow).join('')}</tbody>
       </table>
@@ -3643,6 +3708,17 @@ window.linkAllExact = async function() {
   await admDiscord();
 };
 
+window.linkPlayerDirect = async function(playerId, predUid) {
+  const pred = _discPreds[predUid];
+  if (!pred) { toast('Compte introuvable', 'err'); return; }
+  await updateDoc(doc(db, 'rl_players', playerId), {
+    userId: predUid, discordId: pred.discordId, discordAvatar: pred.discordAvatar || '',
+  });
+  if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId });
+  toast(`${pred.discordUsername} lié !`, 'ok');
+  await admDiscord();
+};
+
 window.linkPlayerDiscord = async function(playerId) {
   const predUid = document.getElementById('sel-' + playerId)?.value;
   if (!predUid) { toast('Sélectionne un compte Discord', 'err'); return; }
@@ -3654,6 +3730,12 @@ window.linkPlayerDiscord = async function(playerId) {
   if (playersMap[playerId]) Object.assign(playersMap[playerId], { userId: predUid, discordId: pred.discordId });
   toast(`${pred.discordUsername} lié !`, 'ok');
   await admDiscord();
+};
+
+window.toggleAltSel = function(playerId) {
+  const el = document.getElementById('alt-' + playerId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
 };
 
 window.linkPlayerManual = async function(playerId) {
