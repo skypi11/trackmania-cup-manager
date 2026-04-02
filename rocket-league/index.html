@@ -4445,10 +4445,16 @@ function renderPredictionCard(m) {
     </div>`;
   } else if (isLocked) {
     voteZone = `<div class="pred-voted-zone-locked">🔒 Votes fermés (15 min avant le match)</div>`;
-  } else if (!curUser) {
-    voteZone = `<div class="pred-login-hint-card">Connexion Discord pour voter</div>`;
   } else {
-    voteZone = `<button class="pred-vote-cta" onclick="openVoteModal('${m.id}')">Pronostiquer →</button>`;
+    const pendingWeeks2 = Object.values(matchesMap).filter(x => x.status !== 'played').map(x => x.week).filter(Boolean);
+    const activeWeek2 = pendingWeeks2.length ? Math.min(...pendingWeeks2) : m.week;
+    if (m.week > activeWeek2) {
+      voteZone = `<div class="pred-voted-zone-locked">📅 Pronostics ouverts en semaine ${m.week}</div>`;
+    } else if (!curUser) {
+      voteZone = `<div class="pred-login-hint-card">Connexion Discord pour voter</div>`;
+    } else {
+      voteZone = `<button class="pred-vote-cta" onclick="openVoteModal('${m.id}')">Pronostiquer →</button>`;
+    }
   }
 
   // Barres
@@ -4701,6 +4707,7 @@ window.openVoteModal = function(matchId) {
   const pendingWeeks = Object.values(matchesMap).filter(x => x.status !== 'played').map(x => x.week).filter(Boolean);
   const activeWeek = pendingWeeks.length ? Math.min(...pendingWeeks) : m.week;
   const isFutureWeek = m.week > activeWeek;
+  if (isFutureWeek) { toast(`Pronostics ouverts en semaine ${m.week}`, 'err'); return; }
 
   _voteState = { matchId, cotes, myJetons, winner: null, scoreH: null, betAmount: 0 };
 
@@ -4745,12 +4752,7 @@ window.openVoteModal = function(matchId) {
       </div>
     </div>
 
-    ${isFutureWeek ? `
-    <div class="vote-modal-section">
-      <div class="vote-modal-section-title">Miser des jetons — optionnel <span style="font-size:.6rem;color:var(--text3)">(mise × cote = pts si correct)</span></div>
-      <div style="font-size:.72rem;color:#f59e0b;margin-bottom:4px">🔒 Jetons disponibles uniquement pour la semaine en cours (S${activeWeek})</div>
-      <div style="font-size:.68rem;color:var(--text3)">Reviens en semaine ${m.week} pour miser tes jetons sur ce match.</div>
-    </div>` : myJetons > 0 ? `
+    ${myJetons > 0 ? `
     <div class="vote-modal-section">
       <div class="vote-modal-section-title">Miser des jetons — optionnel <span style="font-size:.6rem;color:var(--text3)">(mise × cote = pts si correct)</span></div>
       <div style="font-size:.72rem;color:var(--text2);margin-bottom:8px">Solde : <b style="color:#FFB800">${myJetons} 🪙</b></div>
