@@ -601,16 +601,11 @@ img{display:block}
 .jeton-balance-lbl{font-size:.6rem;color:var(--text3)}
 .jeton-reset-info{font-size:.6rem;color:var(--text3);text-align:right}
 .bet-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.bet-slider{flex:1;min-width:120px;accent-color:#FFB800}
+.bet-slider{flex:1;min-width:120px;accent-color:#FFB800;cursor:pointer}
 .bet-display{font-size:.75rem;font-weight:700;color:#FFB800;white-space:nowrap;min-width:110px}
 .vote-modal-confirm{display:block;width:100%;background:var(--rl-blue);border:none;color:#fff;font-size:.85rem;font-weight:800;padding:11px;border-radius:8px;cursor:pointer;font-family:inherit;margin-top:16px;transition:background .2s}
 .vote-modal-confirm:hover{background:rgba(0,81,200,.9)}
 .vote-modal-confirm:disabled{background:var(--bg3);color:var(--text3);cursor:default}
-/* ── LEADERBOARD JETONS ── */
-.jlb-row{display:grid;grid-template-columns:28px 28px 1fr 60px 60px;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;transition:background .15s}
-.jlb-row:last-child{border-bottom:none}
-.jlb-row:hover{background:rgba(255,255,255,.02)}
-.jlb-row.jlb-me{background:rgba(255,184,0,.05)}
 /* ── EXPLICATION PREDICTIONS ── */
 .pred-rules-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .pred-rule-item{display:flex;align-items:flex-start;gap:8px}
@@ -4308,7 +4303,7 @@ async function resolveJetonBets(uid) {
   const pred = predictorsMap[uid];
   if (!pred?.jbets) return;
   const jbets = { ...pred.jbets };
-  let changed = false, jetonsGained = 0;
+  let changed = false;
   for (const [matchId, bet] of Object.entries(jbets)) {
     if (bet.status !== 'pending') continue;
     const m = matchesMap[matchId];
@@ -4317,18 +4312,15 @@ async function resolveJetonBets(uid) {
     const awayWon = (m.awayScore||0) > (m.homeScore||0);
     const won = (bet.side === 'home' && homeWon) || (bet.side === 'away' && awayWon);
     jbets[matchId] = { ...bet, status: won ? 'won' : 'lost' };
-    if (won) jetonsGained += Math.floor(bet.amount * bet.cote);
     changed = true;
   }
   if (!changed) return;
-  const newJetons = (pred.jetons || 0) + jetonsGained;
-  const newEarned = (pred.jetonsEarned || 0) + jetonsGained;
-  await updateDoc(doc(db, 'rl_predictors', uid), { jbets, jetons: newJetons, jetonsEarned: newEarned });
-  Object.assign(predictorsMap[uid], { jbets, jetons: newJetons, jetonsEarned: newEarned });
-  if (jetonsGained > 0) toast(`🪙 +${jetonsGained} jetons gagnés sur vos paris !`, 'ok');
+  await updateDoc(doc(db, 'rl_predictors', uid), { jbets });
+  predictorsMap[uid].jbets = jbets;
 }
 
-function calcPredPoints(vote, match) {
+// jbet optionnel : { amount, cote, status } — si présent, remplace les pts de base par floor(amount×cote)
+function calcPredPoints(vote, match, jbet) {
   if (!vote || match.status !== 'played') return 0;
   const winner = _vWinner(vote);
   const score  = _vScore(vote);
@@ -4336,11 +4328,16 @@ function calcPredPoints(vote, match) {
   const aw = (match.awayScore||0) > (match.homeScore||0);
   const correctWinner = (winner==='home'&&hw) || (winner==='away'&&aw);
   if (!correctWinner) return 0;
-  if (!score) return 1;
-  // Score exact : "4-X" ou "X-4"
+  // Pts de base : 1pt, ou floor(mise × cote) si pari placé
+  let base = 1;
+  if (jbet?.amount > 0 && jbet?.cote > 0) {
+    base = Math.max(1, Math.floor(jbet.amount * jbet.cote));
+  }
+  // Bonus score exact : +2pts
+  if (!score) return base;
   const [hs, as] = score.split('-').map(Number);
-  if (hs === (match.homeScore||0) && as === (match.awayScore||0)) return 3;
-  return 1;
+  if (hs === (match.homeScore||0) && as === (match.awayScore||0)) return base + 2;
+  return base;
 }
 
 function _predGetCounts(matchId) {
@@ -4512,16 +4509,17 @@ function renderPlayedPredRow(m, myVote) {
   const tA = teamsMap[m.awayTeamId] || {name:'?'};
   const homeWon = (m.homeScore||0) > (m.awayScore||0);
   const awayWon = (m.awayScore||0) > (m.homeScore||0);
-  const pts = calcPredPoints(myVote, m);
+  const myJbet = predictorsMap[curUser?.uid]?.jbets?.[m.id] || null;
+  const pts = calcPredPoints(myVote, m, myJbet);
   const correct = pts >= 1;
   const exact = pts === 3;
   const hLogo = tH.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tH.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tH.name||'?')[0])}</div>`;
   const aLogo = tA.logoUrl ? `<img class="pred-cmpct-logo" src="${esc(tA.logoUrl)}" onerror="this.style.display='none'">` : `<div class="pred-cmpct-logo" style="display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700">${esc((tA.name||'?')[0])}</div>`;
-  const ptsBadge = exact
-    ? `<span class="pred-cmpct-pts exact">+3pts★</span>`
-    : correct
-      ? `<span class="pred-cmpct-pts ok">+1pt</span>`
-      : `<span class="pred-cmpct-pts ko">0pt</span>`;
+  const ptsBadge = !correct
+    ? `<span class="pred-cmpct-pts ko">0pt</span>`
+    : exact
+      ? `<span class="pred-cmpct-pts exact">+${pts}pts★</span>`
+      : `<span class="pred-cmpct-pts ok">+${pts}pt${pts>1?'s':''}</span>`;
   return `
     <div class="pred-cmpct${!correct?' pred-wrong':''}">
       <span class="pred-cmpct-ico">${correct?'✅':'❌'}</span>
@@ -4539,23 +4537,33 @@ function renderPredLeaderboard() {
   const rkCls = i => i===0?'pred-lb-rk1':i===1?'pred-lb-rk2':i===2?'pred-lb-rk3':'pred-lb-rkn';
   const rkIcon = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
 
-  // Classement prédictions (pts)
-  const predEntries = Object.values(predictorsMap).map(p => {
-    const votes = p.votes || {};
-    let pts = 0, voted = 0, correct = 0, exact = 0;
-    playedMatches.forEach(m => {
-      if (!votes[m.id]) return;
-      voted++;
-      const pp = calcPredPoints(votes[m.id], m);
-      pts += pp;
-      if (pp >= 1) correct++;
-      if (pp === 3) exact++;
-    });
-    return { p, pts, voted, correct, exact };
-  }).filter(e => e.voted >= 1).sort((a,b) => b.pts-a.pts || b.correct-a.correct);
+  const entries = Object.values(predictorsMap)
+    .filter(p => p.discordUsername) // ignorer sans username
+    .map(p => {
+      const votes = p.votes || {};
+      const jbets = p.jbets || {};
+      let pts = 0, voted = 0, correct = 0, exact = 0;
+      playedMatches.forEach(m => {
+        if (!votes[m.id]) return;
+        voted++;
+        const jbet = jbets[m.id] || null;
+        const pp = calcPredPoints(votes[m.id], m, jbet);
+        pts += pp;
+        if (pp >= 1) correct++;
+        // exact = score prédit correct (base sans mise = 3, avec mise base+2)
+        const sc = _vScore(votes[m.id]);
+        if (sc && pp > 0) {
+          const [hs, as] = sc.split('-').map(Number);
+          if (hs === (m.homeScore||0) && as === (m.awayScore||0)) exact++;
+        }
+      });
+      return { p, pts, voted, correct, exact };
+    })
+    .filter(e => e.voted >= 1)
+    .sort((a,b) => b.pts-a.pts || b.correct-a.correct);
 
-  const predRows = predEntries.slice(0,15).map((e,i) => {
-    const name = e.p.discordUsername || '?';
+  const rows = entries.slice(0,15).map((e,i) => {
+    const name = e.p.discordUsername;
     const isMe = curUser && e.p.id === curUser.uid;
     const av = e.p.discordAvatar
       ? `<img class="pred-lb-av" src="${esc(e.p.discordAvatar)}" onerror="this.src='';">`
@@ -4571,52 +4579,21 @@ function renderPredLeaderboard() {
     </div>`;
   }).join('');
 
-  // Classement jetons
-  const jEntries = Object.values(predictorsMap)
-    .filter(p => (p.jetonsEarned || 0) > 0)
-    .sort((a,b) => (b.jetonsEarned||0) - (a.jetonsEarned||0));
-
-  const jRows = jEntries.slice(0,10).map((p,i) => {
-    const name = p.discordUsername || '?';
-    const isMe = curUser && p.id === curUser.uid;
-    const av = p.discordAvatar
-      ? `<img class="pred-lb-av" src="${esc(p.discordAvatar)}" onerror="this.src='';">`
-      : `<div class="pred-lb-av-ph">${esc((name[0]||'?').toUpperCase())}</div>`;
-    return `<div class="jlb-row${isMe?' jlb-me':''}">
-      <div class="pred-lb-rank ${rkCls(i)}">${rkIcon(i)}</div>
-      ${av}
-      <div class="pred-lb-name${isMe?' me':''}">${esc(name)}${isMe?` <span style="font-size:.65rem;color:var(--text3)">(vous)</span>`:''}</div>
-      <div style="text-align:right;font-weight:800;color:#FFB800">${p.jetonsEarned||0} 🪙</div>
-      <div style="text-align:right;font-size:.7rem;color:var(--text3)">${p.jetons||0} dispo</div>
-    </div>`;
-  }).join('');
-
-  return `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
-      <div class="pred-lb">
-        <div class="pred-lb-hdr">
-          <div class="pred-lb-title">Prédictions</div>
-          <div style="font-size:.6rem;color:var(--text3)">1pt · 3pts★ &nbsp;·&nbsp; ${predEntries.length} participant${predEntries.length!==1?'s':''}</div>
-        </div>
-        ${predRows || `<div class="pred-lb-empty">Aucun résultat encore</div>`}
-      </div>
-      <div class="pred-lb">
-        <div class="pred-lb-hdr">
-          <div class="pred-lb-title" style="--before-bg:#FFB800">🪙 Jetons</div>
-          <div style="font-size:.6rem;color:var(--text3)">${jEntries.length} parieur${jEntries.length!==1?'s':''}</div>
-        </div>
-        ${jRows || `<div class="pred-lb-empty">Aucun pari résolu encore</div>`}
-      </div>
-    </div>`;
-}
+  return `<div class="pred-lb" style="margin-bottom:24px">
+    <div class="pred-lb-hdr">
+      <div class="pred-lb-title">Classement des prédicteurs</div>
+      <div style="font-size:.6rem;color:var(--text3)">Vainqueur=1pt (×mise si pari) · Score exact=+2pts &nbsp;·&nbsp; ${entries.length} participant${entries.length!==1?'s':''}</div>
+    </div>
+    ${rows || `<div class="pred-lb-empty">Les classements apparaîtront après les premiers matchs joués.</div>`}
+  </div>`;
 
 function _rulesBox() {
   return `<div class="pred-rules-box">
     <div class="pred-rule-item"><span class="pred-rule-icon">🎯</span><div class="pred-rule-text"><strong>Pronostique</strong>Clique sur un match → choisis l'équipe gagnante + score BO7 (optionnel)</div></div>
     <div class="pred-rule-item"><span class="pred-rule-icon">🔒</span><div class="pred-rule-text"><strong>Définitif</strong>Le vote est verrouillé dès confirmation — aucune modification possible</div></div>
     <div class="pred-rule-item"><span class="pred-rule-icon">⏱</span><div class="pred-rule-text"><strong>Deadline</strong>Votes fermés 15 min avant le coup d'envoi</div></div>
-    <div class="pred-rule-item"><span class="pred-rule-icon">🏆</span><div class="pred-rule-text"><strong>Points</strong>Bon vainqueur = <b>1pt</b> · Score exact = <b>3pts</b></div></div>
-    <div class="pred-rule-item"><span class="pred-rule-icon">🪙</span><div class="pred-rule-text"><strong>Jetons</strong><b>${JETONS_PER_WEEK} jetons</b> par semaine (reset vendredi). Mise × cote = gain si correct</div></div>
+    <div class="pred-rule-item"><span class="pred-rule-icon">🏆</span><div class="pred-rule-text"><strong>Points</strong>Bon vainqueur = <b>1pt</b> · +2pts si score exact · Mise jetons : floor(mise × cote) pts</div></div>
+    <div class="pred-rule-item"><span class="pred-rule-icon">🪙</span><div class="pred-rule-text"><strong>Jetons</strong><b>${JETONS_PER_WEEK} jetons</b>/semaine (reset vendredi). Mise × cote = pts si correct (remplace le 1pt de base)</div></div>
     <div class="pred-rule-item"><span class="pred-rule-icon">📊</span><div class="pred-rule-text"><strong>Cotes</strong>Calculées sur le classement + les 5 derniers matchs de chaque équipe</div></div>
   </div>`;
 }
@@ -4709,99 +4686,109 @@ window.openVoteModal = function(matchId) {
   const cotes = calcMatchCotes(m.homeTeamId, m.awayTeamId);
   const myJetons = predictorsMap[curUser.uid]?.jetons ?? JETONS_PER_WEEK;
 
-  _voteState = { matchId, cotes, myJetons, winner: null, score: null, betAmount: 0 };
+  _voteState = { matchId, cotes, myJetons, winner: null, scoreH: null, betAmount: 0 };
 
   document.getElementById('mo-vote-pred-title').textContent = `${tH.name} vs ${tA.name}`;
 
-  function _logo(t) {
-    return t.logoUrl
-      ? `<img class="vote-modal-team-logo" src="${esc(t.logoUrl)}" onerror="this.style.display='none'">`
-      : `<div class="vote-modal-team-logo-ph">${esc((t.name||'?')[0])}</div>`;
-  }
+  const _logo = t => t.logoUrl
+    ? `<img class="vote-modal-team-logo" src="${esc(t.logoUrl)}" onerror="this.style.display='none'">`
+    : `<div class="vote-modal-team-logo-ph">${esc((t.name||'?')[0])}</div>`;
 
-  function renderModal() {
-    const { winner, score, betAmount, cotes, myJetons } = _voteState;
-    const cote = winner === 'home' ? cotes.home : cotes.away;
-    const potGain = betAmount > 0 ? Math.floor(betAmount * cote) : 0;
-    const scores = winner === 'home' ? ['4-0','4-1','4-2','4-3'] : ['0-4','1-4','2-4','3-4'];
+  const hScores = ['4-0','4-1','4-2','4-3'];
+  const aScores = ['0-4','1-4','2-4','3-4'];
 
-    document.getElementById('mo-vote-pred-body').innerHTML = `
-      <div class="vote-modal-teams">
-        <button class="vote-modal-team${winner==='home'?' selected':''}" onclick="_voteSelectWinner('home')">
-          ${_logo(tH)}
-          <div class="vote-modal-team-name">${esc(tH.name)}</div>
-          <div class="vote-modal-team-cote">×${cotes.home}</div>
-        </button>
-        <div class="vote-modal-vs">VS</div>
-        <button class="vote-modal-team${winner==='away'?' selected':''}" onclick="_voteSelectWinner('away')">
-          ${_logo(tA)}
-          <div class="vote-modal-team-name">${esc(tA.name)}</div>
-          <div class="vote-modal-team-cote">×${cotes.away}</div>
-        </button>
+  const cote_h = cotes.home, cote_a = cotes.away;
+
+  document.getElementById('mo-vote-pred-body').innerHTML = `
+    <div class="vote-modal-teams" id="vm-teams">
+      <button class="vote-modal-team" id="vm-btn-home" onclick="_voteSelectWinner('home')">
+        ${_logo(tH)}
+        <div class="vote-modal-team-name">${esc(tH.name)}</div>
+        <div class="vote-modal-team-cote">×${cote_h}</div>
+      </button>
+      <div class="vote-modal-vs">VS</div>
+      <button class="vote-modal-team" id="vm-btn-away" onclick="_voteSelectWinner('away')">
+        ${_logo(tA)}
+        <div class="vote-modal-team-name">${esc(tA.name)}</div>
+        <div class="vote-modal-team-cote">×${cote_a}</div>
+      </button>
+    </div>
+
+    <div class="vote-modal-section" id="vm-scores-home" style="display:none">
+      <div class="vote-modal-section-title">Score BO7 — optionnel <span style="color:#FFB800">(+2pts si exact)</span></div>
+      <div class="vote-modal-chips">
+        ${hScores.map(s => `<button class="pred-score-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteSelectScore('${s}')">${s}</button>`).join('')}
       </div>
-
-      ${winner ? `
-      <div class="vote-modal-section">
-        <div class="vote-modal-section-title">Score BO7 — optionnel (+2pts si exact)</div>
-        <div class="vote-modal-chips">
-          ${scores.map(s => `<button class="pred-score-chip${score===s?' active':''}" onclick="_voteSelectScore('${s}')">${s}</button>`).join('')}
-        </div>
+    </div>
+    <div class="vote-modal-section" id="vm-scores-away" style="display:none">
+      <div class="vote-modal-section-title">Score BO7 — optionnel <span style="color:#FFB800">(+2pts si exact)</span></div>
+      <div class="vote-modal-chips">
+        ${aScores.map(s => `<button class="pred-score-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteSelectScore('${s}')">${s}</button>`).join('')}
       </div>
+    </div>
 
-      ${myJetons > 0 ? `
-      <div class="vote-modal-section">
-        <div class="vote-modal-section-title">Miser des jetons — optionnel</div>
-        <div class="jeton-bar" style="margin-bottom:8px">
-          <span class="jeton-icon">🪙</span>
-          <div class="jeton-balance">
-            <div class="jeton-balance-val">${myJetons} disponibles · cote ×${cote}</div>
-            <div class="jeton-balance-lbl">Si correct → ×${cote} de ta mise</div>
-          </div>
-        </div>
-        <div class="bet-row">
-          <input type="range" class="bet-slider" id="vm-bet-slider" min="0" max="${myJetons}" value="${betAmount}" step="1"
-            oninput="_voteUpdateBet(this.value)">
-          <span class="bet-display" id="vm-bet-display">
-            ${betAmount > 0 ? `${betAmount} 🪙 → <b>${potGain}</b> potentiels` : 'Pas de mise'}
-          </span>
-        </div>
-      </div>` : ''}
+    ${myJetons > 0 ? `
+    <div class="vote-modal-section" id="vm-bet-section" style="display:none">
+      <div class="vote-modal-section-title">Miser des jetons — optionnel <span style="font-size:.6rem;color:var(--text3)">(remplace le 1pt de base si correct)</span></div>
+      <div style="font-size:.72rem;color:var(--text2);margin-bottom:6px">
+        Solde : <b style="color:#FFB800">${myJetons} 🪙</b> · Si correct → mise × cote = pts gagnés
+      </div>
+      <div class="bet-row">
+        <input type="range" class="bet-slider" id="vm-bet-slider" min="0" max="${myJetons}" value="0" step="1" oninput="_voteUpdateBet(this.value)">
+        <span class="bet-display" id="vm-bet-display">Pas de mise</span>
+      </div>
+    </div>` : ''}
 
-      <button class="vote-modal-confirm" onclick="confirmVotePred('${matchId}')">
-        🔒 Confirmer mon pronostic — définitif
-      </button>` : `
-      <div style="text-align:center;padding:20px 0;color:var(--text3);font-size:.82rem">
-        Choisis une équipe pour continuer
-      </div>`}
-    `;
-  }
+    <button class="vote-modal-confirm" id="vm-confirm-btn" disabled onclick="confirmVotePred('${matchId}')">
+      Choisis une équipe pour valider
+    </button>
+  `;
 
   window._voteSelectWinner = function(side) {
     _voteState.winner = side;
-    _voteState.score = null;
+    _voteState.scoreH = null;
     _voteState.betAmount = 0;
-    renderModal();
-  };
-  window._voteSelectScore = function(s) {
-    _voteState.score = _voteState.score === s ? null : s;
-    renderModal();
-  };
-  window._voteUpdateBet = function(val) {
-    _voteState.betAmount = parseInt(val) || 0;
-    const { betAmount, cotes, winner } = _voteState;
-    const cote = winner === 'home' ? cotes.home : cotes.away;
-    const potGain = betAmount > 0 ? Math.floor(betAmount * cote) : 0;
-    const el = document.getElementById('vm-bet-display');
-    if (el) el.innerHTML = betAmount > 0 ? `${betAmount} 🪙 → <b>${potGain}</b> potentiels` : 'Pas de mise';
+    // Visuels
+    document.getElementById('vm-btn-home')?.classList.toggle('selected', side==='home');
+    document.getElementById('vm-btn-away')?.classList.toggle('selected', side==='away');
+    document.getElementById('vm-scores-home').style.display = side==='home' ? '' : 'none';
+    document.getElementById('vm-scores-away').style.display = side==='away' ? '' : 'none';
+    document.querySelectorAll('.pred-score-chip').forEach(b => b.classList.remove('active'));
+    const betSection = document.getElementById('vm-bet-section');
+    if (betSection) { betSection.style.display = ''; }
+    if (document.getElementById('vm-bet-slider')) { document.getElementById('vm-bet-slider').value = 0; document.getElementById('vm-bet-display').textContent = 'Pas de mise'; }
+    const btn = document.getElementById('vm-confirm-btn');
+    const cote = side==='home' ? cotes.home : cotes.away;
+    btn.disabled = false;
+    btn.textContent = `🔒 Confirmer — ${side==='home'?tH.name:tA.name} (×${cote}) — Définitif`;
   };
 
-  renderModal();
+  window._voteSelectScore = function(s) {
+    const prev = _voteState.scoreH;
+    _voteState.scoreH = prev === s ? null : s;
+    document.querySelectorAll('.pred-score-chip').forEach(b => b.classList.remove('active'));
+    if (_voteState.scoreH) {
+      const id = 'vm-sc-' + _voteState.scoreH.replace('-','_');
+      document.getElementById(id)?.classList.add('active');
+    }
+  };
+
+  window._voteUpdateBet = function(val) {
+    _voteState.betAmount = parseInt(val) || 0;
+    const { betAmount, winner } = _voteState;
+    const cote = winner === 'home' ? cotes.home : cotes.away;
+    const potPts = betAmount > 0 ? Math.floor(betAmount * cote) : 0;
+    const el = document.getElementById('vm-bet-display');
+    if (el) el.innerHTML = betAmount > 0 ? `${betAmount} 🪙 → <b style="color:#0c8">${potPts} pts</b> potentiels` : 'Pas de mise';
+  };
+
   openModal('mo-vote-pred');
 };
 
 window.confirmVotePred = async function(matchId) {
   if (!curUser) return;
-  const { winner, score, betAmount, cotes } = _voteState;
+  const { winner, scoreH, betAmount, cotes } = _voteState;
+  const score = scoreH;
   if (!winner) { toast('Choisis une équipe', 'err'); return; }
 
   const uid = curUser.uid;
@@ -4834,16 +4821,6 @@ window.confirmVotePred = async function(matchId) {
   } catch(e) { toast('Erreur lors du vote', 'err'); console.error(e); }
 };
 
-window.openTeamModal = function(teamId) {
-  const team = teamsMap[teamId];
-  if (!team) return;
-  goTab('equipes');
-  // Petite pause pour laisser l'onglet s'afficher, puis highlight l'équipe
-  setTimeout(() => {
-    const el = document.querySelector(`[data-team-id="${teamId}"]`);
-    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.click(); }
-  }, 150);
-};
 
 window.votePrediction = async function(matchId, side) {
   if (!curUser) { toast('Connectez-vous pour voter', 'err'); return; }
