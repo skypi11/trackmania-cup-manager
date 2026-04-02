@@ -4695,45 +4695,45 @@ window.openVoteModal = function(matchId) {
     ? `<img class="vote-modal-team-logo" src="${esc(t.logoUrl)}" onerror="this.style.display='none'">`
     : `<div class="vote-modal-team-logo-ph">${esc((t.name||'?')[0])}</div>`;
 
+  // Toutes les chips visibles dès l'ouverture, groupées par équipe
   const hScores = ['4-0','4-1','4-2','4-3'];
   const aScores = ['0-4','1-4','2-4','3-4'];
-
-  const cote_h = cotes.home, cote_a = cotes.away;
+  const hChips = hScores.map(s => `<button class="pred-score-chip vm-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteChip('home','${s}')">${s}</button>`).join('');
+  const aChips = aScores.map(s => `<button class="pred-score-chip vm-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteChip('away','${s}')">${s}</button>`).join('');
 
   document.getElementById('mo-vote-pred-body').innerHTML = `
-    <div class="vote-modal-teams" id="vm-teams">
+    <div class="vote-modal-teams">
       <button class="vote-modal-team" id="vm-btn-home" onclick="_voteSelectWinner('home')">
         ${_logo(tH)}
         <div class="vote-modal-team-name">${esc(tH.name)}</div>
-        <div class="vote-modal-team-cote">×${cote_h}</div>
+        <div class="vote-modal-team-cote">×${cotes.home}</div>
       </button>
       <div class="vote-modal-vs">VS</div>
       <button class="vote-modal-team" id="vm-btn-away" onclick="_voteSelectWinner('away')">
         ${_logo(tA)}
         <div class="vote-modal-team-name">${esc(tA.name)}</div>
-        <div class="vote-modal-team-cote">×${cote_a}</div>
+        <div class="vote-modal-team-cote">×${cotes.away}</div>
       </button>
     </div>
 
-    <div class="vote-modal-section" id="vm-scores-home" style="display:none">
-      <div class="vote-modal-section-title">Score BO7 — optionnel <span style="color:#FFB800">(+2pts si exact)</span></div>
-      <div class="vote-modal-chips">
-        ${hScores.map(s => `<button class="pred-score-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteSelectScore('${s}')">${s}</button>`).join('')}
-      </div>
-    </div>
-    <div class="vote-modal-section" id="vm-scores-away" style="display:none">
-      <div class="vote-modal-section-title">Score BO7 — optionnel <span style="color:#FFB800">(+2pts si exact)</span></div>
-      <div class="vote-modal-chips">
-        ${aScores.map(s => `<button class="pred-score-chip" id="vm-sc-${s.replace('-','_')}" onclick="_voteSelectScore('${s}')">${s}</button>`).join('')}
+    <div class="vote-modal-section">
+      <div class="vote-modal-section-title">Score BO7 — optionnel <span style="color:#FFB800;font-weight:700">(+2pts si exact)</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:.6rem;color:var(--text3);margin-bottom:4px">${esc(tH.name)} gagne</div>
+          <div class="vote-modal-chips">${hChips}</div>
+        </div>
+        <div>
+          <div style="font-size:.6rem;color:var(--text3);margin-bottom:4px">${esc(tA.name)} gagne</div>
+          <div class="vote-modal-chips">${aChips}</div>
+        </div>
       </div>
     </div>
 
     ${myJetons > 0 ? `
-    <div class="vote-modal-section" id="vm-bet-section" style="display:none">
-      <div class="vote-modal-section-title">Miser des jetons — optionnel <span style="font-size:.6rem;color:var(--text3)">(remplace le 1pt de base si correct)</span></div>
-      <div style="font-size:.72rem;color:var(--text2);margin-bottom:6px">
-        Solde : <b style="color:#FFB800">${myJetons} 🪙</b> · Si correct → mise × cote = pts gagnés
-      </div>
+    <div class="vote-modal-section">
+      <div class="vote-modal-section-title">Miser des jetons — optionnel <span style="font-size:.6rem;color:var(--text3)">(mise × cote = pts si correct)</span></div>
+      <div style="font-size:.72rem;color:var(--text2);margin-bottom:8px">Solde : <b style="color:#FFB800">${myJetons} 🪙</b></div>
       <div class="bet-row">
         <input type="range" class="bet-slider" id="vm-bet-slider" min="0" max="${myJetons}" value="0" step="1" oninput="_voteUpdateBet(this.value)">
         <span class="bet-display" id="vm-bet-display">Pas de mise</span>
@@ -4741,38 +4741,48 @@ window.openVoteModal = function(matchId) {
     </div>` : ''}
 
     <button class="vote-modal-confirm" id="vm-confirm-btn" disabled onclick="confirmVotePred('${matchId}')">
-      Choisis une équipe pour valider
+      Choisis une équipe pour confirmer
     </button>
   `;
 
+  // Sélectionner une équipe (clic sur bouton équipe — pas de score)
   window._voteSelectWinner = function(side) {
     _voteState.winner = side;
     _voteState.scoreH = null;
-    _voteState.betAmount = 0;
-    // Visuels
-    document.getElementById('vm-btn-home')?.classList.toggle('selected', side==='home');
-    document.getElementById('vm-btn-away')?.classList.toggle('selected', side==='away');
-    document.getElementById('vm-scores-home').style.display = side==='home' ? '' : 'none';
-    document.getElementById('vm-scores-away').style.display = side==='away' ? '' : 'none';
-    document.querySelectorAll('.pred-score-chip').forEach(b => b.classList.remove('active'));
-    const betSection = document.getElementById('vm-bet-section');
-    if (betSection) { betSection.style.display = ''; }
-    if (document.getElementById('vm-bet-slider')) { document.getElementById('vm-bet-slider').value = 0; document.getElementById('vm-bet-display').textContent = 'Pas de mise'; }
-    const btn = document.getElementById('vm-confirm-btn');
-    const cote = side==='home' ? cotes.home : cotes.away;
-    btn.disabled = false;
-    btn.textContent = `🔒 Confirmer — ${side==='home'?tH.name:tA.name} (×${cote}) — Définitif`;
+    document.querySelectorAll('.vm-chip').forEach(b => b.classList.remove('active'));
+    _updateConfirmBtn(tH, tA, cotes);
   };
 
-  window._voteSelectScore = function(s) {
-    const prev = _voteState.scoreH;
-    _voteState.scoreH = prev === s ? null : s;
-    document.querySelectorAll('.pred-score-chip').forEach(b => b.classList.remove('active'));
-    if (_voteState.scoreH) {
-      const id = 'vm-sc-' + _voteState.scoreH.replace('-','_');
-      document.getElementById(id)?.classList.add('active');
+  // Clic sur un chip de score → sélectionne aussi l'équipe gagnante
+  window._voteChip = function(side, score) {
+    if (_voteState.scoreH === score && _voteState.winner === side) {
+      // Toggle off
+      _voteState.scoreH = null;
+      document.getElementById('vm-sc-' + score.replace('-','_'))?.classList.remove('active');
+    } else {
+      _voteState.winner = side;
+      _voteState.scoreH = score;
+      document.querySelectorAll('.vm-chip').forEach(b => b.classList.remove('active'));
+      document.getElementById('vm-sc-' + score.replace('-','_'))?.classList.add('active');
     }
+    _updateConfirmBtn(tH, tA, cotes);
   };
+
+  function _updateConfirmBtn(tH, tA, cotes) {
+    const { winner, scoreH, betAmount } = _voteState;
+    const btn = document.getElementById('vm-confirm-btn');
+    const hBtn = document.getElementById('vm-btn-home');
+    const aBtn = document.getElementById('vm-btn-away');
+    if (!winner) { btn.disabled = true; btn.textContent = 'Choisis une équipe pour confirmer'; return; }
+    hBtn?.classList.toggle('selected', winner === 'home');
+    aBtn?.classList.toggle('selected', winner === 'away');
+    const cote = winner === 'home' ? cotes.home : cotes.away;
+    const team = winner === 'home' ? tH.name : tA.name;
+    const scoreTxt = scoreH ? ` · ${scoreH}` : '';
+    const betTxt = betAmount > 0 ? ` · ${betAmount}🪙` : '';
+    btn.disabled = false;
+    btn.textContent = `🔒 ${esc(team)}${scoreTxt}${betTxt} (×${cote}) — Confirmer`;
+  }
 
   window._voteUpdateBet = function(val) {
     _voteState.betAmount = parseInt(val) || 0;
@@ -4781,6 +4791,7 @@ window.openVoteModal = function(matchId) {
     const potPts = betAmount > 0 ? Math.floor(betAmount * cote) : 0;
     const el = document.getElementById('vm-bet-display');
     if (el) el.innerHTML = betAmount > 0 ? `${betAmount} 🪙 → <b style="color:#0c8">${potPts} pts</b> potentiels` : 'Pas de mise';
+    _updateConfirmBtn(tH, tA, cotes);
   };
 
   openModal('mo-vote-pred');
