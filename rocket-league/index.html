@@ -4335,8 +4335,8 @@ function calcPredPoints(vote, match, jbet) {
   }
   // Bonus score exact : +2pts
   if (!score) return base;
-  const [hs, as] = score.split('-').map(Number);
-  if (hs === (match.homeScore||0) && as === (match.awayScore||0)) return base + 2;
+  const [hs, asc] = score.split('-').map(Number);
+  if (hs === (match.homeScore||0) && asc === (match.awayScore||0)) return base + 2;
   return base;
 }
 
@@ -4553,8 +4553,8 @@ function renderPredLeaderboard() {
         // exact = score prédit correct (base sans mise = 3, avec mise base+2)
         const sc = _vScore(votes[m.id]);
         if (sc && pp > 0) {
-          const [hs, as] = sc.split('-').map(Number);
-          if (hs === (m.homeScore||0) && as === (m.awayScore||0)) exact++;
+          const [hs, asc] = sc.split('-').map(Number);
+          if (hs === (m.homeScore||0) && asc === (m.awayScore||0)) exact++;
         }
       });
       return { p, pts, voted, correct, exact };
