@@ -4143,9 +4143,19 @@ window.initCalendar = async function() {
 // ════════════════════════════════════════════════
 async function refreshPredictors() {
   if (!curUser) return;
-  const s = await getDocs(collection(db, 'rl_predictors'));
-  predictorsMap = {};
-  s.forEach(d => { predictorsMap[d.id] = {id: d.id, ...d.data()}; });
+  try {
+    const s = await getDocs(collection(db, 'rl_predictors'));
+    predictorsMap = {};
+    s.forEach(d => { predictorsMap[d.id] = {id: d.id, ...d.data()}; });
+  } catch(e) {
+    // Règles Firebase trop restrictives pour lire toute la collection
+    // → fallback : lit au minimum le doc de l'utilisateur courant
+    console.warn('refreshPredictors: lecture collection refusée, fallback doc perso', e.code);
+    try {
+      const own = await getDoc(doc(db, 'rl_predictors', curUser.uid));
+      if (own.exists()) predictorsMap[curUser.uid] = { id: curUser.uid, ...own.data() };
+    } catch(e2) { console.warn('refreshPredictors fallback failed:', e2); }
+  }
 }
 
 async function loadPredictions() {
