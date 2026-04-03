@@ -4353,6 +4353,39 @@ function getJetonWeekKey() {
   return `${lastFri.getFullYear()}-${String(lastFri.getMonth()+1).padStart(2,'0')}-${String(lastFri.getDate()).padStart(2,'0')}`;
 }
 
+// Fenêtre de la semaine courante : vendredi 00h01 → jeudi 23h59
+function getCurrentWeekWindow() {
+  const now = new Date();
+  const day = now.getDay(); // 0=dim, 5=ven
+  const daysSinceFri = (day + 2) % 7;
+  const start = new Date(now);
+  start.setDate(now.getDate() - daysSinceFri);
+  start.setHours(0, 1, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
+// Un match est ouvert aux pronostics si :
+// - son scheduledAt est dans la fenêtre courante (ven→jeu), OU
+// - son scheduledAt est dans le passé ET le match n'est pas joué (retard)
+function isMatchOpenForPredictions(m) {
+  if (!m.scheduledAt) {
+    // Fallback sans date : comparer numéro de semaine comme avant
+    const pendingWeeks = Object.values(matchesMap).filter(x => x.status !== 'played').map(x => x.week).filter(Boolean);
+    const activeWeek = pendingWeeks.length ? Math.min(...pendingWeeks) : m.week;
+    return m.week <= activeWeek + 1;
+  }
+  const scheduled = new Date(m.scheduledAt);
+  const { start, end } = getCurrentWeekWindow();
+  // Dans la fenêtre courante
+  if (scheduled >= start && scheduled <= end) return true;
+  // Passé + non joué (retard)
+  if (scheduled < start && m.status !== 'played') return true;
+  return false;
+}
+
 function nextFridayStr() {
   const now = new Date();
   const day = now.getDay();
@@ -4509,10 +4542,11 @@ function renderPredictionCard(m) {
   } else if (isLocked) {
     voteZone = `<div class="pred-voted-zone-locked">🔒 Votes fermés (15 min avant le match)</div>`;
   } else {
-    const pendingWeeks2 = Object.values(matchesMap).filter(x => x.status !== 'played').map(x => x.week).filter(Boolean);
-    const activeWeek2 = pendingWeeks2.length ? Math.min(...pendingWeeks2) : m.week;
-    if (m.week > activeWeek2) {
-      voteZone = `<div class="pred-voted-zone-locked">📅 Pronostics ouverts en semaine ${m.week}</div>`;
+    if (!isMatchOpenForPredictions(m)) {
+      const { start } = getCurrentWeekWindow();
+      const nextOpen = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const dateStr = nextOpen.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+      voteZone = `<div class="pred-voted-zone-locked">📅 Pronostics ouverts à partir du ${dateStr}</div>`;
     } else if (!curUser) {
       voteZone = `<div class="pred-login-hint-card">Connexion Discord pour voter</div>`;
     } else {
@@ -4766,11 +4800,13 @@ window.openVoteModal = function(matchId) {
   const cotes = calcMatchCotes(m.homeTeamId, m.awayTeamId);
   const myJetons = predictorsMap[curUser.uid]?.jetons ?? JETONS_PER_WEEK;
 
-  // Semaine active = semaine la plus basse des matchs non joués
-  const pendingWeeks = Object.values(matchesMap).filter(x => x.status !== 'played').map(x => x.week).filter(Boolean);
-  const activeWeek = pendingWeeks.length ? Math.min(...pendingWeeks) : m.week;
-  const isFutureWeek = m.week > activeWeek;
-  if (isFutureWeek) { toast(`Pronostics ouverts en semaine ${m.week}`, 'err'); return; }
+  if (!isMatchOpenForPredictions(m)) {
+    const { start } = getCurrentWeekWindow();
+    const nextOpen = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const dateStr = nextOpen.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    toast(`Pronostics ouverts à partir du ${dateStr}`, 'err');
+    return;
+  }
 
   _voteState = { matchId, cotes, myJetons, winner: null, scoreH: null, betAmount: 0 };
 
