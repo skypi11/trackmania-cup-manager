@@ -235,8 +235,9 @@ window.openPlayerAccount = () => {
 window.openCreateProfile = () => {
     const gameLabel = cupId === 'mania' ? '(Mania)' : '(Trackmania)';
     document.getElementById('newProfileGameLabel').textContent = gameLabel;
-    document.getElementById('newProfilePseudo').value  = state.discordUsername || '';
-    document.getElementById('newProfileLoginTM').value = '';
+    document.getElementById('newProfilePseudo').value   = state.discordUsername || '';
+    document.getElementById('newProfilePseudoTM').value = '';
+    document.getElementById('newProfileLoginTM').value  = '';
     document.getElementById('newProfileTeam').value    = '';
     document.getElementById('createProfileMsg').style.display = 'none';
 
@@ -261,12 +262,13 @@ window.closeCreateProfile = () => {
 document.getElementById('createProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!state.currentUser) return;
-    const pseudo   = document.getElementById('newProfilePseudo').value.trim();
-    const loginTM  = document.getElementById('newProfileLoginTM').value.trim();
-    const team     = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
-    const msg      = document.getElementById('createProfileMsg');
+    const pseudo    = document.getElementById('newProfilePseudo').value.trim();
+    const pseudoTM  = document.getElementById('newProfilePseudoTM').value.trim();
+    const loginTM   = document.getElementById('newProfileLoginTM').value.trim();
+    const team      = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
+    const msg       = document.getElementById('createProfileMsg');
 
-    if (!pseudo || !loginTM) return;
+    if (!pseudo || !pseudoTM || !loginTM) return;
     if (state.data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
         msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
         msg.textContent = t('profile.exists');
@@ -277,7 +279,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     try {
         await addDoc(collection(db, 'participants'), {
             pseudo, team, userId: state.currentUser.uid, cupId,
-            pseudoTM: loginTM, games: ['trackmania'],
+            pseudoTM, loginTM, games: ['trackmania'],
             discordId:       state.discordId       || '',
             discordUsername: state.discordUsername || '',
             discordAvatar:   state.discordAvatar   || ''
