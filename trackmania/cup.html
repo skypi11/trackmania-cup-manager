@@ -1359,6 +1359,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             <!-- Sous-panel : Éditions -->
             <div class="adm-panel active" id="admtab-editions">
+              <div class="card" style="margin-bottom:16px">
+                <h2 style="margin-bottom:14px">📋 Toutes les éditions</h2>
+                <div id="adminEditionsList"></div>
+              </div>
               <div class="card" id="createEditionCard">
                 <h2 data-i18n="editions.create">➕ Créer une édition</h2>
                 <form id="addEditionForm">
@@ -1450,6 +1454,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             <!-- Sous-panel : Joueurs -->
             <div class="adm-panel" id="admtab-joueurs">
+              <div class="card" style="margin-bottom:16px">
+                <h2 style="margin-bottom:12px">👥 Tous les joueurs</h2>
+                <div class="search-wrapper" style="margin-bottom:14px">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" id="adminSearchPlayers" placeholder="Rechercher un joueur..." oninput="displayAdminPlayers()" style="width:100%">
+                </div>
+                <div id="adminPlayersList"></div>
+              </div>
               <div class="card">
                 <h2 data-i18n="participants.add">➕ Ajouter un joueur</h2>
                 <form id="addParticipantForm">
@@ -1871,7 +1883,9 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     function switchAdmTab(tab) {
         document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.admtab === tab));
         document.querySelectorAll('.adm-panel').forEach(p => p.classList.toggle('active', p.id === 'admtab-' + tab));
-        if (tab === 'discord') window.displayDiscordMigration && window.displayDiscordMigration();
+        if (tab === 'editions') window.displayAdminEditions && window.displayAdminEditions();
+        if (tab === 'joueurs')  window.displayAdminPlayers  && window.displayAdminPlayers();
+        if (tab === 'discord')  window.displayDiscordMigration && window.displayDiscordMigration();
     }
     window.switchAdmTab = switchAdmTab;
 

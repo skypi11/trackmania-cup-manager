@@ -265,6 +265,106 @@ window.runDataDiagnostic = async function() {
     container.innerHTML = html;
 };
 
+// ── Liste admin : Éditions ────────────────────────────────────────────────────
+
+window.displayAdminEditions = function() {
+    const container = document.getElementById('adminEditionsList');
+    if (!container) return;
+
+    const editions = [...state.data.editions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const statusInfo = {
+        fermee:       { label: '🔒 Fermée',       color: 'rgba(255,255,255,0.12)', text: '#888' },
+        inscriptions: { label: '📋 Inscriptions', color: 'rgba(0,217,54,0.15)',    text: '#00D936' },
+        en_cours:     { label: '🎯 En cours',      color: 'rgba(245,158,11,0.2)',   text: '#f59e0b' },
+        terminee:     { label: '✅ Terminée',      color: 'rgba(255,255,255,0.06)', text: '#555' },
+    };
+
+    if (editions.length === 0) {
+        container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">Aucune édition.</p>';
+        return;
+    }
+
+    container.innerHTML = editions.map(e => {
+        const s = statusInfo[e.status] || statusInfo.fermee;
+        const inscrits   = state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
+        const qualifies  = state.data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
+        const finalistes = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
+        return `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px">
+                <div style="font-weight:700;margin-bottom:3px">${e.name}</div>
+                <div style="font-size:0.78rem;color:var(--color-text-secondary)">${e.date}${e.time ? ' · ' + e.time : ''} · Saison ${e.saison || '?'}</div>
+            </div>
+            <span style="padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;background:${s.color};color:${s.text};white-space:nowrap">${s.label}</span>
+            <div style="font-size:0.78rem;color:var(--color-text-secondary);white-space:nowrap">
+                ${inscrits} inscrits · ${qualifies} qualif · ${finalistes} finalistes
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+                <button onclick="openEditEdition('${e.id}')" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--color-text-primary);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Modifier">✏️ Modifier</button>
+                <button onclick="deleteEdition('${e.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Supprimer">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+// ── Liste admin : Joueurs ─────────────────────────────────────────────────────
+
+window.displayAdminPlayers = function() {
+    const container = document.getElementById('adminPlayersList');
+    if (!container) return;
+
+    const search = (document.getElementById('adminSearchPlayers')?.value || '').toLowerCase();
+    const players = state.data.participants
+        .filter(p => !search || pName(p).toLowerCase().includes(search) || (p.pseudo || '').toLowerCase().includes(search))
+        .sort((a, b) => pName(a).localeCompare(pName(b)));
+
+    if (players.length === 0) {
+        container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">Aucun joueur trouvé.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);text-align:left">
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Pseudo site</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Pseudo TM</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Login TM</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Équipe</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Discord</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Auth</th>
+                <th style="padding:8px 10px"></th>
+            </tr>
+        </thead>
+        <tbody>
+        ${players.map(p => {
+            const discordLinked = p.discordId ? `<span style="color:#7b8cff;font-size:0.75rem">@${p.discordUsername || p.discordId}</span>` : `<span style="color:#ef4444;font-size:0.75rem">—</span>`;
+            const authType = (p.userId || '').startsWith('discord_')
+                ? `<span style="color:#7b8cff;font-size:0.72rem">Discord</span>`
+                : p.userId
+                    ? `<span style="color:#f59e0b;font-size:0.72rem">Google</span>`
+                    : `<span style="color:#555;font-size:0.72rem">—</span>`;
+            return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+                <td style="padding:8px 10px;font-weight:600">${p.pseudo || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.pseudoTM || p.name || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.loginTM || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.team === 'Sans équipe' ? '—' : (p.team || '—')}</td>
+                <td style="padding:8px 10px">${discordLinked}</td>
+                <td style="padding:8px 10px">${authType}</td>
+                <td style="padding:8px 10px;white-space:nowrap;text-align:right">
+                    <button onclick="openEditParticipant('${p.id}')" style="padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--color-text-primary);font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;margin-right:4px">✏️</button>
+                    <button onclick="deleteParticipant('${p.id}')" style="padding:4px 8px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('')}
+        </tbody>
+    </table>
+    </div>`;
+};
+
 // ── Migration Discord ─────────────────────────────────────────────────────────
 
 window.displayDiscordMigration = function() {

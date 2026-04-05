@@ -53,7 +53,7 @@ function showSection(id) {
     else if (id === 'stats') displayStats();
     else if (id === 'home') displayHome();
     else if (id === 'halloffame') displayHallOfFame();
-    else if (id === 'administration') { applySiteConfig(); renderDiscordConfig(); displayDiscordMigration(); }
+    else if (id === 'administration') { applySiteConfig(); renderDiscordConfig(); window.displayAdminEditions?.(); window.displayAdminPlayers?.(); }
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
     else if (id === 'reglement') displayRules();
@@ -141,6 +141,7 @@ watchCollection(collection(db, 'participants'), 'participants', snap => {
     displayHallOfFame(); displayNextEditionBanner(); displayStats();
     displayGeneralRanking(); updateDiscordReminders();
     if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); }
 });
 
 watchCollection(collection(db, 'editions'), 'editions', snap => {
@@ -148,6 +149,7 @@ watchCollection(collection(db, 'editions'), 'editions', snap => {
     displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
     if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
     if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
+    if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminEditions?.();
 });
 
 watchCollection(collection(db, 'results'), 'results', snap => {
