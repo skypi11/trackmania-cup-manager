@@ -28,7 +28,75 @@ export const SCHEDULE = {
   }
 };
 
-export const FLAGS = {FR:'🇫🇷',BE:'🇧🇪',CH:'🇨🇭',DE:'🇩🇪',ES:'🇪🇸',IT:'🇮🇹',NL:'🇳🇱',PT:'🇵🇹',GB:'🇬🇧',PL:'🇵🇱',SE:'🇸🇪',NO:'🇳🇴',DK:'🇩🇰',FI:'🇫🇮',US:'🇺🇸',CA:'🇨🇦',LU:'🇱🇺',MA:'🇲🇦',DZ:'🇩🇿',TN:'🇹🇳',RO:'🇷🇴',TR:'🇹🇷',CZ:'🇨🇿',HU:'🇭🇺',SK:'🇸🇰',RS:'🇷🇸'};
+// Gardé pour rétrocompat (ne pas supprimer)
+export const FLAGS = {FR:'FR',BE:'BE',CH:'CH',DE:'DE',ES:'ES',IT:'IT',NL:'NL',PT:'PT',GB:'GB',PL:'PL',SE:'SE',NO:'NO',DK:'DK',FI:'FI',US:'US',CA:'CA',LU:'LU',MA:'MA',DZ:'DZ',TN:'TN',RO:'RO',TR:'TR',CZ:'CZ',HU:'HU',SK:'SK',RS:'RS'};
+
+export const RL_COUNTRIES = [
+    ['DZ','Algérie'],['DE','Allemagne'],['AR','Argentine'],['AU','Australie'],
+    ['AT','Autriche'],['BE','Belgique'],['BY','Biélorussie'],['BR','Brésil'],
+    ['BG','Bulgarie'],['CA','Canada'],['CY','Chypre'],['KR','Corée du Sud'],
+    ['HR','Croatie'],['DK','Danemark'],['ES','Espagne'],['EE','Estonie'],
+    ['US','États-Unis'],['FI','Finlande'],['FR','France'],['GR','Grèce'],
+    ['HU','Hongrie'],['IE','Irlande'],['IS','Islande'],['IT','Italie'],
+    ['JP','Japon'],['LV','Lettonie'],['LI','Liechtenstein'],['LT','Lituanie'],
+    ['LU','Luxembourg'],['MK','Macédoine du Nord'],['MT','Malte'],['MA','Maroc'],
+    ['MD','Moldavie'],['MC','Monaco'],['NL','Pays-Bas'],['NO','Norvège'],
+    ['NZ','Nouvelle-Zélande'],['PL','Pologne'],['PT','Portugal'],
+    ['CZ','République tchèque'],['RO','Roumanie'],['GB','Royaume-Uni'],
+    ['RU','Russie'],['RS','Serbie'],['SK','Slovaquie'],['SI','Slovénie'],
+    ['SE','Suède'],['CH','Suisse'],['TN','Tunisie'],['TR','Turquie'],['UA','Ukraine'],
+];
+
+const _RL_NAME_MAP = Object.fromEntries(RL_COUNTRIES.map(([c,n])=>[c,n]));
+const _rlFi = code => `<span class="fi fi-${(code||'').toLowerCase()}" style="width:20px;height:14px;border-radius:2px;display:inline-block;flex-shrink:0"></span>`;
+
+export const flagHtml = code => code ? _rlFi(code) : '';
+
+export function buildRLCountryPicker(id, selected = '') {
+    const code = (selected||'').toUpperCase();
+    const name = _RL_NAME_MAP[code] || '';
+    const displayHtml = code
+        ? `${_rlFi(code)}<span>${name||code}</span>`
+        : '<span style="color:#555">— Pays —</span>';
+    const items = RL_COUNTRIES.map(([c,n]) => {
+        const active = c === code;
+        return `<div onclick="window._rlCpSelect('${id}','${c}')"
+            style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:.88rem;color:${active?'var(--rl-blue,#0081FF)':'#e0e0e0'};background:${active?'rgba(0,129,255,.08)':'transparent'}"
+            onmouseover="this.style.background='rgba(255,255,255,.07)'"
+            onmouseout="this.style.background='${active?'rgba(0,129,255,.08)':'transparent'}'">
+            ${_rlFi(c)}<span>${n}</span></div>`;
+    }).join('');
+    return `<div class="rl-cp-root" id="${id}_root" style="position:relative">
+        <div onclick="window._rlCpToggle('${id}')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);cursor:pointer;user-select:none;font-family:inherit;font-size:.88rem;min-height:38px;color:#f0f0f0">
+            <span id="${id}_display" style="display:inline-flex;align-items:center;gap:8px">${displayHtml}</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" style="flex-shrink:0"><path d="M1 1l4 4 4-4" stroke="#666" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        </div>
+        <input type="hidden" id="${id}" value="${code}">
+        <div class="rl-cp-dd" id="${id}_dd" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9999;background:#1c1c1c;border:1px solid rgba(255,255,255,.14);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6)">
+            ${items}
+        </div>
+    </div>`;
+}
+window._rlCpToggle = function(id) {
+    const dd = document.getElementById(`${id}_dd`);
+    if (!dd) return;
+    const open = dd.style.display !== 'none';
+    document.querySelectorAll('.rl-cp-dd').forEach(d => { d.style.display='none'; });
+    if (!open) dd.style.display = 'block';
+};
+window._rlCpSelect = function(id, code) {
+    const input = document.getElementById(id);
+    const display = document.getElementById(`${id}_display`);
+    const dd = document.getElementById(`${id}_dd`);
+    const name = _RL_NAME_MAP[code] || code;
+    if (input) input.value = code;
+    if (display) display.innerHTML = `${_rlFi(code)}<span>${name}</span>`;
+    if (dd) dd.style.display = 'none';
+};
+document.addEventListener('click', e => {
+    if (!e.target.closest('.rl-cp-root'))
+        document.querySelectorAll('.rl-cp-dd').forEach(d => { d.style.display='none'; });
+}, true);
 
 export const I18N = {
   fr:{
