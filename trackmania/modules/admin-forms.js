@@ -265,9 +265,12 @@ window.runDataDiagnostic = async function() {
     container.innerHTML = html;
 };
 
-// ── Admin résultats ───────────────────────────────────────────────────────────
+// ── Admin résultats — 3 onglets spécialisés ──────────────────────────────────
 
-window.displayAdminResults = function() {
+let _admResultTab = 'inscriptions';
+
+window.displayAdminResults = function(tab) {
+    if (tab) _admResultTab = tab;
     const container = document.getElementById('adminResultsContent');
     if (!container) return;
 
@@ -281,79 +284,7 @@ window.displayAdminResults = function() {
     let detailHtml = '';
     if (selectedId) {
         const e = editions.find(ed => ed.id === selectedId);
-        if (e) {
-            const playerOpts = state.data.participants
-                .sort((a, b) => pName(a).localeCompare(pName(b)))
-                .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
-
-            const edResults = state.data.results.filter(r => r.editionId === selectedId);
-            const inscriptions = edResults.filter(r => r.phase === 'inscription').sort((a,b) => pName(state.data.participants.find(p=>p.id===a.playerId)).localeCompare(pName(state.data.participants.find(p=>p.id===b.playerId))));
-            const quals = edResults.filter(r => r.phase === 'qualification').sort((a,b) => (a.map||0)-(b.map||0) || (a.position||0)-(b.position||0));
-            const finale = edResults.filter(r => r.phase === 'finale').sort((a,b) => (a.position||99)-(b.position||99));
-
-            const renderGroup = (title, results, phase) => {
-                if (results.length === 0) return `<div style="color:var(--color-text-secondary);font-size:0.82rem;margin-bottom:14px">${title} : aucun résultat.</div>`;
-                return `<div style="margin-bottom:18px">
-                    <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:8px">${title} (${results.length})</div>
-                    ${results.map(r => {
-                        const player = state.data.participants.find(p => p.id === r.playerId);
-                        const label = phase === 'qualification' ? `Map ${r.map} · P${r.position}` : phase === 'finale' ? `P${r.position}` : 'Inscrit';
-                        return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-                            <span style="flex:1;font-size:0.85rem">${pName(player)}</span>
-                            <span style="font-size:0.75rem;color:var(--color-text-secondary)">${label}</span>
-                            <button onclick="deleteResult('${r.id}')" style="padding:3px 8px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.72rem;cursor:pointer;font-family:inherit">✕</button>
-                        </div>`;
-                    }).join('')}
-                </div>`;
-            };
-
-            detailHtml = `
-            <div class="card" style="margin-bottom:16px">
-                <h3 style="margin-bottom:14px;font-size:1rem">➕ Ajouter un résultat</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label style="font-size:0.82rem">Phase</label>
-                        <select id="admResultPhase" onchange="admOnPhaseChange()" style="font-family:inherit">
-                            <option value="">— Choisir —</option>
-                            <option value="inscription">Inscription</option>
-                            <option value="qualification">Qualification</option>
-                            <option value="finale">Finale</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="admMapField" style="display:none">
-                        <label style="font-size:0.82rem">Map</label>
-                        <select id="admResultMap" style="font-family:inherit">
-                            ${Array.from({length: e.nbMaps || 6}, (_,i) => i+1).map(n => `<option value="${n}">Map ${n}</option>`).join('')}
-                            <option value="7">Map Finale</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label style="font-size:0.82rem">Joueur</label>
-                        <select id="admResultPlayer" style="font-family:inherit">
-                            <option value="">— Sélectionner —</option>
-                            ${playerOpts}
-                        </select>
-                    </div>
-                    <div class="form-group" id="admQualPosField" style="display:none">
-                        <label style="font-size:0.82rem">Position map</label>
-                        <select id="admResultQualPos" style="font-family:inherit">
-                            ${Array.from({length: e.nbQualifPerMap || 3}, (_,i) => i+1).map(pos => `<option value="${pos}">${pos}e</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group" id="admPositionField" style="display:none">
-                        <label style="font-size:0.82rem">Position finale</label>
-                        <input type="number" id="admResultPosition" min="1" placeholder="Ex: 1" style="font-family:inherit">
-                    </div>
-                </div>
-                <button onclick="admSubmitResult('${selectedId}')" class="btn btn-primary">Ajouter le résultat</button>
-            </div>
-            <div class="card">
-                <h3 style="margin-bottom:16px;font-size:1rem">Résultats enregistrés (${edResults.length})</h3>
-                ${renderGroup('Inscriptions', inscriptions, 'inscription')}
-                ${renderGroup('Qualifications', quals, 'qualification')}
-                ${renderGroup('Finale', finale, 'finale')}
-            </div>`;
-        }
+        if (e) detailHtml = _admBuildResultDetail(e, selectedId);
     }
 
     container.innerHTML = `
@@ -370,32 +301,152 @@ window.displayAdminResults = function() {
     ${detailHtml}`;
 };
 
-window.admOnPhaseChange = function() {
-    const phase = document.getElementById('admResultPhase')?.value;
-    if (!phase) return;
-    document.getElementById('admMapField').style.display    = phase === 'qualification' ? '' : 'none';
-    document.getElementById('admQualPosField').style.display = phase === 'qualification' ? '' : 'none';
-    document.getElementById('admPositionField').style.display = phase === 'finale' ? '' : 'none';
+function _admBuildResultDetail(e, editionId) {
+    const edResults = state.data.results.filter(r => r.editionId === editionId);
+    const allPlayers = [...state.data.participants].sort((a,b) => pName(a).localeCompare(pName(b)));
+    const tab = _admResultTab;
+
+    const tabDefs = [
+        { id: 'inscriptions',   label: '📋 Inscriptions' },
+        { id: 'qualifications', label: '🏁 Qualifications' },
+        { id: 'finale',         label: '🏆 Finale' },
+    ];
+
+    const tabBar = `<div style="display:flex;gap:4px;margin-bottom:20px;background:rgba(255,255,255,0.04);border-radius:10px;padding:4px">
+        ${tabDefs.map(td => `<button onclick="window.displayAdminResults('${td.id}')" style="flex:1;padding:8px;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all 0.15s;${td.id===tab ? 'background:rgba(255,255,255,0.12);color:#f0f0f0' : 'background:transparent;color:#777'}">${td.label}</button>`).join('')}
+    </div>`;
+
+    let content = '';
+    if (tab === 'inscriptions')   content = _admInscriptionsTab(e, editionId, edResults, allPlayers);
+    else if (tab === 'qualifications') content = _admQualificationsTab(e, editionId, edResults, allPlayers);
+    else                          content = _admFinaleTab(e, editionId, edResults, allPlayers);
+
+    return `<div class="card">${tabBar}${content}</div>`;
+}
+
+function _admInscriptionsTab(e, editionId, edResults, allPlayers) {
+    const inscriptions = edResults.filter(r => r.phase === 'inscription');
+    const inscribedIds = new Set(inscriptions.map(r => r.playerId));
+
+    const rows = allPlayers.map(p => {
+        const isIn = inscribedIds.has(p.id);
+        const res  = inscriptions.find(r => r.playerId === p.id);
+        const action = isIn ? `admRemoveResult('${res.id}')` : `admAddInscription('${editionId}','${p.id}')`;
+        return `<div onclick="${action}" style="display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:8px;border:1px solid ${isIn ? 'rgba(0,217,54,0.3)' : 'rgba(255,255,255,0.07)'};background:${isIn ? 'rgba(0,217,54,0.07)' : 'rgba(255,255,255,0.02)'};cursor:pointer">
+            <span style="font-size:1rem;flex-shrink:0">${isIn ? '✅' : '⬜'}</span>
+            <span style="font-size:0.85rem;font-weight:${isIn ? '600' : '400'};color:${isIn ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'}">${pName(p)}</span>
+        </div>`;
+    }).join('');
+
+    return `<div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:14px">${inscriptions.length} inscrit(s) sur ${allPlayers.length} — cliquer pour ajouter / retirer</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">${rows}</div>`;
+}
+
+function _admQualificationsTab(e, editionId, edResults, allPlayers) {
+    const quals    = edResults.filter(r => r.phase === 'qualification');
+    const nbMaps   = e.nbMaps || 6;
+    const nbQualif = e.nbQualifPerMap || 3;
+    const playerOpts = allPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+    const mapsHtml = Array.from({length: nbMaps}, (_, i) => i + 1).map(mapN => {
+        const mapQuals = quals.filter(r => r.map == mapN).sort((a,b) => (a.position||0)-(b.position||0));
+        const filledPos = new Set(mapQuals.map(r => r.position));
+        const emptyPos  = Array.from({length: nbQualif}, (_, i) => i + 1).filter(p => !filledPos.has(p));
+        const allFilled = emptyPos.length === 0;
+
+        const filledRows = mapQuals.map(r => {
+            const player = allPlayers.find(p => p.id === r.playerId);
+            return `<div style="display:flex;align-items:center;gap:10px;padding:4px 0">
+                <span style="font-size:0.75rem;font-weight:700;color:var(--color-accent);width:22px;flex-shrink:0">P${r.position}</span>
+                <span style="font-size:0.85rem;flex:1">${pName(player)}</span>
+                <button onclick="admRemoveResult('${r.id}')" style="padding:2px 7px;border-radius:5px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.72rem;cursor:pointer;font-family:inherit">✕</button>
+            </div>`;
+        }).join('');
+
+        const emptySelects = !allFilled ? `
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:${mapQuals.length ? '10px' : '0'};padding-top:${mapQuals.length ? '10px' : '0'};${mapQuals.length ? 'border-top:1px solid rgba(255,255,255,0.06)' : ''}">
+            ${emptyPos.map(pos => `<div style="display:flex;flex-direction:column;gap:4px">
+                <label style="font-size:0.72rem;font-weight:700;color:var(--color-accent)">P${pos}</label>
+                <select id="admQual_${mapN}_${pos}" style="padding:6px 10px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.82rem;font-family:inherit;min-width:140px">
+                    <option value="">— Joueur —</option>${playerOpts}
+                </select>
+            </div>`).join('')}
+            <button onclick="admSubmitMapQuals('${editionId}',${mapN},[${emptyPos.join(',')}])" style="padding:7px 14px;border-radius:7px;background:var(--color-accent);color:#000;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;height:34px;align-self:flex-end">Valider</button>
+        </div>` : '';
+
+        const mapName = e['map'+mapN+'name'] ? ` <span style="font-weight:400;color:#555">· ${e['map'+mapN+'name']}</span>` : '';
+        const badge   = allFilled ? ' <span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:rgba(0,217,54,0.1);color:var(--color-accent)">✅ Complet</span>' : '';
+
+        return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="font-size:0.8rem;font-weight:700;color:var(--color-text-secondary);margin-bottom:${filledRows || !allFilled ? '8px' : '0'};display:flex;align-items:center;gap:8px">Map ${mapN}${mapName}${badge}</div>
+            ${filledRows}${emptySelects}
+        </div>`;
+    }).join('');
+
+    return `<div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:14px">${quals.length} / ${nbMaps * nbQualif} qualifications saisies</div>
+    ${mapsHtml}`;
+}
+
+function _admFinaleTab(e, editionId, edResults, allPlayers) {
+    const finale = edResults.filter(r => r.phase === 'finale').sort((a,b) => (a.position||99)-(b.position||99));
+    const medals = {1:'🥇',2:'🥈',3:'🥉'};
+    const playerOpts = allPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+    const rows = finale.map(r => {
+        const player = allPlayers.find(p => p.id === r.playerId);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <span style="width:24px;text-align:center;flex-shrink:0">${medals[r.position] || ''}</span>
+            <span style="font-size:0.82rem;font-weight:700;color:var(--color-text-secondary);width:24px;flex-shrink:0">P${r.position}</span>
+            <span style="font-size:0.9rem;flex:1;font-weight:${r.position<=3?'700':'400'}">${pName(player)}</span>
+            <button onclick="admRemoveResult('${r.id}')" style="padding:3px 8px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.72rem;cursor:pointer;font-family:inherit">✕</button>
+        </div>`;
+    }).join('');
+
+    return `${rows ? `<div style="margin-bottom:18px">${rows}</div>` : ''}
+    <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+            <label style="font-size:0.78rem;color:var(--color-text-secondary);display:block;margin-bottom:5px">Position</label>
+            <input type="number" id="admFinalePos" min="1" max="99" placeholder="1" style="width:72px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.9rem;font-family:inherit">
+        </div>
+        <div style="flex:1;min-width:160px">
+            <label style="font-size:0.78rem;color:var(--color-text-secondary);display:block;margin-bottom:5px">Joueur</label>
+            <select id="admFinalePlayer" style="width:100%;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.9rem;font-family:inherit">
+                <option value="">— Sélectionner —</option>${playerOpts}
+            </select>
+        </div>
+        <button onclick="admSubmitFinaleResult('${editionId}')" style="padding:8px 16px;border-radius:7px;background:var(--color-accent);color:#000;border:none;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit">Ajouter</button>
+    </div>`;
+}
+
+window.admAddInscription = async function(editionId, playerId) {
+    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'inscription', cupId });
 };
 
-window.admSubmitResult = async function(editionId) {
-    const phase    = document.getElementById('admResultPhase')?.value;
-    const playerId = document.getElementById('admResultPlayer')?.value;
-    if (!phase || !playerId) { showToast('⚠️ Sélectionne une phase et un joueur.'); return; }
+window.admRemoveResult = async function(id) {
+    await deleteDoc(doc(db, 'results', id));
+};
 
-    const data = { editionId, playerId, phase, cupId };
-    if (phase === 'qualification') {
-        data.map      = parseInt(document.getElementById('admResultMap')?.value) || 1;
-        data.position = parseInt(document.getElementById('admResultQualPos')?.value) || 1;
-    } else if (phase === 'finale') {
-        data.position = parseInt(document.getElementById('admResultPosition')?.value) || 1;
+window.admSubmitMapQuals = async function(editionId, mapN, positions) {
+    const toAdd = [];
+    for (const pos of positions) {
+        const playerId = document.getElementById(`admQual_${mapN}_${pos}`)?.value;
+        if (playerId) toAdd.push({ editionId, playerId, phase: 'qualification', map: mapN, position: pos, cupId });
     }
-    await addDoc(collection(db, 'results'), data);
+    if (!toAdd.length) { showToast('⚠️ Aucun joueur sélectionné'); return; }
+    await Promise.all(toAdd.map(d => addDoc(collection(db, 'results'), d)));
+    showToast(`✅ ${toAdd.length} qualification(s) enregistrée(s)`);
+};
+
+window.admSubmitFinaleResult = async function(editionId) {
+    const pos      = parseInt(document.getElementById('admFinalePos')?.value);
+    const playerId = document.getElementById('admFinalePlayer')?.value;
+    if (!pos || !playerId) { showToast('⚠️ Position et joueur requis'); return; }
+    const existing = state.data.results.find(r => r.editionId === editionId && r.phase === 'finale' && r.position === pos);
+    if (existing) { showToast(`⚠️ Position P${pos} déjà attribuée`); return; }
+    await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'finale', position: pos, cupId });
+    document.getElementById('admFinalePos').value = '';
+    document.getElementById('admFinalePlayer').value = '';
     showToast('✅ Résultat ajouté');
-    // Réinitialiser le formulaire
-    document.getElementById('admResultPhase').value = '';
-    document.getElementById('admResultPlayer').value = '';
-    admOnPhaseChange();
 };
 
 // ── Liste admin : Éditions ────────────────────────────────────────────────────
