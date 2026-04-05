@@ -210,6 +210,24 @@ body.admin-mode .admin-indicator { display: flex; align-items: center; gap: 5px;
 .admin-only { display: none; }
 body.admin-mode .admin-only { display: block; }
 
+/* Admin panel tabs */
+.adm-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 12px;
+}
+.adm-tab {
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--color-text-secondary); font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.18s;
+}
+.adm-tab:hover { background: rgba(255,255,255,0.08); color: var(--color-text-primary); }
+.adm-tab.active { background: rgba(0,217,54,0.12); border-color: rgba(0,217,54,0.35); color: var(--color-accent); }
+.adm-panel { display: none; }
+.adm-panel.active { display: block; }
+
 /* Twitch / Stream */
 .sidebar-twitch-btn {
     display: flex; align-items: center; gap: 9px;
@@ -1124,6 +1142,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
                 <span data-i18n="auth.discord">Se connecter avec Discord</span>
             </button>
+            <button onclick="toggleAdmin()" style="margin-top:14px;background:none;border:none;color:rgba(255,255,255,0.18);font-size:0.72rem;cursor:pointer;font-family:inherit;padding:4px 0;display:block;width:100%;text-align:center" onmouseover="this.style.color='rgba(255,255,255,0.45)'" onmouseout="this.style.color='rgba(255,255,255,0.18)'">Connexion admin</button>
         </div>
     </div>
 
@@ -1168,12 +1187,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
               <button class="nav-item" data-section="duel"><span class="nav-icon">⚔️</span><span class="nav-label" data-i18n="nav.duel">Duel</span></button>
             </div>
           </div>
-          <div class="nav-group admin-only" data-group="admin">
-            <button class="nav-group-label admin-only" data-i18n="nav.group.admin">Admin<span class="nav-group-chevron">▼</span></button>
-            <div class="nav-group-items">
-              <button class="nav-item admin-only" data-section="personnalisation"><span class="nav-icon">🎨</span><span class="nav-label" data-i18n="nav.custom">Personnalisation</span></button>
-            </div>
-          </div>
+          <button class="nav-item admin-only" data-section="administration" style="margin-top:4px"><span class="nav-icon">⚙️</span><span class="nav-label">Administration</span></button>
         </nav>
         <div class="sidebar-footer">
           <a id="sidebarTwitchBtn" href="https://www.twitch.tv/springsesport" target="_blank" rel="noopener" class="sidebar-twitch-btn">
@@ -1187,7 +1201,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
           <span class="admin-indicator">⚙️ Mode Admin</span>
           <button class="sidebar-user-btn" id="loginBtn" onclick="openAuthModal()" style="display:none">🔑 Se connecter</button>
           <button class="sidebar-user-btn" id="playerBtn" onclick="openPlayerAccount()" style="display:none">👤 ...</button>
-          <button class="sidebar-user-btn" id="adminToggleBtn" onclick="toggleAdmin()" style="display:none">⚙️ Admin</button>
         </div>
       </aside>
 
@@ -1230,7 +1243,123 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
           <!-- EDITIONS -->
           <div class="section-panel" id="editions" style="display:none">
-            <div class="card admin-only" id="createEditionCard">
+
+            <!-- Filter bar -->
+            <div class="edition-filters" id="editionFilters">
+                <button class="filter-btn active" data-filter="all"   onclick="setEditionFilter('all')" data-i18n="editions.filter.all">Toutes</button>
+                <button class="filter-btn"         data-filter="upcoming" onclick="setEditionFilter('upcoming')" data-i18n="editions.upcoming">À venir</button>
+                <button class="filter-btn"         data-filter="past"     onclick="setEditionFilter('past')" data-i18n="editions.past">Passées</button>
+                <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                    <span style="font-size:0.78rem;color:var(--color-text-secondary)" data-i18n="common.sort">Tri :</span>
+                    <button class="filter-btn active" data-sort="desc" onclick="setEditionSort('desc')" data-i18n="common.sort.newest">Plus récentes</button>
+                    <button class="filter-btn"         data-sort="asc"  onclick="setEditionSort('asc')" data-i18n="common.sort.oldest">Plus anciennes</button>
+                </span>
+            </div>
+
+            <!-- List of edition rows -->
+            <div id="editionsList"></div>
+
+            <!-- Edition detail panel -->
+            <div class="edition-detail" id="editionDetail">
+                <div class="edition-detail-topbar">
+                    <button class="edition-detail-back" onclick="closeEditionDetail()" data-i18n="common.back.editions">← Retour aux éditions</button>
+                    <button class="edition-share-btn" onclick="shareEdition()" data-i18n="msg.copy.link">📋 Copier le lien</button>
+                </div>
+                <div id="editionDetailContent"></div>
+            </div>
+          </div>
+
+          <!-- CLASSEMENT -->
+          <div class="section-panel" id="rankings" style="display:none">
+            <div class="card">
+                <h2>
+                    <span data-i18n="rankings.general">📊 Classement général</span>
+                    <button class="btn btn-secondary btn-small" onclick="exportCSV()" data-i18n="rankings.export.csv">⬇️ Export CSV</button>
+                </h2>
+                <div id="rankingSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+                <div id="generalRanking"></div>
+            </div>
+            <div class="card">
+                <h2 data-i18n="rankings.top10">📈 Points — Top 10</h2>
+                <div class="chart-container">
+                    <canvas id="rankingChart"></canvas>
+                </div>
+            </div>
+          </div>
+
+          <!-- MAPS TIMELINE -->
+          <div class="section-panel" id="maps" style="display:none">
+            <div class="card" style="padding-bottom:8px">
+              <h2 data-i18n="maps.played">🗺️ Maps jouées</h2>
+              <div id="mapsSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+              <div id="mapsTimeline"></div>
+            </div>
+          </div>
+
+          <!-- PRÉDICTIONS -->
+          <div class="section-panel" id="predictions" style="display:none">
+            <div id="predictionsContent"></div>
+          </div>
+
+          <!-- JOUEURS -->
+          <div class="section-panel" id="participants" style="display:none">
+            <div class="card">
+                <h2 data-i18n="participants.registered">👥 Joueurs inscrits</h2>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchPlayers" data-i18n-placeholder="players.search" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
+                </div>
+                <div id="participantsList"></div>
+            </div>
+          </div>
+
+          <!-- STATS -->
+          <div class="section-panel" id="stats" style="display:none">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="stats.players.count">Joueurs ayant participé</div>
+                    <div class="stat-value" id="totalParticipants">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="stats.editions.count">Éditions terminées</div>
+                    <div class="stat-value" id="totalEditions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="stats.quals.count">Qualifications enregistrées</div>
+                    <div class="stat-value" id="totalQuals">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="stats.finals.count">Entrées en finale</div>
+                    <div class="stat-value" id="totalFinals">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>⚡ Streaks & Records</h2>
+                <div id="streaksStats"></div>
+            </div>
+            <div class="card">
+                <h2 data-i18n="stats.by.player">📈 Statistiques par joueur</h2>
+                <div id="playerStats"></div>
+            </div>
+          </div>
+
+          <!-- HALL OF FAME -->
+          <div class="section-panel" id="halloffame" style="display:none">
+            <div id="hallofFameContent"></div>
+          </div>
+
+          <!-- ADMINISTRATION (admin only) -->
+          <div class="section-panel" id="administration" style="display:none">
+            <div class="adm-tabs">
+              <button class="adm-tab active" data-admtab="editions" onclick="switchAdmTab('editions')">📅 Éditions</button>
+              <button class="adm-tab" data-admtab="joueurs" onclick="switchAdmTab('joueurs')">👥 Joueurs</button>
+              <button class="adm-tab" data-admtab="discord" onclick="switchAdmTab('discord')">🔗 Migration Discord</button>
+              <button class="adm-tab" data-admtab="config" onclick="switchAdmTab('config')">⚙️ Configuration</button>
+            </div>
+
+            <!-- Sous-panel : Éditions -->
+            <div class="adm-panel active" id="admtab-editions">
+              <div class="card" id="createEditionCard">
                 <h2 data-i18n="editions.create">➕ Créer une édition</h2>
                 <form id="addEditionForm">
                     <div class="form-row">
@@ -1316,68 +1445,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </details>
                     <button type="submit" class="btn btn-primary" data-i18n="common.create">Créer</button>
                 </form>
+              </div>
             </div>
 
-            <!-- Filter bar -->
-            <div class="edition-filters" id="editionFilters">
-                <button class="filter-btn active" data-filter="all"   onclick="setEditionFilter('all')" data-i18n="editions.filter.all">Toutes</button>
-                <button class="filter-btn"         data-filter="upcoming" onclick="setEditionFilter('upcoming')" data-i18n="editions.upcoming">À venir</button>
-                <button class="filter-btn"         data-filter="past"     onclick="setEditionFilter('past')" data-i18n="editions.past">Passées</button>
-                <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
-                    <span style="font-size:0.78rem;color:var(--color-text-secondary)" data-i18n="common.sort">Tri :</span>
-                    <button class="filter-btn active" data-sort="desc" onclick="setEditionSort('desc')" data-i18n="common.sort.newest">Plus récentes</button>
-                    <button class="filter-btn"         data-sort="asc"  onclick="setEditionSort('asc')" data-i18n="common.sort.oldest">Plus anciennes</button>
-                </span>
-            </div>
-
-            <!-- List of edition rows -->
-            <div id="editionsList"></div>
-
-            <!-- Edition detail panel -->
-            <div class="edition-detail" id="editionDetail">
-                <div class="edition-detail-topbar">
-                    <button class="edition-detail-back" onclick="closeEditionDetail()" data-i18n="common.back.editions">← Retour aux éditions</button>
-                    <button class="edition-share-btn" onclick="shareEdition()" data-i18n="msg.copy.link">📋 Copier le lien</button>
-                </div>
-                <div id="editionDetailContent"></div>
-            </div>
-          </div>
-
-          <!-- CLASSEMENT -->
-          <div class="section-panel" id="rankings" style="display:none">
-            <div class="card">
-                <h2>
-                    <span data-i18n="rankings.general">📊 Classement général</span>
-                    <button class="btn btn-secondary btn-small" onclick="exportCSV()" data-i18n="rankings.export.csv">⬇️ Export CSV</button>
-                </h2>
-                <div id="rankingSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
-                <div id="generalRanking"></div>
-            </div>
-            <div class="card">
-                <h2 data-i18n="rankings.top10">📈 Points — Top 10</h2>
-                <div class="chart-container">
-                    <canvas id="rankingChart"></canvas>
-                </div>
-            </div>
-          </div>
-
-          <!-- MAPS TIMELINE -->
-          <div class="section-panel" id="maps" style="display:none">
-            <div class="card" style="padding-bottom:8px">
-              <h2 data-i18n="maps.played">🗺️ Maps jouées</h2>
-              <div id="mapsSeasonFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
-              <div id="mapsTimeline"></div>
-            </div>
-          </div>
-
-          <!-- PRÉDICTIONS -->
-          <div class="section-panel" id="predictions" style="display:none">
-            <div id="predictionsContent"></div>
-          </div>
-
-          <!-- JOUEURS -->
-          <div class="section-panel" id="participants" style="display:none">
-            <div class="card admin-only">
+            <!-- Sous-panel : Joueurs -->
+            <div class="adm-panel" id="admtab-joueurs">
+              <div class="card">
                 <h2 data-i18n="participants.add">➕ Ajouter un joueur</h2>
                 <form id="addParticipantForm">
                     <div class="form-row">
@@ -1392,128 +1465,96 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     </div>
                     <button type="submit" class="btn btn-primary" data-i18n="common.add">Ajouter</button>
                 </form>
-            </div>
-            <div class="card">
-                <h2 data-i18n="participants.registered">👥 Joueurs inscrits</h2>
-                <div class="search-wrapper">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchPlayers" data-i18n-placeholder="players.search" placeholder="Rechercher un joueur..." oninput="displayParticipants()">
-                </div>
-                <div id="participantsList"></div>
-            </div>
-          </div>
-
-          <!-- STATS -->
-          <div class="section-panel" id="stats" style="display:none">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label" data-i18n="stats.players.count">Joueurs ayant participé</div>
-                    <div class="stat-value" id="totalParticipants">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label" data-i18n="stats.editions.count">Éditions terminées</div>
-                    <div class="stat-value" id="totalEditions">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label" data-i18n="stats.quals.count">Qualifications enregistrées</div>
-                    <div class="stat-value" id="totalQuals">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label" data-i18n="stats.finals.count">Entrées en finale</div>
-                    <div class="stat-value" id="totalFinals">0</div>
-                </div>
-            </div>
-            <div class="card">
-                <h2>⚡ Streaks & Records</h2>
-                <div id="streaksStats"></div>
-            </div>
-            <div class="card">
-                <h2 data-i18n="stats.by.player">📈 Statistiques par joueur</h2>
-                <div id="playerStats"></div>
-            </div>
-          </div>
-
-          <!-- HALL OF FAME -->
-          <div class="section-panel" id="halloffame" style="display:none">
-            <div id="hallofFameContent"></div>
-          </div>
-
-          <!-- PERSONNALISATION (admin only) -->
-          <div class="section-panel admin-only" id="personnalisation" style="display:none">
-            <div class="card" style="margin-bottom:16px">
-              <h2 style="margin-bottom:8px">🔧 Diagnostic données</h2>
-              <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:12px">Détecte les résultats orphelins (joueur supprimé/recréé) et les doublons de participants.</p>
-              <button class="btn btn-secondary" onclick="runDataDiagnostic()">🔍 Analyser</button>
-              <div id="diagResults" style="margin-top:14px"></div>
-            </div>
-            <div class="card">
-              <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
-              <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.general">Général</p>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="cfgSiteName" data-i18n="admin.comp.name">Nom de la compétition</label>
-                    <input type="text" id="cfgSiteName" placeholder="Springs Monthly Cup">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgSiteSubtitle" data-i18n="admin.subtitle">Sous-titre (sidebar &amp; accueil)</label>
-                    <input type="text" id="cfgSiteSubtitle" placeholder="Springs E-Sport · Trackmania · En ligne">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgCopyright" data-i18n="admin.copyright">Copyright (footer)</label>
-                    <input type="text" id="cfgCopyright" placeholder="© 2026 Springs E-Sport">
-                  </div>
-                </div>
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.twitch.section">Twitch</p>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="cfgTwitchChannel" data-i18n="admin.twitch.channel">Nom de la chaîne Twitch</label>
-                    <input type="text" id="cfgTwitchChannel" placeholder="springsesport">
-                  </div>
-                </div>
-                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.social">Réseaux sociaux</p>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="cfgYoutubeUrl" data-i18n="admin.youtube">YouTube</label>
-                    <input type="url" id="cfgYoutubeUrl" placeholder="https://www.youtube.com/@...">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgInstagramUrl" data-i18n="admin.instagram">Instagram</label>
-                    <input type="url" id="cfgInstagramUrl" placeholder="https://www.instagram.com/...">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgTwitterUrl" data-i18n="admin.twitter">X / Twitter</label>
-                    <input type="url" id="cfgTwitterUrl" placeholder="https://x.com/...">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgTiktokUrl" data-i18n="admin.tiktok">TikTok</label>
-                    <input type="url" id="cfgTiktokUrl" placeholder="https://www.tiktok.com/@...">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgTwitchUrl" data-i18n="admin.twitch.url">Twitch (URL directe)</label>
-                    <input type="url" id="cfgTwitchUrl" placeholder="https://www.twitch.tv/...">
-                  </div>
-                  <div class="form-group">
-                    <label for="cfgDiscordInviteUrl" data-i18n="admin.discord.invite">Discord (lien d'invitation)</label>
-                    <input type="url" id="cfgDiscordInviteUrl" placeholder="https://discord.gg/...">
-                  </div>
-                </div>
-                <div style="margin-top:22px;display:flex;gap:14px;align-items:center">
-                  <button type="submit" class="btn btn-primary" data-i18n="admin.save.btn">💾 Enregistrer</button>
-                  <span id="cfgSaveStatus" style="font-size:0.85rem;color:var(--color-success);display:none" data-i18n="admin.saved.btn">✅ Sauvegardé !</span>
-                </div>
-              </form>
+              </div>
             </div>
 
-            <!-- Discord config (généré par discord.js) -->
-            <div id="discordConfigCard"></div>
+            <!-- Sous-panel : Migration Discord -->
+            <div class="adm-panel" id="admtab-discord">
+              <div class="card">
+                <h2>🔗 Migration Discord</h2>
+                <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px">
+                  Joueurs qui se sont connectés avec Google et n'ont pas encore lié leur compte Discord.
+                  Saisis leur Discord ID (snowflake) pour lier leur compte maintenant.
+                </p>
+                <div id="discordMigrationList"></div>
+              </div>
+            </div>
 
-            <!-- Outils Admin -->
-            <div class="card" style="margin-top:20px">
-              <h2 data-i18n="admin.tools">🛠️ Outils Admin</h2>
-              <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.obs.overlay">Stream Overlay (OBS)</p>
-              <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px" data-i18n-html="admin.obs.instr">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
-              <div id="overlayUrlsContainer"></div>
+            <!-- Sous-panel : Configuration -->
+            <div class="adm-panel" id="admtab-config">
+              <div class="card" style="margin-bottom:16px">
+                <h2 style="margin-bottom:8px">🔧 Diagnostic données</h2>
+                <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:12px">Détecte les résultats orphelins (joueur supprimé/recréé) et les doublons de participants.</p>
+                <button class="btn btn-secondary" onclick="runDataDiagnostic()">🔍 Analyser</button>
+                <div id="diagResults" style="margin-top:14px"></div>
+              </div>
+              <div class="card">
+                <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
+                <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
+                  <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.general">Général</p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="cfgSiteName" data-i18n="admin.comp.name">Nom de la compétition</label>
+                      <input type="text" id="cfgSiteName" placeholder="Springs Monthly Cup">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgSiteSubtitle" data-i18n="admin.subtitle">Sous-titre (sidebar &amp; accueil)</label>
+                      <input type="text" id="cfgSiteSubtitle" placeholder="Springs E-Sport · Trackmania · En ligne">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgCopyright" data-i18n="admin.copyright">Copyright (footer)</label>
+                      <input type="text" id="cfgCopyright" placeholder="© 2026 Springs E-Sport">
+                    </div>
+                  </div>
+                  <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.twitch.section">Twitch</p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="cfgTwitchChannel" data-i18n="admin.twitch.channel">Nom de la chaîne Twitch</label>
+                      <input type="text" id="cfgTwitchChannel" placeholder="springsesport">
+                    </div>
+                  </div>
+                  <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:22px 0 14px;font-weight:700" data-i18n="admin.social">Réseaux sociaux</p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="cfgYoutubeUrl" data-i18n="admin.youtube">YouTube</label>
+                      <input type="url" id="cfgYoutubeUrl" placeholder="https://www.youtube.com/@...">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgInstagramUrl" data-i18n="admin.instagram">Instagram</label>
+                      <input type="url" id="cfgInstagramUrl" placeholder="https://www.instagram.com/...">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgTwitterUrl" data-i18n="admin.twitter">X / Twitter</label>
+                      <input type="url" id="cfgTwitterUrl" placeholder="https://x.com/...">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgTiktokUrl" data-i18n="admin.tiktok">TikTok</label>
+                      <input type="url" id="cfgTiktokUrl" placeholder="https://www.tiktok.com/@...">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgTwitchUrl" data-i18n="admin.twitch.url">Twitch (URL directe)</label>
+                      <input type="url" id="cfgTwitchUrl" placeholder="https://www.twitch.tv/...">
+                    </div>
+                    <div class="form-group">
+                      <label for="cfgDiscordInviteUrl" data-i18n="admin.discord.invite">Discord (lien d'invitation)</label>
+                      <input type="url" id="cfgDiscordInviteUrl" placeholder="https://discord.gg/...">
+                    </div>
+                  </div>
+                  <div style="margin-top:22px;display:flex;gap:14px;align-items:center">
+                    <button type="submit" class="btn btn-primary" data-i18n="admin.save.btn">💾 Enregistrer</button>
+                    <span id="cfgSaveStatus" style="font-size:0.85rem;color:var(--color-success);display:none" data-i18n="admin.saved.btn">✅ Sauvegardé !</span>
+                  </div>
+                </form>
+              </div>
+              <!-- Discord config (généré par discord.js) -->
+              <div id="discordConfigCard"></div>
+              <!-- Outils Admin -->
+              <div class="card" style="margin-top:20px">
+                <h2 data-i18n="admin.tools">🛠️ Outils Admin</h2>
+                <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.obs.overlay">Stream Overlay (OBS)</p>
+                <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px" data-i18n-html="admin.obs.instr">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
+                <div id="overlayUrlsContainer"></div>
+              </div>
             </div>
           </div>
 
@@ -1826,6 +1867,14 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
     <script type="module" src="./cup.js"></script>
     <script>
+    // ── Admin panel sub-tabs ──────────────────────────────────────────────────
+    function switchAdmTab(tab) {
+        document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.admtab === tab));
+        document.querySelectorAll('.adm-panel').forEach(p => p.classList.toggle('active', p.id === 'admtab-' + tab));
+        if (tab === 'discord') window.displayDiscordMigration && window.displayDiscordMigration();
+    }
+    window.switchAdmTab = switchAdmTab;
+
     // ── Collapsible sidebar nav groups ────────────────────────────────────────
     (function() {
         const STORAGE_KEY = 'navGroups';

@@ -265,6 +265,83 @@ window.runDataDiagnostic = async function() {
     container.innerHTML = html;
 };
 
+// ── Migration Discord ─────────────────────────────────────────────────────────
+
+window.displayDiscordMigration = function() {
+    const container = document.getElementById('discordMigrationList');
+    if (!container) return;
+
+    // Participants sans discordId OU dont le userId ne commence pas par "discord_"
+    const toMigrate = state.data.participants.filter(p =>
+        !p.discordId || !String(p.userId || '').startsWith('discord_')
+    );
+
+    if (toMigrate.length === 0) {
+        container.innerHTML = '<div style="color:var(--color-accent);font-size:0.85rem">✅ Tous les joueurs ont un compte Discord lié.</div>';
+        return;
+    }
+
+    container.innerHTML = toMigrate.map(p => {
+        const id = p.id;
+        const name = pName(p);
+        const currentDiscordId = p.discordId || '';
+        const currentDiscordUsername = p.discordUsername || '';
+        const userId = p.userId || '';
+        const linkedIcon = currentDiscordId ? '🟡' : '🔴';
+        const linkedLabel = currentDiscordId
+            ? `Discord partiellement lié (ID: ${currentDiscordId}, userId: ${userId})`
+            : 'Aucun Discord lié';
+        return `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="font-weight:700">${name}</span>
+                <span style="font-size:0.75rem;color:var(--color-text-secondary)">${linkedIcon} ${linkedLabel}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                <div class="form-group" style="margin:0;flex:1;min-width:160px">
+                    <label style="font-size:0.75rem;color:var(--color-text-secondary);margin-bottom:4px;display:block">Discord ID (Snowflake) *</label>
+                    <input type="text" id="migDiscordId-${id}" value="${currentDiscordId}" placeholder="Ex: 123456789012345678"
+                        style="width:100%;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.85rem;font-family:inherit">
+                </div>
+                <div class="form-group" style="margin:0;flex:1;min-width:140px">
+                    <label style="font-size:0.75rem;color:var(--color-text-secondary);margin-bottom:4px;display:block">Pseudo Discord (optionnel)</label>
+                    <input type="text" id="migDiscordUsername-${id}" value="${currentDiscordUsername}" placeholder="Ex: PlayerXYZ"
+                        style="width:100%;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#fff;font-size:0.85rem;font-family:inherit">
+                </div>
+                <button onclick="linkDiscordManual('${id}')" style="padding:7px 16px;border-radius:8px;background:rgba(88,101,242,0.15);border:1px solid rgba(88,101,242,0.35);color:#7b8cff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap">
+                    🔗 Lier
+                </button>
+            </div>
+            <div id="migMsg-${id}" style="margin-top:6px;font-size:0.8rem;display:none"></div>
+        </div>`;
+    }).join('');
+};
+
+window.linkDiscordManual = async function(participantId) {
+    const discordId = document.getElementById(`migDiscordId-${participantId}`)?.value.trim();
+    const discordUsername = document.getElementById(`migDiscordUsername-${participantId}`)?.value.trim() || '';
+    const msgEl = document.getElementById(`migMsg-${participantId}`);
+
+    if (!discordId) {
+        if (msgEl) { msgEl.style.cssText = 'display:block;color:var(--color-danger)'; msgEl.textContent = '⚠️ Le Discord ID est obligatoire.'; }
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, 'participants', participantId), {
+            discordId,
+            discordUsername,
+            userId: `discord_${discordId}`
+        });
+        if (msgEl) { msgEl.style.cssText = 'display:block;color:var(--color-accent)'; msgEl.textContent = '✅ Compte lié avec succès !'; }
+        // Rafraîchir la liste après 1.5s
+        setTimeout(() => window.displayDiscordMigration(), 1500);
+    } catch(e) {
+        console.error('Discord link error:', e);
+        if (msgEl) { msgEl.style.cssText = 'display:block;color:var(--color-danger)'; msgEl.textContent = '❌ Erreur lors de la mise à jour.'; }
+    }
+};
+
 window.repairOrphanedResults = async function(oldPlayerId) {
     const safeId = oldPlayerId.replace(/[^a-zA-Z0-9]/g, '_');
     const sel = document.getElementById(`remap-${safeId}`);

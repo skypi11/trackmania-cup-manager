@@ -53,12 +53,12 @@ function showSection(id) {
     else if (id === 'stats') displayStats();
     else if (id === 'home') displayHome();
     else if (id === 'halloffame') displayHallOfFame();
-    else if (id === 'personnalisation') { applySiteConfig(); renderDiscordConfig(); }
+    else if (id === 'administration') { applySiteConfig(); renderDiscordConfig(); displayDiscordMigration(); }
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
     else if (id === 'reglement') displayRules();
     else if (id === 'duel') displayDuel();
-    const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), personnalisation: t('nav.custom'), reglement: t('nav.reglement'), duel: t('nav.duel') };
+    const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), administration: '⚙️ Administration', reglement: t('nav.reglement'), duel: t('nav.duel') };
     const titleEl = document.getElementById('topbarTitle');
     if (titleEl) titleEl.textContent = titles[id] || '';
     // Sync URL hash (replaceState = pas d'entrée dans l'historique pour nav interne)

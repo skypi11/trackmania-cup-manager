@@ -140,15 +140,12 @@ window.authDiscordSignIn = () => {
 
 const googleProvider = new GoogleAuthProvider();
 
+// Connexion admin via Google (lien discret dans la modale auth)
 window.toggleAdmin = async () => {
-    if (state.isAdmin) {
-        await signOut(auth);
-    } else {
-        try {
-            await signInWithPopup(auth, googleProvider);
-        } catch(err) {
-            if (err.code !== 'auth/popup-closed-by-user') alert(t('auth.error'));
-        }
+    try {
+        await signInWithPopup(auth, googleProvider);
+    } catch(err) {
+        if (err.code !== 'auth/popup-closed-by-user') alert(t('auth.error'));
     }
 };
 
@@ -163,15 +160,14 @@ onAuthStateChanged(auth, async (user) => {
     state.currentUser = user;
 
     const loginBtn  = document.getElementById('loginBtn');
-    const adminBtn  = document.getElementById('adminToggleBtn');
     const playerBtn = document.getElementById('playerBtn');
 
     if (!user) {
         state.isAdmin = false;
         state.currentUserProfile = null;
         loginBtn.style.display  = '';
-        adminBtn.style.display  = 'none';
         playerBtn.style.display = 'none';
+        document.body.classList.remove('admin-mode');
         state.loaded.auth = true;
         checkLoaded();
         displayParticipants();
@@ -198,17 +194,12 @@ onAuthStateChanged(auth, async (user) => {
 
     if (state.isAdmin) {
         document.body.classList.add('admin-mode');
-        adminBtn.style.display  = '';
         playerBtn.style.display = '';
-        adminBtn.classList.add('active');
-        adminBtn.textContent = t('admin.logout');
         const pseudoAdmin = state.currentUserProfile?.pseudo || user.displayName || t('nav.account');
         playerBtn.textContent = `👤 ${pseudoAdmin}`;
     } else {
         document.body.classList.remove('admin-mode');
-        adminBtn.style.display  = 'none';
         playerBtn.style.display = '';
-        adminBtn.classList.remove('active');
         const linkedPlayer = state.data.participants.find(p => p.userId === user.uid);
         const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || user.displayName || t('nav.account'));
         playerBtn.textContent = `👤 ${pseudo}`;
