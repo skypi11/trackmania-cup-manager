@@ -117,14 +117,28 @@ export const COUNTRIES = [
     ['🇹🇳','Tunisie'],['🇹🇷','Turquie'],['🇺🇦','Ukraine'],
 ];
 
+// Map nom → flag pour retrouver le drapeau depuis une valeur legacy (ex: "France" → "🇫🇷")
+const _COUNTRY_FLAG_MAP = Object.fromEntries(COUNTRIES.map(([f, n]) => [n, f]));
+
+// La valeur stockée ET affichée est "🇫🇷 France" (flag + espace + nom)
 export function countryOptions(selected = '') {
+    // Normalise une valeur legacy (juste le nom) vers le format complet
+    const normalized = _COUNTRY_FLAG_MAP[selected] ? `${_COUNTRY_FLAG_MAP[selected]} ${selected}` : selected;
     return `<option value="">— Pays —</option>` +
-        COUNTRIES.map(([flag, name]) =>
-            `<option value="${name}"${name === selected ? ' selected' : ''}>${flag} ${name}</option>`
-        ).join('');
+        COUNTRIES.map(([flag, name]) => {
+            const val = `${flag} ${name}`;
+            return `<option value="${val}"${val === normalized ? ' selected' : ''}>${val}</option>`;
+        }).join('');
 }
 
 export function populateCountrySelect(id, selected = '') {
     const el = document.getElementById(id);
     if (el) el.innerHTML = countryOptions(selected);
+}
+
+// Affiche le pays avec son drapeau (gère ancien format "France" et nouveau "🇫🇷 France")
+export function displayCountry(country) {
+    if (!country) return '—';
+    if (_COUNTRY_FLAG_MAP[country]) return `${_COUNTRY_FLAG_MAP[country]} ${country}`;
+    return country; // déjà au format "🇫🇷 France" ou valeur inconnue
 }

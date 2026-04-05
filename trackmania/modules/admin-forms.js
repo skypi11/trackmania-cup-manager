@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast, populateCountrySelect, countryOptions } from './utils.js';
+import { pName, showToast, populateCountrySelect, countryOptions, displayCountry } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
 import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion } from 'firebase/firestore';
 
@@ -559,7 +559,7 @@ window.displayAdminPlayers = function() {
                 <td style="padding:8px 10px;font-weight:600">${p.pseudo || '—'}${newBadge}${incompleteBadge}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.pseudoTM || p.name || '—'}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary);font-size:0.75rem">${p.loginTM || '—'}</td>
-                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.country || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary)">${displayCountry(p.country)}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.team === 'Sans équipe' ? '—' : (p.team || '—')}</td>
                 <td style="padding:8px 10px">${discordLinked}</td>
                 <td style="padding:8px 10px">${authType}</td>
