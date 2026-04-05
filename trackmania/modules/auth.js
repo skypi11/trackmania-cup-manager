@@ -271,8 +271,8 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     try {
         await addDoc(collection(db, 'participants'), {
             pseudo, team, userId: state.currentUser.uid, cupId,
-            pseudoTM, loginTM, games: ['trackmania'],
-            ...(country ? { country } : {}),
+            pseudoTM, loginTM, country, games: ['trackmania'],
+            createdAt: new Date().toISOString(),
             discordId:       state.discordId       || '',
             discordUsername: state.discordUsername || '',
             discordAvatar:   state.discordAvatar   || ''

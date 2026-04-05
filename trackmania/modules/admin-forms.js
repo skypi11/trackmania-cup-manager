@@ -27,6 +27,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
     }
     await addDoc(collection(db, 'participants'), {
         name, pseudo: name, team: team || 'Sans équipe', cupId,
+        createdAt: new Date().toISOString(),
         ...(pseudoTM ? { pseudoTM } : {}),
         ...(loginTM  ? { loginTM  } : {}),
         ...(country  ? { country  } : {}),
@@ -545,9 +546,13 @@ window.displayAdminPlayers = function() {
                 : p.userId
                     ? `<span style="color:#f59e0b;font-size:0.72rem">Google</span>`
                     : `<span style="color:#555;font-size:0.72rem">—</span>`;
+            const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) < 7 * 86400000;
+            const isIncomplete = !p.loginTM || !p.country;
+            const newBadge = isNew ? `<span style="display:inline-block;padding:1px 6px;border-radius:4px;background:rgba(0,217,54,0.2);color:var(--color-accent);font-size:0.68rem;font-weight:700;letter-spacing:0.5px;margin-left:6px;vertical-align:middle">NOUVEAU</span>` : '';
+            const incompleteBadge = isIncomplete ? `<span title="${[!p.loginTM ? 'Login TM manquant' : '', !p.country ? 'Pays manquant' : ''].filter(Boolean).join(' · ')}" style="display:inline-block;margin-left:5px;vertical-align:middle;font-size:0.85rem;cursor:default">⚠️</span>` : '';
             return `
-            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <td style="padding:8px 10px;font-weight:600">${p.pseudo || '—'}</td>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)${isNew ? ';background:rgba(0,217,54,0.03)' : ''}" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${isNew ? 'rgba(0,217,54,0.03)' : ''}'">
+                <td style="padding:8px 10px;font-weight:600">${p.pseudo || '—'}${newBadge}${incompleteBadge}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.pseudoTM || p.name || '—'}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary);font-size:0.75rem">${p.loginTM || '—'}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.country || '—'}</td>
