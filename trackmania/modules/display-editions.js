@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { dateLang, pName, tTeam, getPoints, getCountdown, showToast } from './utils.js';
+import { dateLang, pName, tTeam, getPoints, getCountdown, showToast, parseMarkdown } from './utils.js';
 import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
@@ -189,7 +189,7 @@ export function displayEditions() {
             : state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
         const finals = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
 
-        const descHtml = e.description ? `<div class="event-row-desc">${e.description}</div>` : '';
+        const descHtml = e.description ? `<div class="event-row-desc">${parseMarkdown(e.description)}</div>` : '';
         const liveBadgeHtml = (!isPast && e.status === 'en_cours')
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
@@ -453,7 +453,7 @@ window.openEditionDetail = (id) => {
 
         html += `<div class="card">
             <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span>${editBtnHtml}</h2>
-            ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${e.description}</p>` : ''}
+            ${e.description ? `<div style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${parseMarkdown(e.description)}</div>` : ''}
             ${twitchLiveHtml}
             ${vodEmbedHtml}`;
 
@@ -728,7 +728,7 @@ window.openEditionDetail = (id) => {
             ${workflowHtml}
             ${twitchEmbedHtml}
             ${infoHtml}
-            ${e.description ? `<p style="color:var(--color-text-secondary);font-size:0.9rem;margin:16px 0;line-height:1.6">${e.description}</p>` : ''}
+            ${e.description ? `<div style="color:var(--color-text-secondary);font-size:0.9rem;margin:16px 0;line-height:1.6">${parseMarkdown(e.description)}</div>` : ''}
             ${registrationHtml}
             <div style="margin-top:28px">
                 <div class="phase-title" style="margin-top:0">${t('detail.registered.list')} (${inscriptions.length})</div>
