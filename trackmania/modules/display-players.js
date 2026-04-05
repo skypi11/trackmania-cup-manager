@@ -232,11 +232,23 @@ window.openPlayerProfile = (playerId) => {
                 <div class="form-row">
                     <div class="form-group">
                         <label>${t('profile.pseudo.label')}</label>
-                        <input type="text" id="ownProfilePseudo" required>
+                        <input type="text" id="ownProfilePseudo" required placeholder="${t('profile.ingame.ph')}">
                     </div>
                     <div class="form-group">
                         <label>${t('profile.team')}</label>
                         <input type="text" id="ownProfileTeam" placeholder="Sans équipe">
+                    </div>
+                </div>
+                <div class="form-row" style="margin-top:12px">
+                    <div class="form-group">
+                        <label>${t('profile.tm.pseudo.label')}</label>
+                        <input type="text" id="ownProfilePseudoTM" placeholder="${t('profile.tm.pseudo.ph')}">
+                        <small style="color:var(--color-text-secondary);font-size:0.75rem">${t('profile.tm.pseudo.hint')}</small>
+                    </div>
+                    <div class="form-group">
+                        <label>${t('profile.tm.login.label')}</label>
+                        <input type="text" id="ownProfileLoginTM" placeholder="${t('profile.tm.login.ph')}">
+                        <small style="color:var(--color-text-secondary);font-size:0.75rem">${t('profile.tm.login.hint')}</small>
                     </div>
                 </div>
                 <div id="ownProfileSaveMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
@@ -251,16 +263,20 @@ window.openPlayerProfile = (playerId) => {
     document.getElementById('playerProfileModal').classList.add('open');
 
     if (isOwnProfile) {
-        document.getElementById('ownProfilePseudo').value = pName(player);
-        document.getElementById('ownProfileTeam').value = player.team === 'Sans équipe' ? '' : (player.team || '');
+        document.getElementById('ownProfilePseudo').value   = player.pseudo || pName(player);
+        document.getElementById('ownProfileTeam').value     = player.team === 'Sans équipe' ? '' : (player.team || '');
+        document.getElementById('ownProfilePseudoTM').value = player.pseudoTM || '';
+        document.getElementById('ownProfileLoginTM').value  = player.loginTM  || '';
         document.getElementById('ownProfileEditForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const pseudo = document.getElementById('ownProfilePseudo').value.trim();
-            const team   = document.getElementById('ownProfileTeam').value.trim() || 'Sans équipe';
-            const msg    = document.getElementById('ownProfileSaveMsg');
+            const pseudo    = document.getElementById('ownProfilePseudo').value.trim();
+            const team      = document.getElementById('ownProfileTeam').value.trim() || 'Sans équipe';
+            const pseudoTM  = document.getElementById('ownProfilePseudoTM').value.trim();
+            const loginTM   = document.getElementById('ownProfileLoginTM').value.trim();
+            const msg       = document.getElementById('ownProfileSaveMsg');
             if (!pseudo) return;
             try {
-                await updateDoc(doc(db, 'participants', player.id), { pseudo, team });
+                await updateDoc(doc(db, 'participants', player.id), { pseudo, team, pseudoTM, loginTM });
                 document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
                 msg.style.display = 'block';
                 msg.style.background = 'rgba(0,217,54,0.1)';
