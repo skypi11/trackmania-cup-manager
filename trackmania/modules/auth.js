@@ -3,7 +3,7 @@
 import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast, populateCountrySelect } from './utils.js';
+import { pName, showToast, buildCountryPicker } from './utils.js';
 import { addDoc, getDoc, getDocs, updateDoc, doc, collection, query, where } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { handleDiscordCallback, updateDiscordReminders, maybeShowDiscordPrompt } from './discord.js';
@@ -231,7 +231,7 @@ window.openCreateProfile = () => {
     document.getElementById('newProfileLoginTM').value  = '';
     document.getElementById('newProfileTeam').value    = '';
     document.getElementById('createProfileMsg').style.display = 'none';
-    populateCountrySelect('newProfileCountry');
+    document.getElementById('newProfileCountry_picker').innerHTML = buildCountryPicker('newProfileCountry');
 
     // Afficher l'info Discord si connecté via Discord
     const discordInfo   = document.getElementById('createProfileDiscordInfo');

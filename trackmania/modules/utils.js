@@ -140,5 +140,52 @@ export function populateCountrySelect(id, selected = '') {
 export function displayCountry(country) {
     if (!country) return '—';
     if (_COUNTRY_FLAG_MAP[country]) return `${_COUNTRY_FLAG_MAP[country]} ${country}`;
-    return country; // déjà au format "🇫🇷 France" ou valeur inconnue
+    return country;
 }
+
+// ── Dropdown pays custom (drapeaux visibles sur Windows) ──────────────────────
+export function buildCountryPicker(id, selected = '') {
+    const norm = _COUNTRY_FLAG_MAP[selected] ? `${_COUNTRY_FLAG_MAP[selected]} ${selected}` : selected;
+    const items = COUNTRIES.map(([flag, name]) => {
+        const val = `${flag} ${name}`;
+        const active = val === norm;
+        return `<div class="cp-item" onclick="window._cpSelect('${id}','${val}')"
+            style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:0.88rem;color:${active ? 'var(--color-accent)' : '#e0e0e0'};background:${active ? 'rgba(0,217,54,0.08)' : 'transparent'}"
+            onmouseover="this.style.background='rgba(255,255,255,0.07)'"
+            onmouseout="this.style.background='${active ? 'rgba(0,217,54,0.08)' : 'transparent'}'">
+            <span style="font-size:1.25rem;line-height:1;flex-shrink:0">${flag}</span>
+            <span>${name}</span>
+        </div>`;
+    }).join('');
+    return `<div class="cp-root" id="${id}_root" style="position:relative">
+        <div onclick="window._cpToggle('${id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);cursor:pointer;user-select:none;font-family:inherit;font-size:0.9rem;min-height:40px">
+            <span id="${id}_display" style="color:${norm ? '#f0f0f0' : '#555'}">${norm || '— Pays —'}</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" style="flex-shrink:0"><path d="M1 1l4 4 4-4" stroke="#666" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        </div>
+        <input type="hidden" id="${id}" value="${norm}">
+        <div class="cp-dd" id="${id}_dd" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9999;background:#1c1c1c;border:1px solid rgba(255,255,255,0.14);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.6)">
+            ${items}
+        </div>
+    </div>`;
+}
+
+window._cpToggle = function(id) {
+    const dd = document.getElementById(`${id}_dd`);
+    if (!dd) return;
+    const isOpen = dd.style.display !== 'none';
+    document.querySelectorAll('.cp-dd').forEach(d => { d.style.display = 'none'; });
+    if (!isOpen) dd.style.display = 'block';
+};
+window._cpSelect = function(id, val) {
+    const input = document.getElementById(id);
+    const display = document.getElementById(`${id}_display`);
+    const dd = document.getElementById(`${id}_dd`);
+    if (input) input.value = val;
+    if (display) { display.textContent = val; display.style.color = '#f0f0f0'; }
+    if (dd) dd.style.display = 'none';
+};
+document.addEventListener('click', e => {
+    if (!e.target.closest('.cp-root')) {
+        document.querySelectorAll('.cp-dd').forEach(d => { d.style.display = 'none'; });
+    }
+}, true);
