@@ -99,3 +99,32 @@ export function showToast(msg) {
     el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 2500);
 }
+
+// ── Liste des pays ────────────────────────────────────────────────────────────
+export const COUNTRIES = [
+    ['🇩🇿','Algérie'],['🇩🇪','Allemagne'],['🇦🇷','Argentine'],['🇦🇺','Australie'],
+    ['🇦🇹','Autriche'],['🇧🇪','Belgique'],['🇧🇾','Biélorussie'],['🇧🇷','Brésil'],
+    ['🇧🇬','Bulgarie'],['🇨🇦','Canada'],['🇨🇾','Chypre'],['🇰🇷','Corée du Sud'],
+    ['🇭🇷','Croatie'],['🇩🇰','Danemark'],['🇪🇸','Espagne'],['🇪🇪','Estonie'],
+    ['🇺🇸','États-Unis'],['🇫🇮','Finlande'],['🇫🇷','France'],['🇬🇷','Grèce'],
+    ['🇭🇺','Hongrie'],['🇮🇪','Irlande'],['🇮🇸','Islande'],['🇮🇹','Italie'],
+    ['🇯🇵','Japon'],['🇱🇻','Lettonie'],['🇱🇮','Liechtenstein'],['🇱🇹','Lituanie'],
+    ['🇱🇺','Luxembourg'],['🇲🇰','Macédoine du Nord'],['🇲🇹','Malte'],['🇲🇦','Maroc'],
+    ['🇲🇩','Moldavie'],['🇲🇨','Monaco'],['🇳🇴','Norvège'],['🇳🇿','Nouvelle-Zélande'],
+    ['🇵🇱','Pologne'],['🇵🇹','Portugal'],['🇨🇿','République tchèque'],['🇷🇴','Roumanie'],
+    ['🇬🇧','Royaume-Uni'],['🇷🇺','Russie'],['🇸🇲','Saint-Marin'],['🇷🇸','Serbie'],
+    ['🇸🇰','Slovaquie'],['🇸🇮','Slovénie'],['🇸🇪','Suède'],['🇨🇭','Suisse'],
+    ['🇹🇳','Tunisie'],['🇹🇷','Turquie'],['🇺🇦','Ukraine'],
+];
+
+export function countryOptions(selected = '') {
+    return `<option value="">— Pays —</option>` +
+        COUNTRIES.map(([flag, name]) =>
+            `<option value="${name}"${name === selected ? ' selected' : ''}>${flag} ${name}</option>`
+        ).join('');
+}
+
+export function populateCountrySelect(id, selected = '') {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = countryOptions(selected);
+}

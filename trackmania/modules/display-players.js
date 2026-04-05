@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, tTeam, getPoints, dateLang } from './utils.js';
+import { pName, tTeam, getPoints, dateLang, countryOptions } from './utils.js';
 import { computePlayerStats, ACHIEVEMENTS, playerBadgesHtml } from './display-editions.js';
 import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
 
@@ -254,7 +254,7 @@ window.openPlayerProfile = (playerId) => {
                 <div class="form-row" style="margin-top:12px">
                     <div class="form-group">
                         <label>${t('profile.country.label')}</label>
-                        <input type="text" id="ownProfileCountry" placeholder="${t('profile.country.ph')}">
+                        <select id="ownProfileCountry" style="font-family:inherit">${countryOptions()}</select>
                     </div>
                 </div>
                 <div id="ownProfileSaveMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
@@ -273,7 +273,7 @@ window.openPlayerProfile = (playerId) => {
         document.getElementById('ownProfileTeam').value     = player.team === 'Sans équipe' ? '' : (player.team || '');
         document.getElementById('ownProfilePseudoTM').value = player.pseudoTM || '';
         document.getElementById('ownProfileLoginTM').value  = player.loginTM  || '';
-        document.getElementById('ownProfileCountry').value  = player.country  || '';
+        document.getElementById('ownProfileCountry').innerHTML = countryOptions(player.country || '');
         document.getElementById('ownProfileEditForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const pseudo    = document.getElementById('ownProfilePseudo').value.trim();

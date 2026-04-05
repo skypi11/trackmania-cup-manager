@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast } from './utils.js';
+import { pName, showToast, populateCountrySelect, countryOptions } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
 import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion } from 'firebase/firestore';
 
@@ -12,6 +12,10 @@ const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly
 // Pre-fill saison field with current year
 const saisonInput = document.getElementById('editionSaison');
 if (saisonInput && !saisonInput.value) saisonInput.value = new Date().getFullYear();
+
+// Peupler les selects de pays statiques
+populateCountrySelect('playerCountry');
+populateCountrySelect('editPlayerCountry');
 
 // ── Add participant ───────────────────────────────────────────────────────────
 
@@ -82,7 +86,7 @@ window.openEditParticipant = (id) => {
     document.getElementById('editPlayerName').value       = p.pseudo || pName(p);
     document.getElementById('editPlayerPseudoTM').value   = p.pseudoTM || '';
     document.getElementById('editPlayerLoginTM').value    = p.loginTM  || '';
-    document.getElementById('editPlayerCountry').value    = p.country  || '';
+    populateCountrySelect('editPlayerCountry', p.country || '');
     document.getElementById('editPlayerTeam').value       = p.team === 'Sans équipe' ? '' : (p.team || '');
     document.getElementById('editParticipantModal').classList.add('open');
 };
