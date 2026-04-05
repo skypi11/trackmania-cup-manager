@@ -1604,14 +1604,27 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     <div class="modal-overlay" id="createProfileModal">
         <div class="modal" style="max-width:460px">
             <h2 data-i18n="profile.create.title">👤 Créer mon profil joueur</h2>
-            <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:20px" data-i18n="profile.welcome">
+            <p style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px" data-i18n="profile.welcome">
                 Bienvenue ! Renseignez vos informations pour participer aux compétitions Springs E-Sport.
             </p>
+            <!-- Compte Discord connecté -->
+            <div id="createProfileDiscordInfo" style="display:none;align-items:center;gap:10px;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.3);border-radius:8px;padding:10px 12px;margin-bottom:18px">
+                <img id="createProfileDiscordAvatar" src="" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">
+                <div>
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.4)" data-i18n="profile.discord.connected">Connecté via Discord</div>
+                    <div id="createProfileDiscordName" style="font-size:0.9rem;font-weight:700;color:#fff"></div>
+                </div>
+            </div>
             <form id="createProfileForm">
                 <div class="form-group">
-                    <label for="newProfilePseudo"><span data-i18n="profile.ingame.label">Pseudo en jeu</span> <span id="newProfileGameLabel" style="color:var(--color-text-secondary);font-size:0.85rem"></span> *</label>
-                    <input type="text" id="newProfilePseudo" required data-i18n-placeholder="profile.ingame.ph" placeholder="Votre pseudo en jeu" autocomplete="off">
-                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px" data-i18n="profile.ingame.hint">Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.</small>
+                    <label for="newProfilePseudo"><span data-i18n="profile.ingame.label">Pseudo affiché sur le site</span> *</label>
+                    <input type="text" id="newProfilePseudo" required data-i18n-placeholder="profile.ingame.ph" placeholder="Votre pseudo affiché" autocomplete="off">
+                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px" data-i18n="profile.ingame.hint">Ce pseudo apparaît dans les classements et résultats.</small>
+                </div>
+                <div class="form-group" style="margin-top:14px">
+                    <label for="newProfileLoginTM"><span data-i18n="profile.tm.login.label">Login Trackmania</span> <span id="newProfileGameLabel" style="color:var(--color-text-secondary);font-size:0.85rem"></span> *</label>
+                    <input type="text" id="newProfileLoginTM" required data-i18n-placeholder="profile.tm.login.ph" placeholder="Votre pseudo exact dans Trackmania" autocomplete="off">
+                    <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px" data-i18n="profile.tm.login.hint">Votre identifiant tel qu'il apparaît dans le jeu.</small>
                 </div>
                 <div class="form-group" style="margin-top:14px">
                     <label for="newProfileTeam" data-i18n="form.team.opt">Équipe (optionnel)</label>

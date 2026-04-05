@@ -410,9 +410,13 @@ const translations = {
     // ── Profile creation ──────────────────────────────────────────────────
     'profile.create.title':   '👤 Créer mon profil joueur',
     'profile.welcome':        'Bienvenue ! Renseignez vos informations pour participer aux compétitions Springs E-Sport.',
-    'profile.ingame.label':   'Pseudo en jeu',
-    'profile.ingame.ph':      'Votre pseudo en jeu',
-    'profile.ingame.hint':    'Si vous participez à plusieurs cups Springs, vous pouvez avoir un pseudo différent par cup.',
+    'profile.ingame.label':   'Pseudo affiché sur le site',
+    'profile.ingame.ph':      'Votre pseudo affiché',
+    'profile.ingame.hint':    'Ce pseudo apparaît dans les classements et résultats.',
+    'profile.tm.login.label': 'Login Trackmania',
+    'profile.tm.login.ph':    'Votre pseudo exact dans Trackmania',
+    'profile.tm.login.hint':  'Votre identifiant tel qu\'il apparaît dans le jeu.',
+    'profile.discord.connected': 'Connecté via Discord',
     'profile.cancel':         'Annuler',
 
     // ── Rankings (suite) ──────────────────────────────────────────────────
@@ -984,9 +988,13 @@ const translations = {
     // ── Profile creation ──────────────────────────────────────────────────
     'profile.create.title':   '👤 Create my player profile',
     'profile.welcome':        'Welcome! Fill in your information to participate in Springs E-Sport competitions.',
-    'profile.ingame.label':   'In-game nickname',
-    'profile.ingame.ph':      'Your in-game nickname',
-    'profile.ingame.hint':    'If you participate in multiple Springs cups, you can have a different nickname per cup.',
+    'profile.ingame.label':   'Display nickname',
+    'profile.ingame.ph':      'Your display nickname',
+    'profile.ingame.hint':    'This nickname appears in rankings and results.',
+    'profile.tm.login.label': 'Trackmania login',
+    'profile.tm.login.ph':    'Your exact Trackmania username',
+    'profile.tm.login.hint':  'Your username as it appears in-game.',
+    'profile.discord.connected': 'Connected via Discord',
     'profile.cancel':         'Cancel',
 
     // ── Rankings (suite) ──────────────────────────────────────────────────
