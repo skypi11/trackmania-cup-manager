@@ -249,7 +249,7 @@
         <div class="fg"><label>Discord</label><input class="finput" id="mp-disc" placeholder="pseudo#0000"></div>
         <div class="fg full"><label>Tracker URL</label><input class="finput" id="mp-track" placeholder="https://rocketleague.tracker.network/..." type="url"></div>
         <div class="fg"><label>Âge</label><input class="finput" id="mp-age" type="number" min="1" max="99" placeholder="22"></div>
-        <div class="fg"><label>Pays</label><input class="finput" id="mp-country" placeholder="FR" maxlength="3" style="text-transform:uppercase"></div>
+        <div class="fg"><label>Pays</label><div id="mp-country-picker"></div></div>
         <div class="fg"><label>Rôle</label>
           <select class="finput" id="mp-role">
             <option value="titulaire">Titulaire</option>
@@ -311,7 +311,7 @@ import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
 
 import { state } from './modules/state.js';
-import { FLAGS } from './modules/constants.js';
+import { flagHtml, buildRLCountryPicker } from './modules/constants.js';
 import { applyI18n } from './modules/i18n.js';
 import './modules/auth.js';
 import { fetchAll } from './modules/data.js';
@@ -863,7 +863,7 @@ window.openTeamModal = async function(teamId) {
           <td>${roleCls?`<span class="${roleCls}">${roleTxt}</span>`:roleTxt}</td>
           <td style="color:var(--text2);font-size:.76rem">${esc(p.pseudoDiscord||'—')}</td>
           <td>${p.trackerUrl?`<a class="p-link" href="${p.trackerUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Tracker ↗</a>`:'—'}</td>
-          <td>${FLAGS[p.country]||p.country||'—'}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:6px">${flagHtml(p.country)} ${p.country||'—'}</span></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -947,7 +947,7 @@ window.openPlayerView = function(playerId) {
         <div class="th-name">${esc(p.pseudoRL||p.pseudoDiscord||'?')}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
           ${roleCls?`<span class="${roleCls}">${roleLabel[p.role]||p.role}</span>`:''}
-          ${p.country?`<span class="th-meta-chip">${FLAGS[p.country]||p.country} ${p.country}</span>`:''}
+          ${p.country?`<span class="th-meta-chip" style="display:inline-flex;align-items:center;gap:6px">${flagHtml(p.country)} ${p.country}</span>`:''}
         </div>
         <div class="th-meta" style="margin-top:5px">
           ${team?`<span class="th-meta-chip">${esc(team.name)} · P${team.pool}</span>`:'<span class="th-meta-chip" style="color:var(--text3)">Agent libre</span>'}

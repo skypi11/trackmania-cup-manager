@@ -3,7 +3,7 @@ import { db, auth } from '../../shared/firebase-config.js';
 import { collection, getDocs, getDoc, setDoc, updateDoc, doc, query, where } from 'firebase/firestore';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInWithCustomToken, updateProfile } from 'firebase/auth';
 import { state } from './state.js';
-import { DISCORD_AUTH_URL } from './constants.js';
+import { DISCORD_AUTH_URL, buildRLCountryPicker } from './constants.js';
 import { esc, toast, openModal, closeModal } from './utils.js';
 import { t } from './i18n.js';
 
@@ -239,7 +239,7 @@ window.openProfile = async function() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="prof-field">
             <label>Pays</label>
-            <input class="finput" id="pf-country" value="${esc(playerDoc.country||'')}" placeholder="FR" maxlength="3" style="text-transform:uppercase">
+            <div id="pf-country-picker">${buildRLCountryPicker('pf-country', playerDoc.country||'')}</div>
           </div>
           <div class="prof-field">
             <label>Date de naissance</label>

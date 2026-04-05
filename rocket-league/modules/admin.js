@@ -6,7 +6,7 @@ import { t } from './i18n.js';
 import { esc, toast, openModal, closeModal } from './utils.js';
 import { refreshTeams, refreshPlayers, refreshMatches } from './data.js';
 import { buildStandings } from './standings.js';
-import { SCHEDULE } from './constants.js';
+import { SCHEDULE, flagHtml, buildRLCountryPicker } from './constants.js';
 
 export async function loadAdm(sec) {
   if (!state.isAdmin) return;
@@ -145,7 +145,7 @@ async function admPlayers() {
         </div>
         <div class="adm-pi-sub">
           <span>${esc(tm.name||'— Agent libre —')}</span>
-          ${window.FLAGS&&window.FLAGS[p.country]?`<span>${window.FLAGS[p.country]}</span>`:''}
+          ${p.country?`<span>${flagHtml(p.country)}</span>`:''}
           ${p.age?`<span>${p.age} ans</span>`:''}
         </div>
       </div>
@@ -167,7 +167,7 @@ async function admPlayers() {
       <div class="fg"><label>${t('f_disc')}</label><input class="finput" id="pf-disc" placeholder="pseudo#0000"></div>
       <div class="fg full"><label>${t('f_track')}</label><input class="finput" id="pf-track" placeholder="https://rocketleague.tracker.network/..." type="url"></div>
       <div class="fg"><label>${t('f_age')}</label><input class="finput" id="pf-age" type="number" min="1" max="99" placeholder="22"></div>
-      <div class="fg"><label>${t('f_country')}</label><input class="finput" id="pf-country" placeholder="FR" maxlength="3" style="text-transform:uppercase"></div>
+      <div class="fg"><label>${t('f_country')}</label><div id="pf-country-picker"></div></div>
       <div class="fg"><label>Rôle</label>
         <select class="finput" id="pf-role">
           <option value="titulaire">Titulaire</option>
@@ -195,6 +195,7 @@ async function admPlayers() {
       </div>
     </div>
     <div id="player-list">${renderList()}</div>`;
+  document.getElementById('pf-country-picker').innerHTML = buildRLCountryPicker('pf-country', '');
 }
 
 window.filterPlayerList = function(teamId) {
@@ -215,7 +216,7 @@ window.filterPlayerList = function(teamId) {
         </div>
         <div class="adm-pi-sub">
           <span>${esc(tm.name||'— Agent libre —')}</span>
-          ${window.FLAGS&&window.FLAGS[p.country]?`<span>${window.FLAGS[p.country]}</span>`:''}
+          ${p.country?`<span>${flagHtml(p.country)}</span>`:''}
           ${p.age?`<span>${p.age} ans</span>`:''}
         </div>
       </div>
@@ -259,7 +260,7 @@ window.editPlayer = function(id) {
   document.getElementById('mp-disc').value    = p.pseudoDiscord||'';
   document.getElementById('mp-track').value   = p.trackerUrl||'';
   document.getElementById('mp-age').value     = p.age||'';
-  document.getElementById('mp-country').value = p.country||'';
+  document.getElementById('mp-country-picker').innerHTML = buildRLCountryPicker('mp-country', p.country||'');
   document.getElementById('mp-photo').value   = p.photoUrl||'';
   document.getElementById('mp-team').value    = p.teamId||'';
   document.getElementById('mp-role').value    = p.role||'titulaire';
