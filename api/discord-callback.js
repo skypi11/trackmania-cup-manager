@@ -9,14 +9,28 @@ function initAdmin() {
 }
 
 export default async function handler(req, res) {
-  const { code } = req.query;
+  const { code, state } = req.query;
 
-  if (!code) {
-    return res.redirect(302, '/rocket-league/?auth_error=no_code');
+  // Determine redirect destination based on state parameter
+  // state = 'tm_monthly' | 'tm_mania' → Trackmania
+  // state = 'rl' or absent → Rocket League
+  function getRedirectBase(st) {
+    if (st === 'tm_monthly') return { base: '/trackmania/cup.html', query: 'cup=monthly' };
+    if (st === 'tm_mania')   return { base: '/trackmania/cup.html', query: 'cup=mania' };
+    return { base: '/rocket-league/', query: '' };
   }
 
+  const { base: redirectBase, query: redirectQuery } = getRedirectBase(state);
+
+  function errorRedirect(code) {
+    const sep = redirectQuery ? '&' : '?';
+    return res.redirect(302, `${redirectBase}?${redirectQuery}${sep}auth_error=${code}`);
+  }
+
+  if (!code) return errorRedirect('no_code');
+
   try {
-    // Échange du code contre un access token Discord
+    // Exchange code for Discord access token
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -30,35 +44,28 @@ export default async function handler(req, res) {
     });
 
     const tokenData = await tokenRes.json();
-
     if (!tokenData.access_token) {
       console.error('Discord token error:', tokenData);
-      return res.redirect(302, '/rocket-league/?auth_error=token_failed');
+      return errorRedirect('token_failed');
     }
 
-    // Récupération des infos utilisateur Discord
+    // Get Discord user info
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-
     const discordUser = await userRes.json();
-
     if (!discordUser.id) {
       console.error('Discord user error:', discordUser);
-      return res.redirect(302, '/rocket-league/?auth_error=user_failed');
+      return errorRedirect('user_failed');
     }
 
-    // Initialisation Firebase Admin
+    // Create Firebase custom token (uid = discord_SNOWFLAKE)
     initAdmin();
-    const auth = getAuth();
-
-    // Création du token Firebase custom (uid = discord_SNOWFLAKE)
-    const firebaseToken = await auth.createCustomToken(`discord_${discordUser.id}`, {
+    const firebaseToken = await getAuth().createCustomToken(`discord_${discordUser.id}`, {
       discordId: discordUser.id,
       discordUsername: discordUser.username,
     });
 
-    // URL avatar Discord
     const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
       : `https://cdn.discordapp.com/embed/avatars/0.png`;
@@ -70,9 +77,10 @@ export default async function handler(req, res) {
       da: avatarUrl,
     });
 
-    res.redirect(302, `/rocket-league/?${params.toString()}`);
+    const sep = redirectQuery ? '&' : '?';
+    res.redirect(302, `${redirectBase}?${redirectQuery}${sep}${params.toString()}`);
   } catch (err) {
     console.error('Discord auth error:', err);
-    res.redirect(302, '/rocket-league/?auth_error=server_error');
+    return errorRedirect('server_error');
   }
 }

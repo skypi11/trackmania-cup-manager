@@ -56,8 +56,10 @@ const translations = {
 
     // ── Auth modal ────────────────────────────────────────────────────────
     'auth.title':         'Connexion',
-    'auth.subtitle':      "Connecte-toi avec Google pour apparaître dans les classements et suivre tes résultats.",
+    'auth.subtitle':      "Connecte-toi avec Discord pour apparaître dans les classements et suivre tes résultats.",
     'auth.google':        'Se connecter avec Google',
+    'auth.discord':       'Se connecter avec Discord',
+    'auth.admin':         'Connexion admin',
     'auth.cancel':        'Annuler',
     'auth.error':         'Erreur de connexion. Réessaye.',
     'auth.connecting':    'Connexion...',
@@ -628,8 +630,10 @@ const translations = {
 
     // ── Auth modal ────────────────────────────────────────────────────────
     'auth.title':         'Sign in',
-    'auth.subtitle':      'Sign in with Google to appear in the rankings and track your results.',
+    'auth.subtitle':      'Sign in with Discord to appear in the rankings and track your results.',
     'auth.google':        'Sign in with Google',
+    'auth.discord':       'Sign in with Discord',
+    'auth.admin':         'Admin login',
     'auth.cancel':        'Cancel',
     'auth.error':         'Sign-in error. Please try again.',
     'auth.connecting':    'Signing in...',
