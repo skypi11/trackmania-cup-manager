@@ -1468,15 +1468,31 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <form id="addParticipantForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="playerName" data-i18n="form.pseudo">Pseudo *</label>
+                            <label for="playerName">Pseudo site *</label>
                             <input type="text" id="playerName" required placeholder="Ex: Player123">
                         </div>
+                        <div class="form-group">
+                            <label for="playerPseudoTM">Pseudo TM</label>
+                            <input type="text" id="playerPseudoTM" placeholder="Pseudo affiché en course">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top:10px">
+                        <div class="form-group">
+                            <label for="playerLoginTM">Login TM</label>
+                            <input type="text" id="playerLoginTM" placeholder="Ex: ZTnToj9UQpW145LRVBn-Bg">
+                        </div>
+                        <div class="form-group">
+                            <label for="playerCountry">Pays</label>
+                            <input type="text" id="playerCountry" placeholder="Ex: France">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top:10px">
                         <div class="form-group">
                             <label for="playerTeam" data-i18n="form.team.opt">Équipe (optionnel)</label>
                             <input type="text" id="playerTeam" data-i18n-placeholder="form.team.ph" placeholder="Ex: Team Rocket">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" data-i18n="common.add">Ajouter</button>
+                    <button type="submit" class="btn btn-primary" style="margin-top:6px" data-i18n="common.add">Ajouter</button>
                 </form>
               </div>
             </div>
@@ -1691,8 +1707,8 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                     <small style="color:var(--color-text-secondary);font-size:0.78rem;display:block;margin-top:4px" data-i18n="profile.tm.login.hint">Ton identifiant Ubisoft Connect — visible dans Trackmania > Profil.</small>
                 </div>
                 <div class="form-group" style="margin-top:14px">
-                    <label for="newProfileCountry" data-i18n="profile.country.label">Pays</label>
-                    <input type="text" id="newProfileCountry" data-i18n-placeholder="profile.country.ph" placeholder="Ex: France" autocomplete="off">
+                    <label for="newProfileCountry" data-i18n="profile.country.label">Pays *</label>
+                    <input type="text" id="newProfileCountry" required data-i18n-placeholder="profile.country.ph" placeholder="Ex: France" autocomplete="off">
                 </div>
                 <div class="form-group" style="margin-top:14px">
                     <label for="newProfileTeam" data-i18n="form.team.opt">Équipe (optionnel)</label>
@@ -1758,15 +1774,31 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
     <!-- EDIT PARTICIPANT MODAL -->
     <div class="modal-overlay" id="editParticipantModal" onclick="if(event.target===this)closeEditParticipant()">
-        <div class="modal">
+        <div class="modal" style="max-width:520px">
             <h2 data-i18n="admin.edit.player">✏️ Modifier le joueur</h2>
             <form id="editParticipantForm">
                 <input type="hidden" id="editParticipantId">
-                <div class="form-group">
-                    <label for="editPlayerName" data-i18n="form.pseudo">Pseudo *</label>
-                    <input type="text" id="editPlayerName" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPlayerName">Pseudo site *</label>
+                        <input type="text" id="editPlayerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerPseudoTM">Pseudo TM</label>
+                        <input type="text" id="editPlayerPseudoTM" placeholder="Pseudo affiché en course">
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="form-row" style="margin-top:10px">
+                    <div class="form-group">
+                        <label for="editPlayerLoginTM">Login TM</label>
+                        <input type="text" id="editPlayerLoginTM" placeholder="Ex: ZTnToj9UQpW145LRVBn-Bg">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerCountry">Pays</label>
+                        <input type="text" id="editPlayerCountry" placeholder="Ex: France">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:10px">
                     <label for="editPlayerTeam" data-i18n="form.team">Équipe</label>
                     <input type="text" id="editPlayerTeam" placeholder="Sans équipe">
                 </div>

@@ -17,12 +17,20 @@ if (saisonInput && !saisonInput.value) saisonInput.value = new Date().getFullYea
 
 document.getElementById('addParticipantForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('playerName').value.trim();
-    const team = document.getElementById('playerTeam').value.trim();
+    const name     = document.getElementById('playerName').value.trim();
+    const pseudoTM = document.getElementById('playerPseudoTM').value.trim();
+    const loginTM  = document.getElementById('playerLoginTM').value.trim();
+    const country  = document.getElementById('playerCountry').value.trim();
+    const team     = document.getElementById('playerTeam').value.trim();
     if (state.data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
         alert(t('admin.player.exists')); return;
     }
-    await addDoc(collection(db, 'participants'), { name, team: team || 'Sans équipe', cupId });
+    await addDoc(collection(db, 'participants'), {
+        name, pseudo: name, team: team || 'Sans équipe', cupId,
+        ...(pseudoTM ? { pseudoTM } : {}),
+        ...(loginTM  ? { loginTM  } : {}),
+        ...(country  ? { country  } : {}),
+    });
     e.target.reset();
 });
 
@@ -69,9 +77,12 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
 window.openEditParticipant = (id) => {
     const p = state.data.participants.find(p => p.id === id);
     if (!p) return;
-    document.getElementById('editParticipantId').value = id;
-    document.getElementById('editPlayerName').value = pName(p);
-    document.getElementById('editPlayerTeam').value = p.team === 'Sans équipe' ? '' : p.team;
+    document.getElementById('editParticipantId').value    = id;
+    document.getElementById('editPlayerName').value       = p.pseudo || pName(p);
+    document.getElementById('editPlayerPseudoTM').value   = p.pseudoTM || '';
+    document.getElementById('editPlayerLoginTM').value    = p.loginTM  || '';
+    document.getElementById('editPlayerCountry').value    = p.country  || '';
+    document.getElementById('editPlayerTeam').value       = p.team === 'Sans équipe' ? '' : (p.team || '');
     document.getElementById('editParticipantModal').classList.add('open');
 };
 window.closeEditParticipant = () => {
@@ -79,12 +90,15 @@ window.closeEditParticipant = () => {
 };
 document.getElementById('editParticipantForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const id = document.getElementById('editParticipantId').value;
-    const name = document.getElementById('editPlayerName').value.trim();
-    const team = document.getElementById('editPlayerTeam').value.trim();
-    const duplicate = state.data.participants.find(p => pName(p).toLowerCase() === name.toLowerCase() && p.id !== id);
+    const id       = document.getElementById('editParticipantId').value;
+    const name     = document.getElementById('editPlayerName').value.trim();
+    const pseudoTM = document.getElementById('editPlayerPseudoTM').value.trim();
+    const loginTM  = document.getElementById('editPlayerLoginTM').value.trim();
+    const country  = document.getElementById('editPlayerCountry').value.trim();
+    const team     = document.getElementById('editPlayerTeam').value.trim();
+    const duplicate = state.data.participants.find(p => (p.pseudo || pName(p)).toLowerCase() === name.toLowerCase() && p.id !== id);
     if (duplicate) { alert(t('admin.pseudo.used')); return; }
-    await updateDoc(doc(db, 'participants', id), { pseudoTM: name, name, team: team || 'Sans équipe' });
+    await updateDoc(doc(db, 'participants', id), { pseudo: name, name, pseudoTM, loginTM, country, team: team || 'Sans équipe' });
     window.closeEditParticipant();
 });
 
@@ -516,6 +530,7 @@ window.displayAdminPlayers = function() {
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Pseudo site</th>
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Pseudo TM</th>
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Login TM</th>
+                <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Pays</th>
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Équipe</th>
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Discord</th>
                 <th style="padding:8px 10px;color:var(--color-text-secondary);font-weight:600;white-space:nowrap">Auth</th>
@@ -534,7 +549,8 @@ window.displayAdminPlayers = function() {
             <tr style="border-bottom:1px solid rgba(255,255,255,0.05)" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
                 <td style="padding:8px 10px;font-weight:600">${p.pseudo || '—'}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.pseudoTM || p.name || '—'}</td>
-                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.loginTM || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary);font-size:0.75rem">${p.loginTM || '—'}</td>
+                <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.country || '—'}</td>
                 <td style="padding:8px 10px;color:var(--color-text-secondary)">${p.team === 'Sans équipe' ? '—' : (p.team || '—')}</td>
                 <td style="padding:8px 10px">${discordLinked}</td>
                 <td style="padding:8px 10px">${authType}</td>

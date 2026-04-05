@@ -260,7 +260,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     const team      = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
     const msg       = document.getElementById('createProfileMsg');
 
-    if (!pseudo || !pseudoTM || !loginTM) return;
+    if (!pseudo || !pseudoTM || !loginTM || !country) return;
     if (state.data.participants.find(p => pName(p).toLowerCase() === pseudo.toLowerCase())) {
         msg.style.cssText = 'display:block;background:rgba(239,68,68,0.1);color:var(--color-danger);font-size:0.85rem;padding:8px 12px;border-radius:6px;margin:10px 0';
         msg.textContent = t('profile.exists');
