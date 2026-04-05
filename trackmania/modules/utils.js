@@ -100,69 +100,70 @@ export function showToast(msg) {
     setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ── Liste des pays ────────────────────────────────────────────────────────────
+// ── Liste des pays (code ISO + nom) ──────────────────────────────────────────
 export const COUNTRIES = [
-    ['🇩🇿','Algérie'],['🇩🇪','Allemagne'],['🇦🇷','Argentine'],['🇦🇺','Australie'],
-    ['🇦🇹','Autriche'],['🇧🇪','Belgique'],['🇧🇾','Biélorussie'],['🇧🇷','Brésil'],
-    ['🇧🇬','Bulgarie'],['🇨🇦','Canada'],['🇨🇾','Chypre'],['🇰🇷','Corée du Sud'],
-    ['🇭🇷','Croatie'],['🇩🇰','Danemark'],['🇪🇸','Espagne'],['🇪🇪','Estonie'],
-    ['🇺🇸','États-Unis'],['🇫🇮','Finlande'],['🇫🇷','France'],['🇬🇷','Grèce'],
-    ['🇭🇺','Hongrie'],['🇮🇪','Irlande'],['🇮🇸','Islande'],['🇮🇹','Italie'],
-    ['🇯🇵','Japon'],['🇱🇻','Lettonie'],['🇱🇮','Liechtenstein'],['🇱🇹','Lituanie'],
-    ['🇱🇺','Luxembourg'],['🇲🇰','Macédoine du Nord'],['🇲🇹','Malte'],['🇲🇦','Maroc'],
-    ['🇲🇩','Moldavie'],['🇲🇨','Monaco'],['🇳🇴','Norvège'],['🇳🇿','Nouvelle-Zélande'],
-    ['🇵🇱','Pologne'],['🇵🇹','Portugal'],['🇨🇿','République tchèque'],['🇷🇴','Roumanie'],
-    ['🇬🇧','Royaume-Uni'],['🇷🇺','Russie'],['🇸🇲','Saint-Marin'],['🇷🇸','Serbie'],
-    ['🇸🇰','Slovaquie'],['🇸🇮','Slovénie'],['🇸🇪','Suède'],['🇨🇭','Suisse'],
-    ['🇹🇳','Tunisie'],['🇹🇷','Turquie'],['🇺🇦','Ukraine'],
+    ['dz','Algérie'],['de','Allemagne'],['ar','Argentine'],['au','Australie'],
+    ['at','Autriche'],['be','Belgique'],['by','Biélorussie'],['br','Brésil'],
+    ['bg','Bulgarie'],['ca','Canada'],['cy','Chypre'],['kr','Corée du Sud'],
+    ['hr','Croatie'],['dk','Danemark'],['es','Espagne'],['ee','Estonie'],
+    ['us','États-Unis'],['fi','Finlande'],['fr','France'],['gr','Grèce'],
+    ['hu','Hongrie'],['ie','Irlande'],['is','Islande'],['it','Italie'],
+    ['jp','Japon'],['lv','Lettonie'],['li','Liechtenstein'],['lt','Lituanie'],
+    ['lu','Luxembourg'],['mk','Macédoine du Nord'],['mt','Malte'],['ma','Maroc'],
+    ['md','Moldavie'],['mc','Monaco'],['no','Norvège'],['nz','Nouvelle-Zélande'],
+    ['pl','Pologne'],['pt','Portugal'],['cz','République tchèque'],['ro','Roumanie'],
+    ['gb','Royaume-Uni'],['ru','Russie'],['sm','Saint-Marin'],['rs','Serbie'],
+    ['sk','Slovaquie'],['si','Slovénie'],['se','Suède'],['ch','Suisse'],
+    ['tn','Tunisie'],['tr','Turquie'],['ua','Ukraine'],
 ];
 
-// Map nom → flag pour retrouver le drapeau depuis une valeur legacy (ex: "France" → "🇫🇷")
-const _COUNTRY_FLAG_MAP = Object.fromEntries(COUNTRIES.map(([f, n]) => [n, f]));
+const _CODE_MAP = Object.fromEntries(COUNTRIES.map(([code, name]) => [name, code]));
 
-// La valeur stockée ET affichée est "🇫🇷 France" (flag + espace + nom)
-export function countryOptions(selected = '') {
-    // Normalise une valeur legacy (juste le nom) vers le format complet
-    const normalized = _COUNTRY_FLAG_MAP[selected] ? `${_COUNTRY_FLAG_MAP[selected]} ${selected}` : selected;
-    return `<option value="">— Pays —</option>` +
-        COUNTRIES.map(([flag, name]) => {
-            const val = `${flag} ${name}`;
-            return `<option value="${val}"${val === normalized ? ' selected' : ''}>${val}</option>`;
-        }).join('');
+// Normalise valeurs legacy ("🇫🇷 France" ou "France") → "France"
+function _normCountry(s) {
+    if (!s) return '';
+    if (_CODE_MAP[s]) return s;
+    for (const [, name] of COUNTRIES) { if (s.includes(name)) return name; }
+    return s;
 }
 
-export function populateCountrySelect(id, selected = '') {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = countryOptions(selected);
-}
+// Drapeau via flag-icons CSS (fiable sur Windows contrairement aux emoji)
+const _fi = code => `<span class="fi fi-${code}" style="width:20px;height:14px;border-radius:2px;flex-shrink:0;display:inline-block"></span>`;
 
-// Affiche le pays avec son drapeau (gère ancien format "France" et nouveau "🇫🇷 France")
 export function displayCountry(country) {
-    if (!country) return '—';
-    if (_COUNTRY_FLAG_MAP[country]) return `${_COUNTRY_FLAG_MAP[country]} ${country}`;
-    return country;
+    const name = _normCountry(country);
+    if (!name) return '—';
+    const code = _CODE_MAP[name];
+    return code
+        ? `<span style="display:inline-flex;align-items:center;gap:7px">${_fi(code)} ${name}</span>`
+        : name;
 }
 
-// ── Dropdown pays custom (drapeaux visibles sur Windows) ──────────────────────
+// ── Dropdown pays custom avec vrais drapeaux ──────────────────────────────────
 export function buildCountryPicker(id, selected = '') {
-    const norm = _COUNTRY_FLAG_MAP[selected] ? `${_COUNTRY_FLAG_MAP[selected]} ${selected}` : selected;
-    const items = COUNTRIES.map(([flag, name]) => {
-        const val = `${flag} ${name}`;
-        const active = val === norm;
-        return `<div class="cp-item" onclick="window._cpSelect('${id}','${val}')"
+    const name = _normCountry(selected);
+    const code = _CODE_MAP[name] || '';
+
+    const displayHtml = name
+        ? `${_fi(code)}<span>${name}</span>`
+        : '<span style="color:#555">— Pays —</span>';
+
+    const items = COUNTRIES.map(([c, n]) => {
+        const active = n === name;
+        return `<div onclick="window._cpSelect('${id}','${n}','${c}')"
             style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:0.88rem;color:${active ? 'var(--color-accent)' : '#e0e0e0'};background:${active ? 'rgba(0,217,54,0.08)' : 'transparent'}"
             onmouseover="this.style.background='rgba(255,255,255,0.07)'"
             onmouseout="this.style.background='${active ? 'rgba(0,217,54,0.08)' : 'transparent'}'">
-            <span style="font-size:1.25rem;line-height:1;flex-shrink:0">${flag}</span>
-            <span>${name}</span>
+            ${_fi(c)}<span>${n}</span>
         </div>`;
     }).join('');
+
     return `<div class="cp-root" id="${id}_root" style="position:relative">
         <div onclick="window._cpToggle('${id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);cursor:pointer;user-select:none;font-family:inherit;font-size:0.9rem;min-height:40px">
-            <span id="${id}_display" style="color:${norm ? '#f0f0f0' : '#555'}">${norm || '— Pays —'}</span>
+            <span id="${id}_display" style="display:inline-flex;align-items:center;gap:8px;color:#f0f0f0">${displayHtml}</span>
             <svg width="10" height="6" viewBox="0 0 10 6" style="flex-shrink:0"><path d="M1 1l4 4 4-4" stroke="#666" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
         </div>
-        <input type="hidden" id="${id}" value="${norm}">
+        <input type="hidden" id="${id}" value="${name}">
         <div class="cp-dd" id="${id}_dd" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9999;background:#1c1c1c;border:1px solid rgba(255,255,255,0.14);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.6)">
             ${items}
         </div>
@@ -176,12 +177,12 @@ window._cpToggle = function(id) {
     document.querySelectorAll('.cp-dd').forEach(d => { d.style.display = 'none'; });
     if (!isOpen) dd.style.display = 'block';
 };
-window._cpSelect = function(id, val) {
-    const input = document.getElementById(id);
+window._cpSelect = function(id, name, code) {
+    const input   = document.getElementById(id);
     const display = document.getElementById(`${id}_display`);
-    const dd = document.getElementById(`${id}_dd`);
-    if (input) input.value = val;
-    if (display) { display.textContent = val; display.style.color = '#f0f0f0'; }
+    const dd      = document.getElementById(`${id}_dd`);
+    if (input) input.value = name;
+    if (display) display.innerHTML = `<span class="fi fi-${code}" style="width:20px;height:14px;border-radius:2px;flex-shrink:0;display:inline-block"></span><span>${name}</span>`;
     if (dd) dd.style.display = 'none';
 };
 document.addEventListener('click', e => {
