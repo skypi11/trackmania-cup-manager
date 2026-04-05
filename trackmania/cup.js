@@ -157,6 +157,7 @@ watchCollection(collection(db, 'results'), 'results', snap => {
     displayParticipants(); displayEditions(); displayHome();
     displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
     if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+    if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
 });
 
 watchCollection(
