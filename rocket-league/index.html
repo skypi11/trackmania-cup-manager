@@ -311,7 +311,7 @@ import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
 
 import { state } from './modules/state.js';
-import { flagHtml, buildRLCountryPicker } from './modules/constants.js';
+import { FLAGS, flagHtml, buildRLCountryPicker } from './modules/constants.js';
 import { applyI18n } from './modules/i18n.js';
 import './modules/auth.js';
 import { fetchAll } from './modules/data.js';
