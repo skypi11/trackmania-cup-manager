@@ -256,6 +256,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     const pseudo    = document.getElementById('newProfilePseudo').value.trim();
     const pseudoTM  = document.getElementById('newProfilePseudoTM').value.trim();
     const loginTM   = document.getElementById('newProfileLoginTM').value.trim();
+    const country   = document.getElementById('newProfileCountry').value.trim();
     const team      = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
     const msg       = document.getElementById('createProfileMsg');
 
@@ -271,6 +272,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
         await addDoc(collection(db, 'participants'), {
             pseudo, team, userId: state.currentUser.uid, cupId,
             pseudoTM, loginTM, games: ['trackmania'],
+            ...(country ? { country } : {}),
             discordId:       state.discordId       || '',
             discordUsername: state.discordUsername || '',
             discordAvatar:   state.discordAvatar   || ''

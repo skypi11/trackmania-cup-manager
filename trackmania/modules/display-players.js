@@ -251,6 +251,12 @@ window.openPlayerProfile = (playerId) => {
                         <small style="color:var(--color-text-secondary);font-size:0.75rem">${t('profile.tm.login.hint')}</small>
                     </div>
                 </div>
+                <div class="form-row" style="margin-top:12px">
+                    <div class="form-group">
+                        <label>${t('profile.country.label')}</label>
+                        <input type="text" id="ownProfileCountry" placeholder="${t('profile.country.ph')}">
+                    </div>
+                </div>
                 <div id="ownProfileSaveMsg" style="display:none;font-size:0.85rem;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap">
                     <button type="submit" class="btn btn-primary">${t('profile.save.btn')}</button>
@@ -267,16 +273,18 @@ window.openPlayerProfile = (playerId) => {
         document.getElementById('ownProfileTeam').value     = player.team === 'Sans équipe' ? '' : (player.team || '');
         document.getElementById('ownProfilePseudoTM').value = player.pseudoTM || '';
         document.getElementById('ownProfileLoginTM').value  = player.loginTM  || '';
+        document.getElementById('ownProfileCountry').value  = player.country  || '';
         document.getElementById('ownProfileEditForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const pseudo    = document.getElementById('ownProfilePseudo').value.trim();
             const team      = document.getElementById('ownProfileTeam').value.trim() || 'Sans équipe';
             const pseudoTM  = document.getElementById('ownProfilePseudoTM').value.trim();
             const loginTM   = document.getElementById('ownProfileLoginTM').value.trim();
+            const country   = document.getElementById('ownProfileCountry').value.trim();
             const msg       = document.getElementById('ownProfileSaveMsg');
             if (!pseudo) return;
             try {
-                await updateDoc(doc(db, 'participants', player.id), { pseudo, team, pseudoTM, loginTM });
+                await updateDoc(doc(db, 'participants', player.id), { pseudo, team, pseudoTM, loginTM, country });
                 document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
                 msg.style.display = 'block';
                 msg.style.background = 'rgba(0,217,54,0.1)';
