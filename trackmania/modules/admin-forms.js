@@ -265,6 +265,139 @@ window.runDataDiagnostic = async function() {
     container.innerHTML = html;
 };
 
+// ── Admin résultats ───────────────────────────────────────────────────────────
+
+window.displayAdminResults = function() {
+    const container = document.getElementById('adminResultsContent');
+    if (!container) return;
+
+    const editions = [...state.data.editions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const selectedId = document.getElementById('admResultEditionSelect')?.value || '';
+
+    const editionOptions = editions.map(e =>
+        `<option value="${e.id}" ${e.id === selectedId ? 'selected' : ''}>${e.name} (${e.date})</option>`
+    ).join('');
+
+    let detailHtml = '';
+    if (selectedId) {
+        const e = editions.find(ed => ed.id === selectedId);
+        if (e) {
+            const playerOpts = state.data.participants
+                .sort((a, b) => pName(a).localeCompare(pName(b)))
+                .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+            const edResults = state.data.results.filter(r => r.editionId === selectedId);
+            const inscriptions = edResults.filter(r => r.phase === 'inscription').sort((a,b) => pName(state.data.participants.find(p=>p.id===a.playerId)).localeCompare(pName(state.data.participants.find(p=>p.id===b.playerId))));
+            const quals = edResults.filter(r => r.phase === 'qualification').sort((a,b) => (a.map||0)-(b.map||0) || (a.position||0)-(b.position||0));
+            const finale = edResults.filter(r => r.phase === 'finale').sort((a,b) => (a.position||99)-(b.position||99));
+
+            const renderGroup = (title, results, phase) => {
+                if (results.length === 0) return `<div style="color:var(--color-text-secondary);font-size:0.82rem;margin-bottom:14px">${title} : aucun résultat.</div>`;
+                return `<div style="margin-bottom:18px">
+                    <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin-bottom:8px">${title} (${results.length})</div>
+                    ${results.map(r => {
+                        const player = state.data.participants.find(p => p.id === r.playerId);
+                        const label = phase === 'qualification' ? `Map ${r.map} · P${r.position}` : phase === 'finale' ? `P${r.position}` : 'Inscrit';
+                        return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+                            <span style="flex:1;font-size:0.85rem">${pName(player)}</span>
+                            <span style="font-size:0.75rem;color:var(--color-text-secondary)">${label}</span>
+                            <button onclick="deleteResult('${r.id}')" style="padding:3px 8px;border-radius:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.72rem;cursor:pointer;font-family:inherit">✕</button>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            };
+
+            detailHtml = `
+            <div class="card" style="margin-bottom:16px">
+                <h3 style="margin-bottom:14px;font-size:1rem">➕ Ajouter un résultat</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label style="font-size:0.82rem">Phase</label>
+                        <select id="admResultPhase" onchange="admOnPhaseChange()" style="font-family:inherit">
+                            <option value="">— Choisir —</option>
+                            <option value="inscription">Inscription</option>
+                            <option value="qualification">Qualification</option>
+                            <option value="finale">Finale</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="admMapField" style="display:none">
+                        <label style="font-size:0.82rem">Map</label>
+                        <select id="admResultMap" style="font-family:inherit">
+                            ${Array.from({length: e.nbMaps || 6}, (_,i) => i+1).map(n => `<option value="${n}">Map ${n}</option>`).join('')}
+                            <option value="7">Map Finale</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.82rem">Joueur</label>
+                        <select id="admResultPlayer" style="font-family:inherit">
+                            <option value="">— Sélectionner —</option>
+                            ${playerOpts}
+                        </select>
+                    </div>
+                    <div class="form-group" id="admQualPosField" style="display:none">
+                        <label style="font-size:0.82rem">Position map</label>
+                        <select id="admResultQualPos" style="font-family:inherit">
+                            ${Array.from({length: e.nbQualifPerMap || 3}, (_,i) => i+1).map(pos => `<option value="${pos}">${pos}e</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group" id="admPositionField" style="display:none">
+                        <label style="font-size:0.82rem">Position finale</label>
+                        <input type="number" id="admResultPosition" min="1" placeholder="Ex: 1" style="font-family:inherit">
+                    </div>
+                </div>
+                <button onclick="admSubmitResult('${selectedId}')" class="btn btn-primary">Ajouter le résultat</button>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom:16px;font-size:1rem">Résultats enregistrés (${edResults.length})</h3>
+                ${renderGroup('Inscriptions', inscriptions, 'inscription')}
+                ${renderGroup('Qualifications', quals, 'qualification')}
+                ${renderGroup('Finale', finale, 'finale')}
+            </div>`;
+        }
+    }
+
+    container.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+        <div class="form-group" style="margin:0">
+            <label style="font-size:0.85rem;font-weight:600;margin-bottom:8px;display:block">Sélectionner une édition</label>
+            <select id="admResultEditionSelect" onchange="window.displayAdminResults()"
+                style="width:100%;padding:9px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.9rem;font-family:inherit">
+                <option value="">— Choisir une édition —</option>
+                ${editionOptions}
+            </select>
+        </div>
+    </div>
+    ${detailHtml}`;
+};
+
+window.admOnPhaseChange = function() {
+    const phase = document.getElementById('admResultPhase')?.value;
+    if (!phase) return;
+    document.getElementById('admMapField').style.display    = phase === 'qualification' ? '' : 'none';
+    document.getElementById('admQualPosField').style.display = phase === 'qualification' ? '' : 'none';
+    document.getElementById('admPositionField').style.display = phase === 'finale' ? '' : 'none';
+};
+
+window.admSubmitResult = async function(editionId) {
+    const phase    = document.getElementById('admResultPhase')?.value;
+    const playerId = document.getElementById('admResultPlayer')?.value;
+    if (!phase || !playerId) { showToast('⚠️ Sélectionne une phase et un joueur.'); return; }
+
+    const data = { editionId, playerId, phase, cupId };
+    if (phase === 'qualification') {
+        data.map      = parseInt(document.getElementById('admResultMap')?.value) || 1;
+        data.position = parseInt(document.getElementById('admResultQualPos')?.value) || 1;
+    } else if (phase === 'finale') {
+        data.position = parseInt(document.getElementById('admResultPosition')?.value) || 1;
+    }
+    await addDoc(collection(db, 'results'), data);
+    showToast('✅ Résultat ajouté');
+    // Réinitialiser le formulaire
+    document.getElementById('admResultPhase').value = '';
+    document.getElementById('admResultPlayer').value = '';
+    admOnPhaseChange();
+};
+
 // ── Liste admin : Éditions ────────────────────────────────────────────────────
 
 window.displayAdminEditions = function() {

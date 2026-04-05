@@ -433,7 +433,7 @@ window.openEditionDetail = (id) => {
         const vodEmbedHtml = ytId ? `
             <div class="vod-section-label" style="justify-content:space-between;margin-bottom:0">
                 <span>${t('detail.vod')}</span>
-                <button onclick="toggleYoutubeEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${state.youtubeCollapsed ? t('detail.show') : t('detail.hide')}</button>
+                <button onclick="toggleYoutubeEmbed(this)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);border-radius:6px;color:var(--color-text-primary);cursor:pointer;font-size:0.78rem;font-weight:600;padding:4px 12px;font-family:inherit">${state.youtubeCollapsed ? t('detail.show') : t('detail.hide')}</button>
             </div>
             <div id="youtubeEmbedWrap" class="vod-embed-wrap" style="margin-top:10px${state.youtubeCollapsed ? ';display:none' : ''}">
                 <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
@@ -445,7 +445,7 @@ window.openEditionDetail = (id) => {
                     <span class="live-dot" style="width:7px;height:7px"></span>
                     ${t('detail.live.twitch')}
                 </span>
-                <button onclick="toggleTwitchEmbed(this)" style="background:none;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-secondary);cursor:pointer;font-size:0.75rem;padding:3px 10px">${state.twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
+                <button onclick="toggleTwitchEmbed(this)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);border-radius:6px;color:var(--color-text-primary);cursor:pointer;font-size:0.78rem;font-weight:600;padding:4px 12px;font-family:inherit">${state.twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
             </div>
             <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${state.twitchCollapsed ? 'display:none' : ''}">
                 <iframe src="https://player.twitch.tv/?channel=${state.siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>

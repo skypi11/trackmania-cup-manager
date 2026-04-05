@@ -141,7 +141,7 @@ watchCollection(collection(db, 'participants'), 'participants', snap => {
     displayHallOfFame(); displayNextEditionBanner(); displayStats();
     displayGeneralRanking(); updateDiscordReminders();
     if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); }
+    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
 });
 
 watchCollection(collection(db, 'editions'), 'editions', snap => {
@@ -149,7 +149,7 @@ watchCollection(collection(db, 'editions'), 'editions', snap => {
     displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
     if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
     if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-    if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminEditions?.();
+    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
 });
 
 watchCollection(collection(db, 'results'), 'results', snap => {

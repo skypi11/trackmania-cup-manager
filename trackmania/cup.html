@@ -253,7 +253,7 @@ body.admin-mode .admin-only { display: block; }
 .sidebar-discord-btn svg { flex-shrink: 0; }
 .stream-embed-wrap {
     border-radius: 14px; overflow: hidden;
-    aspect-ratio: 16/9; margin-bottom: 22px;
+    height: 260px; margin-bottom: 22px;
     border: 1px solid rgba(145,70,255,0.25);
     background: #0e0e10;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(145,70,255,0.08);
@@ -261,7 +261,7 @@ body.admin-mode .admin-only { display: block; }
 .stream-embed-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
 .vod-embed-wrap {
     border-radius: 14px; overflow: hidden;
-    aspect-ratio: 16/9; margin-bottom: 22px;
+    height: 260px; margin-bottom: 22px;
     border: 1px solid rgba(255,0,0,0.2);
     background: #0e0e0e;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
@@ -1354,6 +1354,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
               <button class="adm-tab active" data-admtab="editions" onclick="switchAdmTab('editions')">📅 Éditions</button>
               <button class="adm-tab" data-admtab="joueurs" onclick="switchAdmTab('joueurs')">👥 Joueurs</button>
               <button class="adm-tab" data-admtab="discord" onclick="switchAdmTab('discord')">🔗 Migration Discord</button>
+              <button class="adm-tab" data-admtab="resultats" onclick="switchAdmTab('resultats')">🏁 Résultats</button>
               <button class="adm-tab" data-admtab="config" onclick="switchAdmTab('config')">⚙️ Configuration</button>
             </div>
 
@@ -1490,6 +1491,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 </p>
                 <div id="discordMigrationList"></div>
               </div>
+            </div>
+
+            <!-- Sous-panel : Résultats -->
+            <div class="adm-panel" id="admtab-resultats">
+              <div id="adminResultsContent"></div>
             </div>
 
             <!-- Sous-panel : Configuration -->
@@ -1883,9 +1889,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     function switchAdmTab(tab) {
         document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.admtab === tab));
         document.querySelectorAll('.adm-panel').forEach(p => p.classList.toggle('active', p.id === 'admtab-' + tab));
-        if (tab === 'editions') window.displayAdminEditions && window.displayAdminEditions();
-        if (tab === 'joueurs')  window.displayAdminPlayers  && window.displayAdminPlayers();
-        if (tab === 'discord')  window.displayDiscordMigration && window.displayDiscordMigration();
+        if (tab === 'editions')  window.displayAdminEditions   && window.displayAdminEditions();
+        if (tab === 'joueurs')   window.displayAdminPlayers    && window.displayAdminPlayers();
+        if (tab === 'resultats') window.displayAdminResults    && window.displayAdminResults();
+        if (tab === 'discord')   window.displayDiscordMigration && window.displayDiscordMigration();
     }
     window.switchAdmTab = switchAdmTab;
 
