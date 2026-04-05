@@ -10,7 +10,9 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 ## Stack technique
 - **Frontend** : Vanilla JS (ES modules), HTML/CSS inline par fichier
 - **Base de données** : Firebase Firestore
-- **Auth** : Firebase Auth (Google OAuth)
+- **Auth** : Firebase Auth — **Discord OAuth pour tous les joueurs** (TM + RL), Google OAuth réservé aux admins uniquement
+  - Flow Discord : Discord OAuth → `/api/discord-callback?state=tm_monthly|tm_mania|rl` → Firebase custom token (`discord_SNOWFLAKE`) → `signInWithCustomToken`
+  - Admins : `signInWithPopup` Google (UID Google dans collection `admins`)
 - **Hébergement** : Vercel → `https://springs-esport.vercel.app` (GitHub Pages encore actif en backup : `https://skypi11.github.io/trackmania-cup-manager/`)
 - **Source** : GitHub → `skypi11/trackmania-cup-manager`
 - **Module partagé** : `shared/firebase-config.js` (Firebase init, `db`, `auth`, `app`, `pName`, `getPoints`)
@@ -37,7 +39,10 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 ```
 
 ## Collections Firestore — Trackmania
-- **`participants`** : profils joueurs (`pseudo`, `pseudoTM`, `pseudoRL`, `team`, `games`, `email`, `userId`, `cupId`, `discordId`, `discordUsername`) + champs RL : `trackerUrl` (verrouillé après saisie), `trackerUrlLockedAt`, `epicId`, `dateOfBirth`, `country`
+- **`participants`** : profils joueurs (`pseudo`, `pseudoTM`, `loginTM`, `pseudoRL`, `team`, `games`, `email`, `userId`, `cupId`, `discordId`, `discordUsername`, `discordAvatar`) + champs RL : `trackerUrl` (verrouillé après saisie), `trackerUrlLockedAt`, `epicId`, `dateOfBirth`, `country`
+  - ⚠️ `pseudo` = pseudo affiché sur le site ; `pseudoTM` = pseudo affiché **en course** ; `loginTM` = identifiant compte Ubisoft/Nadeo (trois champs distincts)
+  - `userId` = `discord_SNOWFLAKE` pour les joueurs Discord, UID Google pour les admins
+  - Auto-migration : à la connexion Discord, si `discordId` ou `discordUsername` correspond à un participant existant → `userId` mis à jour automatiquement
 - **`editions`** : éditions de cup (`name`, `date`, `status`, `cupId`) — statuts : `inscriptions`, `en_cours`, `terminee`, `upcoming` (⚠️ valeur réelle `en_cours`, pas `live`)
 - **`results`** : résultats (`editionId`, `playerId`, `phase`, `position`, `map`, `cupId`) — phases : `inscription`, `qualification`, `finale`
 - **`predictions`** : prédictions joueurs avant chaque édition
@@ -157,7 +162,8 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 ## URLs importantes
 - Site Vercel : `https://springs-esport.vercel.app`
 - Site GitHub Pages (backup) : `https://skypi11.github.io/trackmania-cup-manager/`
-- Discord redirect URI : dynamique via `window.location.origin + '/trackmania/cup.html'`
+- Discord OAuth redirect URI : `https://springs-esport.vercel.app/api/discord-callback` (unique, state param détermine la destination)
+- State param Discord : `tm_monthly` → cup.html?cup=monthly | `tm_mania` → cup.html?cup=mania | `rl` → rocket-league/
 - Firebase Auth domain autorisé : `springs-esport.vercel.app`
 - Google OAuth origins : `https://springs-esport.vercel.app`
 - Google OAuth redirect : `https://springs-esport.vercel.app/__/auth/handler`
@@ -186,6 +192,11 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 ### Décisions d'architecture
 - **Ligue uniquement** — tournois supprimés, code propre centré sur la ligue
 - Collection `rl_competitions` (type toujours `'league'`)
+
+### Fonctionnalités TM livrées (session 2026-04-05)
+- ✅ TM : Auth Discord unifiée — joueurs TM connectés via Discord (même flow que RL), admins conservent Google
+- ✅ TM : Formulaire profil enrichi — pseudo site (pré-rempli Discord), pseudo TM (affiché en course), login TM (compte Ubisoft), équipe
+- ✅ TM : Auto-migration — connexion Discord rattache automatiquement un compte existant si discordId ou discordUsername correspond
 
 ### Fonctionnalités TM livrées (session 2026-03-25)
 - ✅ TM : nbMaps / nbQualifPerMap configurables par édition
