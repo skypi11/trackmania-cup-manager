@@ -66,10 +66,15 @@ export function checkLoaded() {
     }
 
     if (ft) {
-        // Stocker les infos Discord pour la création de profil
+        // Stocker les infos Discord pour la création de profil (+ sessionStorage pour survivre à un refresh)
         state.discordId       = did  || '';
         state.discordUsername = du   || '';
         state.discordAvatar   = da   || '';
+        if (did) {
+            sessionStorage.setItem('tm_discord_id',       did);
+            sessionStorage.setItem('tm_discord_username', du  || '');
+            sessionStorage.setItem('tm_discord_avatar',   da  || '');
+        }
 
         try {
             const cred = await signInWithCustomToken(auth, ft);
@@ -186,6 +191,19 @@ onAuthStateChanged(auth, async (user) => {
         ]);
         state.isAdmin = adminSnap.exists();
         state.currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
+
+        // Auto-patch : si joueur Discord sans discordId dans son profil, on le rempli
+        if (!partSnap.empty && user.uid.startsWith('discord_')) {
+            const pDoc = partSnap.docs[0];
+            const pData = pDoc.data();
+            if (!pData.discordId) {
+                const snowflake = user.uid.replace('discord_', '');
+                const patch = { discordId: snowflake };
+                if (!pData.discordUsername && state.discordUsername) patch.discordUsername = state.discordUsername;
+                if (!pData.discordAvatar   && state.discordAvatar)   patch.discordAvatar   = state.discordAvatar;
+                updateDoc(doc(db, 'participants', pDoc.id), patch).catch(() => {});
+            }
+        }
     } catch(err) {
         console.error('Auth Firestore fetch error:', err);
         state.isAdmin = false;
@@ -224,6 +242,13 @@ window.openPlayerAccount = () => {
 };
 
 window.openCreateProfile = () => {
+    // Restaurer les infos Discord depuis sessionStorage si besoin (cas d'un refresh de page)
+    if (!state.discordId && state.currentUser?.uid?.startsWith('discord_')) {
+        state.discordId       = sessionStorage.getItem('tm_discord_id')       || state.currentUser.uid.replace('discord_', '');
+        state.discordUsername = sessionStorage.getItem('tm_discord_username') || '';
+        state.discordAvatar   = sessionStorage.getItem('tm_discord_avatar')   || '';
+    }
+
     const gameLabel = cupId === 'mania' ? '(Mania)' : '(Trackmania)';
     document.getElementById('newProfileGameLabel').textContent = gameLabel;
     document.getElementById('newProfilePseudo').value   = state.discordUsername || '';
@@ -278,6 +303,9 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
             discordUsername: state.discordUsername || '',
             discordAvatar:   state.discordAvatar   || ''
         });
+        sessionStorage.removeItem('tm_discord_id');
+        sessionStorage.removeItem('tm_discord_username');
+        sessionStorage.removeItem('tm_discord_avatar');
         window.closeCreateProfile();
         document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
         showToast(t('profile.created'));
