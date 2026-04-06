@@ -5,9 +5,58 @@ import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast, buildCountryPicker, displayCountry } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
-import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion, getDocs, query, where, writeBatch, orderBy, limit } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
+
+// ── Journal des actions admin ─────────────────────────────────────────────────
+
+async function logAdminAction(action, details) {
+    if (!state.currentUser) return;
+    try {
+        await addDoc(collection(db, 'admin_logs'), {
+            adminId:   state.currentUser.uid,
+            adminName: state.currentUserProfile?.pseudo || state.currentUser.displayName || 'Admin',
+            action, details,
+            timestamp: new Date().toISOString(),
+            cupId
+        });
+    } catch(e) { console.warn('Log error:', e); }
+}
+
+window.displayAdminJournal = async function() {
+    const container = document.getElementById('adminJournalList');
+    if (!container) return;
+    container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">Chargement…</p>';
+    try {
+        const snap = await getDocs(query(
+            collection(db, 'admin_logs'),
+            orderBy('timestamp', 'desc'),
+            limit(100)
+        ));
+        if (snap.empty) { container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">Aucune action enregistrée.</p>'; return; }
+        const rows = snap.docs.map(d => {
+            const l = d.data();
+            const dt = new Date(l.timestamp);
+            const dateStr = dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                <td style="padding:8px 10px;color:var(--color-text-secondary);font-size:0.78rem;white-space:nowrap">${dateStr}</td>
+                <td style="padding:8px 10px;font-size:0.82rem;font-weight:600">${l.adminName || '?'}</td>
+                <td style="padding:8px 10px;font-size:0.82rem">${l.details || l.action || ''}</td>
+            </tr>`;
+        }).join('');
+        container.innerHTML = `<table style="width:100%;border-collapse:collapse">
+            <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
+                <th style="padding:6px 10px;text-align:left;font-size:0.75rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px">Date</th>
+                <th style="padding:6px 10px;text-align:left;font-size:0.75rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px">Admin</th>
+                <th style="padding:6px 10px;text-align:left;font-size:0.75rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px">Action</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    } catch(e) {
+        container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">Erreur: ${e.message}</p>`;
+    }
+};
 
 // Pre-fill saison field with current year
 const saisonInput = document.getElementById('editionSaison');
@@ -36,6 +85,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
         ...(loginTM  ? { loginTM  } : {}),
         ...(country  ? { country  } : {}),
     });
+    logAdminAction('create_player', `Joueur créé : ${name}${pseudoTM ? ` (TM: ${pseudoTM})` : ''}`);
     e.target.reset();
 });
 
@@ -55,8 +105,9 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
     const nbMaps         = parseInt(document.getElementById('editionNbMaps').value) || 6;
     const nbQualifPerMap = parseInt(document.getElementById('editionNbQualifPerMap').value) || 3;
     const mapTmxValsCreate = Object.fromEntries([1,2,3,4,5,6,7].map(n => [n, document.getElementById(`editionMap${n}tmx`)?.value.trim() || '']));
+    const editionNameVal = document.getElementById('editionName').value.trim();
     const newEditionRef = await addDoc(collection(db, 'editions'), {
-        name: document.getElementById('editionName').value.trim(),
+        name: editionNameVal,
         date: dateVal,
         status,
         saison,
@@ -72,6 +123,7 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
         nbQualifPerMap,
         cupId
     });
+    logAdminAction('create_edition', `Édition créée : ${editionNameVal} (statut : ${status})`);
     storeTmxThumbs(newEditionRef.id, mapTmxValsCreate);
     e.target.reset();
     document.getElementById('editionSaison').value = new Date().getFullYear();
@@ -104,6 +156,7 @@ document.getElementById('editParticipantForm').addEventListener('submit', async 
     const duplicate = state.data.participants.find(p => (p.pseudo || pName(p)).toLowerCase() === name.toLowerCase() && p.id !== id);
     if (duplicate) { alert(t('admin.pseudo.used')); return; }
     await updateDoc(doc(db, 'participants', id), { pseudo: name, name, pseudoTM, loginTM, country, team: team || 'Sans équipe' });
+    logAdminAction('edit_player', `Joueur modifié : ${name}`);
     window.closeEditParticipant();
 });
 
@@ -156,6 +209,8 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
         updates.statusHistory = arrayUnion({ status: newStatus, at: new Date().toISOString() });
     }
     await updateDoc(doc(db, 'editions', id), updates);
+    const statusLog = (current && current.status !== newStatus) ? ` (statut : ${current.status} → ${newStatus})` : '';
+    logAdminAction('edit_edition', `Édition modifiée : ${name}${statusLog}`);
     window.closeEditEdition();
     const mapTmxVals = {}; [1,2,3,4,5,6,7].forEach(n => { mapTmxVals[n] = mapsTmx[`map${n}tmx`]; });
     storeTmxThumbs(id, mapTmxVals);
@@ -165,21 +220,31 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
 
 window.deleteParticipant = async (id) => {
     if (!confirm(t('msg.confirm.delete.player'))) return;
+    const p = state.data.participants.find(p => p.id === id);
     for (const r of state.data.results.filter(r => r.playerId === id))
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'participants', id));
+    logAdminAction('delete_player', `Joueur supprimé : ${p ? pName(p) : id}`);
 };
 
 window.deleteEdition = async (id) => {
     if (!confirm(t('msg.confirm.delete.edition'))) return;
+    const ed = state.data.editions.find(e => e.id === id);
     for (const r of state.data.results.filter(r => r.editionId === id))
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'editions', id));
+    logAdminAction('delete_edition', `Édition supprimée : ${ed ? ed.name : id}`);
 };
 
 window.deleteResult = async (id) => {
     if (!confirm(t('msg.confirm.delete.result'))) return;
+    const r = state.data.results.find(r => r.id === id);
     await deleteDoc(doc(db, 'results', id));
+    if (r) {
+        const p = state.data.participants.find(p => p.id === r.playerId);
+        const ed = state.data.editions.find(e => e.id === r.editionId);
+        logAdminAction('delete_result', `Résultat supprimé : ${p ? pName(p) : r.playerId} — ${ed ? ed.name : r.editionId} (${r.phase})`);
+    }
 };
 
 // ── Diagnostic & réparation des données ──────────────────────────────────────
@@ -461,6 +526,9 @@ function _admFinaleTab(e, editionId, edResults, allPlayers) {
 
 window.admAddInscription = async function(editionId, playerId) {
     await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'inscription', cupId });
+    const p = state.data.participants.find(p => p.id === playerId);
+    const ed = state.data.editions.find(e => e.id === editionId);
+    logAdminAction('add_inscription', `Inscription ajoutée : ${p ? pName(p) : playerId} → ${ed ? ed.name : editionId}`);
 };
 
 window.admRemoveResult = async function(id) {
@@ -490,6 +558,8 @@ window.admSubmitMapQuals = async function(editionId, mapN, positions) {
     }
     if (!toAdd.length) { showToast('⚠️ Aucun joueur sélectionné'); return; }
     await Promise.all(toAdd.map(d => addDoc(collection(db, 'results'), d)));
+    const ed = state.data.editions.find(e => e.id === editionId);
+    logAdminAction('add_quals', `Qualifs map ${mapN} enregistrées (${toAdd.length}) — ${ed ? ed.name : editionId}`);
     showToast(`✅ ${toAdd.length} qualification(s) enregistrée(s)`);
 };
 
@@ -500,6 +570,9 @@ window.admSubmitFinaleResult = async function(editionId) {
     const existing = state.data.results.find(r => r.editionId === editionId && r.phase === 'finale' && r.position === pos);
     if (existing) { showToast(`⚠️ Position P${pos} déjà attribuée`); return; }
     await addDoc(collection(db, 'results'), { editionId, playerId, phase: 'finale', position: pos, cupId });
+    const p = state.data.participants.find(p => p.id === playerId);
+    const ed = state.data.editions.find(e => e.id === editionId);
+    logAdminAction('add_finale', `Finale P${pos} : ${p ? pName(p) : playerId} — ${ed ? ed.name : editionId}`);
     document.getElementById('admFinalePos').value = '';
     document.getElementById('admFinalePlayer').value = '';
     showToast('✅ Résultat ajouté');
@@ -797,6 +870,7 @@ window.mergeParticipants = async function(keepId, deleteId) {
         batch.delete(doc(db, 'participants', deleteId));
 
         await batch.commit();
+        logAdminAction('merge_players', `Fusion : "${pName(keep)}" conservé ← "${pName(del)}" supprimé (${resultsToMove.length} résultat(s) transféré(s))`);
         showToast(`✅ Fusion réussie — ${resultsToMove.length} résultat(s) transféré(s)`, 'success');
         window.displayAdminPlayers();
     } catch(e) {

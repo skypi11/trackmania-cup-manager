@@ -19,9 +19,21 @@ const DISCORD_REDIRECT   = 'https://springs-esport.vercel.app/api/discord-callba
 // ── checkLoaded ───────────────────────────────────────────────────────────────
 
 state.urlAutoOpenDone = false;
+let _loadingTimeoutId = setTimeout(() => {
+    if (Object.values(state.loaded).some(v => !v)) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay && !overlay.classList.contains('hidden')) {
+            overlay.innerHTML = `
+                <p style="color:var(--color-danger);font-size:0.95rem;text-align:center;margin:0 0 8px">⚠️ Chargement trop long…</p>
+                <p style="color:var(--color-text-secondary);font-size:0.82rem;text-align:center;margin:0 0 16px">Vérifiez votre connexion internet.</p>
+                <button onclick="location.reload()" style="padding:8px 20px;background:var(--color-accent);color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.9rem">🔄 Réessayer</button>`;
+        }
+    }
+}, 15000);
 
 export function checkLoaded() {
     if (Object.values(state.loaded).every(Boolean)) {
+        clearTimeout(_loadingTimeoutId);
         document.getElementById('loadingOverlay').classList.add('hidden');
         displayHome();
         updateDiscordReminders();
@@ -164,14 +176,18 @@ window.playerSignOut = async () => {
 onAuthStateChanged(auth, async (user) => {
     state.currentUser = user;
 
-    const loginBtn  = document.getElementById('loginBtn');
-    const playerBtn = document.getElementById('playerBtn');
+    const loginBtn        = document.getElementById('loginBtn');
+    const playerBtn       = document.getElementById('playerBtn');
+    const topbarLoginBtn  = document.getElementById('topbarLoginBtn');
+    const topbarPlayerBtn = document.getElementById('topbarPlayerBtn');
 
     if (!user) {
         state.isAdmin = false;
         state.currentUserProfile = null;
         loginBtn.style.display  = '';
         playerBtn.style.display = 'none';
+        if (topbarLoginBtn)  topbarLoginBtn.style.display  = '';
+        if (topbarPlayerBtn) topbarPlayerBtn.style.display = 'none';
         document.body.classList.remove('admin-mode');
         state.loaded.auth = true;
         checkLoaded();
@@ -182,6 +198,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     loginBtn.style.display = 'none';
+    if (topbarLoginBtn) topbarLoginBtn.style.display = 'none';
     window.closeAuthModal();
 
     try {
@@ -215,12 +232,14 @@ onAuthStateChanged(auth, async (user) => {
         playerBtn.style.display = '';
         const pseudoAdmin = state.currentUserProfile?.pseudo || user.displayName || t('nav.account');
         playerBtn.textContent = `👤 ${pseudoAdmin}`;
+        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; topbarPlayerBtn.textContent = `👤 ${pseudoAdmin}`; }
     } else {
         document.body.classList.remove('admin-mode');
         playerBtn.style.display = '';
         const linkedPlayer = state.data.participants.find(p => p.userId === user.uid);
         const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || user.displayName || t('nav.account'));
         playerBtn.textContent = `👤 ${pseudo}`;
+        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; topbarPlayerBtn.textContent = `👤 ${pseudo}`; }
     }
     state.loaded.auth = true;
     checkLoaded();

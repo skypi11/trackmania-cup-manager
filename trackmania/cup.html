@@ -1218,6 +1218,10 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
             <img src="../assets/springs-logo.png" style="height:26px">
             <span class="topbar-section-name" id="topbarTitle">Accueil</span>
           </div>
+          <div class="topbar-right">
+            <button id="topbarLoginBtn" onclick="openAuthModal()" style="display:none;padding:6px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-primary);font-size:0.78rem;cursor:pointer;white-space:nowrap">🔑 Connexion</button>
+            <button id="topbarPlayerBtn" onclick="openPlayerAccount()" style="display:none;padding:6px 10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--color-text-primary);font-size:0.78rem;cursor:pointer;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤</button>
+          </div>
         </div>
 
         <div class="main-content">
@@ -1358,6 +1362,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
               <button class="adm-tab" data-admtab="discord" onclick="switchAdmTab('discord')">🔗 Migration Discord</button>
               <button class="adm-tab" data-admtab="resultats" onclick="switchAdmTab('resultats')">🏁 Résultats</button>
               <button class="adm-tab" data-admtab="config" onclick="switchAdmTab('config')">⚙️ Configuration</button>
+              <button class="adm-tab" data-admtab="journal" onclick="switchAdmTab('journal')">📋 Journal</button>
             </div>
 
             <!-- Sous-panel : Éditions -->
@@ -1590,6 +1595,17 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 14px;font-weight:700" data-i18n="admin.obs.overlay">Stream Overlay (OBS)</p>
                 <p style="font-size:0.85rem;color:var(--color-text-secondary);margin:0 0 12px" data-i18n-html="admin.obs.instr">Ajouter une source <strong style="color:var(--color-text)">Navigateur</strong> dans OBS avec les paramètres suivants : largeur <strong style="color:var(--color-text)">1920</strong>, hauteur <strong style="color:var(--color-text)">1080</strong>, arrière-plan transparent.</p>
                 <div id="overlayUrlsContainer"></div>
+              </div>
+            </div>
+
+            <!-- Sous-panel : Journal admin -->
+            <div class="adm-panel" id="admtab-journal">
+              <div class="card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+                  <h2 style="margin:0">📋 Journal des actions admin</h2>
+                  <button class="btn btn-secondary" onclick="displayAdminJournal()" style="font-size:0.82rem;padding:6px 14px">🔄 Actualiser</button>
+                </div>
+                <div id="adminJournalList"><p style="color:var(--color-text-secondary);font-size:0.85rem">Cliquez sur Actualiser pour charger le journal.</p></div>
               </div>
             </div>
           </div>
@@ -1927,10 +1943,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     function switchAdmTab(tab) {
         document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.admtab === tab));
         document.querySelectorAll('.adm-panel').forEach(p => p.classList.toggle('active', p.id === 'admtab-' + tab));
-        if (tab === 'editions')  window.displayAdminEditions   && window.displayAdminEditions();
+        if (tab === 'editions')  window.displayAdminEditions    && window.displayAdminEditions();
         if (tab === 'joueurs')   window.displayAdminPlayers    && window.displayAdminPlayers();
         if (tab === 'resultats') window.displayAdminResults    && window.displayAdminResults();
         if (tab === 'discord')   window.displayDiscordMigration && window.displayDiscordMigration();
+        if (tab === 'journal')   window.displayAdminJournal    && window.displayAdminJournal();
     }
     window.switchAdmTab = switchAdmTab;
 
