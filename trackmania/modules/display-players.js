@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, tTeam, getPoints, dateLang, buildCountryPicker } from './utils.js';
+import { pName, tTeam, getPoints, dateLang, buildCountryPicker, displayCountry } from './utils.js';
 import { computePlayerStats, ACHIEVEMENTS, playerBadgesHtml } from './display-editions.js';
 import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
 
@@ -27,7 +27,7 @@ export function displayParticipants() {
     }
 
     const adminCol = state.isAdmin ? '<th></th>' : '';
-    let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>Pays</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
     filtered.forEach(p => {
         const quals  = new Set(state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
         const finals = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
@@ -35,6 +35,7 @@ export function displayParticipants() {
         html += `<tr>
             <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</td>
             <td style="color:var(--color-text-secondary)">${tTeam(p.team)}</td>
+            <td>${p.country ? displayCountry(p.country) : '<span style="color:var(--color-text-secondary)">—</span>'}</td>
             <td>${quals}</td>
             <td>${finals}</td>
             ${del}
