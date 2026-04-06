@@ -731,7 +731,13 @@ window.openEditionDetail = (id) => {
             ${e.description ? `<div style="color:var(--color-text-secondary);font-size:0.9rem;margin:16px 0;line-height:1.6">${parseMarkdown(e.description)}</div>` : ''}
             ${registrationHtml}
             <div style="margin-top:28px">
-                <div class="phase-title" style="margin-top:0">${t('detail.registered.list')} (${inscriptions.length})</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+                    <div class="phase-title" style="margin:0">${t('detail.registered.list')} (${inscriptions.length})</div>
+                    ${inscriptions.length > 0 ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button onclick="exportGuestlist('${id}','xml')" style="padding:5px 12px;border-radius:7px;background:rgba(0,217,54,0.1);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">⬇️ Export XML</button>
+                        <button onclick="exportGuestlist('${id}','csv')" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#ccc;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">⬇️ Export CSV</button>
+                    </div>` : ''}
+                </div>
                 ${registrantsHtml}
                 ${adminInscriptionHtml}
             </div>
@@ -912,4 +918,38 @@ window.registerForEdition = async (editionId) => {
     }
     await addDoc(collection(db, 'results'), { editionId, playerId: player.id, phase: 'inscription', cupId });
     window.openEditionDetail(editionId);
+};
+
+window.exportGuestlist = function(editionId, format) {
+    const inscriptions = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription');
+    const logins = inscriptions
+        .map(r => state.data.participants.find(p => p.id === r.playerId)?.loginTM)
+        .filter(Boolean);
+
+    if (logins.length === 0) {
+        alert('Aucun login TM trouvé — les joueurs doivent renseigner leur Login TM dans leur profil.');
+        return;
+    }
+
+    let content, filename, type;
+    const editionName = (state.data.editions.find(e => e.id === editionId)?.name || 'edition').replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    if (format === 'xml') {
+        const players = logins.map(l => `  <player>\n    <login>${l}</login>\n  </player>`).join('\n');
+        content = `<?xml version="1.0" encoding="utf-8" ?>\n<guestlist>\n${players}\n</guestlist>`;
+        filename = `guestlist_${editionName}.xml`;
+        type = 'application/xml';
+    } else {
+        content = logins.join('\n');
+        filename = `guestlist_${editionName}.csv`;
+        type = 'text/plain';
+    }
+
+    const blob = new Blob([content], { type });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 };
