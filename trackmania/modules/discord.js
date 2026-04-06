@@ -110,6 +110,9 @@ window.unlinkDiscord = async (playerId) => {
 // ── Configuration Discord (salons / webhooks) ─────────────────────────────────
 
 let _discordChannels = [];
+let _inscriptionTemplate = '';
+
+const DEFAULT_INSCRIPTION_TEMPLATE = '🎮 **{player}** just registered for **{edition}** ({date}) — {count} player(s) registered';
 
 export async function renderDiscordConfig() {
     const container = document.getElementById('discordConfigCard');
@@ -122,6 +125,7 @@ export async function renderDiscordConfig() {
         channels = [{ name: 'Canal principal', url: data.webhookUrl }];
     }
     _discordChannels = channels;
+    _inscriptionTemplate = data.inscriptionTemplate || '';
 
     const inputStyle = `padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:0.85rem;outline:none`;
     const rowsHtml = channels.length > 0 ? channels.map((ch, i) => `
@@ -135,6 +139,9 @@ export async function renderDiscordConfig() {
         ? `<button class="btn-discord-notify" onclick="openDiscordNotifyModal(null)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg> 📢 Envoyer un message</button>`
         : `<p style="font-size:0.85rem;color:var(--color-text-secondary)">Configure au moins un webhook pour envoyer des messages.</p>`;
 
+    const inputStyle = `padding:7px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:0.85rem;outline:none;width:100%;box-sizing:border-box`;
+    const currentTemplate = _inscriptionTemplate || DEFAULT_INSCRIPTION_TEMPLATE;
+
     container.innerHTML = `<div class="card" style="margin-top:20px">
         <h2>🔔 Discord</h2>
         <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 12px;font-weight:700">Webhooks (salons)</p>
@@ -143,6 +150,15 @@ export async function renderDiscordConfig() {
         <div style="display:flex;gap:8px;margin-top:4px">
             <button class="btn btn-secondary" onclick="addDiscordChannelRow()">+ Ajouter un salon</button>
             <button class="btn btn-primary" onclick="saveDiscordChannels()">💾 Enregistrer</button>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+            <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 10px;font-weight:700">Message d'inscription automatique</p>
+            <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:10px">Envoyé automatiquement quand un joueur s'inscrit à une édition. Variables disponibles : <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{player}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{edition}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{date}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{count}</code></p>
+            <textarea id="discordInscriptionTemplate" rows="2" style="${inputStyle};resize:vertical;font-family:monospace">${currentTemplate}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <button class="btn btn-primary" onclick="saveDiscordChannels()" style="font-size:0.82rem;padding:6px 14px">💾 Enregistrer</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('discordInscriptionTemplate').value=${JSON.stringify(DEFAULT_INSCRIPTION_TEMPLATE)}" style="font-size:0.82rem;padding:6px 14px">↺ Défaut</button>
+            </div>
         </div>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
             <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 12px;font-weight:700">Envoyer un message</p>
@@ -179,9 +195,11 @@ window.saveDiscordChannels = async () => {
         name: row.querySelector('input[type="text"]')?.value.trim() || '',
         url:  row.querySelector('input[type="url"]')?.value.trim()  || ''
     })).filter(ch => ch.url);
-    await setDoc(doc(db, 'siteContent', 'discord'), { channels }, { merge: true });
+    const inscriptionTemplate = document.getElementById('discordInscriptionTemplate')?.value.trim() || '';
+    await setDoc(doc(db, 'siteContent', 'discord'), { channels, inscriptionTemplate }, { merge: true });
     _discordChannels = channels;
-    showToast('✅ Webhooks enregistrés');
+    _inscriptionTemplate = inscriptionTemplate;
+    showToast('✅ Configuration Discord enregistrée');
     renderDiscordConfig();
 };
 
@@ -189,19 +207,30 @@ window.saveDiscordChannels = async () => {
 
 export async function notifyDiscordInscription(player, edition, totalInscribed) {
     let webhookUrl = _discordChannels[0]?.url || '';
-    if (!webhookUrl) {
+    let template   = _inscriptionTemplate;
+    if (!webhookUrl || !template) {
         try {
             const snap = await getDoc(doc(db, 'siteContent', 'discord'));
             const data = snap.exists() ? snap.data() : {};
-            webhookUrl = data.channels?.[0]?.url || data.webhookUrl || '';
-            if (Array.isArray(data.channels) && data.channels.length > 0) _discordChannels = data.channels;
+            if (!webhookUrl) {
+                webhookUrl = data.channels?.[0]?.url || data.webhookUrl || '';
+                if (Array.isArray(data.channels) && data.channels.length > 0) _discordChannels = data.channels;
+            }
+            if (!template) {
+                template = data.inscriptionTemplate || '';
+                _inscriptionTemplate = template;
+            }
         } catch(e) { return; }
     }
     if (!webhookUrl) return;
-    const pseudo  = pName(player);
-    const edName  = edition.name;
-    const dateStr = edition.date ? ` (${new Date(edition.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })})` : '';
-    const content = `🎮 **${pseudo}** vient de s'inscrire à **${edName}**${dateStr} — ${totalInscribed} participant(s) inscrit(s)`;
+    const dateStr = edition.date
+        ? new Date(edition.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
+        : '';
+    const content = (template || DEFAULT_INSCRIPTION_TEMPLATE)
+        .replace('{player}',  pName(player))
+        .replace('{edition}', edition.name)
+        .replace('{date}',    dateStr)
+        .replace('{count}',   String(totalInscribed));
     fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
