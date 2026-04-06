@@ -365,7 +365,13 @@ function _admQualificationsTab(e, editionId, edResults, allPlayers) {
     const quals    = edResults.filter(r => r.phase === 'qualification');
     const nbMaps   = e.nbMaps || 6;
     const nbQualif = e.nbQualifPerMap || 3;
-    const playerOpts = allPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+    // Seulement les joueurs inscrits à cette édition
+    const inscritIds = new Set(edResults.filter(r => r.phase === 'inscription').map(r => r.playerId));
+    const inscritPlayers = inscritIds.size > 0
+        ? allPlayers.filter(p => inscritIds.has(p.id))
+        : allPlayers; // fallback si aucune inscription saisie
+    const playerOpts = inscritPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
 
     const mapsHtml = Array.from({length: nbMaps}, (_, i) => i + 1).map(mapN => {
         const mapQuals = quals.filter(r => r.map == mapN).sort((a,b) => (a.position||0)-(b.position||0));
@@ -409,7 +415,14 @@ function _admQualificationsTab(e, editionId, edResults, allPlayers) {
 function _admFinaleTab(e, editionId, edResults, allPlayers) {
     const finale = edResults.filter(r => r.phase === 'finale').sort((a,b) => (a.position||99)-(b.position||99));
     const medals = {1:'🥇',2:'🥈',3:'🥉'};
-    const playerOpts = allPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
+
+    // Seulement les joueurs qualifiés (au moins une qualif sur une map)
+    const qualIds = new Set(edResults.filter(r => r.phase === 'qualification').map(r => r.playerId));
+    const finaleIds = new Set(finale.map(r => r.playerId));
+    const qualPlayers = qualIds.size > 0
+        ? allPlayers.filter(p => qualIds.has(p.id) && !finaleIds.has(p.id)) // exclure déjà dans la finale
+        : allPlayers.filter(p => !finaleIds.has(p.id));
+    const playerOpts = qualPlayers.map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
 
     const rows = finale.map(r => {
         const player = allPlayers.find(p => p.id === r.playerId);
