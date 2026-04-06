@@ -555,14 +555,29 @@ window.displayAdminPlayers = function() {
                 </div>`;
             }).join('')}
             </div>
-            ${group.length === 2 ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-                <button onclick="confirmMerge('${group[0].id}','${group[1].id}')" style="padding:5px 14px;border-radius:7px;background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">
-                    🔀 Fusionner (garder ${(group[0].userId||'').startsWith('discord_') ? 'Discord' : 'Google'} → supprimer ${(group[1].userId||'').startsWith('discord_') ? 'Discord' : 'Google'})
-                </button>
-                <button onclick="confirmMerge('${group[1].id}','${group[0].id}')" style="padding:5px 14px;border-radius:7px;background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">
-                    🔀 Fusionner (garder ${(group[1].userId||'').startsWith('discord_') ? 'Discord' : 'Google'} → supprimer ${(group[0].userId||'').startsWith('discord_') ? 'Discord' : 'Google'})
-                </button>
-            </div>` : ''}
+            ${group.length === 2 ? (() => {
+                const r0 = state.data.results.filter(r => r.playerId === group[0].id).length;
+                const r1 = state.data.results.filter(r => r.playerId === group[1].id).length;
+                const recommended = r0 >= r1 ? 0 : 1; // recommander de garder celui avec le plus de résultats
+                const btn = (keepIdx, delIdx) => {
+                    const keep = group[keepIdx], del = group[delIdx];
+                    const keepR = keepIdx === 0 ? r0 : r1;
+                    const delR  = delIdx  === 0 ? r0 : r1;
+                    const isRec = keepIdx === recommended;
+                    return `<button onclick="confirmMerge('${keep.id}','${del.id}')"
+                        style="padding:6px 14px;border-radius:7px;background:${isRec ? 'rgba(0,217,54,0.15)' : 'rgba(255,255,255,0.06)'};border:1px solid ${isRec ? 'rgba(0,217,54,0.4)' : 'rgba(255,255,255,0.15)'};color:${isRec ? 'var(--color-accent)' : '#aaa'};font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">
+                        ✅ Garder <code style="font-size:0.72rem">${keep.id.substring(0,6)}</code> (${keepR} résultat${keepR>1?'s':''})
+                        &nbsp;·&nbsp;
+                        🗑️ Supprimer <code style="font-size:0.72rem">${del.id.substring(0,6)}</code> (${delR} résultat${delR>1?'s':''})
+                        ${isRec ? ' ⭐' : ''}
+                    </button>`;
+                };
+                return `<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:0.74rem;color:var(--color-text-secondary)">Choisir quel profil conserver :</div>
+                    ${btn(0,1)}
+                    ${btn(1,0)}
+                </div>`;
+            })() : ''}
         </div>`).join('')}
     </div>`;
 
