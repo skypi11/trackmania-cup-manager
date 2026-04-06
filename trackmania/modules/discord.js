@@ -112,7 +112,7 @@ window.unlinkDiscord = async (playerId) => {
 let _discordChannels = [];
 let _inscriptionTemplate = '';
 
-const DEFAULT_INSCRIPTION_TEMPLATE = '🎮 **{player}** just registered for **{edition}** ({date}) — {count} player(s) registered';
+const DEFAULT_INSCRIPTION_TEMPLATE = '🎮 {mention} just registered for **{edition}** ({date}) — {count} player(s) registered';
 
 export async function renderDiscordConfig() {
     const container = document.getElementById('discordConfigCard');
@@ -153,7 +153,7 @@ export async function renderDiscordConfig() {
         </div>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
             <p style="font-size:0.82rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-secondary);margin:0 0 10px;font-weight:700">Message d'inscription automatique</p>
-            <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:10px">Envoyé automatiquement quand un joueur s'inscrit à une édition. Variables disponibles : <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{player}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{edition}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{date}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{count}</code></p>
+            <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:10px">Envoyé automatiquement quand un joueur s'inscrit à une édition. Variables disponibles : <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{mention}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{player}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{edition}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{date}</code> <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:0.8rem">{count}</code></p>
             <textarea id="discordInscriptionTemplate" rows="2" style="${textareaStyle};resize:vertical;font-family:monospace">${currentTemplate}</textarea>
             <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
                 <button class="btn btn-primary" onclick="saveDiscordChannels()" style="font-size:0.82rem;padding:6px 14px">💾 Enregistrer</button>
@@ -223,11 +223,13 @@ export async function notifyDiscordInscription(player, edition, totalInscribed) 
         } catch(e) { return; }
     }
     if (!webhookUrl) return;
-    const dateStr = edition.date
+    const dateStr  = edition.date
         ? new Date(edition.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
         : '';
+    const mention  = player.discordId ? `<@${player.discordId}>` : `**${pName(player)}**`;
     const content = (template || DEFAULT_INSCRIPTION_TEMPLATE)
         .replace('{player}',  pName(player))
+        .replace('{mention}', mention)
         .replace('{edition}', edition.name)
         .replace('{date}',    dateStr)
         .replace('{count}',   String(totalInscribed));

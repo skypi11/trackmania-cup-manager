@@ -922,8 +922,11 @@ window.registerForEdition = async (editionId) => {
     }
     await addDoc(collection(db, 'results'), { editionId, playerId: player.id, phase: 'inscription', cupId });
     const edition = state.data.editions.find(e => e.id === editionId);
-    const totalInscribed = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription').length + 1;
-    if (edition) notifyDiscordInscription(player, edition, totalInscribed).catch(() => {});
+    // Délai 300ms pour que le listener temps réel mette à jour state.data.results avant de compter
+    if (edition) setTimeout(() => {
+        const totalInscribed = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription').length;
+        notifyDiscordInscription(player, edition, totalInscribed).catch(() => {});
+    }, 300);
     window.openEditionDetail(editionId);
 };
 
