@@ -185,6 +185,30 @@ window.saveDiscordChannels = async () => {
     renderDiscordConfig();
 };
 
+// ── Notification auto inscription ────────────────────────────────────────────
+
+export async function notifyDiscordInscription(player, edition, totalInscribed) {
+    let webhookUrl = _discordChannels[0]?.url || '';
+    if (!webhookUrl) {
+        try {
+            const snap = await getDoc(doc(db, 'siteContent', 'discord'));
+            const data = snap.exists() ? snap.data() : {};
+            webhookUrl = data.channels?.[0]?.url || data.webhookUrl || '';
+            if (Array.isArray(data.channels) && data.channels.length > 0) _discordChannels = data.channels;
+        } catch(e) { return; }
+    }
+    if (!webhookUrl) return;
+    const pseudo  = pName(player);
+    const edName  = edition.name;
+    const dateStr = edition.date ? ` (${new Date(edition.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })})` : '';
+    const content = `🎮 **${pseudo}** vient de s'inscrire à **${edName}**${dateStr} — ${totalInscribed} participant(s) inscrit(s)`;
+    fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, username: 'Springs Monthly Cup' })
+    }).catch(() => {});
+}
+
 // ── Notifications admin ───────────────────────────────────────────────────────
 
 function buildMentions(editionId) {

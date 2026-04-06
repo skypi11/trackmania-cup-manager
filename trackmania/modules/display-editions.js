@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { dateLang, pName, tTeam, getPoints, getCountdown, showToast, parseMarkdown } from './utils.js';
 import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { notifyDiscordInscription } from './discord.js';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -917,6 +918,9 @@ window.registerForEdition = async (editionId) => {
         return;
     }
     await addDoc(collection(db, 'results'), { editionId, playerId: player.id, phase: 'inscription', cupId });
+    const edition = state.data.editions.find(e => e.id === editionId);
+    const totalInscribed = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription').length + 1;
+    if (edition) notifyDiscordInscription(player, edition, totalInscribed).catch(() => {});
     window.openEditionDetail(editionId);
 };
 
