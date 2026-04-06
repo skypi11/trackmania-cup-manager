@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast, buildCountryPicker, displayCountry } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
-import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion } from 'firebase/firestore';
+import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion, getDocs, query, where, writeBatch } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -527,7 +527,46 @@ window.displayAdminPlayers = function() {
         return;
     }
 
-    container.innerHTML = `
+    // ── Détection doublons ──
+    const allParticipants = state.data.participants;
+    const pseudoGroups = {};
+    allParticipants.forEach(p => {
+        const key = (p.pseudoTM || p.pseudo || '').toLowerCase().trim();
+        if (!key) return;
+        if (!pseudoGroups[key]) pseudoGroups[key] = [];
+        pseudoGroups[key].push(p);
+    });
+    const duplicateGroups = Object.values(pseudoGroups).filter(g => g.length > 1);
+    const duplicatesHtml = duplicateGroups.length === 0 ? '' : `
+    <div style="margin-bottom:16px;padding:12px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px">
+        <div style="font-weight:700;color:var(--color-warning);margin-bottom:10px;font-size:0.85rem">⚠️ ${duplicateGroups.length} doublon(s) détecté(s)</div>
+        ${duplicateGroups.map(group => `
+        <div style="margin-bottom:8px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px">
+            <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:8px">Même pseudo : <strong style="color:#f0f0f0">${pName(group[0])}</strong></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+            ${group.map(p => {
+                const authLabel = (p.userId||'').startsWith('discord_') ? '🟣 Discord' : p.userId ? '🟡 Google' : '⚫ Sans compte';
+                const resultsCount = state.data.results.filter(r => r.playerId === p.id).length;
+                return `<div style="flex:1;min-width:180px;padding:8px 10px;background:rgba(255,255,255,0.05);border-radius:7px;font-size:0.78rem">
+                    <div style="font-weight:600;margin-bottom:3px">${p.pseudo||'?'}</div>
+                    <div style="color:var(--color-text-secondary)">ID: <code style="font-size:0.72rem">${p.id.substring(0,8)}…</code></div>
+                    <div style="color:var(--color-text-secondary)">${authLabel} · ${resultsCount} résultat(s)</div>
+                    ${p.discordUsername ? `<div style="color:#7b8cff">@${p.discordUsername}</div>` : ''}
+                </div>`;
+            }).join('')}
+            </div>
+            ${group.length === 2 ? `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                <button onclick="confirmMerge('${group[0].id}','${group[1].id}')" style="padding:5px 14px;border-radius:7px;background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">
+                    🔀 Fusionner (garder ${(group[0].userId||'').startsWith('discord_') ? 'Discord' : 'Google'} → supprimer ${(group[1].userId||'').startsWith('discord_') ? 'Discord' : 'Google'})
+                </button>
+                <button onclick="confirmMerge('${group[1].id}','${group[0].id}')" style="padding:5px 14px;border-radius:7px;background:rgba(0,217,54,0.12);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">
+                    🔀 Fusionner (garder ${(group[1].userId||'').startsWith('discord_') ? 'Discord' : 'Google'} → supprimer ${(group[0].userId||'').startsWith('discord_') ? 'Discord' : 'Google'})
+                </button>
+            </div>` : ''}
+        </div>`).join('')}
+    </div>`;
+
+    container.innerHTML = duplicatesHtml + `
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
         <thead>
@@ -648,6 +687,69 @@ window.linkDiscordManual = async function(participantId) {
     } catch(e) {
         console.error('Discord link error:', e);
         if (msgEl) { msgEl.style.cssText = 'display:block;color:var(--color-danger)'; msgEl.textContent = '❌ Erreur lors de la mise à jour.'; }
+    }
+};
+
+// ── Fusion de doublons ────────────────────────────────────────────────────────
+
+window.confirmMerge = function(keepId, deleteId) {
+    const keep = state.data.participants.find(p => p.id === keepId);
+    const del  = state.data.participants.find(p => p.id === deleteId);
+    if (!keep || !del) return;
+    const keepAuth   = (keep.userId||'').startsWith('discord_') ? 'Discord' : 'Google';
+    const deleteAuth = (del.userId||'').startsWith('discord_') ? 'Discord' : 'Google';
+    const resultsCount = state.data.results.filter(r => r.playerId === deleteId).length;
+    if (!confirm(
+        `Fusionner les deux profils "${pName(keep)}" ?\n\n` +
+        `✅ CONSERVER : profil ${keepAuth} (${keep.id.substring(0,8)}…)\n` +
+        `🗑️ SUPPRIMER : profil ${deleteAuth} (${del.id.substring(0,8)}…)\n\n` +
+        `${resultsCount} résultat(s) seront transférés vers le profil conservé.\n` +
+        `Les champs manquants du profil conservé seront complétés avec les données du profil supprimé.\n\n` +
+        `Cette action est irréversible.`
+    )) return;
+    window.mergeParticipants(keepId, deleteId);
+};
+
+window.mergeParticipants = async function(keepId, deleteId) {
+    const keep = state.data.participants.find(p => p.id === keepId);
+    const del  = state.data.participants.find(p => p.id === deleteId);
+    if (!keep || !del) { showToast('Joueur introuvable', 'error'); return; }
+
+    try {
+        const batch = writeBatch(db);
+
+        // 1. Transférer tous les résultats du profil supprimé vers le profil conservé
+        const resultsToMove = state.data.results.filter(r => r.playerId === deleteId);
+        for (const r of resultsToMove) {
+            batch.update(doc(db, 'results', r.id), { playerId: keepId });
+        }
+
+        // 2. Compléter les champs manquants du profil conservé avec ceux du profil supprimé
+        const updates = {};
+        const fields = ['pseudoTM','loginTM','country','team','discordId','discordUsername','discordAvatar','email','epicId','dateOfBirth','trackerUrl'];
+        fields.forEach(f => {
+            if (!keep[f] && del[f]) updates[f] = del[f];
+        });
+        // Si le profil conservé n'a pas de userId Discord et le supprimé en a un, prendre celui du supprimé
+        if (!(keep.userId||'').startsWith('discord_') && (del.userId||'').startsWith('discord_')) {
+            updates.userId = del.userId;
+            if (del.discordId) updates.discordId = del.discordId;
+            if (del.discordUsername) updates.discordUsername = del.discordUsername;
+            if (del.discordAvatar) updates.discordAvatar = del.discordAvatar;
+        }
+        if (Object.keys(updates).length > 0) {
+            batch.update(doc(db, 'participants', keepId), updates);
+        }
+
+        // 3. Supprimer le doublon
+        batch.delete(doc(db, 'participants', deleteId));
+
+        await batch.commit();
+        showToast(`✅ Fusion réussie — ${resultsToMove.length} résultat(s) transféré(s)`, 'success');
+        window.displayAdminPlayers();
+    } catch(e) {
+        console.error('Merge error:', e);
+        showToast('❌ Erreur lors de la fusion', 'error');
     }
 };
 
