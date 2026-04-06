@@ -400,10 +400,15 @@ function _admQualificationsTab(e, editionId, edResults, allPlayers) {
         </div>` : '';
 
         const mapName = e['map'+mapN+'name'] ? ` <span style="font-weight:400;color:#555">· ${e['map'+mapN+'name']}</span>` : '';
-        const badge   = allFilled ? ' <span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:rgba(0,217,54,0.1);color:var(--color-accent)">✅ Complet</span>' : '';
+        const filled = mapQuals.length;
+        const total  = nbQualif;
+        const progressColor = allFilled ? '#00D936' : filled === 0 ? '#ef4444' : '#f59e0b';
+        const progressLabel = allFilled
+            ? `<span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:rgba(0,217,54,0.1);color:#00D936">✅ Complet</span>`
+            : `<span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.05);color:${progressColor};font-weight:700">${filled}/${total}</span>`;
 
         return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <div style="font-size:0.8rem;font-weight:700;color:var(--color-text-secondary);margin-bottom:${filledRows || !allFilled ? '8px' : '0'};display:flex;align-items:center;gap:8px">Map ${mapN}${mapName}${badge}</div>
+            <div style="font-size:0.8rem;font-weight:700;color:var(--color-text-secondary);margin-bottom:${filledRows || !allFilled ? '8px' : '0'};display:flex;align-items:center;gap:8px">Map ${mapN}${mapName}${progressLabel}</div>
             ${filledRows}${emptySelects}
         </div>`;
     }).join('');
@@ -460,9 +465,24 @@ window.admRemoveResult = async function(id) {
 
 window.admSubmitMapQuals = async function(editionId, mapN, positions) {
     const toAdd = [];
+    const selectedIds = [];
     for (const pos of positions) {
         const playerId = document.getElementById(`admQual_${mapN}_${pos}`)?.value;
-        if (playerId) toAdd.push({ editionId, playerId, phase: 'qualification', map: mapN, position: pos, cupId });
+        if (!playerId) continue;
+        // Doublon sur la même map (deux selects avec le même joueur)
+        if (selectedIds.includes(playerId)) {
+            const name = pName(state.data.participants.find(p => p.id === playerId));
+            showToast(`⚠️ ${name} sélectionné deux fois sur la même map`);
+            return;
+        }
+        // Déjà qualifié sur cette map
+        if (state.data.results.some(r => r.editionId === editionId && r.phase === 'qualification' && r.map === mapN && r.playerId === playerId)) {
+            const name = pName(state.data.participants.find(p => p.id === playerId));
+            showToast(`⚠️ ${name} est déjà qualifié sur cette map`);
+            return;
+        }
+        selectedIds.push(playerId);
+        toAdd.push({ editionId, playerId, phase: 'qualification', map: mapN, position: pos, cupId });
     }
     if (!toAdd.length) { showToast('⚠️ Aucun joueur sélectionné'); return; }
     await Promise.all(toAdd.map(d => addDoc(collection(db, 'results'), d)));
