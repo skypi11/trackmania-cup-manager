@@ -240,6 +240,10 @@ onAuthStateChanged(auth, async (user) => {
         const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || user.displayName || t('nav.account'));
         playerBtn.textContent = `👤 ${pseudo}`;
         if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; topbarPlayerBtn.textContent = `👤 ${pseudo}`; }
+        // Nouveau joueur Discord sans profil → ouvrir la création de profil automatiquement
+        if (!linkedPlayer && !state.currentUserProfile && user.uid.startsWith('discord_')) {
+            setTimeout(() => window.openCreateProfile(), 600);
+        }
     }
     state.loaded.auth = true;
     checkLoaded();

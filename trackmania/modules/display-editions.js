@@ -639,7 +639,10 @@ window.openEditionDetail = (id) => {
         } else if (alreadyRegistered) {
             registrationHtml = `<div class="registered-badge">${t('detail.already.reg')}</div>`;
         } else if (!currentPlayer) {
-            registrationHtml = `<p style="color:var(--color-text-secondary);font-size:0.9rem">${t('detail.create.profile')}</p>`;
+            registrationHtml = `<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+                <p style="color:var(--color-text-secondary);font-size:0.85rem;margin:0">${t('detail.create.profile')}</p>
+                <button class="btn btn-primary" onclick="openCreateProfile()">${t('detail.create.profile.btn')}</button>
+            </div>`;
         } else {
             registrationHtml = `<button class="btn btn-primary" onclick="registerForEdition('${id}')">${t('editions.register.btn')}</button>`;
         }
