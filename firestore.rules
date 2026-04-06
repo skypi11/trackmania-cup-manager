@@ -46,7 +46,10 @@ service cloud.firestore {
     }
     match /results/{id} {
       allow read: if true;
-      allow create: if isAdmin();
+      allow create: if isAdmin() ||
+        (request.auth != null &&
+         request.resource.data.phase == 'inscription' &&
+         get(/databases/$(database)/documents/participants/$(request.resource.data.playerId)).data.userId == request.auth.uid);
       allow update: if isAdmin();
       allow delete: if isAdmin() ||
         (request.auth != null &&
