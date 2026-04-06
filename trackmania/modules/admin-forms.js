@@ -439,11 +439,15 @@ function _admFinaleTab(e, editionId, edResults, allPlayers) {
         </div>`;
     }).join('');
 
+    // Auto-incrément inversé : KO → on saisit le dernier en premier
+    const existingPositions = finale.map(r => r.position).filter(Boolean);
+    const nextPos = existingPositions.length > 0 ? Math.min(...existingPositions) - 1 : '';
+
     return `${rows ? `<div style="margin-bottom:18px">${rows}</div>` : ''}
     <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
         <div>
             <label style="font-size:0.78rem;color:var(--color-text-secondary);display:block;margin-bottom:5px">Position</label>
-            <input type="number" id="admFinalePos" min="1" max="99" placeholder="1" style="width:72px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.9rem;font-family:inherit">
+            <input type="number" id="admFinalePos" min="1" max="99" placeholder="1" value="${nextPos}" style="width:72px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);color:#fff;font-size:0.9rem;font-family:inherit">
         </div>
         <div style="flex:1;min-width:160px">
             <label style="font-size:0.78rem;color:var(--color-text-secondary);display:block;margin-bottom:5px">Joueur</label>
