@@ -77,8 +77,8 @@ export default async function handler(req, res) {
       da: avatarUrl,
     });
 
-    const sep = redirectQuery ? '&' : '?';
-    res.redirect(302, `${redirectBase}?${redirectQuery}${sep}${params.toString()}`);
+    const queryStr = redirectQuery ? `${redirectQuery}&${params.toString()}` : params.toString();
+    res.redirect(302, `${redirectBase}?${queryStr}`);
   } catch (err) {
     console.error('Discord auth error:', err);
     return errorRedirect('server_error');
