@@ -766,11 +766,11 @@
                 document.getElementById('accountBtn').className = 'account-btn player-active';
                 closeAccount();
             } else {
-                // First time: show profile setup
+                // Pas encore de profil — afficher le bouton connecté sans ouvrir la modale
                 document.body.classList.remove('guest-mode');
-                document.getElementById('setupPseudo').value = user.displayName || discordUsername || '';
-                document.getElementById('accountModal').classList.add('open');
-                showView('view-setup');
+                const name = user.displayName || discordUsername || 'Joueur';
+                document.getElementById('accountBtn').textContent = `👤 ${name}`;
+                document.getElementById('accountBtn').className = 'account-btn player-active';
             }
         } catch {
             document.body.classList.remove('guest-mode');
