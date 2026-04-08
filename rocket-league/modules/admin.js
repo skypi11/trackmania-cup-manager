@@ -1316,7 +1316,7 @@ window.initPlayers = async function() {
   const btn = document.getElementById('btn-init-players');
   btn.disabled = true; btn.textContent = '...';
   try {
-    await refreshTeams(); await refreshPlayers();
+    await refreshTeams(true); await refreshPlayers(true);
     const nameToId = {};
     Object.values(state.teamsMap).forEach(t => { nameToId[t.name.trim().toLowerCase()] = t.id; });
     const existDiscords = new Set(Object.values(state.playersMap).map(p => p.pseudoDiscord?.toLowerCase()));
@@ -1335,7 +1335,7 @@ window.initPlayers = async function() {
       }
     }
     await batch.commit();
-    await refreshPlayers();
+    await refreshPlayers(true);
     const msg = document.getElementById('init-players-result');
     msg.className = 'init-msg ok';
     msg.textContent = `✓ ${created} joueurs créés.${skipped?` ${skipped} déjà existants ignorés.`:''}${missing.length?` Équipes non trouvées : ${missing.join(', ')}.`:''}`;
@@ -1351,7 +1351,7 @@ window.initTeams = async function() {
   const btn = document.getElementById('btn-init-teams');
   btn.disabled = true; btn.textContent = '...';
   try {
-    await refreshTeams();
+    await refreshTeams(true);
     const existingNames = new Set(Object.values(state.teamsMap).map(t => t.name.trim().toLowerCase()));
     const batch = writeBatch(db);
     let created = 0, skipped = 0;
@@ -1365,7 +1365,7 @@ window.initTeams = async function() {
       }
     }
     await batch.commit();
-    await refreshTeams();
+    await refreshTeams(true);
     const msg = document.getElementById('init-teams-result');
     msg.className = 'init-msg ok';
     msg.textContent = `✓ ${created} équipes créées.${skipped ? ` ${skipped} déjà existantes ignorées.` : ''}`;
@@ -1381,7 +1381,7 @@ window.initCalendar = async function() {
   const btn=document.querySelector('#adm-content .btn-p');
   btn.disabled=true; btn.textContent='...';
   try {
-    await refreshTeams();
+    await refreshTeams(true);
     const nameToId={};
     Object.values(state.teamsMap).forEach(t=>{nameToId[t.name.trim().toLowerCase()]=t.id;});
     const batch=writeBatch(db);

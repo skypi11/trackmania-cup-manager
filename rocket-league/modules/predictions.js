@@ -6,6 +6,10 @@ import { t } from './i18n.js';
 import { esc, toast, openModal, closeModal } from './utils.js';
 import { fetchAll, refreshMatches } from './data.js';
 
+// Cooldown pour éviter de relire les deux collections à chaque ouverture d'onglet
+const PRED_COOLDOWN_MS = 60_000;
+let _lastPredFetch = 0;
+
 // Helper : ref Firestore vers les données de saison d'un prédicteur
 function _predSeasonRef(uid) { return doc(db, 'rl_pred_season', uid); }
 
@@ -19,8 +23,10 @@ function _pickAccountFields(data) {
   return out;
 }
 
-async function refreshPredictors() {
+async function refreshPredictors(force = false) {
   if (!state.curUser) return;
+  const now = Date.now();
+  if (!force && now - _lastPredFetch < PRED_COOLDOWN_MS) return;
   try {
     const [accSnap, seasonSnap] = await Promise.all([
       getDocs(collection(db, 'rl_predictors')),
@@ -34,6 +40,7 @@ async function refreshPredictors() {
       if (!state.predictorsMap[d.id]) state.predictorsMap[d.id] = { id: d.id };
       Object.assign(state.predictorsMap[d.id], d.data());
     });
+    _lastPredFetch = now;
   } catch(e) {
     console.warn('refreshPredictors: lecture collection refusée, fallback doc perso', e.code);
     try {
