@@ -48,14 +48,12 @@ async function _onDiscordLogin(user, discordId, discordUsername, discordAvatar) 
     const snapPseudo = await getDocs(byPseudo);
 
     if (!snapPseudo.empty) {
-      await updateDoc(doc(db, 'rl_players', snapPseudo.docs[0].id), {
-        userId: user.uid,
-        discordId,
-        discordAvatar,
-        discordUsername,
+      const pid = snapPseudo.docs[0].id;
+      await updateDoc(doc(db, 'rl_players', pid), {
+        userId: user.uid, discordId, discordAvatar, discordUsername,
       });
-      // Invalide le cache pour que fetchAll recharge les données à jour
-      state._dataFetched = false;
+      // Mise à jour du cache local directement (évite un rechargement complet)
+      if (state.playersMap[pid]) Object.assign(state.playersMap[pid], { userId: user.uid, discordId, discordAvatar, discordUsername });
     } else {
       // Spectateur/prédicteur : profil minimal
       await setDoc(doc(db, 'rl_predictors', user.uid), {

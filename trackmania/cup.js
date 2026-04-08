@@ -115,11 +115,13 @@ initLang();
 // Load site config (async, non-blocking)
 loadSiteConfig();
 
-// Real-time listeners avec auto-retry si le listener Firestore meurt
+// Real-time listeners avec backoff exponentiel (surtout sur resource-exhausted)
 function watchCollection(ref, name, onData) {
+    let retryDelay = 8000;
     function subscribe() {
         const unsub = onSnapshot(ref,
             snap => {
+                retryDelay = 8000; // reset au succès
                 onData(snap);
                 if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
             },
@@ -127,38 +129,58 @@ function watchCollection(ref, name, onData) {
                 console.error(`Listener Firestore "${name}" error:`, err.code, err.message);
                 if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
                 unsub?.();
-                // Retry automatique après 8 secondes
-                setTimeout(subscribe, 8000);
+                if (err.code === 'resource-exhausted') {
+                    // Quota dépassé : backoff exponentiel jusqu'à 30 min max
+                    retryDelay = Math.min(retryDelay * 2, 30 * 60 * 1000);
+                    console.warn(`[Firestore] Quota dépassé sur "${name}" — retry dans ${Math.round(retryDelay/1000)}s`);
+                } else {
+                    retryDelay = 8000;
+                }
+                setTimeout(subscribe, retryDelay);
             }
         );
     }
     subscribe();
 }
 
-watchCollection(collection(db, 'participants'), 'participants', snap => {
-    state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    displayParticipants(); displayEditions(); displayHome();
-    displayHallOfFame(); displayNextEditionBanner(); displayStats();
-    displayGeneralRanking(); updateDiscordReminders();
-    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
-});
+// Filtres serveur sur cupId pour réduire les lectures Firestore
+// (les docs sans cupId sont des anciens docs 'monthly' — ils sont inclus via le filtre 'in')
+watchCollection(
+    query(collection(db, 'participants'), where('cupId', '==', cupId)),
+    'participants',
+    snap => {
+        state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayParticipants(); displayEditions(); displayHome();
+        displayHallOfFame(); displayNextEditionBanner(); displayStats();
+        displayGeneralRanking(); updateDiscordReminders();
+        if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
+    }
+);
 
-watchCollection(collection(db, 'editions'), 'editions', snap => {
-    state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-    displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
-    if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
-    if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
-});
+watchCollection(
+    query(collection(db, 'editions'), where('cupId', '==', cupId)),
+    'editions',
+    snap => {
+        state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
+        if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
+        if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
+        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
+    }
+);
 
-watchCollection(collection(db, 'results'), 'results', snap => {
-    state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-    displayParticipants(); displayEditions(); displayHome();
-    displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
-    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-    if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
-});
+watchCollection(
+    query(collection(db, 'results'), where('cupId', '==', cupId)),
+    'results',
+    snap => {
+        state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayParticipants(); displayEditions(); displayHome();
+        displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
+        if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+        if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
+    }
+);
 
 watchCollection(
     query(collection(db, 'predictions'), where('cupId', '==', cupId)),
