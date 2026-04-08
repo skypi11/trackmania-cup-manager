@@ -36,9 +36,6 @@ document.getElementById('cupTitle').textContent = CUP.name;
 document.getElementById('cupSubtitle').textContent = `Springs E-Sport · ${CUP.label}`;
 document.getElementById('authCupName').textContent = CUP.name;
 
-// Cup filter: backward compat — existing docs without cupId are treated as 'monthly'
-const cupFilter = item => (item.cupId || 'monthly') === cupId;
-
 // → site-config.js | discord.js | auth.js
 
 // Section switching
@@ -143,31 +140,43 @@ function watchCollection(ref, name, onData) {
     subscribe();
 }
 
-// Listeners sur les collections complètes (filtre cupId côté client pour backward compat)
-watchCollection(collection(db, 'participants'), 'participants', snap => {
-    state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-    displayParticipants(); displayEditions(); displayHome();
-    displayHallOfFame(); displayNextEditionBanner(); displayStats();
-    displayGeneralRanking(); updateDiscordReminders();
-    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
-});
+// Filtres serveur par cupId — tous les docs sont migrés, lecture minimale
+watchCollection(
+    query(collection(db, 'participants'), where('cupId', '==', cupId)),
+    'participants',
+    snap => {
+        state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayParticipants(); displayEditions(); displayHome();
+        displayHallOfFame(); displayNextEditionBanner(); displayStats();
+        displayGeneralRanking(); updateDiscordReminders();
+        if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
+    }
+);
 
-watchCollection(collection(db, 'editions'), 'editions', snap => {
-    state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-    displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
-    if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
-    if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-    if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
-});
+watchCollection(
+    query(collection(db, 'editions'), where('cupId', '==', cupId)),
+    'editions',
+    snap => {
+        state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
+        if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
+        if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
+        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
+    }
+);
 
-watchCollection(collection(db, 'results'), 'results', snap => {
-    state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(cupFilter);
-    displayParticipants(); displayEditions(); displayHome();
-    displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
-    if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-    if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
-});
+watchCollection(
+    query(collection(db, 'results'), where('cupId', '==', cupId)),
+    'results',
+    snap => {
+        state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayParticipants(); displayEditions(); displayHome();
+        displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
+        if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
+        if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
+    }
+);
 
 watchCollection(
     query(collection(db, 'predictions'), where('cupId', '==', cupId)),
