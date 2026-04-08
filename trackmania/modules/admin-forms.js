@@ -879,6 +879,56 @@ window.mergeParticipants = async function(keepId, deleteId) {
     }
 };
 
+// ── Migration cupId (one-shot) ────────────────────────────────────────────────
+
+window.runCupIdMigration = async function() {
+    const container = document.getElementById('migrationResults');
+    if (!container) return;
+    if (!confirm('Lancer la migration cupId sur participants, éditions et résultats ?\n\nCette opération est sûre et peut être relancée sans risque.')) return;
+
+    container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">⏳ Migration en cours…</p>';
+
+    const BATCH_SIZE = 400; // Firestore limite à 500 ops par batch
+    let totalPatched = 0;
+    let totalSkipped = 0;
+
+    async function migrateCollection(collectionName) {
+        const snap = await getDocs(collection(db, collectionName));
+        const toFix = snap.docs.filter(d => !d.data().cupId);
+        if (toFix.length === 0) return 0;
+
+        // Traitement par chunks de BATCH_SIZE
+        for (let i = 0; i < toFix.length; i += BATCH_SIZE) {
+            const chunk = toFix.slice(i, i + BATCH_SIZE);
+            const batch = writeBatch(db);
+            chunk.forEach(d => batch.update(d.ref, { cupId: 'monthly' }));
+            await batch.commit();
+        }
+        return toFix.length;
+    }
+
+    try {
+        const log = [];
+        for (const col of ['participants', 'editions', 'results']) {
+            container.innerHTML = `<p style="color:var(--color-text-secondary);font-size:0.85rem">⏳ Migration <strong>${col}</strong>…</p>`;
+            const n = await migrateCollection(col);
+            totalPatched += n;
+            totalSkipped += (await getDocs(collection(db, col))).size - n;
+            log.push(`<li><strong>${col}</strong> : ${n} doc(s) mis à jour</li>`);
+        }
+        container.innerHTML = `
+            <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:12px 16px;font-size:0.85rem">
+                <strong style="color:var(--color-accent)">✅ Migration terminée</strong>
+                <ul style="margin:8px 0 0;padding-left:20px;color:var(--color-text-secondary)">${log.join('')}</ul>
+                <p style="margin:8px 0 0;color:var(--color-text-secondary)">Total : ${totalPatched} doc(s) patchés.</p>
+            </div>`;
+        logAdminAction('migration_cupid', `Migration cupId : ${totalPatched} docs patchés (participants + editions + results)`);
+    } catch(e) {
+        console.error('Migration error:', e);
+        container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">❌ Erreur : ${e.message}</p>`;
+    }
+};
+
 window.repairOrphanedResults = async function(oldPlayerId) {
     const safeId = oldPlayerId.replace(/[^a-zA-Z0-9]/g, '_');
     const sel = document.getElementById(`remap-${safeId}`);

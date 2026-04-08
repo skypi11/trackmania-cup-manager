@@ -1529,6 +1529,12 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <button class="btn btn-secondary" onclick="runDataDiagnostic()">🔍 Analyser</button>
                 <div id="diagResults" style="margin-top:14px"></div>
               </div>
+              <div class="card" style="margin-bottom:16px;border:1px solid rgba(245,158,11,0.3)">
+                <h2 style="margin-bottom:8px">🛠️ Migration cupId</h2>
+                <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:12px">Ajoute <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px">cupId: "monthly"</code> sur tous les anciens docs (participants, éditions, résultats) qui n'ont pas encore ce champ. À lancer <strong>une seule fois</strong>.</p>
+                <button class="btn btn-secondary" onclick="runCupIdMigration()" style="border-color:rgba(245,158,11,0.5);color:var(--color-warning)">▶ Lancer la migration</button>
+                <div id="migrationResults" style="margin-top:14px"></div>
+              </div>
               <div class="card">
                 <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
                 <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
