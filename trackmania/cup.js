@@ -1,6 +1,6 @@
 import { app, db } from '../shared/firebase-config.js';
 import { t, setLang, getLang, initLang } from '../shared/i18n.js';
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { state } from './modules/state.js';
 import { buildRankingStats, displayGeneralRanking, displayStats } from './modules/display-rankings.js';
@@ -112,77 +112,41 @@ initLang();
 // Load site config (async, non-blocking)
 loadSiteConfig();
 
-// Real-time listeners avec backoff exponentiel (surtout sur resource-exhausted)
-function watchCollection(ref, name, onData) {
-    let retryDelay = 8000;
-    function subscribe() {
-        const unsub = onSnapshot(ref,
-            snap => {
-                retryDelay = 8000; // reset au succès
-                onData(snap);
-                if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
-            },
-            err => {
-                console.error(`Listener Firestore "${name}" error:`, err.code, err.message);
-                if (!state.loaded[name]) { state.loaded[name] = true; checkLoaded(); }
-                unsub?.();
-                if (err.code === 'resource-exhausted') {
-                    // Quota dépassé : backoff exponentiel jusqu'à 30 min max
-                    retryDelay = Math.min(retryDelay * 2, 30 * 60 * 1000);
-                    console.warn(`[Firestore] Quota dépassé sur "${name}" — retry dans ${Math.round(retryDelay/1000)}s`);
-                } else {
-                    retryDelay = 8000;
-                }
-                setTimeout(subscribe, retryDelay);
-            }
-        );
-    }
-    subscribe();
-}
+// Chargement unique des données (remplace les listeners temps réel)
+async function loadData() {
+    try {
+        const [pSnap, eSnap, rSnap, predSnap] = await Promise.all([
+            getDocs(query(collection(db, 'participants'), where('cupId', '==', cupId))),
+            getDocs(query(collection(db, 'editions'), where('cupId', '==', cupId))),
+            getDocs(query(collection(db, 'results'), where('cupId', '==', cupId))),
+            getDocs(query(collection(db, 'predictions'), where('cupId', '==', cupId))),
+        ]);
 
-// Filtres serveur par cupId — tous les docs sont migrés, lecture minimale
-watchCollection(
-    query(collection(db, 'participants'), where('cupId', '==', cupId)),
-    'participants',
-    snap => {
-        state.data.participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.participants = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.editions = eSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.results = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.predictions = predSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        ['participants', 'editions', 'results', 'predictions'].forEach(k => { state.loaded[k] = true; });
+        checkLoaded();
+
         displayParticipants(); displayEditions(); displayHome();
         displayHallOfFame(); displayNextEditionBanner(); displayStats();
         displayGeneralRanking(); updateDiscordReminders();
         if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminPlayers?.(); window.displayDiscordMigration?.(); window.displayAdminResults?.(); }
-    }
-);
-
-watchCollection(
-    query(collection(db, 'editions'), where('cupId', '==', cupId)),
-    'editions',
-    snap => {
-        state.data.editions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        displayEditions(); displayHome(); displayNextEditionBanner(); displayStats();
+        if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
         if (document.getElementById('maps')?.style.display !== 'none') displayMapsTimeline();
-        if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-        if (document.getElementById('administration')?.style.display !== 'none') { window.displayAdminEditions?.(); window.displayAdminResults?.(); }
+        if (document.getElementById('administration')?.style.display !== 'none') {
+            window.displayAdminPlayers?.(); window.displayDiscordMigration?.();
+            window.displayAdminResults?.(); window.displayAdminEditions?.();
+        }
+    } catch (err) {
+        console.error('[Firestore] loadData error:', err.code, err.message);
+        ['participants', 'editions', 'results', 'predictions'].forEach(k => { state.loaded[k] = true; });
+        checkLoaded();
     }
-);
+}
 
-watchCollection(
-    query(collection(db, 'results'), where('cupId', '==', cupId)),
-    'results',
-    snap => {
-        state.data.results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        displayParticipants(); displayEditions(); displayHome();
-        displayHallOfFame(); displayNextEditionBanner(); displayStats(); displayGeneralRanking();
-        if (document.getElementById('duel')?.style.display !== 'none') displayDuel();
-        if (document.getElementById('administration')?.style.display !== 'none') window.displayAdminResults?.();
-    }
-);
-
-watchCollection(
-    query(collection(db, 'predictions'), where('cupId', '==', cupId)),
-    'predictions',
-    snap => {
-        state.data.predictions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (document.getElementById('predictions')?.style.display !== 'none') displayPredictions();
-    }
-);
+// Chargement initial + auto-refresh toutes les 2 minutes
+loadData();
+setInterval(loadData, 2 * 60 * 1000);
