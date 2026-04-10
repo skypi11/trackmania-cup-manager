@@ -13,10 +13,13 @@ export function getCountdown(dateStr, timeStr) {
     const target = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
     const diff = target - now;
     if (diff <= 0) return null;
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const mins = Math.floor((diff % 3600000) / 60000);
+    // Jours calendaires (10 avril → 12 avril = 2 jours, peu importe l'heure)
+    const todayMidnight  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetMidnight = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+    const days = Math.round((targetMidnight - todayMidnight) / 86400000);
     if (days > 0) return t('countdown.days', {n: days});
+    const hours = Math.floor(diff / 3600000);
+    const mins  = Math.floor((diff % 3600000) / 60000);
     if (hours > 0) return t('countdown.hours', {n: hours, m: mins > 0 ? ` ${mins}min` : ''});
     return t('countdown.minutes', {n: mins});
 }
