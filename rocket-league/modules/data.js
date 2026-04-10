@@ -1,46 +1,72 @@
 // modules/data.js
 import { db } from '../../shared/firebase-config.js';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { state } from './state.js';
 
-const COOLDOWN_MS = 60_000; // 1 minute entre deux lectures de la même collection
-const _lastFetch = { teams: 0, players: 0, matches: 0 };
+// ── Realtime listeners for teams & matches ────────────────────────────
+let _listenersInit = false;
+let _teamsReady = false;
+let _matchesReady = false;
+let _initResolve = null;
+const _initPromise = new Promise(resolve => { _initResolve = resolve; });
 
+function _checkReady() {
+  if (_teamsReady && _matchesReady) {
+    state._dataFetched = true;
+    _initResolve();
+  }
+}
+
+function _initListeners() {
+  if (_listenersInit) return;
+  _listenersInit = true;
+
+  let teamsFirst = true;
+  onSnapshot(collection(db, 'rl_teams'), snap => {
+    state.teamsMap = {};
+    snap.forEach(d => { state.teamsMap[d.id] = { id: d.id, ...d.data() }; });
+    if (teamsFirst) { teamsFirst = false; _teamsReady = true; _checkReady(); }
+    else { window.dispatchEvent(new CustomEvent('rl-data-updated')); }
+  });
+
+  let matchesFirst = true;
+  onSnapshot(collection(db, 'rl_matches'), snap => {
+    state.matchesMap = {};
+    snap.forEach(d => { state.matchesMap[d.id] = { id: d.id, ...d.data() }; });
+    if (matchesFirst) { matchesFirst = false; _matchesReady = true; _checkReady(); }
+    else { window.dispatchEvent(new CustomEvent('rl-data-updated')); }
+  });
+}
+
+// ── fetchAll : charge tout, attendu par les tabs au premier rendu ─────
 export async function fetchAll(force = false) {
-  if (state._dataFetched && !force) return;
-  const now = Date.now();
-  const [ts, ps, ms] = await Promise.all([
-    getDocs(collection(db,'rl_teams')),
-    getDocs(collection(db,'rl_players')),
-    getDocs(collection(db,'rl_matches'))
-  ]);
-  state.teamsMap = {}; ts.forEach(d => { state.teamsMap[d.id]={id:d.id,...d.data()}; });
-  state.playersMap = {}; ps.forEach(d => { state.playersMap[d.id]={id:d.id,...d.data()}; });
-  state.matchesMap = {}; ms.forEach(d => { state.matchesMap[d.id]={id:d.id,...d.data()}; });
-  _lastFetch.teams = _lastFetch.players = _lastFetch.matches = now;
-  state._dataFetched = true;
+  if (!_listenersInit) {
+    // Players : getDocs suffit (ne changent pas en cours de saison)
+    const ps = await getDocs(collection(db, 'rl_players'));
+    state.playersMap = {};
+    ps.forEach(d => { state.playersMap[d.id] = { id: d.id, ...d.data() }; });
+    _initListeners();
+  }
+  // Attend que les deux premiers snapshots aient répondu
+  if (!state._dataFetched) await _initPromise;
 }
 
-export async function refreshTeams(force = false) {
-  const now = Date.now();
-  if (!force && now - _lastFetch.teams < COOLDOWN_MS) return;
-  const s = await getDocs(collection(db,'rl_teams'));
-  state.teamsMap = {}; s.forEach(d => { state.teamsMap[d.id]={id:d.id,...d.data()}; });
-  _lastFetch.teams = now;
+// ── Refresh helpers (utilisés par admin.js après écriture) ───────────
+// Toujours fonctionnels ; onSnapshot met aussi à jour state en parallèle.
+export async function refreshTeams() {
+  const s = await getDocs(collection(db, 'rl_teams'));
+  state.teamsMap = {};
+  s.forEach(d => { state.teamsMap[d.id] = { id: d.id, ...d.data() }; });
 }
 
-export async function refreshPlayers(force = false) {
-  const now = Date.now();
-  if (!force && now - _lastFetch.players < COOLDOWN_MS) return;
-  const s = await getDocs(collection(db,'rl_players'));
-  state.playersMap = {}; s.forEach(d => { state.playersMap[d.id]={id:d.id,...d.data()}; });
-  _lastFetch.players = now;
+export async function refreshPlayers() {
+  const s = await getDocs(collection(db, 'rl_players'));
+  state.playersMap = {};
+  s.forEach(d => { state.playersMap[d.id] = { id: d.id, ...d.data() }; });
 }
 
-export async function refreshMatches(force = false) {
-  const now = Date.now();
-  if (!force && now - _lastFetch.matches < COOLDOWN_MS) return;
-  const s = await getDocs(collection(db,'rl_matches'));
-  state.matchesMap = {}; s.forEach(d => { state.matchesMap[d.id]={id:d.id,...d.data()}; });
-  _lastFetch.matches = now;
+export async function refreshMatches() {
+  const s = await getDocs(collection(db, 'rl_matches'));
+  state.matchesMap = {};
+  s.forEach(d => { state.matchesMap[d.id] = { id: d.id, ...d.data() }; });
 }

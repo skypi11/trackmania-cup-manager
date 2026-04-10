@@ -326,6 +326,12 @@ window._loadTab = loadTab;
 window._fetchAll = fetchAll;
 window.FLAGS = FLAGS;
 
+// Mise à jour temps réel : quand onSnapshot détecte un changement,
+// on re-rend l'onglet courant sans recharger la page
+window.addEventListener('rl-data-updated', () => {
+  if (state.curTab) loadTab(state.curTab);
+});
+
 // ── TAB NAVIGATION ──────────────────────────────────────────────────
 window.goTab = function(tab) {
   if (tab === 'admin' && !state.isAdmin) return;
