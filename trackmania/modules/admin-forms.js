@@ -87,6 +87,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
     });
     logAdminAction('create_player', `Joueur créé : ${name}${pseudoTM ? ` (TM: ${pseudoTM})` : ''}`);
     e.target.reset();
+    window.reloadData?.();
 });
 
 // ── Add edition ───────────────────────────────────────────────────────────────
@@ -127,6 +128,7 @@ document.getElementById('addEditionForm').addEventListener('submit', async (e) =
     storeTmxThumbs(newEditionRef.id, mapTmxValsCreate);
     e.target.reset();
     document.getElementById('editionSaison').value = new Date().getFullYear();
+    window.reloadData?.();
 });
 
 // ── Edit participant ──────────────────────────────────────────────────────────
@@ -158,6 +160,7 @@ document.getElementById('editParticipantForm').addEventListener('submit', async 
     await updateDoc(doc(db, 'participants', id), { pseudo: name, name, pseudoTM, loginTM, country, team: team || 'Sans équipe' });
     logAdminAction('edit_player', `Joueur modifié : ${name}`);
     window.closeEditParticipant();
+    window.reloadData?.();
 });
 
 // ── Edit edition ──────────────────────────────────────────────────────────────
@@ -214,6 +217,7 @@ document.getElementById('editEditionForm').addEventListener('submit', async (e) 
     window.closeEditEdition();
     const mapTmxVals = {}; [1,2,3,4,5,6,7].forEach(n => { mapTmxVals[n] = mapsTmx[`map${n}tmx`]; });
     storeTmxThumbs(id, mapTmxVals);
+    window.reloadData?.();
 });
 
 // ── Delete ────────────────────────────────────────────────────────────────────
@@ -225,6 +229,7 @@ window.deleteParticipant = async (id) => {
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'participants', id));
     logAdminAction('delete_player', `Joueur supprimé : ${p ? pName(p) : id}`);
+    window.reloadData?.();
 };
 
 window.deleteEdition = async (id) => {
@@ -234,6 +239,7 @@ window.deleteEdition = async (id) => {
         await deleteDoc(doc(db, 'results', r.id));
     await deleteDoc(doc(db, 'editions', id));
     logAdminAction('delete_edition', `Édition supprimée : ${ed ? ed.name : id}`);
+    window.reloadData?.();
 };
 
 window.deleteResult = async (id) => {
@@ -245,6 +251,7 @@ window.deleteResult = async (id) => {
         const ed = state.data.editions.find(e => e.id === r.editionId);
         logAdminAction('delete_result', `Résultat supprimé : ${p ? pName(p) : r.playerId} — ${ed ? ed.name : r.editionId} (${r.phase})`);
     }
+    window.reloadData?.();
 };
 
 // ── Diagnostic & réparation des données ──────────────────────────────────────
@@ -529,10 +536,12 @@ window.admAddInscription = async function(editionId, playerId) {
     const p = state.data.participants.find(p => p.id === playerId);
     const ed = state.data.editions.find(e => e.id === editionId);
     logAdminAction('add_inscription', `Inscription ajoutée : ${p ? pName(p) : playerId} → ${ed ? ed.name : editionId}`);
+    window.reloadData?.();
 };
 
 window.admRemoveResult = async function(id) {
     await deleteDoc(doc(db, 'results', id));
+    window.reloadData?.();
 };
 
 window.admSubmitMapQuals = async function(editionId, mapN, positions) {
@@ -561,6 +570,7 @@ window.admSubmitMapQuals = async function(editionId, mapN, positions) {
     const ed = state.data.editions.find(e => e.id === editionId);
     logAdminAction('add_quals', `Qualifs map ${mapN} enregistrées (${toAdd.length}) — ${ed ? ed.name : editionId}`);
     showToast(`✅ ${toAdd.length} qualification(s) enregistrée(s)`);
+    window.reloadData?.();
 };
 
 window.admSubmitFinaleResult = async function(editionId) {
@@ -576,6 +586,7 @@ window.admSubmitFinaleResult = async function(editionId) {
     document.getElementById('admFinalePos').value = '';
     document.getElementById('admFinalePlayer').value = '';
     showToast('✅ Résultat ajouté');
+    window.reloadData?.();
 };
 
 // ── Liste admin : Éditions ────────────────────────────────────────────────────

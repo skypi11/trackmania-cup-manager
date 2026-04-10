@@ -147,6 +147,10 @@ async function loadData() {
     }
 }
 
+// Exposé globalement pour que admin-forms.js puisse déclencher un refresh
+// après chaque écriture, sans attendre le prochain cycle automatique
+window.reloadData = loadData;
+
 // Chargement initial + auto-refresh toutes les 2 minutes
 loadData();
 setInterval(loadData, 2 * 60 * 1000);
