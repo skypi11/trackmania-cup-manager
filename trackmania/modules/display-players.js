@@ -292,6 +292,7 @@ window.openPlayerProfile = (playerId) => {
                 msg.style.color = 'var(--color-accent)';
                 msg.textContent = t('profile.saved');
                 setTimeout(() => msg.style.display = 'none', 3000);
+                window.reloadData?.();
             } catch(err) {
                 console.error('Save profile error:', err);
                 msg.style.display = 'block';

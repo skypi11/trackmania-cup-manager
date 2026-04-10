@@ -28,6 +28,7 @@ window.setEditionStatus = async (id, status) => {
         status,
         statusHistory: arrayUnion({ status, at: new Date().toISOString() })
     });
+    window.reloadData?.();
 };
 
 window.goToEdition = (id) => {
@@ -760,6 +761,7 @@ window.openEditionDetail = (id) => {
             btn.disabled = true;
             try {
                 await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'inscription', cupId });
+                await window.reloadData?.();
                 window.openEditionDetail(id);
             } finally {
                 btn.disabled = false;
@@ -808,8 +810,8 @@ window.openEditionDetail = (id) => {
                     }
                     await addDoc(collection(db, 'results'), { editionId: id, playerId, phase: 'finale', position, cupId });
                 }
-                detailForm.reset();
-                window.detailOnPhaseChange();
+                await window.reloadData?.();
+                window.openEditionDetail(id);
             } finally {
                 btn.disabled = false;
             }
@@ -903,6 +905,7 @@ window.cancelInscription = async (resultId, editionId) => {
     if (!confirm(t('msg.confirm.cancel.reg'))) return;
     try {
         await deleteDoc(doc(db, 'results', resultId));
+        await window.reloadData?.();
         window.openEditionDetail(editionId);
     } catch (err) {
         console.error('cancelInscription:', err);
@@ -921,13 +924,14 @@ window.registerForEdition = async (editionId) => {
         return;
     }
     await addDoc(collection(db, 'results'), { editionId, playerId: player.id, phase: 'inscription', cupId });
+    await window.reloadData?.();
+    window.openEditionDetail(editionId);
+    // Notification Discord avec le compte exact (state.data.results est maintenant à jour)
     const edition = state.data.editions.find(e => e.id === editionId);
-    // Délai 300ms pour que le listener temps réel mette à jour state.data.results avant de compter
-    if (edition) setTimeout(() => {
+    if (edition) {
         const totalInscribed = state.data.results.filter(r => r.editionId === editionId && r.phase === 'inscription').length;
         notifyDiscordInscription(player, edition, totalInscribed).catch(() => {});
-    }, 300);
-    window.openEditionDetail(editionId);
+    }
 };
 
 window.exportGuestlist = function(editionId, format) {
