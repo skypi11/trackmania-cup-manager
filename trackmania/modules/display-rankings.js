@@ -27,6 +27,8 @@ export function buildRankingStats(finaleResults) {
 }
 
 export function displayGeneralRanking() {
+    const exportBtn = document.getElementById('btnExportCSV');
+    if (exportBtn) exportBtn.style.display = state.isAdmin ? '' : 'none';
     const container = document.getElementById('generalRanking');
 
     // Build available seasons (only those with finale data)

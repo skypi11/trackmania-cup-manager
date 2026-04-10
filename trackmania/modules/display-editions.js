@@ -738,7 +738,7 @@ window.openEditionDetail = (id) => {
             <div style="margin-top:28px">
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
                     <div class="phase-title" style="margin:0">${t('detail.registered.list')} (${inscriptions.length})</div>
-                    ${inscriptions.length > 0 ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+                    ${inscriptions.length > 0 && state.isAdmin ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button onclick="exportGuestlist('${id}','xml')" style="padding:5px 12px;border-radius:7px;background:rgba(0,217,54,0.1);border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">⬇️ Export XML</button>
                         <button onclick="exportGuestlist('${id}','csv')" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#ccc;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit">⬇️ Export CSV</button>
                     </div>` : ''}
