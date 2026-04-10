@@ -1,6 +1,6 @@
 import { app, db } from '../shared/firebase-config.js';
 import { t, setLang, getLang, initLang } from '../shared/i18n.js';
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { state } from './modules/state.js';
 import { buildRankingStats, displayGeneralRanking, displayStats } from './modules/display-rankings.js';
@@ -151,6 +151,30 @@ async function loadData() {
 // après chaque écriture, sans attendre le prochain cycle automatique
 window.reloadData = loadData;
 
-// Chargement initial + auto-refresh toutes les 2 minutes
+// Chargement initial
 loadData();
-setInterval(loadData, 2 * 60 * 1000);
+
+// Mise à jour temps réel : onSnapshot sur les 4 collections TM
+// Firebase pousse une notification dès qu'il y a un changement (écriture admin ou joueur)
+// → plus besoin d'un timer aveugle toutes les 2 minutes
+let _reloadTimer = null;
+function _scheduleReload() {
+    clearTimeout(_reloadTimer);
+    _reloadTimer = setTimeout(loadData, 500); // debounce si plusieurs collections changent d'un coup
+}
+
+const _queries = [
+    query(collection(db, 'participants'), where('cupId', '==', cupId)),
+    query(collection(db, 'editions'),    where('cupId', '==', cupId)),
+    query(collection(db, 'results'),     where('cupId', '==', cupId)),
+    query(collection(db, 'predictions'), where('cupId', '==', cupId)),
+];
+
+// On ignore le premier fire de chaque snapshot (= état initial, déjà chargé par loadData)
+_queries.forEach(q => {
+    let first = true;
+    onSnapshot(q, () => {
+        if (first) { first = false; return; }
+        _scheduleReload();
+    });
+});
