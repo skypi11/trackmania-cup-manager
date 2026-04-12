@@ -29,7 +29,7 @@ export function displayParticipants() {
     const adminCol = state.isAdmin ? '<th></th>' : '';
     let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>Pays</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
     filtered.forEach(p => {
-        const quals  = new Set(state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification').map(r => r.editionId)).size;
+        const quals  = new Set(state.data.results.filter(r => r.playerId === p.id && r.phase === 'inscription').map(r => r.editionId)).size;
         const finals = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
         const del = state.isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
         html += `<tr>
@@ -52,6 +52,7 @@ window.openPlayerProfile = (playerId) => {
     const player = state.data.participants.find(p => p.id === playerId);
     if (!player) return;
 
+    const inscRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'inscription');
     const qualRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
     const finaleRes = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale').sort((a, b) => a.position - b.position);
     const points    = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
@@ -64,10 +65,10 @@ window.openPlayerProfile = (playerId) => {
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const historyRows = pastEditions.map(e => {
-        const participated = qualRes.some(r => r.editionId === e.id);
+        const participated = inscRes.some(r => r.editionId === e.id);
         const finale  = finaleRes.find(r => r.editionId === e.id);
-        const inscrit = state.data.results.some(r => r.editionId === e.id && r.playerId === playerId && r.phase === 'inscription');
-        if (!participated && !finale && !inscrit) return null;
+        const inscrit = participated;
+        if (!participated && !finale) return null;
         return { edition: e, participated, finale, inscrit };
     }).filter(Boolean);
 
@@ -76,12 +77,12 @@ window.openPlayerProfile = (playerId) => {
 
     let currentPartStreak = 0;
     for (const e of pastDesc) {
-        if (qualRes.some(r => r.editionId === e.id)) currentPartStreak++;
+        if (inscRes.some(r => r.editionId === e.id)) currentPartStreak++;
         else break;
     }
     let bestPartStreak = 0, tmpStreak = 0;
     for (const e of pastEditions) {
-        if (qualRes.some(r => r.editionId === e.id)) { tmpStreak++; bestPartStreak = Math.max(bestPartStreak, tmpStreak); }
+        if (inscRes.some(r => r.editionId === e.id)) { tmpStreak++; bestPartStreak = Math.max(bestPartStreak, tmpStreak); }
         else tmpStreak = 0;
     }
     let currentFinStreak = 0;
@@ -157,7 +158,7 @@ window.openPlayerProfile = (playerId) => {
             </div>
         </div>
         <div class="player-profile-stats" style="margin-bottom:20px">
-            <div class="pp-stat"><div class="pp-stat-value">${new Set(qualRes.map(r => r.editionId)).size}</div><div class="pp-stat-label">${t('stats.participations')}</div></div>
+            <div class="pp-stat"><div class="pp-stat-value">${new Set(inscRes.map(r => r.editionId)).size}</div><div class="pp-stat-label">${t('stats.participations')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">${t('player.finals')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">${t('stats.podiums')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">${t('rankings.col.best')}</div></div>
@@ -372,7 +373,7 @@ window.copyPlayerCard = async (playerId, btn) => {
     const player = state.data.participants.find(p => p.id === playerId);
     if (!player) return;
 
-    const qualRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
+    const inscRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'inscription');
     const finaleRes = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
     const points    = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
     const wins      = finaleRes.filter(r => r.position === 1).length;
@@ -539,7 +540,7 @@ window.copyPlayerCard = async (playerId, btn) => {
 
     // Stats row
     const statsData = [
-        { label: 'PARTICIPATIONS', value: String(new Set(qualRes.map(r => r.editionId)).size) },
+        { label: 'PARTICIPATIONS', value: String(new Set(inscRes.map(r => r.editionId)).size) },
         { label: 'FINALES',        value: String(finaleRes.length) },
         { label: 'POINTS',         value: String(points) },
         { label: 'VICTOIRES',      value: String(wins) },

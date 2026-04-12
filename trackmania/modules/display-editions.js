@@ -40,9 +40,9 @@ window.goToEdition = (id) => {
 
 export const ACHIEVEMENTS = [
     // ── Compétition ───────────────────────────────────────────────────────
-    { id: 'rookie',          icon: '🌱', check: s => s.quals >= 1 },
-    { id: 'regulier',        icon: '⭐', check: s => s.quals >= 5 },
-    { id: 'veteran',         icon: '💪', check: s => s.quals >= 10 },
+    { id: 'rookie',          icon: '🌱', check: s => s.participations >= 1 },
+    { id: 'regulier',        icon: '⭐', check: s => s.participations >= 5 },
+    { id: 'veteran',         icon: '💪', check: s => s.participations >= 10 },
     { id: 'assidu',          icon: '📅', check: s => s.allEditions },
     { id: 'finaliste',       icon: '🎯', check: s => s.finals >= 1 },
     { id: 'podium',          icon: '🥉', check: s => s.podiums >= 1 },
@@ -62,15 +62,18 @@ export const ACHIEVEMENTS = [
 ];
 
 export function computePlayerStats(playerId) {
+    const inscriptions = state.data.results.filter(r => r.playerId === playerId && r.phase === 'inscription');
     const quals   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
     const finales = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+
+    const participations = new Set(inscriptions.map(r => r.editionId)).size;
 
     const pastEditions = state.data.editions
         .filter(e => new Date(e.date) < new Date())
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const allEditions = pastEditions.length > 0 &&
-        pastEditions.every(e => quals.some(r => r.editionId === e.id));
+        pastEditions.every(e => inscriptions.some(r => r.editionId === e.id));
 
     let maxConsecWins = 0, cur = 0;
     pastEditions.forEach(e => {
@@ -104,6 +107,7 @@ export function computePlayerStats(playerId) {
     });
 
     return {
+        participations,
         quals:          new Set(quals.map(r => r.editionId)).size,
         finals:         finales.length,
         wins:           finales.filter(r => r.position === 1).length,
