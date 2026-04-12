@@ -43,6 +43,7 @@ export const ACHIEVEMENTS = [
     { id: 'rookie',          icon: '🌱', check: s => s.participations >= 1 },
     { id: 'regulier',        icon: '⭐', check: s => s.participations >= 5 },
     { id: 'veteran',         icon: '💪', check: s => s.participations >= 10 },
+    // NOTE: participations = éditions distinctes avec au moins un résultat (inscription, qualification ou finale)
     { id: 'assidu',          icon: '📅', check: s => s.allEditions },
     { id: 'finaliste',       icon: '🎯', check: s => s.finals >= 1 },
     { id: 'podium',          icon: '🥉', check: s => s.podiums >= 1 },
@@ -66,14 +67,15 @@ export function computePlayerStats(playerId) {
     const quals   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'qualification');
     const finales = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
 
-    const participations = new Set(inscriptions.map(r => r.editionId)).size;
+    const allPlayerResults = state.data.results.filter(r => r.playerId === playerId);
+    const participations = new Set([...inscriptions, ...quals, ...finales].map(r => r.editionId)).size;
 
     const pastEditions = state.data.editions
-        .filter(e => new Date(e.date) < new Date())
+        .filter(e => new Date(e.date) < new Date() || e.status === 'terminee')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const allEditions = pastEditions.length > 0 &&
-        pastEditions.every(e => inscriptions.some(r => r.editionId === e.id));
+        pastEditions.every(e => allPlayerResults.some(r => r.editionId === e.id));
 
     let maxConsecWins = 0, cur = 0;
     pastEditions.forEach(e => {
