@@ -238,12 +238,12 @@ export function displayStats() {
     document.getElementById('totalFinals').textContent = finals;
 
     const container = document.getElementById('playerStats');
+    const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < new Date() || e.status === 'terminee').map(e => e.id));
     const rows = state.data.participants.map(p => {
-        const qRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'qualification');
-        const fRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale');
-        const iRes = state.data.results.filter(r => r.playerId === p.id && r.phase === 'inscription');
-        if (qRes.length === 0 && fRes.length === 0 && iRes.length === 0) return null;
-        const participEditions = new Set([...qRes, ...iRes].map(r => r.editionId)).size;
+        const allRes = state.data.results.filter(r => r.playerId === p.id);
+        const fRes = allRes.filter(r => r.phase === 'finale');
+        if (allRes.length === 0) return null;
+        const participEditions = new Set(allRes.filter(r => pastEdIds.has(r.editionId)).map(r => r.editionId)).size;
         return {
             p,
             quals: participEditions,

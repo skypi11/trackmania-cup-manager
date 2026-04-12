@@ -17,8 +17,9 @@ export function displayHome() {
 
     const totalEditions      = state.data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
     const totalPlayers       = state.data.participants.length;
+    const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').map(e => e.id));
     const totalParticipations = new Set(
-        state.data.results.map(r => `${r.playerId}_${r.editionId}`)
+        state.data.results.filter(r => pastEdIds.has(r.editionId)).map(r => `${r.playerId}_${r.editionId}`)
     ).size;
 
     const currentPlayer = state.currentUser
@@ -76,7 +77,7 @@ export function displayHome() {
         const myWins  = myFinales.filter(r => r.position === 1).length;
         const myParts = new Set(
             state.data.results
-                .filter(r => r.playerId === currentPlayer.id)
+                .filter(r => r.playerId === currentPlayer.id && pastEdIds.has(r.editionId))
                 .map(r => r.editionId)
         ).size;
         const initial = pName(currentPlayer).charAt(0).toUpperCase();

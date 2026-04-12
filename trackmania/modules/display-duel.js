@@ -10,7 +10,8 @@ function buildPlayerData(playerId) {
     const qualRes    = allResults.filter(r => r.phase === 'qualification');
     const finaleRes  = allResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
 
-    const participations = new Set(allResults.map(r => r.editionId)).size;
+    const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < new Date() || e.status === 'terminee').map(e => e.id));
+    const participations = new Set(allResults.filter(r => pastEdIds.has(r.editionId)).map(r => r.editionId)).size;
     const points  = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
     const wins    = finaleRes.filter(r => r.position === 1).length;
     const podiums = finaleRes.filter(r => r.position <= 3).length;

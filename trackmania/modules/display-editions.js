@@ -68,14 +68,21 @@ export function computePlayerStats(playerId) {
     const finales = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
 
     const allPlayerResults = state.data.results.filter(r => r.playerId === playerId);
-    const participations = new Set(allPlayerResults.map(r => r.editionId)).size;
 
     const pastEditions = state.data.editions
         .filter(e => new Date(e.date) < new Date() || e.status === 'terminee')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    const pastEditionIds = new Set(pastEditions.map(e => e.id));
+    const participations = new Set(allPlayerResults.filter(r => pastEditionIds.has(r.editionId)).map(r => r.editionId)).size;
+
     const allEditions = pastEditions.length > 0 &&
         pastEditions.every(e => allPlayerResults.some(r => r.editionId === e.id));
+
+    // Debug temporaire — à retirer après vérification
+    if (participations === 0 && allPlayerResults.length > 0) {
+        console.warn(`[achievements] ${playerId}: ${allPlayerResults.length} résultats mais 0 participations passées. Éditions passées:`, pastEditions.map(e => e.id), 'Résultats editionIds:', [...new Set(allPlayerResults.map(r => r.editionId))]);
+    }
 
     let maxConsecWins = 0, cur = 0;
     pastEditions.forEach(e => {

@@ -28,8 +28,9 @@ export function displayParticipants() {
 
     const adminCol = state.isAdmin ? '<th></th>' : '';
     let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('players.col.team')}</th><th>Pays</th><th>${t('home.stat.participations')}</th><th>${t('stats.finals')}</th>${adminCol}</tr></thead><tbody>`;
+    const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < new Date() || e.status === 'terminee').map(e => e.id));
     filtered.forEach(p => {
-        const quals  = new Set(state.data.results.filter(r => r.playerId === p.id).map(r => r.editionId)).size;
+        const quals  = new Set(state.data.results.filter(r => r.playerId === p.id && pastEdIds.has(r.editionId)).map(r => r.editionId)).size;
         const finals = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
         const del = state.isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
         html += `<tr>
@@ -61,7 +62,7 @@ window.openPlayerProfile = (playerId) => {
     const bestRank  = finaleRes.length > 0 ? Math.min(...finaleRes.map(r => r.position)) : null;
 
     const pastEditions = state.data.editions
-        .filter(e => new Date(e.date) < new Date())
+        .filter(e => new Date(e.date) < new Date() || e.status === 'terminee')
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const allRes = state.data.results.filter(r => r.playerId === playerId);
@@ -161,7 +162,7 @@ window.openPlayerProfile = (playerId) => {
             </div>
         </div>
         <div class="player-profile-stats" style="margin-bottom:20px">
-            <div class="pp-stat"><div class="pp-stat-value">${new Set([...inscRes, ...qualRes, ...finaleRes].map(r => r.editionId)).size}</div><div class="pp-stat-label">${t('stats.participations')}</div></div>
+            <div class="pp-stat"><div class="pp-stat-value">${new Set([...inscRes, ...qualRes, ...finaleRes].filter(r => pastEditions.some(e => e.id === r.editionId)).map(r => r.editionId)).size}</div><div class="pp-stat-label">${t('stats.participations')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${finaleRes.length}</div><div class="pp-stat-label">${t('player.finals')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${podiums > 0 ? podiums : '—'}</div><div class="pp-stat-label">${t('stats.podiums')}</div></div>
             <div class="pp-stat"><div class="pp-stat-value">${bestRank !== null ? `P${bestRank}` : '—'}</div><div class="pp-stat-label">${t('rankings.col.best')}</div></div>
@@ -376,8 +377,9 @@ window.copyPlayerCard = async (playerId, btn) => {
     const player = state.data.participants.find(p => p.id === playerId);
     if (!player) return;
 
-    const inscRes   = state.data.results.filter(r => r.playerId === playerId && r.phase === 'inscription');
-    const finaleRes = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
+    const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < new Date() || e.status === 'terminee').map(e => e.id));
+    const allRes    = state.data.results.filter(r => r.playerId === playerId && pastEdIds.has(r.editionId));
+    const finaleRes = allRes.filter(r => r.phase === 'finale');
     const points    = finaleRes.reduce((s, r) => s + getPoints(r.position), 0);
     const wins      = finaleRes.filter(r => r.position === 1).length;
     const podiums   = finaleRes.filter(r => r.position <= 3).length;
@@ -543,7 +545,7 @@ window.copyPlayerCard = async (playerId, btn) => {
 
     // Stats row
     const statsData = [
-        { label: 'PARTICIPATIONS', value: String(new Set([...inscRes, ...finaleRes].map(r => r.editionId)).size) },
+        { label: 'PARTICIPATIONS', value: String(new Set(allRes.map(r => r.editionId)).size) },
         { label: 'FINALES',        value: String(finaleRes.length) },
         { label: 'POINTS',         value: String(points) },
         { label: 'VICTOIRES',      value: String(wins) },
