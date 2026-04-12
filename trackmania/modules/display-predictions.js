@@ -8,6 +8,10 @@ import { updateDoc, doc, addDoc, collection, getDoc, deleteDoc } from 'firebase/
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
+// Limite dure du nombre de finalistes qu'un utilisateur peut pronostiquer.
+// Évite que les gens cochent tout le monde par flemme.
+const PRED_MAX_FINALISTS = 10;
+
 // ── Handlers interactifs ──────────────────────────────────────────────────────
 
 window.togglePredFinalist = function(edId, playerId) {
@@ -17,6 +21,8 @@ window.togglePredFinalist = function(edId, playerId) {
         s.finalists.delete(playerId);
         s.top3 = s.top3.map(p => p === playerId ? null : p);
     } else {
+        // Bloque l'ajout au-delà de la limite
+        if (s.finalists.size >= PRED_MAX_FINALISTS) return;
         s.finalists.add(playerId);
     }
     renderPredForm(edId);
@@ -332,12 +338,14 @@ function renderPredForm(edId) {
     const stepStyle = `display:flex;align-items:center;gap:10px;margin-bottom:10px`;
     const stepNumStyle = (active) => `width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;${active ? 'background:var(--color-accent);color:#000' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4)'}`;
 
+    const maxReached = s.finalists.size >= PRED_MAX_FINALISTS;
+    const counterColor = maxReached ? '#ef4444' : 'var(--color-accent)';
     html += `<div style="${stepStyle}">
         <div style="${stepNumStyle(true)}">1</div>
         <div style="font-weight:700;font-size:0.9rem">${t('predictions.step1')}</div>
-        ${s.finalists.size > 0 ? `<span style="margin-left:auto;font-size:0.78rem;color:var(--color-accent);font-weight:600">${t('predictions.selected').replace('{n}', s.finalists.size)}</span>` : ''}
+        <span style="margin-left:auto;font-size:0.78rem;color:${counterColor};font-weight:600">${s.finalists.size} / ${PRED_MAX_FINALISTS}</span>
     </div>
-    <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px;padding-left:32px">${t('predictions.step1.hint')}</p>`;
+    <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:8px;padding-left:32px">${t('predictions.step1.hint')} <span style="color:rgba(255,255,255,0.4)">(max ${PRED_MAX_FINALISTS})</span></p>`;
 
     if (players.length > 10) {
         html += `<input id="pred-search-${edId}" type="text" placeholder="Rechercher un joueur..." oninput="filterPredSearch('${edId}')"
@@ -346,8 +354,12 @@ function renderPredForm(edId) {
 
     html += `<div id="pred-grid-${edId}" class="pred-player-grid" style="max-height:200px;overflow-y:auto;padding-right:4px;margin-bottom:4px">`;
     players.forEach(p => {
-        const sel = s.finalists.has(p.id) ? ' selected-finalist' : '';
-        html += `<div class="pred-player-chip${sel}" data-name="${pName(p)}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
+        const isSelected = s.finalists.has(p.id);
+        const sel = isSelected ? ' selected-finalist' : '';
+        // Quand la limite est atteinte, les chips non-sélectionnés deviennent grisés et non-cliquables
+        const disabled = maxReached && !isSelected;
+        const disabledStyle = disabled ? 'opacity:0.3;pointer-events:none;cursor:not-allowed' : '';
+        html += `<div class="pred-player-chip${sel}" data-name="${pName(p)}" style="${disabledStyle}" onclick="togglePredFinalist('${edId}','${p.id}')">${pName(p)}</div>`;
     });
     html += `</div>`;
 
