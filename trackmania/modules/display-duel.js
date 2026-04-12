@@ -26,13 +26,13 @@ function buildPlayerData(playerId) {
 
     let currentPartStreak = 0;
     for (const e of pastDesc) {
-        if (qualRes.some(r => r.editionId === e.id)) currentPartStreak++;
+        if (allResults.some(r => r.editionId === e.id)) currentPartStreak++;
         else break;
     }
     let bestPartStreak = 0;
     let tmp = 0;
     for (const e of pastEditions) {
-        if (qualRes.some(r => r.editionId === e.id)) { tmp++; bestPartStreak = Math.max(bestPartStreak, tmp); }
+        if (allResults.some(r => r.editionId === e.id)) { tmp++; bestPartStreak = Math.max(bestPartStreak, tmp); }
         else tmp = 0;
     }
     let currentFinStreak = 0;

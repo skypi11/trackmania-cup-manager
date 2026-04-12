@@ -68,7 +68,7 @@ export function computePlayerStats(playerId) {
     const finales = state.data.results.filter(r => r.playerId === playerId && r.phase === 'finale');
 
     const allPlayerResults = state.data.results.filter(r => r.playerId === playerId);
-    const participations = new Set([...inscriptions, ...quals, ...finales].map(r => r.editionId)).size;
+    const participations = new Set(allPlayerResults.map(r => r.editionId)).size;
 
     const pastEditions = state.data.editions
         .filter(e => new Date(e.date) < new Date() || e.status === 'terminee')
