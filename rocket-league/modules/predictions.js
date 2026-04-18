@@ -478,8 +478,22 @@ function renderPredLeaderboard() {
   const rkCls = i => i===0?'pred-lb-rk1':i===1?'pred-lb-rk2':i===2?'pred-lb-rk3':'pred-lb-rkn';
   const rkIcon = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
 
+  // Index des joueurs RL par uid — les joueurs qui votent n'ont pas forcément
+  // de doc dans rl_predictors (créé uniquement pour les spectateurs purs),
+  // donc on utilise leur pseudo RL comme fallback pour l'affichage.
+  const playersByUid = {};
+  Object.values(state.playersMap || {}).forEach(pl => {
+    if (pl.userId) playersByUid[pl.userId] = pl;
+  });
+
   const entries = Object.values(state.predictorsMap)
-    .filter(p => p.discordUsername) // ignorer sans username
+    .map(p => {
+      const pl = playersByUid[p.id];
+      const displayName = p.discordUsername || pl?.pseudoRL || pl?.pseudoDiscord || null;
+      const displayAvatar = p.discordAvatar || pl?.discordAvatar || pl?.photoUrl || null;
+      return { ...p, _displayName: displayName, _displayAvatar: displayAvatar };
+    })
+    .filter(p => p._displayName) // ignorer ceux qu'on ne peut pas afficher
     .map(p => {
       const votes = p.votes || {};
       const jbets = p.jbets || {};
@@ -504,10 +518,11 @@ function renderPredLeaderboard() {
     .sort((a,b) => b.pts-a.pts || b.correct-a.correct);
 
   const rows = entries.slice(0,15).map((e,i) => {
-    const name = e.p.discordUsername;
+    const name = e.p._displayName;
+    const avatar = e.p._displayAvatar;
     const isMe = state.curUser && e.p.id === state.curUser.uid;
-    const av = e.p.discordAvatar
-      ? `<img class="pred-lb-av" src="${esc(e.p.discordAvatar)}" onerror="this.src='';">`
+    const av = avatar
+      ? `<img class="pred-lb-av" src="${esc(avatar)}" onerror="this.src='';">`
       : `<div class="pred-lb-av-ph">${esc((name[0]||'?').toUpperCase())}</div>`;
     const ptsColor = e.pts>=10?'#0c8':e.pts>=5?'#f59e0b':'var(--text)';
     return `<div class="pred-lb-row${isMe?' pred-lb-me':''}">
