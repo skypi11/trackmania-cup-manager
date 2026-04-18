@@ -559,6 +559,14 @@ img{display:block}
 .pred-lb-score{font-size:.75rem;color:var(--text2);text-align:center;white-space:nowrap}
 .pred-lb-pct{font-weight:900;text-align:right;white-space:nowrap}
 .pred-lb-empty{padding:20px;text-align:center;color:var(--text3);font-size:.8rem}
+.pred-lb-scroll{max-height:450px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.pred-lb-scroll::-webkit-scrollbar{width:6px}
+.pred-lb-scroll::-webkit-scrollbar-track{background:transparent}
+.pred-lb-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.pred-lb-scroll::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+.pred-lb-pinned{border-top:2px solid var(--rl-blue);background:rgba(0,129,255,.08);position:relative}
+.pred-lb-pinned::before{content:'Ma position';position:absolute;top:-9px;left:12px;background:var(--bg2);color:var(--rl-blue);font-size:.55rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:0 8px}
+.pred-lb-pinned .pred-lb-row{border-bottom:none;background:transparent}
 .pred-sec-title{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:.9rem;font-weight:700}
 .pred-sec-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--rl-blue);border-radius:2px;flex-shrink:0}
 .pred-sec-cnt{font-size:.68rem;font-weight:600;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:10px;border:1px solid var(--border)}

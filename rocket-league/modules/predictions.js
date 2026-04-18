@@ -517,7 +517,7 @@ function renderPredLeaderboard() {
     .filter(e => e.voted >= 1)
     .sort((a,b) => b.pts-a.pts || b.correct-a.correct);
 
-  const rows = entries.slice(0,15).map((e,i) => {
+  const renderRow = (e, i) => {
     const name = e.p._displayName;
     const avatar = e.p._displayAvatar;
     const isMe = state.curUser && e.p.id === state.curUser.uid;
@@ -533,14 +533,25 @@ function renderPredLeaderboard() {
       <div class="pred-lb-score" style="color:#FFB800;font-weight:700">${e.exact > 0 ? `${e.exact}★` : '–'}</div>
       <div class="pred-lb-pct" style="color:${ptsColor};font-size:.9rem">${e.pts} pts</div>
     </div>`;
-  }).join('');
+  };
+
+  const rows = entries.map((e,i) => renderRow(e, i)).join('');
+
+  // Si l'utilisateur connecté a voté mais est hors du top 15 → ligne épinglée en bas
+  let myPinnedRow = '';
+  if (state.curUser) {
+    const myIdx = entries.findIndex(e => e.p.id === state.curUser.uid);
+    if (myIdx >= 15) {
+      myPinnedRow = `<div class="pred-lb-pinned">${renderRow(entries[myIdx], myIdx)}</div>`;
+    }
+  }
 
   return `<div class="pred-lb" style="margin-bottom:24px">
     <div class="pred-lb-hdr">
       <div class="pred-lb-title">Classement des prédicteurs</div>
       <div style="font-size:.6rem;color:var(--text3)">Vainqueur=1pt (×mise si pari) · Score exact=+2pts &nbsp;·&nbsp; ${entries.length} participant${entries.length!==1?'s':''}</div>
     </div>
-    ${rows || `<div class="pred-lb-empty">Les classements apparaîtront après les premiers matchs joués.</div>`}
+    ${rows ? `<div class="pred-lb-scroll">${rows}</div>${myPinnedRow}` : `<div class="pred-lb-empty">Les classements apparaîtront après les premiers matchs joués.</div>`}
   </div>`;
 }
 
