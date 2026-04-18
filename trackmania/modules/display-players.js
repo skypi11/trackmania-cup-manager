@@ -6,6 +6,7 @@ import { t } from '../../shared/i18n.js';
 import { pName, tTeam, getPoints, dateLang, buildCountryPicker, displayCountry } from './utils.js';
 import { computePlayerStats, ACHIEVEMENTS, playerBadgesHtml } from './display-editions.js';
 import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
+import springsLogo from '../../assets/springs-logo.png';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 const CUP = cupId === 'mania'
@@ -158,7 +159,7 @@ window.openPlayerProfile = (playerId) => {
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;z-index:1">
                 <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.18);font-weight:700">${state.siteConfig.siteName}</span>
-                <img src="../assets/springs-logo.png" style="height:18px;opacity:0.22">
+                <img src="${springsLogo}" style="height:18px;opacity:0.22">
             </div>
         </div>
         <div class="player-profile-stats" style="margin-bottom:20px">
@@ -391,7 +392,7 @@ window.copyPlayerCard = async (playerId, btn) => {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = '../assets/springs-logo.png';
+        img.src = springsLogo;
     });
 
     const W = 620, H = 360;
@@ -607,7 +608,7 @@ window.copyPodium = async (editionId, btn) => {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = '../assets/springs-logo.png';
+        img.src = springsLogo;
     });
 
     const W = 680, H = 400;
