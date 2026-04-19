@@ -1,0 +1,144 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "structures",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "founderId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "startsAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "applicantId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetUserId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "applicantId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "targetUserId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "token", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "game", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_member_history",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "game", "order": "ASCENDING" },
+        { "fieldPath": "leftAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "structure_member_history",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "joinedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "read", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "replays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "teamId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "replays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "structureId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "eventId", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
