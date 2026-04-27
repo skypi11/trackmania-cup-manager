@@ -25,10 +25,18 @@ let _listenerInit = false;
 export function setupLanListener() {
   if (_listenerInit) return;
   _listenerInit = true;
-  onSnapshot(doc(db, 'rl_lan', LAN_DOC_ID), snap => {
-    state.lanConfig = snap.exists() ? { id: snap.id, ...snap.data() } : null;
-    window.dispatchEvent(new CustomEvent('rl-lan-updated'));
-  });
+  onSnapshot(
+    doc(db, 'rl_lan', LAN_DOC_ID),
+    snap => {
+      state.lanConfig = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+      window.dispatchEvent(new CustomEvent('rl-lan-updated'));
+    },
+    err => {
+      // Permission denied (rules pas encore propagées, App Check, etc.)
+      // → on garde lanConfig=null, les helpers utiliseront les valeurs par défaut.
+      console.warn('[lan] listener error (fallback sur valeurs par défaut):', err.code || err.message);
+    }
+  );
 }
 
 export async function ensureLanDoc() {
