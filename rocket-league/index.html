@@ -353,6 +353,11 @@ window.addEventListener('rl-data-updated', () => {
 window.addEventListener('rl-lan-updated', () => {
   if (state.curTab === 'classement' || state.curTab === 'admin' || state.curTab === 'accueil') loadTab(state.curTab);
 });
+// Quand les matchs LAN changent (saisie de scores, génération de round…),
+// re-render l'admin LAN pour montrer le nouveau classement / état.
+window.addEventListener('rl-lan-matches-updated', () => {
+  if (state.curTab === 'admin' && state.admSec === 'lan') loadTab('admin');
+});
 // One-shot read : pas de listener live au démarrage (évite les retries
 // permission-denied qui peuvent bloquer le pipeline async).
 fetchLanConfigOnce();

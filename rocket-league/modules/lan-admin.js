@@ -1,21 +1,52 @@
-// modules/lan-admin.js — UI admin "Préparation LAN"
+// modules/lan-admin.js — UI admin LAN (router + sous-onglet "Préparation")
 import { state } from './state.js';
 import { esc, toast } from './utils.js';
 import { buildStandings } from './standings.js';
 import {
   ensureLanDoc, updateLanConfig, getLanQuotas, getQualifiedTeams,
   getLanName, getLanLocation, getLanDates, LAN_DOC_ID,
-  setupLanListener,
+  setupLanListener, setupLanMatchesListener,
 } from './lan.js';
+import { admLanSwiss } from './lan-swiss-admin.js';
 
+state.lanAdmSec = state.lanAdmSec || 'preparation';
+
+// Router principal : affiche le sous-menu + délègue au sous-onglet courant
 export async function admLan() {
   if (!state.isAdmin) return;
   const wrap = document.getElementById('adm-content');
-  wrap.innerHTML = `<div class="loading"></div>`;
 
-  // Active le listener live pour que les changements remontent en temps réel
-  // pendant que l'admin modifie la config (idempotent : appelé plusieurs fois sans effet).
+  // Listeners live (idempotents) — on les active dès qu'on entre dans l'admin LAN
   setupLanListener();
+  setupLanMatchesListener();
+
+  // Sous-menu commun à toutes les sections LAN
+  wrap.innerHTML = `
+    <div class="lan-subnav">
+      <button class="lan-sub ${state.lanAdmSec==='preparation'?'active':''}" onclick="window.lanGoSec('preparation')">📋 Préparation</button>
+      <button class="lan-sub ${state.lanAdmSec==='swiss'?'active':''}" onclick="window.lanGoSec('swiss')">🇨🇭 Suisse (Jour 1)</button>
+      <button class="lan-sub ${state.lanAdmSec==='bracket'?'active':''}" onclick="window.lanGoSec('bracket')" disabled style="opacity:.4;cursor:not-allowed" title="Phase 2 — à venir">🏆 Bracket (Jour 2)</button>
+    </div>
+    <div id="lan-sec-content"><div class="loading"></div></div>
+  `;
+
+  if (state.lanAdmSec === 'swiss') return admLanSwiss();
+  if (state.lanAdmSec === 'bracket') {
+    document.getElementById('lan-sec-content').innerHTML =
+      `<div class="empty" style="padding:30px;text-align:center;color:var(--text2)">Phase 2 — Bracket à venir.</div>`;
+    return;
+  }
+  return admLanPreparation();
+}
+
+window.lanGoSec = function(sec) {
+  state.lanAdmSec = sec;
+  admLan();
+};
+
+async function admLanPreparation() {
+  const wrap = document.getElementById('lan-sec-content');
+  wrap.innerHTML = `<div class="loading"></div>`;
 
   await ensureLanDoc();
 

@@ -880,6 +880,16 @@ img{display:block}
 /* ── LAN admin / preparation ── */
 .adm-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
 .adm-card-hdr{font-weight:700;font-size:.86rem;color:var(--text);margin-bottom:10px;letter-spacing:.02em;display:flex;align-items:center;flex-wrap:wrap}
+
+/* ── Sous-onglets de la section Admin LAN ── */
+.lan-subnav{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0}
+.lan-sub{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);padding:9px 16px;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.lan-sub:hover:not(:disabled){color:var(--text);background:rgba(255,255,255,.03)}
+.lan-sub.active{color:var(--red);border-bottom-color:var(--red)}
+
+@media(max-width:900px){
+  .lan-swiss-grid{grid-template-columns:1fr !important}
+}
 @media(max-width:720px){
   .lan-qual-grid{grid-template-columns:1fr !important}
 }
