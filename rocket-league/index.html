@@ -321,7 +321,7 @@ import { fetchAll } from './modules/data.js';
 import { buildStandings, calcPts } from './modules/standings.js';
 import { loadAdm } from './modules/admin.js';
 import { loadPredictions } from './modules/predictions.js';
-import { setupLanListener, getLanQuota } from './modules/lan.js';
+import { fetchLanConfigOnce, getLanQuota } from './modules/lan.js';
 
 // Bridge functions exposées pour les modules
 window._loadTab = loadTab;
@@ -334,12 +334,14 @@ window.addEventListener('rl-data-updated', () => {
   if (state.curTab) loadTab(state.curTab);
 });
 
-// Listener live sur le doc rl_lan (quotas, infos LAN…)
-// Différé pour ne pas interférer avec l'init de Firestore + App Check au démarrage.
+// Quand la config LAN est lue (ou rafraîchie par l'admin), on re-render
+// le classement / l'admin pour mettre à jour le séparateur "TOP N — QUALIFIÉS LAN".
 window.addEventListener('rl-lan-updated', () => {
-  if (state.curTab === 'classement' || state.curTab === 'admin') loadTab(state.curTab);
+  if (state.curTab === 'classement' || state.curTab === 'admin' || state.curTab === 'accueil') loadTab(state.curTab);
 });
-setTimeout(() => { try { setupLanListener(); } catch (e) { console.warn('[lan] setup failed:', e); } }, 1500);
+// One-shot read : pas de listener live au démarrage (évite les retries
+// permission-denied qui peuvent bloquer le pipeline async).
+fetchLanConfigOnce();
 
 // ── TAB NAVIGATION ──────────────────────────────────────────────────
 window.goTab = function(tab) {

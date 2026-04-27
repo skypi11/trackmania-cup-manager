@@ -5,12 +5,17 @@ import { buildStandings } from './standings.js';
 import {
   ensureLanDoc, updateLanConfig, getLanQuotas, getQualifiedTeams,
   getLanName, getLanLocation, getLanDates, LAN_DOC_ID,
+  setupLanListener,
 } from './lan.js';
 
 export async function admLan() {
   if (!state.isAdmin) return;
   const wrap = document.getElementById('adm-content');
   wrap.innerHTML = `<div class="loading"></div>`;
+
+  // Active le listener live pour que les changements remontent en temps réel
+  // pendant que l'admin modifie la config (idempotent : appelé plusieurs fois sans effet).
+  setupLanListener();
 
   await ensureLanDoc();
 

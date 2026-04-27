@@ -18,10 +18,29 @@ const DEFAULT_LAN = {
   status: 'preparation', // preparation | swiss | between | bracket | finished
 };
 
-// État local — peuplé par onSnapshot
+// État local — peuplé par fetchLanConfigOnce() ou setupLanListener() (admin)
 state.lanConfig = null;
 let _listenerInit = false;
+let _fetchedOnce = false;
 
+// One-shot read au démarrage : pas de listener live (évite les retries en
+// boucle qui propagent permission-denied non-catché). Utilisé par le rendu
+// public — les admins activent le listener live via setupLanListener().
+export async function fetchLanConfigOnce() {
+  if (_fetchedOnce) return state.lanConfig;
+  _fetchedOnce = true;
+  try {
+    const snap = await getDoc(doc(db, 'rl_lan', LAN_DOC_ID));
+    state.lanConfig = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    window.dispatchEvent(new CustomEvent('rl-lan-updated'));
+  } catch (err) {
+    console.warn('[lan] fetch one-shot error (fallback sur valeurs par défaut):', err.code || err.message);
+  }
+  return state.lanConfig;
+}
+
+// Listener live — réservé à l'admin pour voir les changements en temps réel
+// pendant qu'il modifie la config. Pas activé pour le public.
 export function setupLanListener() {
   if (_listenerInit) return;
   _listenerInit = true;
@@ -32,8 +51,6 @@ export function setupLanListener() {
       window.dispatchEvent(new CustomEvent('rl-lan-updated'));
     },
     err => {
-      // Permission denied (rules pas encore propagées, App Check, etc.)
-      // → on garde lanConfig=null, les helpers utiliseront les valeurs par défaut.
       console.warn('[lan] listener error (fallback sur valeurs par défaut):', err.code || err.message);
     }
   );
