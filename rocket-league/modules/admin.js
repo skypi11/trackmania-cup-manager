@@ -7,6 +7,7 @@ import { esc, toast, openModal, closeModal } from './utils.js';
 import { refreshTeams, refreshPlayers, refreshMatches } from './data.js';
 import { buildStandings } from './standings.js';
 import { SCHEDULE, flagHtml, buildRLCountryPicker } from './constants.js';
+import { admLan } from './lan-admin.js';
 
 export async function loadAdm(sec) {
   if (!state.isAdmin) return;
@@ -15,6 +16,7 @@ export async function loadAdm(sec) {
   else if (sec==='resultats') await admResults();
   else if (sec==='calendrier') admCalendar();
   else if (sec==='discord')   await admDiscord();
+  else if (sec==='lan')       await admLan();
 }
 
 window.showAdm = async function(sec) {

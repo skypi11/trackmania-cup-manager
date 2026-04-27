@@ -876,3 +876,10 @@ img{display:block}
   .teams-grid{grid-template-columns:1fr}
   .mc-body{grid-template-columns:1fr 58px 1fr}
 }
+
+/* ── LAN admin / preparation ── */
+.adm-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.adm-card-hdr{font-weight:700;font-size:.86rem;color:var(--text);margin-bottom:10px;letter-spacing:.02em;display:flex;align-items:center;flex-wrap:wrap}
+@media(max-width:720px){
+  .lan-qual-grid{grid-template-columns:1fr !important}
+}

@@ -195,6 +195,7 @@
       <button class="adm-sub" onclick="showAdm('resultats')" id="as-resultats">Résultats</button>
       <button class="adm-sub" onclick="showAdm('calendrier')" id="as-calendrier">Calendrier</button>
       <button class="adm-sub" onclick="showAdm('discord')" id="as-discord">🔗 Discord</button>
+      <button class="adm-sub" onclick="showAdm('lan')" id="as-lan">🏆 LAN</button>
     </div>
     <div id="adm-content"></div>
   </section>
@@ -320,6 +321,21 @@ import { fetchAll } from './modules/data.js';
 import { buildStandings, calcPts } from './modules/standings.js';
 import { loadAdm } from './modules/admin.js';
 import { loadPredictions } from './modules/predictions.js';
+import { fetchLanConfigOnce, getLanQuota } from './modules/lan.js';
+
+// Filet de sécurité : avale les unhandled rejections "permission-denied"
+// du SDK Firestore (retries internes, App Check qui n'est pas encore prêt…).
+// Ces erreurs sont cosmétiques tant qu'on a fallback côté code (cas du listener
+// rl_lan public qui n'existe pas encore). On les log en debug et on stop la propagation.
+window.addEventListener('unhandledrejection', e => {
+  const err = e.reason;
+  const code = err?.code || '';
+  const msg = err?.message || String(err);
+  if (code === 'permission-denied' || /permission/i.test(msg)) {
+    console.debug('[firestore] suppressed unhandled permission-denied:', msg);
+    e.preventDefault();
+  }
+});
 
 // Bridge functions exposées pour les modules
 window._loadTab = loadTab;
@@ -331,6 +347,15 @@ window.FLAGS = FLAGS;
 window.addEventListener('rl-data-updated', () => {
   if (state.curTab) loadTab(state.curTab);
 });
+
+// Quand la config LAN est lue (ou rafraîchie par l'admin), on re-render
+// le classement / l'admin pour mettre à jour le séparateur "TOP N — QUALIFIÉS LAN".
+window.addEventListener('rl-lan-updated', () => {
+  if (state.curTab === 'classement' || state.curTab === 'admin' || state.curTab === 'accueil') loadTab(state.curTab);
+});
+// One-shot read : pas de listener live au démarrage (évite les retries
+// permission-denied qui peuvent bloquer le pipeline async).
+fetchLanConfigOnce();
 
 // ── TAB NAVIGATION ──────────────────────────────────────────────────
 window.goTab = function(tab) {
@@ -461,13 +486,14 @@ async function loadAccueil() {
     const rows = buildStandings(pool);
     const el = document.getElementById('prev'+pool);
     if (!rows.length) { el.innerHTML='<div class="empty" style="padding:14px">—</div>'; return; }
+    const lanQuota = getLanQuota(pool);
     let html = '';
     rows.forEach((t2,i)=>{
       const rank=i+1;
-      const inLan=rank<=8&&t2.played>0;
+      const inLan=rank<=lanQuota&&t2.played>0;
       const rkCls=rank===1?'rk1':rank===2?'rk2':rank===3?'rk3':inLan?'rk-lan':'rk-n';
       const logo=t2.logoUrl?`<img class="prev-logo" src="${esc(t2.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`:`<div class="prev-logo"></div>`;
-      if (rank===9) html+=`<div class="prev-row prev-sep"><span style="font-size:.55rem;color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase">Hors LAN</span></div>`;
+      if (rank===lanQuota+1) html+=`<div class="prev-row prev-sep"><span style="font-size:.55rem;color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase">Hors LAN</span></div>`;
       html+=`<div class="prev-row${inLan?' top8':''}" onclick="openTeamModal('${t2.id}')">
         <div class="prev-rank-cell"><span class="prev-rk ${rkCls}">${rank}</span></div>
         <div class="prev-team-cell">${logo}<span class="prev-name">${esc(t2.name)}</span></div>
@@ -593,9 +619,10 @@ async function loadStandings(pool) {
     }).join('')}</div>`;
   }
 
+  const lanQuota = getLanQuota(pool);
   const tbody = rows.map((t2,i) => {
     const rank = i+1;
-    const inLan = rank<=8&&t2.played>0;
+    const inLan = rank<=lanQuota&&t2.played>0;
     const diff = t2.gw - t2.gl;
     const rkCls = rank===1?'rk1':rank===2?'rk2':rank===3?'rk3':inLan?'rk-lan':'rk-n';
     const rkBadge = `<span class="rk-badge ${rkCls}">${rank}</span>`;
@@ -626,8 +653,8 @@ async function loadStandings(pool) {
         nxtHtml = `<div class="nxt-cell">${nLogo}<span class="nxt-name">${esc(opp.name)}</span><span class="nxt-week">S${nxt.week}</span></div>`;
       }
     }
-    const sep = rank===8&&rows.length>8
-      ? `<tr class="stbl-sep"><td colspan="11"><div class="stbl-sep-inner"><span class="stbl-sep-line"></span><span class="stbl-sep-txt">🏆 TOP 8 — QUALIFIÉS LAN</span><span class="stbl-sep-line"></span></div></td></tr>`
+    const sep = rank===lanQuota&&rows.length>lanQuota
+      ? `<tr class="stbl-sep"><td colspan="11"><div class="stbl-sep-inner"><span class="stbl-sep-line"></span><span class="stbl-sep-txt">🏆 TOP ${lanQuota} — QUALIFIÉS LAN</span><span class="stbl-sep-line"></span></div></td></tr>`
       : '';
     return `<tr class="${inLan?'top8':''}" onclick="openTeamModal('${t2.id}')">
       <td class="rk"><div style="display:flex;flex-direction:column;align-items:center;gap:2px">${rkBadge}${progHtml}</div></td>
