@@ -327,9 +327,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ── RL — LAN brackets ──────────────────────────────────────────────────────
+    // ── RL — LAN (config, qualifs, bracket) ────────────────────────────────────
+    // Lecture publique : badges qualifiés / page LAN visibles par tous.
     match /rl_lan/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
