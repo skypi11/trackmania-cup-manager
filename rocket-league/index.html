@@ -335,10 +335,11 @@ window.addEventListener('rl-data-updated', () => {
 });
 
 // Listener live sur le doc rl_lan (quotas, infos LAN…)
-setupLanListener();
+// Différé pour ne pas interférer avec l'init de Firestore + App Check au démarrage.
 window.addEventListener('rl-lan-updated', () => {
   if (state.curTab === 'classement' || state.curTab === 'admin') loadTab(state.curTab);
 });
+setTimeout(() => { try { setupLanListener(); } catch (e) { console.warn('[lan] setup failed:', e); } }, 1500);
 
 // ── TAB NAVIGATION ──────────────────────────────────────────────────
 window.goTab = function(tab) {
