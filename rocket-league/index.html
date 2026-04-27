@@ -323,6 +323,20 @@ import { loadAdm } from './modules/admin.js';
 import { loadPredictions } from './modules/predictions.js';
 import { fetchLanConfigOnce, getLanQuota } from './modules/lan.js';
 
+// Filet de sécurité : avale les unhandled rejections "permission-denied"
+// du SDK Firestore (retries internes, App Check qui n'est pas encore prêt…).
+// Ces erreurs sont cosmétiques tant qu'on a fallback côté code (cas du listener
+// rl_lan public qui n'existe pas encore). On les log en debug et on stop la propagation.
+window.addEventListener('unhandledrejection', e => {
+  const err = e.reason;
+  const code = err?.code || '';
+  const msg = err?.message || String(err);
+  if (code === 'permission-denied' || /permission/i.test(msg)) {
+    console.debug('[firestore] suppressed unhandled permission-denied:', msg);
+    e.preventDefault();
+  }
+});
+
 // Bridge functions exposées pour les modules
 window._loadTab = loadTab;
 window._fetchAll = fetchAll;
