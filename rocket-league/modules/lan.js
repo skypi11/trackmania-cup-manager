@@ -1,6 +1,9 @@
-// modules/lan.js — gestion de la LAN (collection rl_lan)
+// modules/lan.js — gestion de la LAN (collection rl_lan + rl_lan_matches)
 import { db } from '../../shared/firebase-config.js';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  doc, collection, onSnapshot, setDoc, updateDoc, getDoc, getDocs,
+  addDoc, deleteDoc, serverTimestamp, writeBatch,
+} from 'firebase/firestore';
 import { state } from './state.js';
 import { buildStandings } from './standings.js';
 
@@ -117,4 +120,92 @@ export function getLanDates() {
     start: state.lanConfig?.startDate || DEFAULT_LAN.startDate,
     end: state.lanConfig?.endDate || DEFAULT_LAN.endDate,
   };
+}
+
+// ── Collection rl_lan_matches : matchs de la LAN (Suisse + Bracket) ───
+state.lanMatches = state.lanMatches || {};
+let _matchesListenerInit = false;
+let _matchesFetchedOnce = false;
+
+export async function fetchLanMatchesOnce() {
+  if (_matchesFetchedOnce) return Object.values(state.lanMatches);
+  _matchesFetchedOnce = true;
+  try {
+    const snap = await getDocs(collection(db, 'rl_lan_matches'));
+    state.lanMatches = {};
+    snap.forEach(d => { state.lanMatches[d.id] = { id: d.id, ...d.data() }; });
+    window.dispatchEvent(new CustomEvent('rl-lan-matches-updated'));
+  } catch (err) {
+    console.warn('[lan] matches fetch error:', err.code || err.message);
+  }
+  return Object.values(state.lanMatches);
+}
+
+export function setupLanMatchesListener() {
+  if (_matchesListenerInit) return;
+  _matchesListenerInit = true;
+  onSnapshot(
+    collection(db, 'rl_lan_matches'),
+    snap => {
+      state.lanMatches = {};
+      snap.forEach(d => { state.lanMatches[d.id] = { id: d.id, ...d.data() }; });
+      window.dispatchEvent(new CustomEvent('rl-lan-matches-updated'));
+    },
+    err => {
+      console.warn('[lan] matches listener error:', err.code || err.message);
+    }
+  );
+}
+
+export function getLanMatches() {
+  return Object.values(state.lanMatches || {});
+}
+
+export function getLanMatchesByPhase(phase) {
+  return getLanMatches().filter(m => m.phase === phase);
+}
+
+// ── Création / mise à jour des matchs ────────────────────────────────
+export async function createLanMatch(matchData) {
+  return addDoc(collection(db, 'rl_lan_matches'), {
+    lanId: LAN_DOC_ID,
+    games: [],
+    status: 'pending',
+    onStage: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    ...matchData,
+  });
+}
+
+export async function updateLanMatch(matchId, patch) {
+  return updateDoc(doc(db, 'rl_lan_matches', matchId), {
+    ...patch,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteLanMatch(matchId) {
+  return deleteDoc(doc(db, 'rl_lan_matches', matchId));
+}
+
+// Création par lots (utilisé pour générer un round entier d'un coup)
+export async function createLanMatchesBatch(matchesData) {
+  const batch = writeBatch(db);
+  const refs = [];
+  for (const m of matchesData) {
+    const ref = doc(collection(db, 'rl_lan_matches'));
+    batch.set(ref, {
+      lanId: LAN_DOC_ID,
+      games: [],
+      status: 'pending',
+      onStage: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      ...m,
+    });
+    refs.push(ref);
+  }
+  await batch.commit();
+  return refs.map(r => r.id);
 }
