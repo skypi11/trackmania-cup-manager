@@ -11,6 +11,8 @@ import {
   calcSeriesScore, calculateSwissStandings, getRoundMatches, getSwissMatches,
   isRoundComplete,
 } from './lan-swiss.js';
+import { SLOT_LABEL } from './lan-bracket.js';
+import { applyBracketProgression } from './lan-bracket-admin.js';
 import { showPairingsConfirmation } from './lan-modals.js';
 
 export async function admLanSwiss() {
@@ -378,7 +380,12 @@ window.openSwissMatch = function (matchId) {
     </div>
   `;
 
-  document.getElementById('mo-match-title').textContent = `Round ${getSwissRound(match.phase)} — ${homeName} vs ${awayName}`;
+  // Titre adaptatif : "Round X" pour la Suisse, label de slot pour le bracket
+  const swissRound = getSwissRound(match.phase);
+  const titlePrefix = swissRound > 0
+    ? `Round ${swissRound}`
+    : (SLOT_LABEL[match.bracketSlot] || match.phase || 'Match');
+  document.getElementById('mo-match-title').textContent = `${titlePrefix} — ${homeName} vs ${awayName}`;
   openModal('mo-match');
 
   // ── Init valeurs + handlers UX
@@ -575,6 +582,10 @@ window.saveSwissMatch = async function (matchId) {
       winner: ss.played ? (ss.winner === 'home' ? match.homeTeamId : match.awayTeamId) : null,
       status: ss.played ? 'played' : 'pending',
     });
+    // Si c'est un match du bracket, propage le résultat aux matchs en aval
+    if (match.bracketSlot) {
+      await applyBracketProgression(matchId);
+    }
     closeModal('mo-match');
     toast(ss.played ? `✓ Match terminé (${ss.home}-${ss.away})` : 'Score enregistré', 'ok');
   } catch (e) {
