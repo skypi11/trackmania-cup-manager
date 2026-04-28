@@ -137,40 +137,170 @@ function renderPreviewBanner() {
 function renderHero() {
   const wrap = document.getElementById('lan-hero-content');
   if (!wrap) return;
+  const status = getLanStatus();
+
+  wrap.parentElement.classList.remove('lp-st-prep','lp-st-live','lp-st-done');
+
+  if (status === 'finished') return renderHeroFinished(wrap);
+  if (status === 'preparation') return renderHeroPreparation(wrap);
+  return renderHeroLive(wrap, status);
+}
+
+function renderHeroFinished(wrap) {
+  wrap.parentElement.classList.add('lp-st-done');
+
+  const cfg = state.lanConfig || {};
+  const name = cfg.name || 'Springs League Series #2';
+  const start = fmtDate(cfg.startDate || '2026-05-16');
+  const end = fmtDate(cfg.endDate || '2026-05-17');
+
+  const bracketMatches = getBracketMatches(Object.values(state.lanMatches));
+  const gf = getMatchBySlot(bracketMatches, 'gf');
+  const champion = gf?.winner ? state.teamsMap[gf.winner] : null;
+
+  if (!champion) {
+    // Fallback : LAN finished sans champion (cas dégénéré) — vue minimale
+    wrap.innerHTML = `
+      <div class="lp-hero-bdg">LAN terminée</div>
+      <h1 class="lp-hero-title">${esc(name)} — LAN</h1>
+      <div class="lp-hero-meta"><span>📅 ${esc(start)} → ${esc(end)}</span></div>
+    `;
+    return;
+  }
+
+  const logo = champion.logoUrl
+    ? `<img src="${esc(champion.logoUrl)}" alt="${esc(champion.name)}" class="lp-champ-logo" onerror="this.style.opacity='.2'">`
+    : `<div class="lp-champ-logo lp-logo-ph"></div>`;
+
+  wrap.innerHTML = `
+    <div class="lp-champ-tag">🏆 Vainqueur · ${esc(name)}</div>
+    ${logo}
+    <h1 class="lp-champ-name">${esc(champion.name)}</h1>
+    <div class="lp-champ-prize">800€ remportés</div>
+    <div class="lp-champ-meta">
+      <span>📅 ${esc(start)} → ${esc(end)}</span>
+      <span>📍 ${esc(cfg.location || 'Magny-Cours')}</span>
+    </div>
+  `;
+}
+
+function renderHeroLive(wrap, status) {
+  wrap.parentElement.classList.add('lp-st-live');
+
   const cfg = state.lanConfig || {};
   const name = cfg.name || 'Springs League Series #2 — LAN';
-  const start = fmtDate(cfg.startDate || '2026-05-16');
+  const loc = cfg.location || 'Salle Culturelle, Magny-Cours';
+
+  // Détecter le match sur scène + sa phase
+  const allMatches = Object.values(state.lanMatches);
+  const stageMatch = allMatches.find(m => m.onStage);
+  const stageBlock = stageMatch ? renderStageMatch(stageMatch) : '';
+
+  // Phase actuelle
+  const phaseLabel = {
+    swiss: 'Phase Suisse · Jour 1',
+    between: 'Entre Suisse & Bracket',
+    bracket: 'Bracket · Jour 2',
+  }[status] || 'En cours';
+
+  // Round Suisse en cours, si applicable
+  let roundInfo = '';
+  if (status === 'swiss') {
+    const swissMatches = getSwissMatches(allMatches);
+    let currentRound = 0;
+    for (let r = 1; r <= SWISS_ROUNDS; r++) {
+      if (swissMatches.some(m => getSwissRound(m.phase) === r)) currentRound = r;
+    }
+    if (currentRound) roundInfo = ` · Round ${currentRound} / ${SWISS_ROUNDS}`;
+  }
+
+  wrap.innerHTML = `
+    <div class="lp-hero-bdg lp-bdg-live"><span class="lp-live-dot"></span>${esc(phaseLabel)}${esc(roundInfo)}</div>
+    <h1 class="lp-hero-title">${esc(name)}</h1>
+    <div class="lp-hero-meta">
+      <span>📍 ${esc(loc)}</span>
+      <span>💰 1 600€ · 16 équipes</span>
+    </div>
+    ${stageBlock}
+  `;
+}
+
+function renderHeroPreparation(wrap) {
+  wrap.parentElement.classList.add('lp-st-prep');
+
+  const cfg = state.lanConfig || {};
+  const name = cfg.name || 'Springs League Series #2 — LAN';
+  const startDate = cfg.startDate || '2026-05-16';
+  const start = fmtDate(startDate);
   const end = fmtDate(cfg.endDate || '2026-05-17');
   const loc = cfg.location || 'Salle Culturelle, Magny-Cours';
 
-  const status = getLanStatus();
-  const statusBadge = {
-    preparation: { label: 'En préparation', cls: 'lp-st-prep' },
-    swiss:       { label: 'Phase Suisse en cours', cls: 'lp-st-live' },
-    between:     { label: 'Entre Suisse et Bracket', cls: 'lp-st-live' },
-    bracket:     { label: 'Bracket en cours', cls: 'lp-st-live' },
-    finished:    { label: 'LAN terminée', cls: 'lp-st-done' },
-  }[status] || { label: status, cls: 'lp-st-prep' };
+  const targetMs = new Date(`${startDate}T10:00:00`).getTime();
+  const diff = targetMs - Date.now();
+  let countdownHtml;
+  if (diff <= 0) {
+    countdownHtml = `<div class="lp-countdown-lbl">C'est aujourd'hui !</div>`;
+  } else {
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    countdownHtml = `
+      <div class="lp-countdown-lbl">Démarre dans</div>
+      <div class="lp-countdown">
+        <div class="lp-cd-cell"><div class="lp-cd-val">${days}</div><div class="lp-cd-unit">jours</div></div>
+        <div class="lp-cd-cell"><div class="lp-cd-val">${hours}</div><div class="lp-cd-unit">heures</div></div>
+        <div class="lp-cd-cell"><div class="lp-cd-val">${mins}</div><div class="lp-cd-unit">minutes</div></div>
+      </div>
+    `;
+  }
 
+  const allQualified = getAllQualified();
   wrap.innerHTML = `
-    <div class="lp-hero-bdg">${esc(statusBadge.label)}</div>
+    ${countdownHtml}
     <h1 class="lp-hero-title">${esc(name)}</h1>
     <div class="lp-hero-meta">
       <span>📅 ${esc(start)} → ${esc(end)}</span>
       <span>📍 ${esc(loc)}</span>
       <span>💰 1 600€ de cashprize</span>
-      <span>🎮 16 équipes · BO5 / BO7</span>
+      <span>🎮 ${allQualified.length} / 16 équipes qualifiées</span>
     </div>
   `;
-  wrap.parentElement.classList.remove('lp-st-prep','lp-st-live','lp-st-done');
-  wrap.parentElement.classList.add(statusBadge.cls);
+
+  // Refresh chaque minute pour le countdown
+  if (!window._lanCountdownInterval) {
+    window._lanCountdownInterval = setInterval(() => {
+      if (getLanStatus() === 'preparation') renderHero();
+    }, 60000);
+  }
 }
+
+function renderStageMatch(m) {
+  const home = state.teamsMap[m.homeTeamId];
+  const away = state.teamsMap[m.awayTeamId];
+  if (!home || !away) return '';
+  const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+  const fmt = (m.format || 'bo5').toUpperCase();
+  return `
+    <div class="lp-stage-card">
+      <div class="lp-stage-hdr"><span class="lp-live-dot"></span>EN DIRECT · MATCH SUR SCÈNE · ${esc(fmt)}</div>
+      <div class="lp-stage-body">
+        <div class="lp-stage-team">${teamLogo(home, 'lp-stage-logo')}<div class="lp-stage-name">${esc(home.name)}</div></div>
+        <div class="lp-stage-score">${ss.home}<span>-</span>${ss.away}</div>
+        <div class="lp-stage-team away"><div class="lp-stage-name">${esc(away.name)}</div>${teamLogo(away, 'lp-stage-logo')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// État local de l'UI : sections expandables (préservé entre rerender)
+const UI_STATE = window._lanUiState = window._lanUiState || { qualifiedExpanded: null };
 
 function renderQualified() {
   const wrap = document.getElementById('lan-qualified');
   if (!wrap) return;
   const p1 = getQualifiedTeams(1);
   const p2 = getQualifiedTeams(2);
+  const status = getLanStatus();
 
   if (!p1.length && !p2.length) {
     wrap.innerHTML = `
@@ -179,6 +309,11 @@ function renderQualified() {
     `;
     return;
   }
+
+  // En préparation : la section reste ouverte (les qualifs sont l'attraction).
+  // Sinon : repliée par défaut (la LAN se passe ou est passée, les qualifs c'est de l'historique).
+  const defaultExpanded = (status === 'preparation');
+  const expanded = UI_STATE.qualifiedExpanded ?? defaultExpanded;
 
   const renderTeam = (t, rank, pool) => {
     const team = state.teamsMap[t.id] || t;
@@ -198,8 +333,19 @@ function renderQualified() {
     `;
   };
 
-  wrap.innerHTML = `
-    <div class="lp-stitle">🏅 Équipes qualifiées <span class="lp-stitle-sub">${p1.length + p2.length} / 16</span></div>
+  // Teaser quand replié : juste un strip horizontal des logos
+  const teaserStrip = expanded ? '' : `
+    <div class="lp-q-teaser">
+      ${[...p1, ...p2].map(t => {
+        const team = state.teamsMap[t.id] || t;
+        return team.logoUrl
+          ? `<img class="lp-q-tlogo" src="${esc(team.logoUrl)}" alt="${esc(team.name)}" title="${esc(team.name)}">`
+          : `<div class="lp-q-tlogo lp-logo-ph"></div>`;
+      }).join('')}
+    </div>
+  `;
+
+  const fullPools = !expanded ? '' : `
     <div class="lp-q-pools">
       <div class="lp-q-pool">
         <div class="lp-q-pool-hdr"><span class="lp-pool-bdg p1">Poule 1</span> <span class="lp-q-pool-cnt">${p1.length} qualifiés</span></div>
@@ -211,7 +357,26 @@ function renderQualified() {
       </div>
     </div>
   `;
+
+  wrap.innerHTML = `
+    <div class="lp-stitle">🏅 Équipes qualifiées <span class="lp-stitle-sub">${p1.length + p2.length} / 16</span></div>
+    ${teaserStrip}
+    ${fullPools}
+    <div class="lp-collapse-toggle-wrap">
+      <button class="lp-collapse-toggle" onclick="window._lanToggleQualified()">
+        ${expanded ? '↑ Replier' : `↓ Voir les ${p1.length + p2.length} équipes`}
+      </button>
+    </div>
+  `;
 }
+
+window._lanToggleQualified = function () {
+  const status = getLanStatus();
+  const defaultExpanded = (status === 'preparation');
+  const cur = UI_STATE.qualifiedExpanded ?? defaultExpanded;
+  UI_STATE.qualifiedExpanded = !cur;
+  renderQualified();
+};
 
 function renderSwiss() {
   const wrap = document.getElementById('lan-swiss');
@@ -226,7 +391,10 @@ function renderSwiss() {
   const qIds = getAllQualified().map(t => t.id);
   const standings = calculateSwissStandings(swissMatches, qIds);
 
-  const standingsRows = standings.map((row, i) => {
+  const standingsExpanded = UI_STATE.standingsExpanded ?? false; // top 8 par défaut
+  const visibleStandings = standingsExpanded ? standings : standings.slice(0, 8);
+
+  const standingsRows = visibleStandings.map((row, i) => {
     const team = state.teamsMap[row.teamId];
     if (!team) return '';
     const top8 = i < 8 ? 'lp-sw-top8' : '';
@@ -243,28 +411,56 @@ function renderSwiss() {
     `;
   }).join('');
 
-  // Rounds : pour chacun des 5 rounds, afficher la liste des matchs
+  const standingsToggle = standings.length > 8 ? `
+    <div class="lp-sw-stand-foot">
+      <button class="lp-collapse-toggle" onclick="window._lanToggleStandings()">
+        ${standingsExpanded ? `↑ N'afficher que le top 8 (qualifiés bracket)` : `↓ Voir le classement complet (${standings.length} équipes)`}
+      </button>
+    </div>
+  ` : '';
+
+  // Rounds en accordéon : round en cours ouvert, autres fermés
+  let currentRound = 0;
+  for (let r = 1; r <= SWISS_ROUNDS; r++) {
+    if (swissMatches.some(m => getSwissRound(m.phase) === r)) currentRound = r;
+  }
+  // Le round "en cours" = le plus haut round qui a au moins 1 match non terminé.
+  // Si tous les rounds existants sont terminés, on ouvre le dernier joué.
+  let liveRound = 0;
+  for (let r = 1; r <= SWISS_ROUNDS; r++) {
+    const ms = swissMatches.filter(m => getSwissRound(m.phase) === r);
+    if (ms.length && !isRoundComplete(swissMatches, r)) { liveRound = r; break; }
+  }
+  const openRound = liveRound || currentRound;
+
   const roundsHtml = [];
   for (let r = 1; r <= SWISS_ROUNDS; r++) {
     const ms = swissMatches.filter(m => getSwissRound(m.phase) === r);
     if (!ms.length) {
       roundsHtml.push(`
-        <div class="lp-sw-round">
-          <div class="lp-sw-round-hdr">Round ${r}<span class="lp-sw-round-state lp-st-pending">À venir</span></div>
-        </div>
+        <details class="lp-sw-round">
+          <summary class="lp-sw-round-hdr">
+            <span>Round ${r}</span>
+            <span class="lp-sw-round-state lp-st-pending">À venir</span>
+          </summary>
+        </details>
       `);
       continue;
     }
     const complete = isRoundComplete(swissMatches, r);
     const stateLbl = complete
       ? `<span class="lp-sw-round-state lp-st-done">✓ Terminé</span>`
-      : `<span class="lp-sw-round-state lp-st-live">En cours</span>`;
+      : `<span class="lp-sw-round-state lp-st-live"><span class="lp-live-dot"></span>En cours</span>`;
     const matches = ms.map(m => renderSwissMatch(m)).join('');
+    const open = r === openRound ? 'open' : '';
     roundsHtml.push(`
-      <div class="lp-sw-round">
-        <div class="lp-sw-round-hdr">Round ${r}${stateLbl}</div>
+      <details class="lp-sw-round" ${open}>
+        <summary class="lp-sw-round-hdr">
+          <span>Round ${r} <span class="lp-sw-round-cnt">${ms.length} matchs</span></span>
+          ${stateLbl}
+        </summary>
         <div class="lp-sw-round-matches">${matches}</div>
-      </div>
+      </details>
     `);
   }
 
@@ -282,11 +478,17 @@ function renderSwiss() {
           <div class="lp-sw-stat">Δ</div>
         </div>
         ${standingsRows}
+        ${standingsToggle}
       </div>
       <div class="lp-sw-rounds">${roundsHtml.join('')}</div>
     </div>
   `;
 }
+
+window._lanToggleStandings = function () {
+  UI_STATE.standingsExpanded = !(UI_STATE.standingsExpanded ?? false);
+  renderSwiss();
+};
 
 function renderSwissMatch(m) {
   const home = state.teamsMap[m.homeTeamId];
@@ -490,7 +692,10 @@ function drawBracketConnectors() {
   }
 }
 
-// ── RENDER : Champion ─────────────────────────────────────────────────
+// ── RENDER : Podium ───────────────────────────────────────────────────
+// Le champion est déjà mis en avant dans le hero (mode finished). Cette
+// section affiche le podium 2/3 places + un rappel discret du 1er, plus
+// pédagogique : "voici les 3 premiers".
 function renderChampion() {
   const wrap = document.getElementById('lan-champion');
   if (!wrap) return;
@@ -505,7 +710,6 @@ function renderChampion() {
   const champion = state.teamsMap[gf.winner];
   if (!champion) { wrap.innerHTML = ''; return; }
 
-  // Top 3 : champion + perdant GF (= 2e) + perdant LB Final (= 3e)
   const lbF = getMatchBySlot(bracketMatches, 'lb_f');
   const second = gf.homeTeamId === gf.winner ? gf.awayTeamId : gf.homeTeamId;
   const third = lbF?.winner
@@ -526,7 +730,7 @@ function renderChampion() {
   };
 
   wrap.innerHTML = `
-    <div class="lp-stitle">🏆 Podium</div>
+    <div class="lp-stitle">🥇 Podium final</div>
     <div class="lp-podium">
       ${podiumCard(second, '2ᵉ', '500€', '2nd')}
       ${podiumCard(champion.id, '🏆 1ᵉʳ', '800€', '1st')}

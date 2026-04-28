@@ -122,8 +122,79 @@
      (les autres sections restent contraintes au wrap pour rester lisibles) */
   body{overflow-x:hidden}
   section#lan-bracket{width:100vw;position:relative;left:50%;margin-left:-50vw;padding:0 28px;box-sizing:border-box}
-  section#lan-bracket > .lp-stitle{max-width:1480px;margin:32px auto 14px}
+  section#lan-bracket > .lp-stitle{max-width:1480px;margin:0 auto 18px}
   section#lan-bracket > .bracket-viewport{max-width:1880px;margin:0 auto}
+
+  /* ── REFONTE UX : aération + sections distinctes ── */
+  .lp-wrap{padding:32px 28px 80px}
+  main.lp-wrap > section{margin-top:72px}
+  main.lp-wrap > section:first-of-type,
+  main.lp-wrap > .lp-hero{margin-top:0}
+  .lp-hero{margin-bottom:0}
+  .lp-stitle{margin:0 0 18px}
+
+  /* ── HERO : 3 modes ── */
+  /* Mode FINISHED : champion XXL au centre */
+  .lp-hero.lp-st-done{padding:64px 40px 68px;text-align:center}
+  .lp-hero.lp-st-done::before{width:100%;height:100%;background:radial-gradient(ellipse at center,rgba(255,184,0,.15),transparent 60%)}
+  .lp-champ-tag{font-size:.78rem;font-weight:800;letter-spacing:.18em;color:#FFB800;text-transform:uppercase;margin-bottom:32px;position:relative;z-index:2}
+  .lp-champ-logo{width:160px;height:160px;border-radius:20px;border:3px solid rgba(255,184,0,.6);box-shadow:0 16px 56px rgba(255,184,0,.28);background:#000;object-fit:contain;display:block;margin:0 auto 28px;position:relative;z-index:2}
+  .lp-champ-logo.lp-logo-ph{background:rgba(255,255,255,.04);border:3px dashed rgba(255,184,0,.3)}
+  .lp-champ-name{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;letter-spacing:-.03em;margin:0 0 14px;background:linear-gradient(135deg,#FFB800 0%,#FF6B35 100%);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;position:relative;z-index:2}
+  .lp-champ-prize{font-size:1.4rem;font-weight:800;color:#FFB800;margin-bottom:28px;position:relative;z-index:2}
+  .lp-champ-meta{display:flex;justify-content:center;gap:24px;font-size:.92rem;color:var(--text2);font-weight:600;flex-wrap:wrap;position:relative;z-index:2}
+
+  /* Mode LIVE : indicator pulsant + match scène mis en avant */
+  .lp-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#0c8;margin-right:8px;animation:lp-pulse 1.6s ease-in-out infinite;vertical-align:middle}
+  @keyframes lp-pulse{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(0,200,100,.6)}50%{opacity:.5;transform:scale(.85);box-shadow:0 0 0 8px rgba(0,200,100,0)}}
+  .lp-bdg-live{background:rgba(0,200,100,.14);border:1px solid rgba(0,200,100,.4);color:#0c8;display:inline-flex;align-items:center;font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:6px 12px;border-radius:5px;margin-bottom:16px}
+
+  .lp-stage-card{margin-top:28px;background:linear-gradient(135deg,rgba(255,184,0,.12),rgba(255,107,53,.06));border:1px solid rgba(255,184,0,.4);border-radius:12px;overflow:hidden;position:relative;z-index:2}
+  .lp-stage-hdr{padding:9px 16px;background:rgba(0,0,0,.35);font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#FFB800;display:flex;align-items:center}
+  .lp-stage-body{display:grid;grid-template-columns:1fr 110px 1fr;align-items:center;padding:20px 24px;gap:16px}
+  .lp-stage-team{display:flex;align-items:center;gap:14px;min-width:0}
+  .lp-stage-team.away{flex-direction:row-reverse;text-align:right}
+  .lp-stage-logo{width:52px;height:52px;border-radius:8px;object-fit:contain;background:var(--bg3);flex-shrink:0;border:1px solid var(--border)}
+  .lp-stage-name{font-weight:800;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lp-stage-score{font-size:2.4rem;font-weight:900;text-align:center;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+  .lp-stage-score span{color:var(--text3);font-weight:600;margin:0 4px;font-size:1.6rem}
+
+  /* Mode PREPARATION : countdown */
+  .lp-hero.lp-st-prep{padding:48px 40px 44px}
+  .lp-countdown-lbl{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--text2);margin-bottom:14px;position:relative;z-index:2}
+  .lp-countdown{display:flex;gap:14px;margin-bottom:32px;flex-wrap:wrap;position:relative;z-index:2}
+  .lp-cd-cell{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 22px;text-align:center;min-width:96px}
+  .lp-cd-val{font-size:2.4rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#FFB800}
+  .lp-cd-unit{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-top:6px}
+
+  /* ── Qualifiés : teaser horizontal + bouton expand ── */
+  .lp-q-teaser{display:flex;gap:10px;flex-wrap:wrap;padding:18px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;align-items:center;justify-content:center}
+  .lp-q-tlogo{width:46px;height:46px;border-radius:7px;object-fit:contain;background:var(--bg3);border:1px solid var(--border);transition:all .2s;cursor:default}
+  .lp-q-tlogo:hover{transform:translateY(-2px);border-color:rgba(255,184,0,.45);box-shadow:0 4px 12px rgba(255,184,0,.15)}
+  .lp-q-tlogo.lp-logo-ph{background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.08)}
+
+  /* ── Bouton "voir plus / replier" universel ── */
+  .lp-collapse-toggle-wrap{margin-top:16px;text-align:center}
+  .lp-collapse-toggle{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--text2);font-size:.8rem;font-weight:700;padding:9px 20px;border-radius:6px;cursor:pointer;transition:all .15s;letter-spacing:.02em;font-family:inherit}
+  .lp-collapse-toggle:hover{background:rgba(255,184,0,.1);border-color:rgba(255,184,0,.35);color:#FFB800}
+
+  /* ── Suisse : rounds en accordéon ── */
+  details.lp-sw-round{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;padding:0}
+  details.lp-sw-round summary{list-style:none;cursor:pointer;padding:12px 16px;background:var(--bg3);font-weight:800;font-size:.86rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;transition:background .15s}
+  details.lp-sw-round summary::-webkit-details-marker{display:none}
+  details.lp-sw-round summary::after{content:'▼';font-size:.55rem;color:var(--text3);margin-left:8px;transition:transform .2s}
+  details.lp-sw-round[open] summary{border-bottom-color:var(--border)}
+  details.lp-sw-round[open] summary::after{transform:rotate(180deg)}
+  details.lp-sw-round summary:hover{background:#2a2a2a}
+  .lp-sw-round-cnt{font-size:.68rem;color:var(--text3);font-weight:600;margin-left:8px;letter-spacing:0;text-transform:none}
+
+  /* Bouton "voir le classement complet" sous le standings */
+  .lp-sw-stand-foot{padding:10px 14px;background:var(--bg3);border-top:1px solid var(--border);text-align:center}
+  .lp-sw-stand-foot .lp-collapse-toggle{font-size:.72rem;padding:6px 14px}
+
+  /* Séparation visuelle entre top 8 et 9-16 quand expanded */
+  .lp-sw-row.lp-sw-top8 + .lp-sw-row:not(.lp-sw-top8){border-top:2px solid rgba(255,184,0,.2);position:relative}
+  .lp-sw-row.lp-sw-top8 + .lp-sw-row:not(.lp-sw-top8)::before{content:'NON QUALIFIÉS BRACKET';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--bg2);color:var(--text3);font-size:.55rem;font-weight:800;letter-spacing:.1em;padding:0 10px}
 </style>
 </head>
 <body>
