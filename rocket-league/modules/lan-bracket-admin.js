@@ -78,25 +78,32 @@ function renderEmptyBracket(wrap, swissComplete, swissMatches) {
   `;
 }
 
-// ── Vue "bracket généré" — vrai bracket visuel ────────────────────────
+// ── Vue "bracket généré" — vrai bracket visuel (grille unique WB+LB) ──
+// Layout par colonnes-temps (chaque colonne = un créneau de la LAN) :
+//   Col 1 : WB QF
+//   Col 2 : WB SF + LB R1
+//   Col 3 : WB F  + LB R2
+//   Col 4 : LB R3
+//   Col 5 : LB F
+//   Col 6 : GF (à cheval sur les 2 lignes)
 function renderBracket(wrap, bracketMatches) {
   const complete = isBracketComplete(bracketMatches);
 
-  // Définition visuelle des sections du bracket
-  const wbRounds = [
-    { title: 'Quarts WB', fmt: 'BO5', slots: ['wb_qf1','wb_qf4','wb_qf2','wb_qf3'] },
-    { title: 'Demis WB',  fmt: 'BO5', slots: ['wb_sf1','wb_sf2'] },
-    { title: 'Finale WB', fmt: 'BO7', slots: ['wb_f'] },
-  ];
-  const lbRounds = [
-    { title: 'LB R1', fmt: 'BO5', slots: ['lb_r1_1','lb_r1_2'] },
-    { title: 'LB R2', fmt: 'BO5', slots: ['lb_r2_1','lb_r2_2'] },
-    { title: 'LB R3', fmt: 'BO7', slots: ['lb_r3'] },
-    { title: 'Finale LB', fmt: 'BO7', slots: ['lb_f'] },
-  ];
-  const gfRounds = [
-    { title: 'Grande Finale', fmt: 'BO7', slots: ['gf'] },
-  ];
+  const renderCol = (colClass, kind, title, fmt, slots, isFinal) => {
+    const cards = slots.map(s => {
+      const m = getMatchBySlot(bracketMatches, s);
+      return m ? renderBracketCard(m, isFinal) : '';
+    }).join('');
+    return `
+      <div class="bcol ${colClass}">
+        <div class="bcol-hdr ${kind}">
+          <span>${esc(title)}</span>
+          <span class="fmt">${esc(fmt)}</span>
+        </div>
+        <div class="bcol-cards">${cards}</div>
+      </div>
+    `;
+  };
 
   wrap.innerHTML = `
     <div class="stitle">🏆 Bracket — Jour 2 (dimanche)</div>
@@ -104,45 +111,33 @@ function renderBracket(wrap, bracketMatches) {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <div>
           <div style="font-weight:700;font-size:1rem">${complete ? '✓ Bracket terminé' : 'Bracket en cours'}</div>
-          <div style="font-size:.78rem;color:var(--text2)">Double élimination · 8 équipes · 14 matchs au total</div>
+          <div style="font-size:.78rem;color:var(--text2)">Double élimination · 8 équipes · 14 matchs · WB ↑ / LB ↓ / GF →</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          ${complete ? `${renderChampion(bracketMatches)}` : ''}
+          ${complete ? renderChampion(bracketMatches) : ''}
           <button class="btn-d" onclick="resetBracket()">🗑️ Reset Bracket</button>
         </div>
       </div>
     </div>
 
-    <div class="bracket-viewport">
-      ${renderBracketSection('wb', "🏆 Winners' Bracket", "Pas de défaite — droit à la grande finale", wbRounds, bracketMatches)}
-      ${renderBracketSection('lb', "🔥 Losers' Bracket", "Une défaite = élimination", lbRounds, bracketMatches)}
-      ${renderBracketSection('gf', '⭐ Grande Finale', 'Sans bracket reset — BO7 unique', gfRounds, bracketMatches)}
+    <div class="bracket-viewport" id="bracket-viewport">
+      <div class="bracket-grid" id="bracket-grid">
+        <svg class="bracket-svg" id="bracket-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        ${renderCol('bcol-wb-qf','wb','Quarts WB','BO5',['wb_qf1','wb_qf4','wb_qf2','wb_qf3'],false)}
+        ${renderCol('bcol-wb-sf','wb','Demis WB','BO5',['wb_sf1','wb_sf2'],false)}
+        ${renderCol('bcol-wb-f', 'wb','Finale WB','BO7',['wb_f'],false)}
+        ${renderCol('bcol-lb-r1','lb','LB R1','BO5',['lb_r1_1','lb_r1_2'],false)}
+        ${renderCol('bcol-lb-r2','lb','LB R2','BO5',['lb_r2_1','lb_r2_2'],false)}
+        ${renderCol('bcol-lb-r3','lb','LB R3','BO7',['lb_r3'],false)}
+        ${renderCol('bcol-lb-f', 'lb','Finale LB','BO7',['lb_f'],false)}
+        ${renderCol('bcol-gf',   'gf','⭐ Grande Finale','BO7',['gf'],true)}
+      </div>
     </div>
   `;
-}
 
-function renderBracketSection(kind, title, subtitle, rounds, bracketMatches) {
-  return `
-    <div class="bracket-section ${kind}">
-      <div class="bracket-sec-hdr">
-        <div class="bracket-sec-title">${title}</div>
-        <div class="bracket-sec-sub">${esc(subtitle)}</div>
-      </div>
-      <div class="bracket-rows">
-        ${rounds.map(r => `
-          <div class="bracket-round">
-            <div class="bracket-round-hdr">${esc(r.title)}<span class="fmt">${esc(r.fmt)}</span></div>
-            <div class="bracket-round-cards">
-              ${r.slots.map(s => {
-                const m = getMatchBySlot(bracketMatches, s);
-                return m ? renderBracketCard(m, kind === 'gf') : '';
-              }).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+  // Tracé des connecteurs SVG (en L) après que le DOM est posé
+  requestAnimationFrame(() => drawBracketConnectors());
+  attachBracketResizeListener();
 }
 
 function renderChampion(bracketMatches) {
@@ -206,7 +201,7 @@ function renderBracketCard(match, isFinal = false) {
   const onclickAttr = isPending ? '' : `onclick="openSwissMatch('${match.id}')"`;
 
   return `
-    <div class="${cardClass}" ${onclickAttr}>
+    <div class="${cardClass}" data-bm-slot="${esc(match.bracketSlot || '')}" ${onclickAttr}>
       <div class="bm-row ${homeRowClass}">
         <div class="bm-team">${homeLogo}<div class="${homeNameClass}">${esc(homeName)}</div></div>
         ${homeScoreCell}
@@ -237,6 +232,88 @@ function feederToLabel(feeder) {
   const [type, slot] = feeder.split(':');
   const slotLabel = SLOT_LABEL[slot] || slot;
   return type === 'winner' ? `Vainqueur ${slotLabel}` : `Perdant ${slotLabel}`;
+}
+
+// ── Tracé des connecteurs SVG en L ────────────────────────────────────
+// Définition des liens : sources[] → target. solid pour le flux principal
+// (gagnant), dashed pour les "drop downs" WB→LB (perdant), gold pour le flux
+// vers la grande finale.
+const CONNECTORS = [
+  // Winners' bracket
+  { sources: ['wb_qf1','wb_qf4'], target: 'wb_sf1', kind: 'solid' },
+  { sources: ['wb_qf2','wb_qf3'], target: 'wb_sf2', kind: 'solid' },
+  { sources: ['wb_sf1','wb_sf2'], target: 'wb_f',   kind: 'solid' },
+  { sources: ['wb_f'],            target: 'gf',     kind: 'gold'  },
+  // Losers' bracket
+  { sources: ['lb_r1_1'], target: 'lb_r2_1', kind: 'solid' },
+  { sources: ['lb_r1_2'], target: 'lb_r2_2', kind: 'solid' },
+  { sources: ['lb_r2_1','lb_r2_2'], target: 'lb_r3', kind: 'solid' },
+  { sources: ['lb_r3'],   target: 'lb_f',    kind: 'solid' },
+  { sources: ['lb_f'],    target: 'gf',      kind: 'gold'  },
+  // Drop downs WB → LB (perdants) — pointillés rouges
+  { sources: ['wb_sf2'], target: 'lb_r2_1', kind: 'dashed' },
+  { sources: ['wb_sf1'], target: 'lb_r2_2', kind: 'dashed' },
+  { sources: ['wb_f'],   target: 'lb_f',    kind: 'dashed' },
+];
+
+function drawBracketConnectors() {
+  const grid = document.getElementById('bracket-grid');
+  const svg = document.getElementById('bracket-svg');
+  if (!grid || !svg) return;
+
+  const w = grid.scrollWidth;
+  const h = grid.scrollHeight;
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.innerHTML = '';
+
+  const gridRect = grid.getBoundingClientRect();
+  const rectOf = (slot) => {
+    const card = grid.querySelector(`[data-bm-slot="${slot}"]`);
+    if (!card) return null;
+    const r = card.getBoundingClientRect();
+    return {
+      left: r.left - gridRect.left,
+      right: r.right - gridRect.left,
+      midY: r.top - gridRect.top + r.height / 2,
+    };
+  };
+
+  // Regrouper les connecteurs par target pour calculer un "midX" commun
+  // entre les sources et la target — ça donne un vrai tracé en arbre.
+  for (const conn of CONNECTORS) {
+    const tgt = rectOf(conn.target);
+    if (!tgt) continue;
+    const srcs = conn.sources.map(rectOf).filter(Boolean);
+    if (!srcs.length) continue;
+
+    // Coordonnées : on veut une ligne horizontale à partir de chaque source,
+    // qui se rejoint sur une "colonne verticale" placée entre src.right max et tgt.left.
+    const maxSrcRight = Math.max(...srcs.map(s => s.right));
+    const branchX = maxSrcRight + (tgt.left - maxSrcRight) / 2;
+
+    for (const src of srcs) {
+      // Path : src.right → branchX (horizontal) → tgt.midY (vertical) → tgt.left (horizontal)
+      const d = `M ${src.right} ${src.midY} H ${branchX} V ${tgt.midY} H ${tgt.left}`;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('class', conn.kind);
+      svg.appendChild(path);
+    }
+  }
+}
+
+let _bracketResizeBound = false;
+function attachBracketResizeListener() {
+  if (_bracketResizeBound) return;
+  _bracketResizeBound = true;
+  let raf = null;
+  const handler = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => drawBracketConnectors());
+  };
+  window.addEventListener('resize', handler);
 }
 
 // ── Actions exposées sur window ───────────────────────────────────────

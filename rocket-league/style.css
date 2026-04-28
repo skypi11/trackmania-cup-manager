@@ -937,20 +937,31 @@ img{display:block}
   .lan-qual-grid{grid-template-columns:1fr !important}
 }
 
-/* ── BRACKET VISUEL DOUBLE ÉLIM ── */
-.bracket-viewport{display:flex;flex-direction:column;gap:18px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-.bracket-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px 18px;min-width:max-content}
-.bracket-section.wb{border-top:3px solid rgba(0,200,100,.35)}
-.bracket-section.lb{border-top:3px solid rgba(239,68,68,.4)}
-.bracket-section.gf{border-top:3px solid #FFB800;display:flex;flex-direction:column;align-items:center}
-.bracket-sec-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.bracket-sec-title{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
-.bracket-sec-sub{font-size:.7rem;color:var(--text3);font-weight:600;letter-spacing:.04em}
-.bracket-rows{display:flex;gap:34px;align-items:stretch;min-height:220px}
-.bracket-round{display:flex;flex-direction:column;flex:0 0 auto;min-width:230px;width:230px}
-.bracket-round-hdr{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:800;text-align:center;margin-bottom:10px;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.07)}
-.bracket-round-hdr .fmt{display:inline-block;background:var(--bg3);color:var(--text2);font-size:.6rem;padding:1px 6px;border-radius:3px;margin-left:6px;letter-spacing:.04em;border:1px solid var(--border)}
-.bracket-round-cards{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px;position:relative}
+/* ── BRACKET VISUEL DOUBLE ÉLIM (v2 — grille unique + connecteurs SVG) ── */
+.bracket-viewport{position:relative;overflow-x:auto;padding:6px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;-webkit-overflow-scrolling:touch}
+.bracket-grid{display:grid;grid-template-columns:repeat(6,260px);grid-template-rows:auto auto;gap:30px 44px;padding:18px 18px 22px;min-width:max-content;position:relative}
+.bracket-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible}
+.bcol{position:relative;z-index:2;display:flex;flex-direction:column;min-width:0}
+.bcol-hdr{text-align:center;font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;margin-bottom:14px;border-radius:6px;display:flex;flex-direction:column;gap:3px;align-items:center;line-height:1.3}
+.bcol-hdr.wb{background:rgba(0,200,100,.08);border:1px solid rgba(0,200,100,.22);color:rgba(0,200,100,.95)}
+.bcol-hdr.lb{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);color:rgba(239,68,68,.95)}
+.bcol-hdr.gf{background:linear-gradient(90deg,rgba(255,184,0,.14),rgba(255,107,53,.14));border:1px solid rgba(255,184,0,.35);color:#FFB800}
+.bcol-hdr .fmt{font-size:.58rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);padding:1px 6px;border-radius:3px;letter-spacing:.04em;font-weight:700;color:var(--text2)}
+.bcol-cards{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px;min-height:140px}
+/* WB row (top) */
+.bcol-wb-qf{grid-column:1;grid-row:1}
+.bcol-wb-sf{grid-column:2;grid-row:1}
+.bcol-wb-f{grid-column:3;grid-row:1}
+/* LB row (bottom) */
+.bcol-lb-r1{grid-column:2;grid-row:2}
+.bcol-lb-r2{grid-column:3;grid-row:2}
+.bcol-lb-r3{grid-column:4;grid-row:2}
+.bcol-lb-f{grid-column:5;grid-row:2}
+/* GF spans both rows on right */
+.bcol-gf{grid-column:6;grid-row:1 / span 2}
+.bcol-gf .bcol-cards{flex:1;align-items:stretch;justify-content:center;min-height:0}
+/* Cellules vides (WB QF n'a rien dans LB row, LB R3/F n'ont rien dans WB row) */
+.bcol-empty{visibility:hidden;min-height:1px}
 /* Carte de match bracket */
 .bm{background:var(--bg3);border:1px solid var(--border);border-radius:7px;overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
 .bm:hover:not(.bm-empty){border-color:rgba(245,158,11,.55);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
@@ -984,22 +995,15 @@ img{display:block}
 .bm-act.stage{background:transparent;border:1px solid rgba(255,184,0,.4);color:#FFB800;font-size:.58rem;padding:2px 6px}
 .bm-act.stage:hover{background:rgba(255,184,0,.12)}
 .bm-pending-msg{font-size:.62rem;color:var(--text3);font-style:italic;font-weight:600}
-/* Connecteurs : ligne horizontale qui sort à gauche de chaque carte des rounds 2+ */
-.bracket-round + .bracket-round .bracket-round-cards .bm::before{
-  content:'';position:absolute;right:100%;top:50%;width:18px;height:0;
-  border-top:2px solid rgba(255,255,255,.08);
-}
-/* Et ligne qui sort à droite de chaque carte sauf la dernière colonne */
-.bracket-round:not(:last-child) .bracket-round-cards .bm::after{
-  content:'';position:absolute;left:100%;top:50%;width:18px;height:0;
-  border-top:2px solid rgba(255,255,255,.08);
-}
-/* Grand Final centrée */
-.bracket-section.gf .bracket-rows{justify-content:center}
-.bracket-section.gf .bracket-round{min-width:280px;width:280px}
+/* Tracé SVG : couleurs */
+.bracket-svg path{fill:none;stroke-linecap:square;stroke-linejoin:miter}
+.bracket-svg path.solid{stroke:rgba(255,255,255,.22);stroke-width:2}
+.bracket-svg path.dashed{stroke:rgba(239,68,68,.45);stroke-width:1.5;stroke-dasharray:5,4}
+.bracket-svg path.gold{stroke:rgba(255,184,0,.55);stroke-width:2}
+/* Carte GF : glow doré subtil */
+.bcol-gf .bm{box-shadow:0 0 0 1px rgba(255,184,0,.18),0 6px 18px rgba(255,184,0,.08)}
 
 @media(max-width:720px){
-  .bracket-rows{gap:22px}
-  .bracket-round{min-width:200px;width:200px}
+  .bracket-grid{grid-template-columns:repeat(6,220px);gap:22px 28px;padding:14px 10px 18px}
   .bm-name{font-size:.74rem}
 }
