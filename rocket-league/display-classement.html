@@ -48,9 +48,16 @@
 
   /* Tableau classement — flex pour que les 16 rows + header se répartissent
      dans la hauteur disponible quelle que soit la taille de l'écran. */
-  .d-table{flex:1 1 auto;display:flex;flex-direction:column;gap:0;background:rgba(255,255,255,.02);border-radius:clamp(8px,.8vw,20px);overflow:hidden;min-height:0}
-  .d-tbl-hdr{flex:0 0 auto;display:grid;grid-template-columns:var(--rank-w) var(--logo-sm) 1fr clamp(70px,5.5vw,140px) clamp(56px,4vw,110px) clamp(56px,4vw,110px) clamp(70px,5vw,130px);align-items:center;gap:clamp(8px,.8vw,20px);padding:clamp(8px,.8vw,20px) clamp(12px,1.2vw,30px);background:rgba(255,255,255,.05);font-size:var(--t-meta);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)}
-  .d-row{flex:1 1 0;min-height:0;display:grid;grid-template-columns:var(--rank-w) var(--logo-sm) 1fr clamp(70px,5.5vw,140px) clamp(56px,4vw,110px) clamp(56px,4vw,110px) clamp(70px,5vw,130px);align-items:center;gap:clamp(8px,.8vw,20px);padding:0 clamp(12px,1.2vw,30px);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;overflow:hidden}
+  .d-table{flex:1 1 auto;display:flex;flex-direction:column;gap:0;background:rgba(255,255,255,.02);border-radius:clamp(8px,.8vw,20px);overflow:hidden;min-height:0;position:relative}
+  /* Watermark : grand logo Springs centré derrière les rows */
+  .d-table::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('/assets/springs-logo.png') center/clamp(280px,38%,640px) no-repeat;opacity:.04;pointer-events:none;z-index:0}
+  /* Mêmes grid-template-columns pour header et rows → alignement parfait.
+     Numérique = text-align:right pour que les chiffres s'alignent par leur
+     bord droit avec les headers (PTS / V / D / Δ). */
+  .d-tbl-hdr,.d-row{display:grid;grid-template-columns:var(--rank-w) var(--logo-sm) 1fr clamp(70px,5.5vw,140px) clamp(56px,4vw,110px) clamp(56px,4vw,110px) clamp(70px,5vw,130px);align-items:center;gap:clamp(8px,.8vw,20px);padding:0 clamp(12px,1.2vw,30px);position:relative;z-index:1}
+  .d-tbl-hdr{flex:0 0 auto;padding:clamp(8px,.8vw,20px) clamp(12px,1.2vw,30px);background:rgba(255,255,255,.05);font-size:var(--t-meta);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .d-tbl-hdr > div:nth-child(n+4){text-align:right}
+  .d-row{flex:1 1 0;min-height:0;border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;overflow:hidden}
   .d-row:last-child{border-bottom:0}
 
   /* Top 8 — qualifiés bracket */
@@ -58,9 +65,10 @@
   .d-row.d-top8 .d-rank{color:#FFB800;font-weight:900}
   .d-row.d-top8 .d-rank::before{content:'';position:absolute;left:0;top:18%;bottom:18%;width:.25em;background:#FFB800;border-radius:1px}
 
-  /* Séparation top 8 / hors top 8 */
-  .d-row.d-top8 + .d-row:not(.d-top8){border-top:2px solid rgba(255,184,0,.3);position:relative}
-  .d-row.d-top8 + .d-row:not(.d-top8)::before{content:'NON QUALIFIÉS BRACKET';position:absolute;top:-.6em;left:50%;transform:translateX(-50%);background:#0a0a0a;color:rgba(255,255,255,.4);font-size:calc(var(--t-meta)*.78);font-weight:800;letter-spacing:.14em;padding:0 .8em}
+  /* Séparateur "NON QUALIFIÉS BRACKET" : row dédiée plutôt qu'un ::before
+     bricolé qui se faisait recouvrir par le contenu de la row précédente */
+  .d-separator{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:clamp(10px,1vw,24px);padding:clamp(6px,.6vw,14px) clamp(12px,1.2vw,30px);background:rgba(0,0,0,.5);border-top:1px solid rgba(255,184,0,.35);border-bottom:1px solid rgba(255,184,0,.2);font-size:calc(var(--t-meta)*.95);font-weight:800;letter-spacing:.14em;color:rgba(255,184,0,.8);text-transform:uppercase;position:relative;z-index:2}
+  .d-separator::before,.d-separator::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,184,0,.25),transparent);max-width:30%}
 
   .d-rank{position:relative;font-size:var(--t-row);font-weight:800;text-align:center;color:rgba(255,255,255,.55)}
   /* Logo : dimensionné par la hauteur de row (75% de la row, carré, capé à --logo-sm)
@@ -69,8 +77,10 @@
   .d-logo-ph{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08)}
   .d-name{font-size:var(--t-row);font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  .d-stat{font-size:var(--t-stat);font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
-  .d-pts{font-size:var(--t-pts);font-weight:900;text-align:center;color:#FFB800;font-variant-numeric:tabular-nums;line-height:1}
+  /* Colonnes numériques : right-aligned pour que header et valeurs s'alignent
+     par leur bord droit (les nombres ont des largeurs différentes). */
+  .d-stat{font-size:var(--t-stat);font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+  .d-pts{font-size:var(--t-pts);font-weight:900;text-align:right;color:#FFB800;font-variant-numeric:tabular-nums;line-height:1}
   .d-loss{color:rgba(239,68,68,.75)}
   .d-diff.d-pos{color:#0c8}
   .d-diff.d-neg{color:rgba(239,68,68,.75)}
@@ -172,7 +182,7 @@
           return;
         }
 
-        const rows = standings.map((row, i) => {
+        const renderRow = (row, i) => {
           const team = state.teamsMap[row.teamId];
           if (!team) return '';
           const top8 = i < 8 ? 'd-top8' : '';
@@ -189,7 +199,14 @@
               <div class="d-stat d-diff ${diffCls}">${diff >= 0 ? '+' : ''}${diff}</div>
             </div>
           `;
-        }).join('');
+        };
+
+        // Séparateur entre top 8 et reste pour bien marquer la limite de qualif bracket
+        const top8Rows = standings.slice(0, 8).map(renderRow).join('');
+        const restRows = standings.slice(8).map((row, idx) => renderRow(row, idx + 8)).join('');
+        const separator = standings.length > 8
+          ? `<div class="d-separator">Non qualifiés bracket</div>`
+          : '';
 
         body.innerHTML = `
           <div class="d-table">
@@ -202,7 +219,9 @@
               <div>D</div>
               <div>Δ</div>
             </div>
-            ${rows}
+            ${top8Rows}
+            ${separator}
+            ${restRows}
           </div>
         `;
       }
