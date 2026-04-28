@@ -87,8 +87,11 @@
   .d-diff.d-pos{color:#0c8}
   .d-diff.d-neg{color:rgba(239,68,68,.75)}
 
-  /* Footer — compact */
-  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.3) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.05)}
+  /* Footer — compact, intègre les sponsors au centre */
+  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.4) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:clamp(12px,1.5vw,40px);border-top:1px solid rgba(255,255,255,.05)}
+  .d-sponsors{display:flex;align-items:center;gap:clamp(12px,1.4vw,36px);flex-shrink:0}
+  .d-sponsors-lbl{font-size:calc(var(--t-meta)*.78);text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);font-weight:700;white-space:nowrap}
+  .d-sponsor{height:clamp(30px,3.2vh,72px);width:auto;object-fit:contain;opacity:.9;filter:brightness(1.1)}
 
   /* Vue vide */
   .d-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--t-h1);color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:var(--pad)}
@@ -118,6 +121,11 @@
 
 <footer class="d-foot">
   <span>springs-esport.vercel.app/rocket-league/lan</span>
+  <div class="d-sponsors">
+    <span class="d-sponsors-lbl">Avec</span>
+    <img src="../assets/PAGE_404.png" alt="Page 404 Informatique" class="d-sponsor">
+    <img src="../assets/Ibis-budget-2019.svg.png" alt="Ibis Budget" class="d-sponsor">
+  </div>
   <span id="d-now"></span>
 </footer>
 
