@@ -52,7 +52,7 @@
   /* Watermark : grand logo SLS centré derrière les rows. Opacité plus
      forte que pour le Springs plein car le logo SLS est en outline
      (moins de matière visuelle, donc moins lisible à faible opacité). */
-  .d-table::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('/assets/SpringsLeagueSeries.png') center/clamp(320px,42%,720px) no-repeat;opacity:.08;pointer-events:none;z-index:0}
+  .d-table::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('../assets/SpringsLeagueSeries.png') center/clamp(320px,42%,720px) no-repeat;opacity:.1;pointer-events:none;z-index:0}
   /* Mêmes grid-template-columns pour header et rows → alignement parfait.
      Numérique = text-align:right pour que les chiffres s'alignent par leur
      bord droit avec les headers (PTS / V / D / Δ). */
@@ -87,11 +87,14 @@
   .d-diff.d-pos{color:#0c8}
   .d-diff.d-neg{color:rgba(239,68,68,.75)}
 
-  /* Footer — compact, intègre les sponsors au centre */
-  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.4) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:clamp(12px,1.5vw,40px);border-top:1px solid rgba(255,255,255,.05)}
-  .d-sponsors{display:flex;align-items:center;gap:clamp(12px,1.4vw,36px);flex-shrink:0}
-  .d-sponsors-lbl{font-size:calc(var(--t-meta)*.78);text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);font-weight:700;white-space:nowrap}
-  .d-sponsor{height:clamp(30px,3.2vh,72px);width:auto;object-fit:contain;opacity:.9;filter:brightness(1.1)}
+  /* Footer — grid 3 colonnes pour vraie centring des sponsors */
+  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.4) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(12px,1.5vw,40px);border-top:1px solid rgba(255,255,255,.05)}
+  .d-foot-l{justify-self:start}
+  .d-foot-r{justify-self:end}
+  .d-sponsors{display:flex;align-items:flex-end;justify-content:center;gap:clamp(20px,2.4vw,56px)}
+  .d-sponsor{display:flex;flex-direction:column;align-items:center;gap:clamp(4px,.4vh,10px)}
+  .d-sponsor img{height:clamp(34px,3.6vh,80px);width:auto;object-fit:contain;opacity:.95;filter:brightness(1.1)}
+  .d-sponsor-name{font-size:calc(var(--t-meta)*.85);color:rgba(255,255,255,.55);font-weight:700;letter-spacing:.04em;white-space:nowrap}
 
   /* Vue vide */
   .d-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--t-h1);color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:var(--pad)}
@@ -120,13 +123,18 @@
 </main>
 
 <footer class="d-foot">
-  <span>springs-esport.vercel.app/rocket-league/lan</span>
+  <span class="d-foot-l">springs-esport.vercel.app/rocket-league/lan</span>
   <div class="d-sponsors">
-    <span class="d-sponsors-lbl">Avec</span>
-    <img src="../assets/PAGE_404.png" alt="Page 404 Informatique" class="d-sponsor">
-    <img src="../assets/Ibis-budget-2019.svg.png" alt="Ibis Budget" class="d-sponsor">
+    <div class="d-sponsor">
+      <img src="../assets/PAGE_404.png" alt="Page 404 Informatique">
+      <span class="d-sponsor-name">Page 404 Informatique</span>
+    </div>
+    <div class="d-sponsor">
+      <img src="../assets/Ibis-budget-2019.svg.png" alt="Ibis Budget">
+      <span class="d-sponsor-name">Ibis Budget</span>
+    </div>
   </div>
-  <span id="d-now"></span>
+  <span class="d-foot-r" id="d-now"></span>
 </footer>
 
 <script type="module">
