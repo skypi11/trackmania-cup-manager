@@ -342,27 +342,29 @@ window.openSwissMatch = function (matchId) {
       </div>
     </div>
 
-    <!-- En-tête colonnes : indique quelle équipe est de quel côté -->
-    <div style="display:grid;grid-template-columns:80px 1fr 18px 1fr 30px;column-gap:10px;align-items:center;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
-      <span></span>
-      <span style="text-align:center">${homeName.toUpperCase()}</span>
-      <span></span>
-      <span style="text-align:center">${awayName.toUpperCase()}</span>
-      <span></span>
-    </div>
-
-    <!-- Layout : une manche par ligne, scores côte à côte (grid 5 colonnes) -->
-    <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-      ${Array.from({length: maxGames}, (_, i) => `
-        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:80px 1fr 18px 1fr 30px;column-gap:10px;align-items:center;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
-          <span style="font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
-          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span style="text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
-          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span class="sg-winner" data-idx="${i}" style="font-size:1rem;text-align:center;font-weight:700"></span>
-        </div>
-      `).join('')}
-    </div>
+    <!-- Layout en table HTML : la solution la plus fiable pour aligner -->
+    <table class="swiss-games-table" id="swiss-games-list">
+      <thead>
+        <tr>
+          <th class="sg-th-label"></th>
+          <th>${homeName.toUpperCase()}</th>
+          <th class="sg-th-sep"></th>
+          <th>${awayName.toUpperCase()}</th>
+          <th class="sg-th-winner"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${Array.from({length: maxGames}, (_, i) => `
+          <tr class="sg-row" data-row="${i}">
+            <td><span class="sg-label">Manche ${i+1}</span></td>
+            <td><input type="number" class="sg-input sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
+            <td><span class="sg-sep">—</span></td>
+            <td><input type="number" class="sg-input sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
+            <td><span class="sg-winner" data-idx="${i}"></span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
 
     <div style="font-size:.7rem;color:var(--text3);margin-bottom:12px;text-align:center">
       💡 <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Tab</kbd> auto après 1 chiffre ·
@@ -464,30 +466,28 @@ function refreshLiveScore(body, format, target, homeName, awayName) {
     const a = awayIns[i].value;
     const row = body.querySelector(`.sg-row[data-row="${i}"]`);
     const winSpan = body.querySelector(`.sg-winner[data-idx="${i}"]`);
-    // Reset visual de la ligne
-    row.style.display = '';
-    row.style.borderColor = 'transparent';
-    row.style.background = 'rgba(255,255,255,.03)';
+    // Reset des classes de la ligne
+    row.classList.remove('sg-won', 'sg-invalid', 'sg-hidden');
     winSpan.textContent = '';
 
     if (h === '' || a === '') continue;
     const hh = +h;
     const aa = +a;
     if (Number.isNaN(hh) || Number.isNaN(aa) || hh === aa) {
-      // Score invalide (égalité ou non-numérique) → bord rouge
-      row.style.borderColor = 'rgba(239,68,68,.4)';
+      // Score invalide (égalité ou non-numérique)
+      row.classList.add('sg-invalid');
       continue;
     }
     if (hh > aa) {
       if (!winner) home++;
       winSpan.textContent = '←';
       winSpan.style.color = '#0c8';
-      row.style.background = 'rgba(0,200,136,.05)';
+      row.classList.add('sg-won');
     } else {
       if (!winner) away++;
       winSpan.textContent = '→';
       winSpan.style.color = '#0c8';
-      row.style.background = 'rgba(0,200,136,.05)';
+      row.classList.add('sg-won');
     }
     if (!winner) {
       if (home >= target) { winner = 'home'; winnerIdx = i; wasJustWonNow.value = true; }
@@ -499,7 +499,7 @@ function refreshLiveScore(body, format, target, homeName, awayName) {
   if (winnerIdx >= 0) {
     for (let i = winnerIdx + 1; i < homeIns.length; i++) {
       const row = body.querySelector(`.sg-row[data-row="${i}"]`);
-      row.style.display = 'none';
+      row.classList.add('sg-hidden');
       // Vide les valeurs des lignes cachées au cas où elles avaient été saisies
       homeIns[i].value = '';
       awayIns[i].value = '';
