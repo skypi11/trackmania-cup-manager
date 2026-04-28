@@ -343,23 +343,23 @@ window.openSwissMatch = function (matchId) {
     </div>
 
     <!-- En-tête colonnes : indique quelle équipe est de quel côté -->
-    <div style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
-      <span style="width:80px;flex-shrink:0"></span>
-      <span style="flex:1 1 0;text-align:center">${homeName.toUpperCase()}</span>
-      <span style="width:18px;flex-shrink:0"></span>
-      <span style="flex:1 1 0;text-align:center">${awayName.toUpperCase()}</span>
-      <span style="width:30px;flex-shrink:0"></span>
+    <div style="display:grid;grid-template-columns:80px 1fr 18px 1fr 30px;column-gap:10px;align-items:center;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
+      <span></span>
+      <span style="text-align:center">${homeName.toUpperCase()}</span>
+      <span></span>
+      <span style="text-align:center">${awayName.toUpperCase()}</span>
+      <span></span>
     </div>
 
-    <!-- Layout vertical : une manche par ligne, scores côte à côte (flex row, no-wrap) -->
+    <!-- Layout : une manche par ligne, scores côte à côte (grid 5 colonnes) -->
     <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
       ${Array.from({length: maxGames}, (_, i) => `
-        <div class="sg-row" data-row="${i}" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
-          <span style="width:80px;flex-shrink:0;font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
-          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1 1 0;min-width:0;width:auto;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span style="width:18px;flex-shrink:0;text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
-          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1 1 0;min-width:0;width:auto;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span class="sg-winner" data-idx="${i}" style="width:30px;flex-shrink:0;font-size:1rem;text-align:center;font-weight:700"></span>
+        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:80px 1fr 18px 1fr 30px;column-gap:10px;align-items:center;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
+          <span style="font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
+          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span style="text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
+          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span class="sg-winner" data-idx="${i}" style="font-size:1rem;text-align:center;font-weight:700"></span>
         </div>
       `).join('')}
     </div>
