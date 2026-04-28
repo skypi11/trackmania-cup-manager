@@ -117,6 +117,13 @@
   .lp-preview-banner strong{color:#fff}
   .lp-preview-exit{background:#000;color:#FFB800;padding:4px 10px;border-radius:4px;font-size:.74rem;font-weight:800;text-decoration:none;border:1px solid rgba(255,184,0,.4)}
   .lp-preview-exit:hover{background:#FFB800;color:#000}
+
+  /* Bracket : sort du wrap pour utiliser toute la largeur viewport
+     (les autres sections restent contraintes au wrap pour rester lisibles) */
+  body{overflow-x:hidden}
+  section#lan-bracket{width:100vw;position:relative;left:50%;margin-left:-50vw;padding:0 28px;box-sizing:border-box}
+  section#lan-bracket > .lp-stitle{max-width:1480px;margin:32px auto 14px}
+  section#lan-bracket > .bracket-viewport{max-width:1880px;margin:0 auto}
 </style>
 </head>
 <body>
