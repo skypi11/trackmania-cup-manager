@@ -888,21 +888,26 @@ img{display:block}
 .lan-sub.active{color:var(--red);border-bottom-color:var(--red)}
 
 /* ── Modal de saisie scores Suisse — layout en table HTML pour fiabilité ── */
-/* 4 colonnes : input home / label "Manche X" centré / input away / vainqueur */
+/* 3 colonnes : input home / label "Manche X" centré / input away */
+/* Le gagnant est indiqué par la couleur de l'input (vert), le perdant en rouge */
 .swiss-games-table{width:100%;border-collapse:separate;border-spacing:0 6px;table-layout:fixed}
 .swiss-games-table th{font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:0 8px 4px;text-align:center}
 .swiss-games-table th.sg-th-label{width:90px}
-.swiss-games-table th.sg-th-winner{width:34px}
 .swiss-games-table td{padding:10px 8px;background:rgba(255,255,255,.03);transition:background .15s;text-align:center}
 .swiss-games-table tr.sg-row td:first-child{border-radius:7px 0 0 7px;padding-left:14px}
 .swiss-games-table tr.sg-row td:last-child{border-radius:0 7px 7px 0;padding-right:14px}
-.swiss-games-table tr.sg-row.sg-won td{background:rgba(0,200,136,.06)}
-.swiss-games-table tr.sg-row.sg-invalid td{background:rgba(239,68,68,.06)}
 .swiss-games-table tr.sg-row.sg-hidden{display:none}
 .swiss-games-table .sg-label{display:inline-block;font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em;white-space:nowrap}
-.swiss-games-table .sg-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px;border-radius:6px;font-family:inherit}
+.swiss-games-table .sg-input{width:100%;background:var(--bg3);border:1.5px solid var(--border);color:var(--text);text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px;border-radius:6px;font-family:inherit;transition:all .15s}
 .swiss-games-table .sg-input:focus{outline:none;border-color:var(--red)}
-.swiss-games-table .sg-winner{display:inline-block;font-size:1rem;font-weight:700}
+/* Input gagnant : vert vif, fond légèrement vert */
+.swiss-games-table .sg-input.sg-won{background:rgba(0,200,136,.13);border-color:#0c8;color:#0c8}
+.swiss-games-table .sg-input.sg-won:focus{border-color:#0c8;box-shadow:0 0 0 2px rgba(0,200,136,.25)}
+/* Input perdant : rouge atténué, fond légèrement rouge */
+.swiss-games-table .sg-input.sg-lost{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.5);color:#ef4444}
+.swiss-games-table .sg-input.sg-lost:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.2)}
+/* Score invalide (égalité, manche nulle impossible en RL) */
+.swiss-games-table .sg-input.sg-invalid{border-color:#f59e0b;background:rgba(245,158,11,.08)}
 
 @media(max-width:900px){
   .lan-swiss-grid{grid-template-columns:1fr !important}
