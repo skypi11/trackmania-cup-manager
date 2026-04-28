@@ -59,7 +59,8 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 - **`rl_stats`** : stats par joueur par match (`matchId`, `seasonId`, `playerId`, `teamId`, `goals`, `assists`, `saves`, `shots`, `mvp:bool`) — saisies par les admins uniquement
 - **`rl_transfers`** : transferts (`seasonId`, `playerId`, `fromTeamId`, `toTeamId`, `role`, `requestedBy`, `status`, `adminId`) — validation admin obligatoire
 - **`rl_applications`** : candidatures joueurs (`seasonId`, `playerId`, `teamId`, `message`, `status`, `processedBy`) — acceptées par manager ou fondateur
-- **`rl_lan`** : brackets LAN (`seasonId`, `status`, `qualifiedTeams:[16 teamIds]`, `swissRounds:[{round, matches}]`, `bracket:{upper,lower,final}`)
+- **`rl_lan`** : config LAN (1 doc par édition, ID lisible ex: `sls2-2026`) — `name`, `startDate`, `endDate`, `location`, `poolQuotas:{1:9,2:7}`, `manualQualified:[teamIds]` (override auto), `status:'preparation'|'swiss'|'between'|'bracket'|'finished'`
+- **`rl_lan_matches`** : matchs de la LAN (Suisse + Bracket) — `lanId`, `phase` (`swiss_r1`-`swiss_r5`, `wb_qf`, `wb_sf`, `wb_f`, `lb_r1`-`lb_f`, `gf`), `homeTeamId`, `awayTeamId`, `format:'bo5'|'bo7'`, `games:[{home,away}]`, `seriesScore:{home,away}`, `winner`, `status`, `onStage:bool`, `scheduledAt`, `swissOrder` (ordre dans le round)
 
 ## Règles métier — Rocket League
 
@@ -67,8 +68,9 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 - **Springs League Series** — 2ème édition 2026
 - 2 poules de 16 équipes, round-robin complet dans chaque poule (15 matchs/équipe)
 - 5 semaines, 3 matchs/semaine, format BO7, 3v3 Standard
-- Top 8 de chaque poule → LAN finale (16 équipes mélangées)
-- LAN : Samedi ronde suisse (5 rounds BO5) + Dimanche double élimination (BO5/BO7)
+- LAN finale (16-17 mai 2026, Salle Culturelle Magny-Cours) : 16 équipes qualifiées (top 9 P1 + top 7 P2 — quotas configurables, ad-hoc 2026 à cause de 3 forfaits P2)
+- LAN Jour 1 (samedi) : phase Suisse 5 rounds BO5, max 4 matchs simultanés (2 vagues), points 3V/0D + 0.1 par manche gagnée
+- LAN Jour 2 (dimanche) : top 8 de la Suisse → bracket double élim (BO5 phases 1-2, BO7 phases 3+, finale BO7 sans reset)
 - Mercatos : 12 avril et 26 mai 2026 (validation admin requise)
 - Dotation : 1er 800€, 2ème 500€, 3ème 300€
 
@@ -185,7 +187,12 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ Classements temps réel (V/D/pts/diff, top 8 → LAN badge)
 - ✅ Saisie scores (manager + confirmation adverse + override admin)
 - ✅ Administration : édition équipes/joueurs, forfait, reset match, gestion joueurs
-- ❌ Bracket LAN (top 8 pool A + top 8 pool B → 16 équipes)
+- ✅ LAN — Phase 0 : config `rl_lan`, qualifs auto/manuelles, badges "Qualifié LAN" sur classement (Phase 0 livrée 2026-04-27)
+- ✅ LAN — Phase 1 : Suisse complète — génération R1 (P1↔P2 + 4P1vs5P1) + algo Swiss greedy R2-R5, saisie scores manche par manche (table HTML), classement live, flag "match scène" (Phase 1 livrée 2026-04-28)
+- ❌ LAN — Phase 2 : Bracket double élim 8 équipes (BO5/BO7, auto-progression + rétro-propage)
+- ❌ LAN — Phase 3 : écrans géants (URLs dédiées plein écran, classement + matchs adaptatif)
+- ❌ LAN — Phase 4 : prédictions LAN étendues (match / top 8 / podium / vainqueur)
+- ❌ LAN — Phase 5 : page publique LAN (`/rocket-league/lan.html`)
 - ❌ Mercato (transferts inter-équipes)
 - ❌ Discord webhooks
 
@@ -205,10 +212,15 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ TM : Onglet 📋 Règles et Format — éditeur admin bilingue FR/EN, fallback FR si EN vide
 
 ### Planifié (ordre priorité)
-- [ ] RL : Bracket LAN (double élim, génération + saisie scores + avancement auto)
+- [ ] RL LAN Phase 2 : Bracket double élim 8 équipes (auto-progression + rétro-propage)
+- [ ] RL LAN Phase 3 : écrans géants `display-classement.html` + `display-matchs.html`
+- [ ] RL LAN Phase 4 : prédictions LAN étendues (match individuel + top 8 + podium + vainqueur)
+- [ ] RL LAN Phase 5 : page publique `/rocket-league/lan.html`
 - [ ] RL : Mercato (transferts inter-équipes, validation admin)
 - [ ] RL : Discord webhook notifications
 - [ ] TM : Système de prédictions
 - [ ] Domaine custom (Namecheap/Porkbun → Vercel)
 - [ ] OAuth Epic Games (portail dev Epic)
 - [ ] OAuth Ubisoft/Nadeo (nécessite accord)
+
+**Note :** Plan détaillé de la LAN dans `PLAN_LAN_2026.md` à la racine.

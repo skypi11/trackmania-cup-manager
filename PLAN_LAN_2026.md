@@ -159,19 +159,20 @@ Extension du système existant. Ouverture progressive :
 
 ## 6. Plan de livraison — 5 phases
 
-### Phase 0 — Données & qualifs (1-2 jours)
-- [ ] Création collection `rl_lan` + 1er doc édition LAN 2026
-- [ ] Auto-qualif des 16 équipes depuis le classement ligue (9 P1 + 7 P2)
-- [ ] Page admin "Préparation LAN" pour vérifier/forcer les qualifs
-- [ ] Badge "🏆 Qualifié LAN" sur le classement ligue public
+### Phase 0 — Données & qualifs ✅ LIVRÉE 2026-04-27
+- [x] Création collection `rl_lan` + 1er doc édition LAN 2026
+- [x] Auto-qualif des 16 équipes depuis le classement ligue (9 P1 + 7 P2)
+- [x] Page admin "Préparation LAN" pour vérifier/forcer les qualifs
+- [x] Badge "🏆 Qualifié LAN" sur le classement ligue public
 
-### Phase 1 — Suisse (4-5 jours)
-- [ ] Génération auto des appariements R1 (P1↔P2 selon classement ligue)
-- [ ] Algo Suisse R2-R5 (mêmes points s'affrontent, pas de revanche, override admin)
-- [ ] Saisie scores manche par manche (admin)
-- [ ] Flag scène par match
-- [ ] Classement live (3 V / 0 D / +0.1 par manche)
-- [ ] Onglet "Suisse" sur la page publique LAN
+### Phase 1 — Suisse ✅ LIVRÉE 2026-04-28
+- [x] Génération auto des appariements R1 (P1↔P2 selon classement ligue + 4P1vs5P1 interne)
+- [x] Algo Swiss greedy R2-R5 (V/D > pts > diff buts, pas de revanche, override admin via reset)
+- [x] Saisie scores manche par manche (modal table HTML, score live, auto-tab 1 chiffre, raccourcis clavier)
+- [x] Flag scène par match (toggle direct sur la carte)
+- [x] Classement live (3V / 0D / +0.1 par manche)
+- [ ] **TODO modif modal saisie** (à préciser au prochain run)
+- [ ] Onglet "Suisse" sur la page publique LAN (sera fait dans Phase 5)
 
 ### Phase 2 — Bracket double élim (3-4 jours)
 - [ ] Top 8 Suisse → bracket auto-rempli (1v8, 2v7, 3v6, 4v5)
