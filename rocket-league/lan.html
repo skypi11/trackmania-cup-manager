@@ -198,16 +198,14 @@
 
   /* Section Sponsors / Partenaires */
   .lp-sponsors-section{margin-top:96px}
-  .lp-sponsors-grid{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;gap:64px;padding:40px 28px;background:linear-gradient(135deg,rgba(255,255,255,.02),rgba(255,255,255,.04));border:1px solid var(--border);border-radius:14px}
-  .lp-sponsor{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 18px;border-radius:10px;transition:all .2s}
+  .lp-sponsors-grid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:64px;padding:40px 28px;background:linear-gradient(135deg,rgba(255,255,255,.02),rgba(255,255,255,.04));border:1px solid var(--border);border-radius:14px}
+  .lp-sponsor{display:flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:10px;transition:all .2s}
   .lp-sponsor:hover{background:rgba(255,255,255,.04);transform:translateY(-2px)}
   .lp-sponsor img{height:64px;width:auto;max-width:240px;object-fit:contain;opacity:.9;filter:brightness(1.05);transition:opacity .2s}
   .lp-sponsor:hover img{opacity:1}
-  .lp-sponsor-name{font-size:.86rem;font-weight:700;color:var(--text2);letter-spacing:.02em;text-align:center;white-space:nowrap}
   @media(max-width:600px){
     .lp-sponsors-grid{gap:32px;padding:28px 16px}
     .lp-sponsor img{height:46px}
-    .lp-sponsor-name{font-size:.78rem}
   }
 </style>
 </head>
@@ -252,14 +250,8 @@
   <section class="lp-sponsors-section">
     <div class="lp-stitle">🤝 Avec le soutien de</div>
     <div class="lp-sponsors-grid">
-      <div class="lp-sponsor">
-        <img src="../assets/PAGE_404.png" alt="Page 404 Informatique">
-        <span class="lp-sponsor-name">Page 404 Informatique</span>
-      </div>
-      <div class="lp-sponsor">
-        <img src="../assets/Ibis-budget-2019.svg.png" alt="Ibis Budget">
-        <span class="lp-sponsor-name">Ibis Budget</span>
-      </div>
+      <div class="lp-sponsor"><img src="../assets/PAGE_404.png" alt="Page 404 Informatique"></div>
+      <div class="lp-sponsor"><img src="../assets/Ibis-budget-2019.svg.png" alt="Ibis Budget"></div>
     </div>
   </section>
 </main>
