@@ -342,13 +342,12 @@ window.openSwissMatch = function (matchId) {
       </div>
     </div>
 
-    <!-- Layout en table HTML : la solution la plus fiable pour aligner -->
+    <!-- Layout en table HTML : 4 colonnes — home / "Manche X" centré / away / vainqueur -->
     <table class="swiss-games-table" id="swiss-games-list">
       <thead>
         <tr>
-          <th class="sg-th-label"></th>
           <th>${homeName.toUpperCase()}</th>
-          <th class="sg-th-sep"></th>
+          <th class="sg-th-label"></th>
           <th>${awayName.toUpperCase()}</th>
           <th class="sg-th-winner"></th>
         </tr>
@@ -356,9 +355,8 @@ window.openSwissMatch = function (matchId) {
       <tbody>
         ${Array.from({length: maxGames}, (_, i) => `
           <tr class="sg-row" data-row="${i}">
-            <td><span class="sg-label">Manche ${i+1}</span></td>
             <td><input type="number" class="sg-input sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
-            <td><span class="sg-sep">—</span></td>
+            <td><span class="sg-label">Manche ${i+1}</span></td>
             <td><input type="number" class="sg-input sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
             <td><span class="sg-winner" data-idx="${i}"></span></td>
           </tr>
