@@ -56,9 +56,12 @@
   .d-stage-bar-l{display:flex;align-items:center;gap:.6em}
   .d-stage-bar-l::before{content:'🎭';font-size:1.2em}
   .d-stage-fmt{background:rgba(255,184,0,.18);border:1px solid rgba(255,184,0,.4);padding:.15em .7em;border-radius:.3em;font-size:.85em}
-  .d-stage-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:clamp(20px,2vw,60px) clamp(24px,2.5vw,80px);gap:var(--gap)}
-  .d-stage-team{display:flex;align-items:center;gap:clamp(16px,1.5vw,40px);min-width:0}
-  .d-stage-team.d-away{flex-direction:row-reverse;text-align:right}
+  /* Grid 1fr | auto | 1fr avec home content collé à droite (vers le score)
+     et away content collé à gauche (vers le score) → score parfaitement
+     centré et symétrique. */
+  .d-stage-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:clamp(20px,2vw,60px) clamp(24px,2.5vw,80px);gap:clamp(20px,2.5vw,80px)}
+  .d-stage-team{display:flex;align-items:center;gap:clamp(16px,1.5vw,40px);min-width:0;justify-content:flex-end}
+  .d-stage-team.d-away{justify-content:flex-start}
   .d-stage-logo{width:var(--logo-stage);height:var(--logo-stage);border-radius:clamp(8px,.8vw,20px);object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0}
   .d-stage-name{font-size:var(--t-stage-name);font-weight:900;letter-spacing:-.02em;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .d-stage-score{font-size:var(--t-stage-score);font-weight:900;text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.04em;color:#fff}
@@ -257,12 +260,21 @@
           }
           phaseInfo.textContent = `Phase Suisse · Round ${currentRound} / ${SWISS_ROUNDS}`;
 
+          // Format LAN : max 4 matchs simultanés (système groupe 1 / groupe 2).
+          // - Stage match : 1
+          // - Autres "en cours" (matchs live = jeu démarré, pas encore fini) : max 3
+          // - "À venir" : matchs pending du round actuel + round suivant
           const currentRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound);
           const stageMatch = currentRoundMatches.find(m => m.onStage);
-          const otherMatches = currentRoundMatches.filter(m => m !== stageMatch);
+          const others = currentRoundMatches.filter(m => m !== stageMatch);
+          // Live = match avec au moins une manche jouée mais pas terminé
+          const liveOthers = others.filter(m => !isMatchPlayed(m) && (m.games?.length > 0)).slice(0, 3);
+          // Pending = match du round actuel sans manche jouée + matchs round suivant (vague 2)
+          const pendingCurrent = others.filter(m => !isMatchPlayed(m) && !(m.games?.length > 0));
           const nextRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound + 1);
+          const upcoming = [...pendingCurrent, ...nextRoundMatches].slice(0, 4);
 
-          renderLayout(stageMatch, otherMatches, nextRoundMatches, `Round ${currentRound}`, `Round ${currentRound + 1} (à venir)`, m => `Round ${getSwissRound(m.phase)}`);
+          renderLayout(stageMatch, liveOthers, upcoming, 'En cours', 'À venir', m => `Round ${getSwissRound(m.phase)}`);
           return;
         }
 
@@ -276,22 +288,22 @@
           }
           phaseInfo.textContent = 'Bracket double élimination';
 
-          // Match sur scène
+          // Format bracket double élim : max 4 matchs simultanés.
           const stageMatch = bracketMatches.find(m => m.onStage && hasBothTeams(m));
-
-          // Matchs prêts (équipes connues, pas joués) sauf le match sur scène
-          const ready = bracketMatches.filter(m => m !== stageMatch && hasBothTeams(m) && !isMatchPlayed(m));
-          // Matchs en attente (au moins une équipe inconnue)
-          const upcoming = bracketMatches.filter(m => !hasBothTeams(m));
-          // Matchs déjà joués (résultats récents) — top 3 derniers
+          // Matchs prêts (équipes connues, pas joués) hors scène — limit 3
+          const ready = bracketMatches
+            .filter(m => m !== stageMatch && hasBothTeams(m) && !isMatchPlayed(m))
+            .slice(0, 3);
+          // Matchs en attente (équipes inconnues) — vague suivante
+          const upcoming = bracketMatches.filter(m => !hasBothTeams(m)).slice(0, 4);
+          // Si tout est joué : afficher les derniers résultats
           const recent = bracketMatches.filter(m => isMatchPlayed(m)).slice(-3);
 
-          // Si rien d'actif (status finished avec tout joué) : on affiche les derniers résultats
           if (!stageMatch && !ready.length) {
-            renderLayout(null, recent, upcoming.slice(0, 4), 'Derniers résultats', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
+            renderLayout(null, recent, upcoming, 'Derniers résultats', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
             return;
           }
-          renderLayout(stageMatch, ready, upcoming.slice(0, 4), 'Matchs en cours', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
+          renderLayout(stageMatch, ready, upcoming, 'En cours', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
           return;
         }
 
