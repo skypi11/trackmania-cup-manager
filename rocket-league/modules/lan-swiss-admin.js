@@ -11,6 +11,7 @@ import {
   calcSeriesScore, calculateSwissStandings, getRoundMatches, getSwissMatches,
   isRoundComplete,
 } from './lan-swiss.js';
+import { showPairingsConfirmation } from './lan-modals.js';
 
 export async function admLanSwiss() {
   const wrap = document.getElementById('lan-sec-content');
@@ -217,13 +218,13 @@ window.generateSwissR1 = async function () {
   const pairings = generateR1Pairings(qP1, qP2);
   if (!pairings.length) { toast('Aucun appariement généré', 'err'); return; }
 
-  const summary = pairings.map((p, i) => {
-    const h = state.teamsMap[p.home]?.name || '?';
-    const a = state.teamsMap[p.away]?.name || '?';
-    return `${i+1}. ${h}  vs  ${a}`;
-  }).join('\n');
-
-  if (!confirm(`Générer les ${pairings.length} matchs du Round 1 ?\n\n${summary}`)) return;
+  const ok = await showPairingsConfirmation({
+    title: 'Round 1 — Génération des appariements',
+    subtitle: `${pairings.length} matchs en BO5 vont être créés (Poule 1 ↔ Poule 2 + 4P1 vs 5P1 interne).`,
+    pairings,
+    format: 'bo5',
+  });
+  if (!ok) return;
 
   try {
     await createLanMatchesBatch(pairings.map((p, i) => ({
@@ -253,13 +254,13 @@ window.generateSwissNextRound = async function (round) {
   const pairings = generateNextRoundPairings(swissMatches, qIds);
   if (!pairings.length) { toast('Aucun appariement généré', 'err'); return; }
 
-  const summary = pairings.map((p, i) => {
-    const h = state.teamsMap[p.home]?.name || '?';
-    const a = state.teamsMap[p.away]?.name || '?';
-    return `${i+1}. ${h}  vs  ${a}`;
-  }).join('\n');
-
-  if (!confirm(`Générer les ${pairings.length} matchs du Round ${round} ?\n\n${summary}`)) return;
+  const ok = await showPairingsConfirmation({
+    title: `Round ${round} — Génération des appariements`,
+    subtitle: `${pairings.length} matchs en BO5 — appariement Swiss (équipes au même score, sans revanche).`,
+    pairings,
+    format: 'bo5',
+  });
+  if (!ok) return;
 
   try {
     await createLanMatchesBatch(pairings.map((p, i) => ({

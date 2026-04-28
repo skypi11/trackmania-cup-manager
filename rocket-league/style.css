@@ -909,6 +909,18 @@ img{display:block}
 /* Score invalide (égalité, manche nulle impossible en RL) */
 .swiss-games-table .sg-input.sg-invalid{border-color:#f59e0b;background:rgba(245,158,11,.08)}
 
+/* ── Modal de confirmation génération de round / bracket ── */
+.pairings-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;max-height:55vh;overflow-y:auto;padding-right:4px}
+.pairing-card{display:grid;grid-template-columns:30px 1fr 60px 1fr;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;transition:border-color .15s}
+.pairing-card:hover{border-color:rgba(255,184,0,.3)}
+.pairing-num{font-size:.86rem;font-weight:800;color:#FFB800;text-align:center}
+.pairing-team{display:flex;align-items:center;gap:10px;min-width:0}
+.pairing-team.away{flex-direction:row-reverse;text-align:right}
+.pairing-logo{width:32px;height:32px;border-radius:5px;object-fit:cover;background:var(--bg2);flex-shrink:0}
+.pairing-logo-ph{width:32px;height:32px;border-radius:5px;background:var(--bg2);flex-shrink:0}
+.pairing-name{font-weight:700;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pairing-vs{text-align:center;font-size:.7rem;font-weight:800;color:var(--text3);letter-spacing:.06em}
+
 @media(max-width:900px){
   .lan-swiss-grid{grid-template-columns:1fr !important}
 }
