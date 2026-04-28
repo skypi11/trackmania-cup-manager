@@ -8,6 +8,7 @@ import {
   setupLanListener, setupLanMatchesListener,
 } from './lan.js';
 import { admLanSwiss } from './lan-swiss-admin.js';
+import { admLanBracket } from './lan-bracket-admin.js';
 
 state.lanAdmSec = state.lanAdmSec || 'preparation';
 
@@ -25,17 +26,13 @@ export async function admLan() {
     <div class="lan-subnav">
       <button class="lan-sub ${state.lanAdmSec==='preparation'?'active':''}" onclick="window.lanGoSec('preparation')">📋 Préparation</button>
       <button class="lan-sub ${state.lanAdmSec==='swiss'?'active':''}" onclick="window.lanGoSec('swiss')">🇨🇭 Suisse (Jour 1)</button>
-      <button class="lan-sub ${state.lanAdmSec==='bracket'?'active':''}" onclick="window.lanGoSec('bracket')" disabled style="opacity:.4;cursor:not-allowed" title="Phase 2 — à venir">🏆 Bracket (Jour 2)</button>
+      <button class="lan-sub ${state.lanAdmSec==='bracket'?'active':''}" onclick="window.lanGoSec('bracket')">🏆 Bracket (Jour 2)</button>
     </div>
     <div id="lan-sec-content"><div class="loading"></div></div>
   `;
 
   if (state.lanAdmSec === 'swiss') return admLanSwiss();
-  if (state.lanAdmSec === 'bracket') {
-    document.getElementById('lan-sec-content').innerHTML =
-      `<div class="empty" style="padding:30px;text-align:center;color:var(--text2)">Phase 2 — Bracket à venir.</div>`;
-    return;
-  }
+  if (state.lanAdmSec === 'bracket') return admLanBracket();
   return admLanPreparation();
 }
 
