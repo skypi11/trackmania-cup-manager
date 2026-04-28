@@ -19,6 +19,17 @@ const LAN_DOC_ID = 'sls2-2026';
 state.lanConfig = null;
 state.lanMatches = state.lanMatches || {};
 
+// Mode aperçu : ?preview=swiss|between|bracket|finished force le status
+// localement (pas de write Firestore) pour visualiser le rendu de chaque
+// phase avant la LAN. Lecture seule des données réelles.
+const VALID_PREVIEW_STATUSES = ['preparation', 'swiss', 'between', 'bracket', 'finished'];
+const PREVIEW_STATUS = (() => {
+  try {
+    const p = new URL(window.location.href).searchParams.get('preview');
+    return p && VALID_PREVIEW_STATUSES.includes(p) ? p : null;
+  } catch { return null; }
+})();
+
 // ── Init : listeners live ─────────────────────────────────────────────
 export function initLanPublic() {
   let pending = 0;
@@ -69,7 +80,10 @@ function teamLogo(t, cls = 'lp-logo') {
     ? `<img class="${cls}" src="${esc(t.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
     : `<div class="${cls} lp-logo-ph"></div>`;
 }
-function getLanStatus() { return state.lanConfig?.status || 'preparation'; }
+function getLanStatus() {
+  if (PREVIEW_STATUS) return PREVIEW_STATUS;
+  return state.lanConfig?.status || 'preparation';
+}
 function getLanQuota(pool) {
   const q = state.lanConfig?.poolQuotas || { 1: 9, 2: 7 };
   return q[pool] ?? q[String(pool)] ?? 8;
@@ -101,11 +115,23 @@ function fmtDate(s) {
 // ── RENDER : top-level ────────────────────────────────────────────────
 function rerender() {
   if (!Object.keys(state.teamsMap || {}).length) return; // attendre les équipes
+  renderPreviewBanner();
   renderHero();
   renderQualified();
   renderSwiss();
   renderBracket();
   renderChampion();
+}
+
+function renderPreviewBanner() {
+  const wrap = document.getElementById('lan-preview-banner');
+  if (!wrap) return;
+  if (!PREVIEW_STATUS) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = `
+    <div><strong>👁️ Mode aperçu</strong> — status forcé à <strong>${esc(PREVIEW_STATUS)}</strong> · données réelles non modifiées</div>
+    <a href="./lan.html" class="lp-preview-exit">✕ Sortir du mode aperçu</a>
+  `;
 }
 
 function renderHero() {

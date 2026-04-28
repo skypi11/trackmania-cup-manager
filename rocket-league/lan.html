@@ -111,6 +111,12 @@
   .lp-pod-name{font-weight:800;font-size:.95rem}
   .lp-pod-prize{font-weight:700;color:#FFB800;font-size:.86rem}
   @media(max-width:600px){.lp-podium{grid-template-columns:1fr;max-width:340px}.lp-pod-1st{transform:none;order:-1}}
+
+  /* Bandeau Mode aperçu */
+  .lp-preview-banner{display:none;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 18px;background:linear-gradient(90deg,rgba(255,184,0,.18),rgba(255,107,53,.15));border-bottom:2px solid rgba(255,184,0,.5);color:#FFB800;font-size:.86rem;font-weight:600}
+  .lp-preview-banner strong{color:#fff}
+  .lp-preview-exit{background:#000;color:#FFB800;padding:4px 10px;border-radius:4px;font-size:.74rem;font-weight:800;text-decoration:none;border:1px solid rgba(255,184,0,.4)}
+  .lp-preview-exit:hover{background:#FFB800;color:#000}
 </style>
 </head>
 <body>
@@ -130,6 +136,8 @@
     </a>
   </div>
 </header>
+
+<div id="lan-preview-banner" class="lp-preview-banner"></div>
 
 <main class="lp-wrap">
   <div class="lp-hero" id="lan-hero">
