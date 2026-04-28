@@ -329,7 +329,8 @@ window.openSwissMatch = function (matchId) {
           <span style="color:var(--text3);font-size:1.4rem">-</span>
           <span id="sl-away-score" style="min-width:40px;text-align:left;color:var(--text)">0</span>
         </div>
-        <div id="sl-status" style="font-size:.7rem;color:var(--text2);margin-top:6px;font-weight:700;letter-spacing:.04em;min-height:14px">EN COURS · BO${target===3?5:7}</div>
+        <div id="sl-format" style="font-size:.7rem;color:var(--text2);margin-top:6px;font-weight:700;letter-spacing:.04em">EN COURS · BO${target===3?5:7}</div>
+        <div id="sl-status" style="font-size:.65rem;color:var(--text3);margin-top:2px;font-weight:600;min-height:13px">encore ${target} manche${target>1?'s':''}</div>
       </div>
       <!-- Équipe extérieur (droite) -->
       <div style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">
@@ -342,23 +343,23 @@ window.openSwissMatch = function (matchId) {
     </div>
 
     <!-- En-tête colonnes : indique quelle équipe est de quel côté -->
-    <div style="display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
-      <span style="width:80px"></span>
-      <span style="flex:1;text-align:center">${homeName.toUpperCase()}</span>
-      <span style="width:18px"></span>
-      <span style="flex:1;text-align:center">${awayName.toUpperCase()}</span>
-      <span style="width:30px"></span>
+    <div style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
+      <span style="width:80px;flex-shrink:0"></span>
+      <span style="flex:1 1 0;text-align:center">${homeName.toUpperCase()}</span>
+      <span style="width:18px;flex-shrink:0"></span>
+      <span style="flex:1 1 0;text-align:center">${awayName.toUpperCase()}</span>
+      <span style="width:30px;flex-shrink:0"></span>
     </div>
 
-    <!-- Layout vertical : une manche par ligne, tous les champs côte à côte (flex) -->
+    <!-- Layout vertical : une manche par ligne, scores côte à côte (flex row, no-wrap) -->
     <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
       ${Array.from({length: maxGames}, (_, i) => `
-        <div class="sg-row" data-row="${i}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
-          <span style="width:80px;font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em;flex-shrink:0">Manche ${i+1}</span>
-          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1;min-width:0;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span style="width:18px;text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem;flex-shrink:0">—</span>
-          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1;min-width:0;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span class="sg-winner" data-idx="${i}" style="width:30px;font-size:1rem;text-align:center;font-weight:700;flex-shrink:0"></span>
+        <div class="sg-row" data-row="${i}" style="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
+          <span style="width:80px;flex-shrink:0;font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
+          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1 1 0;min-width:0;width:auto;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span style="width:18px;flex-shrink:0;text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
+          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1 1 0;min-width:0;width:auto;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span class="sg-winner" data-idx="${i}" style="width:30px;flex-shrink:0;font-size:1rem;text-align:center;font-weight:700"></span>
         </div>
       `).join('')}
     </div>
@@ -505,24 +506,31 @@ function refreshLiveScore(body, format, target, homeName, awayName) {
     }
   }
 
-  // Update du score live + statut
+  // Update du score live + statut sur 2 lignes (format / état)
   document.getElementById('sl-home-score').textContent = home;
   document.getElementById('sl-away-score').textContent = away;
+  const formatLine = document.getElementById('sl-format');
   const status = document.getElementById('sl-status');
   if (winner === 'home') {
-    status.textContent = `✓ ${homeName.toUpperCase()} GAGNE ${home}-${away}`;
+    formatLine.textContent = `✓ ${homeName.toUpperCase()} GAGNE`;
+    formatLine.style.color = '#0c8';
+    status.textContent = `${home}-${away} en manches`;
     status.style.color = '#0c8';
     document.getElementById('sl-home-score').style.color = '#0c8';
     document.getElementById('sl-away-score').style.color = 'var(--text3)';
   } else if (winner === 'away') {
-    status.textContent = `✓ ${awayName.toUpperCase()} GAGNE ${home}-${away}`;
+    formatLine.textContent = `✓ ${awayName.toUpperCase()} GAGNE`;
+    formatLine.style.color = '#0c8';
+    status.textContent = `${home}-${away} en manches`;
     status.style.color = '#0c8';
     document.getElementById('sl-home-score').style.color = 'var(--text3)';
     document.getElementById('sl-away-score').style.color = '#0c8';
   } else {
     const need = Math.max(target - home, target - away);
-    status.textContent = `EN COURS · BO${target === 3 ? 5 : 7} · encore ${need} manche${need > 1 ? 's' : ''}`;
-    status.style.color = 'var(--text2)';
+    formatLine.textContent = `EN COURS · BO${target === 3 ? 5 : 7}`;
+    formatLine.style.color = 'var(--text2)';
+    status.textContent = `encore ${need} manche${need > 1 ? 's' : ''}`;
+    status.style.color = 'var(--text3)';
     document.getElementById('sl-home-score').style.color = 'var(--text)';
     document.getElementById('sl-away-score').style.color = 'var(--text)';
   }
