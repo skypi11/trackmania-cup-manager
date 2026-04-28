@@ -45,12 +45,14 @@ export const SLOT_PHASE = {
   gf:    'gf',
 };
 
-// Label lisible de chaque slot
+// Label lisible de chaque slot — court pour rentrer dans le footer des
+// cartes du bracket (260px de large). Les seedings (S1 vs S8 etc.) sont
+// visibles via la position des équipes dans la colonne Quarts WB.
 export const SLOT_LABEL = {
-  wb_qf1: 'Quart WB 1 (S1 vs S8)',
-  wb_qf2: 'Quart WB 2 (S2 vs S7)',
-  wb_qf3: 'Quart WB 3 (S3 vs S6)',
-  wb_qf4: 'Quart WB 4 (S4 vs S5)',
+  wb_qf1: 'Quart WB 1',
+  wb_qf2: 'Quart WB 2',
+  wb_qf3: 'Quart WB 3',
+  wb_qf4: 'Quart WB 4',
   wb_sf1: 'Demi WB 1',
   wb_sf2: 'Demi WB 2',
   wb_f:   'Finale WB',

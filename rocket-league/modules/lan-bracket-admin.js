@@ -235,9 +235,10 @@ function feederToLabel(feeder) {
 }
 
 // ── Tracé des connecteurs SVG en L ────────────────────────────────────
-// Définition des liens : sources[] → target. solid pour le flux principal
-// (gagnant), dashed pour les "drop downs" WB→LB (perdant), gold pour le flux
-// vers la grande finale.
+// Note : les "drop-downs" WB→LB (perdants) ne sont pas tracés visuellement —
+// l'info est déjà portée par les feeder labels ("Perdant Demi WB 1" etc.)
+// dans les cartes LB. Tracer ces lignes générait des chevauchements et
+// passait à travers des cartes.
 const CONNECTORS = [
   // Winners' bracket
   { sources: ['wb_qf1','wb_qf4'], target: 'wb_sf1', kind: 'solid' },
@@ -250,10 +251,6 @@ const CONNECTORS = [
   { sources: ['lb_r2_1','lb_r2_2'], target: 'lb_r3', kind: 'solid' },
   { sources: ['lb_r3'],   target: 'lb_f',    kind: 'solid' },
   { sources: ['lb_f'],    target: 'gf',      kind: 'gold'  },
-  // Drop downs WB → LB (perdants) — pointillés rouges
-  { sources: ['wb_sf2'], target: 'lb_r2_1', kind: 'dashed' },
-  { sources: ['wb_sf1'], target: 'lb_r2_2', kind: 'dashed' },
-  { sources: ['wb_f'],   target: 'lb_f',    kind: 'dashed' },
 ];
 
 function drawBracketConnectors() {
@@ -269,18 +266,31 @@ function drawBracketConnectors() {
   svg.innerHTML = '';
 
   const gridRect = grid.getBoundingClientRect();
+
+  // Pour chaque carte, on prend comme "point de raccord" le milieu entre les
+  // deux team rows (pas le centre géométrique qui inclut le footer). Comme ça
+  // les tracés sortent pile entre les deux équipes.
   const rectOf = (slot) => {
     const card = grid.querySelector(`[data-bm-slot="${slot}"]`);
     if (!card) return null;
     const r = card.getBoundingClientRect();
+    const rows = card.querySelectorAll('.bm-row');
+    let midY;
+    if (rows.length >= 2) {
+      const r1 = rows[0].getBoundingClientRect();
+      const r2 = rows[rows.length - 1].getBoundingClientRect();
+      midY = (r1.bottom + r2.top) / 2 - gridRect.top;
+    } else {
+      midY = r.top - gridRect.top + r.height / 2;
+    }
     return {
       left: r.left - gridRect.left,
       right: r.right - gridRect.left,
-      midY: r.top - gridRect.top + r.height / 2,
+      midY,
     };
   };
 
-  // Regrouper les connecteurs par target pour calculer un "midX" commun
+  // Regrouper les connecteurs par target pour calculer un branchX commun
   // entre les sources et la target — ça donne un vrai tracé en arbre.
   for (const conn of CONNECTORS) {
     const tgt = rectOf(conn.target);
@@ -288,13 +298,10 @@ function drawBracketConnectors() {
     const srcs = conn.sources.map(rectOf).filter(Boolean);
     if (!srcs.length) continue;
 
-    // Coordonnées : on veut une ligne horizontale à partir de chaque source,
-    // qui se rejoint sur une "colonne verticale" placée entre src.right max et tgt.left.
     const maxSrcRight = Math.max(...srcs.map(s => s.right));
     const branchX = maxSrcRight + (tgt.left - maxSrcRight) / 2;
 
     for (const src of srcs) {
-      // Path : src.right → branchX (horizontal) → tgt.midY (vertical) → tgt.left (horizontal)
       const d = `M ${src.right} ${src.midY} H ${branchX} V ${tgt.midY} H ${tgt.left}`;
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', d);

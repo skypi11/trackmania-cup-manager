@@ -967,7 +967,7 @@ img{display:block}
 .bm:hover:not(.bm-empty){border-color:rgba(245,158,11,.55);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .bm.bm-played{border-left:3px solid rgba(0,200,100,.5)}
 .bm.bm-pending{border-left:3px solid rgba(245,158,11,.45)}
-.bm.bm-empty{border-left:3px solid rgba(255,255,255,.06);opacity:.55;cursor:default}
+.bm.bm-empty{border-left:3px solid rgba(255,255,255,.06);opacity:.78;cursor:default}
 .bm.bm-stage{box-shadow:0 0 0 2px rgba(255,184,0,.4),0 4px 14px rgba(255,184,0,.15)}
 .bm.bm-final{min-width:260px}
 .bm-row{display:grid;grid-template-columns:1fr 44px;align-items:center;padding:7px 11px;gap:8px;min-height:38px}
