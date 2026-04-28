@@ -338,27 +338,28 @@ window.openSwissMatch = function (matchId) {
       </div>
     </div>
 
-    <!-- Layout grille 2 colonnes pour les manches -->
-    <div id="swiss-games-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    <!-- Layout vertical : une manche par ligne -->
+    <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
       ${Array.from({length: maxGames}, (_, i) => `
-        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:60px 1fr 18px 1fr 24px;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:6px;transition:all .15s">
-          <span style="font-size:.7rem;font-weight:700;color:var(--text2);letter-spacing:.04em">M${i+1}</span>
-          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.05rem;padding:6px 4px">
-          <span style="text-align:center;font-weight:700;color:var(--text3)">—</span>
-          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.05rem;padding:6px 4px">
-          <span class="sg-winner" data-idx="${i}" style="font-size:.9rem;text-align:center"></span>
+        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:70px 1fr 28px 1fr 30px;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
+          <span style="font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
+          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span style="text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
+          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span class="sg-winner" data-idx="${i}" style="font-size:1rem;text-align:center;font-weight:700"></span>
         </div>
       `).join('')}
     </div>
 
     <div style="font-size:.7rem;color:var(--text3);margin-bottom:12px;text-align:center">
-      💡 <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Tab</kbd> = champ suivant ·
+      💡 <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Tab</kbd> auto après 1 chiffre ·
+      <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Backspace</kbd> = champ précédent ·
       <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Enter</kbd> = enregistrer ·
       <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Esc</kbd> = annuler
     </div>
 
     <div class="f-actions">
-      <button class="btn-p" onclick="saveSwissMatch('${matchId}')">💾 Enregistrer</button>
+      <button class="btn-p" id="swiss-save-btn" onclick="saveSwissMatch('${matchId}')">💾 Enregistrer</button>
       <button class="btn-s" onclick="closeModal('mo-match')">Annuler</button>
       <button class="btn-d" style="margin-left:auto" onclick="clearSwissMatch('${matchId}')">🗑️ Effacer manches</button>
     </div>
@@ -367,21 +368,34 @@ window.openSwissMatch = function (matchId) {
   document.getElementById('mo-match-title').textContent = `Round ${getSwissRound(match.phase)} — ${homeName} vs ${awayName}`;
   openModal('mo-match');
 
-  // ── Init valeurs + handlers UX (auto-tab, auto-focus, score live, raccourcis)
+  // ── Init valeurs + handlers UX
   const games = match.games || [];
   const inputs = body.querySelectorAll('.sg-home, .sg-away');
   inputs.forEach(inp => {
     const idx = +inp.dataset.idx;
     const which = inp.classList.contains('sg-home') ? 'home' : 'away';
     if (games[idx]?.[which] != null) inp.value = games[idx][which];
+
     inp.addEventListener('input', () => {
-      // Auto-jump quand l'input a 2 chiffres (largement suffisant pour RL)
-      if (inp.value.length >= 2) focusNext(body, inp);
+      // Auto-tab après 1 chiffre (rare qu'une équipe mette 10+ buts en RL)
+      if (inp.value.length >= 1 && /^\d+$/.test(inp.value)) {
+        focusNext(body, inp);
+      }
       refreshLiveScore(body, format, target, homeName, awayName);
     });
+
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); window.saveSwissMatch(matchId); }
-      else if (e.key === 'Escape') { e.preventDefault(); closeModal('mo-match'); }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        window.saveSwissMatch(matchId);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal('mo-match');
+      } else if (e.key === 'Backspace' && inp.value === '') {
+        // Backspace dans champ vide → focus champ précédent
+        e.preventDefault();
+        focusPrev(body, inp);
+      }
     });
   });
 
@@ -391,39 +405,63 @@ window.openSwissMatch = function (matchId) {
   // Auto-focus sur le premier input vide
   setTimeout(() => {
     const firstEmpty = Array.from(inputs).find(i => !i.value);
-    (firstEmpty || inputs[0])?.focus();
-    (firstEmpty || inputs[0])?.select();
+    const target = firstEmpty || inputs[0];
+    target?.focus();
+    target?.select();
   }, 50);
 };
 
 function focusNext(body, current) {
-  const all = Array.from(body.querySelectorAll('.sg-home, .sg-away'));
+  const all = Array.from(body.querySelectorAll('.sg-home, .sg-away'))
+    .filter(el => el.closest('.sg-row').style.display !== 'none');
   const i = all.indexOf(current);
   if (i >= 0 && i < all.length - 1) {
     const next = all[i + 1];
     next.focus();
     next.select();
+  } else {
+    // On est sur le dernier champ visible : focus le bouton enregistrer
+    document.getElementById('swiss-save-btn')?.focus();
   }
 }
 
-// Recalcule + ré-affiche le score série live et le statut du match
+function focusPrev(body, current) {
+  const all = Array.from(body.querySelectorAll('.sg-home, .sg-away'))
+    .filter(el => el.closest('.sg-row').style.display !== 'none');
+  const i = all.indexOf(current);
+  if (i > 0) {
+    const prev = all[i - 1];
+    prev.focus();
+    prev.select();
+  }
+}
+
+// Recalcule + ré-affiche le score série live, le statut, l'état des manches
 function refreshLiveScore(body, format, target, homeName, awayName) {
   const homeIns = body.querySelectorAll('.sg-home');
   const awayIns = body.querySelectorAll('.sg-away');
-  let home = 0, away = 0, winner = null;
+  let home = 0;
+  let away = 0;
+  let winner = null;
   let winnerIdx = -1;
+  const wasJustWonNow = { value: false };
+
   for (let i = 0; i < homeIns.length; i++) {
-    const h = homeIns[i].value, a = awayIns[i].value;
+    const h = homeIns[i].value;
+    const a = awayIns[i].value;
     const row = body.querySelector(`.sg-row[data-row="${i}"]`);
     const winSpan = body.querySelector(`.sg-winner[data-idx="${i}"]`);
-    // Reset visual
+    // Reset visual de la ligne
+    row.style.display = '';
     row.style.borderColor = 'transparent';
     row.style.background = 'rgba(255,255,255,.03)';
-    row.style.opacity = '1';
     winSpan.textContent = '';
+
     if (h === '' || a === '') continue;
-    const hh = +h, aa = +a;
+    const hh = +h;
+    const aa = +a;
     if (Number.isNaN(hh) || Number.isNaN(aa) || hh === aa) {
+      // Score invalide (égalité ou non-numérique) → bord rouge
       row.style.borderColor = 'rgba(239,68,68,.4)';
       continue;
     }
@@ -439,36 +477,47 @@ function refreshLiveScore(body, format, target, homeName, awayName) {
       row.style.background = 'rgba(0,200,136,.05)';
     }
     if (!winner) {
-      if (home >= target) { winner = 'home'; winnerIdx = i; }
-      else if (away >= target) { winner = 'away'; winnerIdx = i; }
-    }
-  }
-  // Grise les manches inutiles (après le winnerIdx)
-  if (winnerIdx >= 0) {
-    for (let i = winnerIdx + 1; i < homeIns.length; i++) {
-      const row = body.querySelector(`.sg-row[data-row="${i}"]`);
-      row.style.opacity = '.4';
+      if (home >= target) { winner = 'home'; winnerIdx = i; wasJustWonNow.value = true; }
+      else if (away >= target) { winner = 'away'; winnerIdx = i; wasJustWonNow.value = true; }
     }
   }
 
+  // Cache les manches après le winnerIdx (inutiles)
+  if (winnerIdx >= 0) {
+    for (let i = winnerIdx + 1; i < homeIns.length; i++) {
+      const row = body.querySelector(`.sg-row[data-row="${i}"]`);
+      row.style.display = 'none';
+      // Vide les valeurs des lignes cachées au cas où elles avaient été saisies
+      homeIns[i].value = '';
+      awayIns[i].value = '';
+    }
+  }
+
+  // Update du score live + statut
   document.getElementById('sl-home-score').textContent = home;
   document.getElementById('sl-away-score').textContent = away;
   const status = document.getElementById('sl-status');
   if (winner === 'home') {
-    status.textContent = `✓ ${homeName.toUpperCase()} GAGNE`;
+    status.textContent = `✓ ${homeName.toUpperCase()} GAGNE ${home}-${away}`;
     status.style.color = '#0c8';
     document.getElementById('sl-home-score').style.color = '#0c8';
     document.getElementById('sl-away-score').style.color = 'var(--text3)';
   } else if (winner === 'away') {
-    status.textContent = `✓ ${awayName.toUpperCase()} GAGNE`;
+    status.textContent = `✓ ${awayName.toUpperCase()} GAGNE ${home}-${away}`;
     status.style.color = '#0c8';
     document.getElementById('sl-home-score').style.color = 'var(--text3)';
     document.getElementById('sl-away-score').style.color = '#0c8';
   } else {
-    status.textContent = `EN COURS · BO${target === 3 ? 5 : 7}`;
+    const need = Math.max(target - home, target - away);
+    status.textContent = `EN COURS · BO${target === 3 ? 5 : 7} · encore ${need} manche${need > 1 ? 's' : ''}`;
     status.style.color = 'var(--text2)';
     document.getElementById('sl-home-score').style.color = 'var(--text)';
     document.getElementById('sl-away-score').style.color = 'var(--text)';
+  }
+
+  // Match juste terminé : focus le bouton enregistrer pour Enter direct
+  if (wasJustWonNow.value) {
+    setTimeout(() => document.getElementById('swiss-save-btn')?.focus(), 30);
   }
 }
 
