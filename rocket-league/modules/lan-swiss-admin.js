@@ -312,16 +312,18 @@ window.openSwissMatch = function (matchId) {
 
   const body = document.getElementById('mo-match-body');
   body.innerHTML = `
-    <!-- En-tête avec score série live -->
-    <div id="swiss-live-header" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:14px;padding:14px;background:rgba(0,0,0,.25);border-radius:10px">
-      <div style="text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:10px">
-        <div>
-          <div id="sl-home-name" style="font-weight:700;font-size:.92rem">${homeName}</div>
+    <!-- En-tête équipes + score série live -->
+    <div id="swiss-live-header" style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;padding:14px;background:rgba(0,0,0,.25);border-radius:10px">
+      <!-- Équipe domicile (gauche) -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0">
+        <div style="text-align:right;min-width:0">
+          <div style="font-weight:700;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${homeName}</div>
           <div style="font-size:.66rem;color:var(--text3);margin-top:2px">DOMICILE</div>
         </div>
-        ${homeLogoUrl?`<img src="${homeLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
+        ${homeLogoUrl?`<img src="${homeLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0" onerror="this.style.opacity='.2'">`:''}
       </div>
-      <div style="text-align:center">
+      <!-- Score live au centre -->
+      <div style="text-align:center;flex-shrink:0">
         <div style="display:flex;align-items:center;gap:10px;font-size:2.2rem;font-weight:900;line-height:1">
           <span id="sl-home-score" style="min-width:40px;text-align:right;color:var(--text)">0</span>
           <span style="color:var(--text3);font-size:1.4rem">-</span>
@@ -329,24 +331,34 @@ window.openSwissMatch = function (matchId) {
         </div>
         <div id="sl-status" style="font-size:.7rem;color:var(--text2);margin-top:6px;font-weight:700;letter-spacing:.04em;min-height:14px">EN COURS · BO${target===3?5:7}</div>
       </div>
-      <div style="text-align:left;display:flex;align-items:center;gap:10px">
-        ${awayLogoUrl?`<img src="${awayLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
-        <div>
-          <div id="sl-away-name" style="font-weight:700;font-size:.92rem">${awayName}</div>
+      <!-- Équipe extérieur (droite) -->
+      <div style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">
+        ${awayLogoUrl?`<img src="${awayLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0" onerror="this.style.opacity='.2'">`:''}
+        <div style="text-align:left;min-width:0">
+          <div style="font-weight:700;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${awayName}</div>
           <div style="font-size:.66rem;color:var(--text3);margin-top:2px">EXTÉRIEUR</div>
         </div>
       </div>
     </div>
 
-    <!-- Layout vertical : une manche par ligne -->
+    <!-- En-tête colonnes : indique quelle équipe est de quel côté -->
+    <div style="display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:6px;font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em">
+      <span style="width:80px"></span>
+      <span style="flex:1;text-align:center">${homeName.toUpperCase()}</span>
+      <span style="width:18px"></span>
+      <span style="flex:1;text-align:center">${awayName.toUpperCase()}</span>
+      <span style="width:30px"></span>
+    </div>
+
+    <!-- Layout vertical : une manche par ligne, tous les champs côte à côte (flex) -->
     <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
       ${Array.from({length: maxGames}, (_, i) => `
-        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:70px 1fr 28px 1fr 30px;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
-          <span style="font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em">Manche ${i+1}</span>
-          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span style="text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem">—</span>
-          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
-          <span class="sg-winner" data-idx="${i}" style="font-size:1rem;text-align:center;font-weight:700"></span>
+        <div class="sg-row" data-row="${i}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:7px;transition:all .15s">
+          <span style="width:80px;font-size:.78rem;font-weight:700;color:var(--text2);letter-spacing:.04em;flex-shrink:0">Manche ${i+1}</span>
+          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1;min-width:0;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span style="width:18px;text-align:center;font-weight:700;color:var(--text3);font-size:1.1rem;flex-shrink:0">—</span>
+          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="flex:1;min-width:0;text-align:center;font-weight:800;font-size:1.15rem;padding:8px 6px">
+          <span class="sg-winner" data-idx="${i}" style="width:30px;font-size:1rem;text-align:center;font-weight:700;flex-shrink:0"></span>
         </div>
       `).join('')}
     </div>
@@ -568,6 +580,21 @@ window.saveSwissMatch = async function (matchId) {
 
 window.clearSwissMatch = async function (matchId) {
   if (!confirm('Effacer toutes les manches saisies pour ce match ?')) return;
+  // Vide les inputs visuellement sans fermer la modal
+  const body = document.getElementById('mo-match-body');
+  if (body) {
+    body.querySelectorAll('.sg-home, .sg-away').forEach(inp => { inp.value = ''; });
+    const match = state.lanMatches[matchId];
+    const format = match?.format || 'bo5';
+    const target = format === 'bo7' ? 4 : 3;
+    const home = state.teamsMap[match?.homeTeamId];
+    const away = state.teamsMap[match?.awayTeamId];
+    refreshLiveScore(body, format, target, esc(home?.name || '?'), esc(away?.name || '?'));
+    // Re-focus sur la première manche pour resaisir tout de suite
+    const firstInput = body.querySelector('.sg-home');
+    firstInput?.focus();
+    firstInput?.select();
+  }
   try {
     await updateLanMatch(matchId, {
       games: [],
@@ -575,7 +602,6 @@ window.clearSwissMatch = async function (matchId) {
       winner: null,
       status: 'pending',
     });
-    closeModal('mo-match');
     toast('Manches effacées', 'ok');
   } catch (e) { console.error(e); toast('Erreur', 'err'); }
 };
