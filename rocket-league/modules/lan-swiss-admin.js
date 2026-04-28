@@ -302,53 +302,175 @@ window.openSwissMatch = function (matchId) {
   const away = state.teamsMap[match.awayTeamId];
   if (!home || !away) return;
 
-  const games = match.games || [];
   const format = match.format || 'bo5';
+  const target = format === 'bo7' ? 4 : 3;
   const maxGames = format === 'bo7' ? 7 : 5;
+  const homeName = esc(home.name);
+  const awayName = esc(away.name);
+  const homeLogoUrl = home.logoUrl ? esc(home.logoUrl) : '';
+  const awayLogoUrl = away.logoUrl ? esc(away.logoUrl) : '';
 
   const body = document.getElementById('mo-match-body');
   body.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;padding:14px;background:rgba(0,0,0,.2);border-radius:8px">
-      <div style="text-align:center;flex:1">
-        ${home.logoUrl?`<img src="${esc(home.logoUrl)}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
-        <div style="font-weight:700;margin-top:5px;font-size:.86rem">${esc(home.name)}</div>
+    <!-- En-tête avec score série live -->
+    <div id="swiss-live-header" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:14px;padding:14px;background:rgba(0,0,0,.25);border-radius:10px">
+      <div style="text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:10px">
+        <div>
+          <div id="sl-home-name" style="font-weight:700;font-size:.92rem">${homeName}</div>
+          <div style="font-size:.66rem;color:var(--text3);margin-top:2px">DOMICILE</div>
+        </div>
+        ${homeLogoUrl?`<img src="${homeLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
       </div>
-      <div style="text-align:center"><span style="font-size:1.6rem;font-weight:800;color:var(--text3)">VS</span></div>
-      <div style="text-align:center;flex:1">
-        ${away.logoUrl?`<img src="${esc(away.logoUrl)}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
-        <div style="font-weight:700;margin-top:5px;font-size:.86rem">${esc(away.name)}</div>
+      <div style="text-align:center">
+        <div style="display:flex;align-items:center;gap:10px;font-size:2.2rem;font-weight:900;line-height:1">
+          <span id="sl-home-score" style="min-width:40px;text-align:right;color:var(--text)">0</span>
+          <span style="color:var(--text3);font-size:1.4rem">-</span>
+          <span id="sl-away-score" style="min-width:40px;text-align:left;color:var(--text)">0</span>
+        </div>
+        <div id="sl-status" style="font-size:.7rem;color:var(--text2);margin-top:6px;font-weight:700;letter-spacing:.04em;min-height:14px">EN COURS · BO${target===3?5:7}</div>
+      </div>
+      <div style="text-align:left;display:flex;align-items:center;gap:10px">
+        ${awayLogoUrl?`<img src="${awayLogoUrl}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.style.opacity='.2'">`:''}
+        <div>
+          <div id="sl-away-name" style="font-weight:700;font-size:.92rem">${awayName}</div>
+          <div style="font-size:.66rem;color:var(--text3);margin-top:2px">EXTÉRIEUR</div>
+        </div>
       </div>
     </div>
 
-    <div style="font-size:.78rem;color:var(--text2);margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:6px">
-      Format <strong>${format.toUpperCase()}</strong> — première équipe à <strong>${format==='bo7'?4:3} manches</strong> gagnées.<br>
-      Saisis le score en buts de chaque manche jouée. Les manches non jouées peuvent rester vides.
+    <!-- Layout grille 2 colonnes pour les manches -->
+    <div id="swiss-games-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      ${Array.from({length: maxGames}, (_, i) => `
+        <div class="sg-row" data-row="${i}" style="display:grid;grid-template-columns:60px 1fr 18px 1fr 24px;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid transparent;border-radius:6px;transition:all .15s">
+          <span style="font-size:.7rem;font-weight:700;color:var(--text2);letter-spacing:.04em">M${i+1}</span>
+          <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.05rem;padding:6px 4px">
+          <span style="text-align:center;font-weight:700;color:var(--text3)">—</span>
+          <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—" style="text-align:center;font-weight:800;font-size:1.05rem;padding:6px 4px">
+          <span class="sg-winner" data-idx="${i}" style="font-size:.9rem;text-align:center"></span>
+        </div>
+      `).join('')}
     </div>
 
-    <div id="swiss-games-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      ${Array.from({length: maxGames}, (_, i) => {
-        const g = games[i];
-        return `
-          <div style="display:grid;grid-template-columns:84px 1fr 28px 1fr;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:6px">
-            <span style="font-size:.78rem;font-weight:700;color:var(--text2)">Manche ${i+1}</span>
-            <input type="number" class="finput sg-home" data-idx="${i}" min="0" max="99" value="${g?.home ?? ''}" placeholder="0" style="text-align:center;font-weight:700">
-            <span style="text-align:center;font-weight:700;color:var(--text3)">—</span>
-            <input type="number" class="finput sg-away" data-idx="${i}" min="0" max="99" value="${g?.away ?? ''}" placeholder="0" style="text-align:center;font-weight:700">
-          </div>
-        `;
-      }).join('')}
+    <div style="font-size:.7rem;color:var(--text3);margin-bottom:12px;text-align:center">
+      💡 <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Tab</kbd> = champ suivant ·
+      <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Enter</kbd> = enregistrer ·
+      <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:.65rem">Esc</kbd> = annuler
     </div>
 
     <div class="f-actions">
       <button class="btn-p" onclick="saveSwissMatch('${matchId}')">💾 Enregistrer</button>
       <button class="btn-s" onclick="closeModal('mo-match')">Annuler</button>
-      ${games.length ? `<button class="btn-d" style="margin-left:auto" onclick="clearSwissMatch('${matchId}')">🗑️ Effacer manches</button>` : ''}
+      <button class="btn-d" style="margin-left:auto" onclick="clearSwissMatch('${matchId}')">🗑️ Effacer manches</button>
     </div>
   `;
 
-  document.getElementById('mo-match-title').textContent = `Round ${getSwissRound(match.phase)} — Saisie des manches`;
+  document.getElementById('mo-match-title').textContent = `Round ${getSwissRound(match.phase)} — ${homeName} vs ${awayName}`;
   openModal('mo-match');
+
+  // ── Init valeurs + handlers UX (auto-tab, auto-focus, score live, raccourcis)
+  const games = match.games || [];
+  const inputs = body.querySelectorAll('.sg-home, .sg-away');
+  inputs.forEach(inp => {
+    const idx = +inp.dataset.idx;
+    const which = inp.classList.contains('sg-home') ? 'home' : 'away';
+    if (games[idx]?.[which] != null) inp.value = games[idx][which];
+    inp.addEventListener('input', () => {
+      // Auto-jump quand l'input a 2 chiffres (largement suffisant pour RL)
+      if (inp.value.length >= 2) focusNext(body, inp);
+      refreshLiveScore(body, format, target, homeName, awayName);
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); window.saveSwissMatch(matchId); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeModal('mo-match'); }
+    });
+  });
+
+  // Affichage initial du score live
+  refreshLiveScore(body, format, target, homeName, awayName);
+
+  // Auto-focus sur le premier input vide
+  setTimeout(() => {
+    const firstEmpty = Array.from(inputs).find(i => !i.value);
+    (firstEmpty || inputs[0])?.focus();
+    (firstEmpty || inputs[0])?.select();
+  }, 50);
 };
+
+function focusNext(body, current) {
+  const all = Array.from(body.querySelectorAll('.sg-home, .sg-away'));
+  const i = all.indexOf(current);
+  if (i >= 0 && i < all.length - 1) {
+    const next = all[i + 1];
+    next.focus();
+    next.select();
+  }
+}
+
+// Recalcule + ré-affiche le score série live et le statut du match
+function refreshLiveScore(body, format, target, homeName, awayName) {
+  const homeIns = body.querySelectorAll('.sg-home');
+  const awayIns = body.querySelectorAll('.sg-away');
+  let home = 0, away = 0, winner = null;
+  let winnerIdx = -1;
+  for (let i = 0; i < homeIns.length; i++) {
+    const h = homeIns[i].value, a = awayIns[i].value;
+    const row = body.querySelector(`.sg-row[data-row="${i}"]`);
+    const winSpan = body.querySelector(`.sg-winner[data-idx="${i}"]`);
+    // Reset visual
+    row.style.borderColor = 'transparent';
+    row.style.background = 'rgba(255,255,255,.03)';
+    row.style.opacity = '1';
+    winSpan.textContent = '';
+    if (h === '' || a === '') continue;
+    const hh = +h, aa = +a;
+    if (Number.isNaN(hh) || Number.isNaN(aa) || hh === aa) {
+      row.style.borderColor = 'rgba(239,68,68,.4)';
+      continue;
+    }
+    if (hh > aa) {
+      if (!winner) home++;
+      winSpan.textContent = '←';
+      winSpan.style.color = '#0c8';
+      row.style.background = 'rgba(0,200,136,.05)';
+    } else {
+      if (!winner) away++;
+      winSpan.textContent = '→';
+      winSpan.style.color = '#0c8';
+      row.style.background = 'rgba(0,200,136,.05)';
+    }
+    if (!winner) {
+      if (home >= target) { winner = 'home'; winnerIdx = i; }
+      else if (away >= target) { winner = 'away'; winnerIdx = i; }
+    }
+  }
+  // Grise les manches inutiles (après le winnerIdx)
+  if (winnerIdx >= 0) {
+    for (let i = winnerIdx + 1; i < homeIns.length; i++) {
+      const row = body.querySelector(`.sg-row[data-row="${i}"]`);
+      row.style.opacity = '.4';
+    }
+  }
+
+  document.getElementById('sl-home-score').textContent = home;
+  document.getElementById('sl-away-score').textContent = away;
+  const status = document.getElementById('sl-status');
+  if (winner === 'home') {
+    status.textContent = `✓ ${homeName.toUpperCase()} GAGNE`;
+    status.style.color = '#0c8';
+    document.getElementById('sl-home-score').style.color = '#0c8';
+    document.getElementById('sl-away-score').style.color = 'var(--text3)';
+  } else if (winner === 'away') {
+    status.textContent = `✓ ${awayName.toUpperCase()} GAGNE`;
+    status.style.color = '#0c8';
+    document.getElementById('sl-home-score').style.color = 'var(--text3)';
+    document.getElementById('sl-away-score').style.color = '#0c8';
+  } else {
+    status.textContent = `EN COURS · BO${target === 3 ? 5 : 7}`;
+    status.style.color = 'var(--text2)';
+    document.getElementById('sl-home-score').style.color = 'var(--text)';
+    document.getElementById('sl-away-score').style.color = 'var(--text)';
+  }
+}
 
 window.saveSwissMatch = async function (matchId) {
   const homeInputs = document.querySelectorAll('#swiss-games-list .sg-home');
