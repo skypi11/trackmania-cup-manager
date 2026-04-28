@@ -342,14 +342,14 @@ window.openSwissMatch = function (matchId) {
       </div>
     </div>
 
-    <!-- Layout en table HTML : 4 colonnes — home / "Manche X" centré / away / vainqueur -->
+    <!-- Layout en table HTML : 3 colonnes — home / "Manche X" centré / away -->
+    <!-- Le gagnant est indiqué par la couleur de l'input (vert) au lieu d'une flèche -->
     <table class="swiss-games-table" id="swiss-games-list">
       <thead>
         <tr>
           <th>${homeName.toUpperCase()}</th>
           <th class="sg-th-label"></th>
           <th>${awayName.toUpperCase()}</th>
-          <th class="sg-th-winner"></th>
         </tr>
       </thead>
       <tbody>
@@ -358,7 +358,6 @@ window.openSwissMatch = function (matchId) {
             <td><input type="number" class="sg-input sg-home" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
             <td><span class="sg-label">Manche ${i+1}</span></td>
             <td><input type="number" class="sg-input sg-away" data-idx="${i}" min="0" max="99" inputmode="numeric" pattern="[0-9]*" placeholder="—"></td>
-            <td><span class="sg-winner" data-idx="${i}"></span></td>
           </tr>
         `).join('')}
       </tbody>
@@ -463,29 +462,28 @@ function refreshLiveScore(body, format, target, homeName, awayName) {
     const h = homeIns[i].value;
     const a = awayIns[i].value;
     const row = body.querySelector(`.sg-row[data-row="${i}"]`);
-    const winSpan = body.querySelector(`.sg-winner[data-idx="${i}"]`);
-    // Reset des classes de la ligne
-    row.classList.remove('sg-won', 'sg-invalid', 'sg-hidden');
-    winSpan.textContent = '';
+    // Reset des classes de l'input et de la ligne
+    homeIns[i].classList.remove('sg-won', 'sg-lost', 'sg-invalid');
+    awayIns[i].classList.remove('sg-won', 'sg-lost', 'sg-invalid');
+    row.classList.remove('sg-hidden');
 
     if (h === '' || a === '') continue;
     const hh = +h;
     const aa = +a;
     if (Number.isNaN(hh) || Number.isNaN(aa) || hh === aa) {
-      // Score invalide (égalité ou non-numérique)
-      row.classList.add('sg-invalid');
+      // Score invalide (égalité non possible en RL)
+      homeIns[i].classList.add('sg-invalid');
+      awayIns[i].classList.add('sg-invalid');
       continue;
     }
     if (hh > aa) {
       if (!winner) home++;
-      winSpan.textContent = '←';
-      winSpan.style.color = '#0c8';
-      row.classList.add('sg-won');
+      homeIns[i].classList.add('sg-won');
+      awayIns[i].classList.add('sg-lost');
     } else {
       if (!winner) away++;
-      winSpan.textContent = '→';
-      winSpan.style.color = '#0c8';
-      row.classList.add('sg-won');
+      homeIns[i].classList.add('sg-lost');
+      awayIns[i].classList.add('sg-won');
     }
     if (!winner) {
       if (home >= target) { winner = 'home'; winnerIdx = i; wasJustWonNow.value = true; }
