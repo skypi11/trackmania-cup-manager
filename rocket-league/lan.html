@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLS#2 LAN — Springs E-Sport</title>
+<meta name="description" content="Springs League Series #2 — LAN finale 16-17 mai 2026 à Magny-Cours. Phase Suisse, bracket double élimination et résultats live.">
+<link rel="icon" href="/assets/springs-logo.png">
+<script defer src="/_vercel/insights/script.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ── Page LAN publique : styles spécifiques ── */
+  body{background:#0a0a0a}
+  .lp-wrap{max-width:1480px;margin:0 auto;padding:24px 28px 60px}
+  .lp-hero{background:linear-gradient(135deg,#1a1a1a 0%,#0f0f0f 100%);border:1px solid var(--border);border-radius:16px;padding:36px 38px 32px;margin-bottom:28px;position:relative;overflow:hidden}
+  .lp-hero::before{content:'';position:absolute;top:0;right:0;width:55%;height:100%;background:radial-gradient(ellipse at top right,rgba(255,184,0,.08),transparent 70%);pointer-events:none}
+  .lp-hero.lp-st-live::before{background:radial-gradient(ellipse at top right,rgba(0,200,100,.12),transparent 70%)}
+  .lp-hero.lp-st-done::before{background:radial-gradient(ellipse at top right,rgba(255,184,0,.18),transparent 70%)}
+  .lp-hero-bdg{display:inline-block;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:5px 11px;border-radius:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text2);margin-bottom:14px}
+  .lp-hero.lp-st-live .lp-hero-bdg{background:rgba(0,200,100,.12);border-color:rgba(0,200,100,.35);color:#0c8}
+  .lp-hero.lp-st-live .lp-hero-bdg::before{content:'● ';color:#0c8}
+  .lp-hero.lp-st-done .lp-hero-bdg{background:linear-gradient(90deg,rgba(255,184,0,.18),rgba(255,107,53,.18));border-color:rgba(255,184,0,.4);color:#FFB800}
+  .lp-hero-title{font-size:2.4rem;font-weight:900;letter-spacing:-.02em;margin:0 0 14px;line-height:1.1}
+  .lp-hero-meta{display:flex;flex-wrap:wrap;gap:16px;font-size:.92rem;color:var(--text2);font-weight:600}
+  .lp-hero-meta span{display:inline-flex;align-items:center;gap:6px}
+
+  .lp-stitle{font-size:1.15rem;font-weight:800;letter-spacing:-.01em;margin:32px 0 14px;display:flex;align-items:center;gap:10px}
+  .lp-stitle::before{content:'';display:inline-block;width:4px;height:20px;background:var(--rl-orange,#FF6B35);border-radius:2px;flex-shrink:0}
+  .lp-stitle-sub{font-size:.78rem;color:var(--text3);font-weight:600;letter-spacing:0;margin-left:auto}
+
+  .lp-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 22px}
+  .lp-empty{text-align:center;color:var(--text2);padding:36px;font-size:.92rem;font-style:italic}
+
+  .lp-logo{width:38px;height:38px;border-radius:6px;object-fit:contain;background:var(--bg3);flex-shrink:0;border:1px solid var(--border)}
+  .lp-logo-ph{background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.08)}
+
+  /* Qualifiés */
+  .lp-q-pools{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .lp-q-pool{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .lp-q-pool-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .lp-q-pool-cnt{font-size:.74rem;color:var(--text3);font-weight:600}
+  .lp-q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+  .lp-q-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;transition:border-color .2s}
+  .lp-q-card:hover{border-color:rgba(255,184,0,.4)}
+  .lp-q-rank{font-size:.78rem;font-weight:800;color:var(--text3);width:28px;flex-shrink:0;letter-spacing:.04em}
+  .lp-q-logo{width:36px;height:36px;border-radius:5px;object-fit:contain;background:var(--bg2);flex-shrink:0;border:1px solid var(--border)}
+  .lp-q-info{flex:1;min-width:0}
+  .lp-q-name{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lp-q-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
+  .lp-q-tag{font-size:.7rem;color:var(--text2);font-weight:600}
+  .lp-pool-bdg{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase}
+  .lp-pool-bdg.p1{background:rgba(0,129,255,.15);color:var(--rl-blue);border:1px solid rgba(0,129,255,.3)}
+  .lp-pool-bdg.p2{background:rgba(255,107,53,.15);color:#FF6B35;border:1px solid rgba(255,107,53,.3)}
+  @media(max-width:880px){.lp-q-pools{grid-template-columns:1fr}}
+
+  /* Suisse */
+  .lp-sw-grid{display:grid;grid-template-columns:minmax(380px,440px) 1fr;gap:18px;align-items:start}
+  @media(max-width:980px){.lp-sw-grid{grid-template-columns:1fr}}
+  .lp-sw-stand{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .lp-sw-stand-hdr,.lp-sw-row{display:grid;grid-template-columns:34px 30px 1fr 60px 36px 36px 50px;gap:6px;align-items:center;padding:8px 12px}
+  .lp-sw-stand-hdr{background:var(--bg3);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:800;border-bottom:1px solid var(--border)}
+  .lp-sw-row{font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04)}
+  .lp-sw-row:last-child{border-bottom:0}
+  .lp-sw-row.lp-sw-top8{background:rgba(255,184,0,.05)}
+  .lp-sw-row.lp-sw-top8 .lp-sw-rank{color:#FFB800;font-weight:900}
+  .lp-sw-rank{font-weight:800;color:var(--text2);text-align:center}
+  .lp-sw-logo{width:24px;height:24px;border-radius:4px;object-fit:contain;background:var(--bg3)}
+  .lp-sw-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lp-sw-stat{font-weight:700;text-align:center;font-size:.78rem}
+  .lp-sw-pts{color:#FFB800;font-weight:800;font-size:.86rem}
+  .lp-sw-loss{color:rgba(239,68,68,.7)}
+  .lp-sw-diff{color:var(--text2)}
+
+  .lp-sw-rounds{display:flex;flex-direction:column;gap:14px}
+  .lp-sw-round{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .lp-sw-round-hdr{padding:10px 14px;background:var(--bg3);font-weight:800;font-size:.86rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .lp-sw-round-state{font-size:.66rem;font-weight:800;padding:2px 8px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase}
+  .lp-st-pending{background:rgba(255,255,255,.05);color:var(--text3);border:1px solid rgba(255,255,255,.08)}
+  .lp-st-live{background:rgba(0,200,100,.12);color:#0c8;border:1px solid rgba(0,200,100,.3)}
+  .lp-st-done{background:rgba(255,184,0,.12);color:#FFB800;border:1px solid rgba(255,184,0,.3)}
+  .lp-sw-round-matches{padding:10px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+  .lp-sw-match{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:7px 10px;position:relative;font-size:.78rem}
+  .lp-sw-match.lp-played{border-left:3px solid rgba(0,200,100,.4)}
+  .lp-sw-match.lp-pending{border-left:3px solid rgba(245,158,11,.4)}
+  .lp-sw-team{display:flex;align-items:center;gap:6px;min-width:0}
+  .lp-sw-team.away{flex-direction:row-reverse;text-align:right}
+  .lp-sw-team span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lp-sw-team.win span{color:#0c8}
+  .lp-sw-team.lose span{color:rgba(255,255,255,.4)}
+  .lp-sw-mlogo{width:20px;height:20px;border-radius:4px;object-fit:contain;background:var(--bg2);flex-shrink:0}
+  .lp-sw-score{font-weight:900;font-size:.95rem;text-align:center}
+  .lp-sw-score-vs{font-size:.7rem;color:var(--text3);font-weight:700}
+  .lp-sw-score span{color:var(--text3);margin:0 2px;font-weight:600}
+  .lp-sw-stage{position:absolute;top:-7px;right:8px;background:linear-gradient(90deg,#FFB800,#FF6B35);color:#000;font-size:.55rem;font-weight:800;padding:1px 6px;border-radius:3px;letter-spacing:.04em}
+
+  /* Bracket — re-utilise les classes .bm* / .bcol* / .bracket-* de style.css */
+  .lp-bm-foot{justify-content:flex-start;gap:8px}
+
+  /* Podium */
+  .lp-podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end;max-width:760px;margin:0 auto}
+  .lp-pod-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+  .lp-pod-1st{background:linear-gradient(180deg,rgba(255,184,0,.18),rgba(255,107,53,.08));border:2px solid rgba(255,184,0,.5);transform:translateY(-12px);padding-top:24px;padding-bottom:24px;box-shadow:0 8px 28px rgba(255,184,0,.18)}
+  .lp-pod-2nd{background:linear-gradient(180deg,rgba(192,192,192,.1),transparent);border-color:rgba(192,192,192,.3)}
+  .lp-pod-3rd{background:linear-gradient(180deg,rgba(205,127,50,.1),transparent);border-color:rgba(205,127,50,.3)}
+  .lp-pod-place{font-size:.78rem;font-weight:800;letter-spacing:.04em;color:var(--text2)}
+  .lp-pod-1st .lp-pod-place{color:#FFB800;font-size:.95rem}
+  .lp-pod-logo{width:64px;height:64px;border-radius:8px;object-fit:contain;background:var(--bg3);border:1px solid var(--border)}
+  .lp-pod-1st .lp-pod-logo{width:80px;height:80px;border:2px solid #FFB800}
+  .lp-pod-name{font-weight:800;font-size:.95rem}
+  .lp-pod-prize{font-weight:700;color:#FFB800;font-size:.86rem}
+  @media(max-width:600px){.lp-podium{grid-template-columns:1fr;max-width:340px}.lp-pod-1st{transform:none;order:-1}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-l">
+    <a href="./" class="btn-back">← Retour</a>
+    <div class="hdr-sep"></div>
+    <img src="../assets/springs-logo.png" alt="Springs" class="hdr-logo">
+    <span class="hdr-brand">SPRINGS <span>E-SPORT</span></span>
+    <span class="hdr-season">SLS #2 — LAN</span>
+  </div>
+  <div class="hdr-r">
+    <a href="https://discord.gg/ZXHRRd95C3" target="_blank" rel="noopener" class="btn-discord" style="text-decoration:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.031.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      <span>Discord</span>
+    </a>
+  </div>
+</header>
+
+<main class="lp-wrap">
+  <div class="lp-hero" id="lan-hero">
+    <div id="lan-hero-content">
+      <div class="lp-hero-bdg">Chargement…</div>
+      <h1 class="lp-hero-title">Springs League Series #2 — LAN</h1>
+      <div class="lp-hero-meta">
+        <span>📅 16-17 mai 2026</span>
+        <span>📍 Magny-Cours</span>
+        <span>💰 1 600€ de cashprize</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="lan-qualified"><div class="lp-stitle">🏅 Équipes qualifiées</div><div class="lp-card lp-empty">Chargement…</div></section>
+  <section id="lan-swiss"></section>
+  <section id="lan-bracket"></section>
+  <section id="lan-champion"></section>
+</main>
+
+<footer style="padding:24px 32px;border-top:1px solid rgba(255,255,255,0.06);background:#0a0a0a;display:flex;justify-content:center;align-items:center;gap:10px">
+  <img src="../assets/springs-logo.png" style="height:22px;opacity:0.5">
+  <span style="font-size:0.78rem;color:rgba(255,255,255,0.25)">&copy; 2026 Springs E-Sport · <a href="./" style="color:rgba(255,255,255,0.4);text-decoration:none">Retour à la ligue</a></span>
+</footer>
+
+<script type="module">
+  import { initLanPublic } from './modules/lan-public.js';
+  initLanPublic();
+</script>
+
+</body>
+</html>

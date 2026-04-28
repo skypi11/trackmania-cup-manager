@@ -16,6 +16,7 @@ export default defineConfig({
                 tmOverlayFin:   resolve(__dirname, 'trackmania/overlay-finale.html'),
                 tmOverlayPod:   resolve(__dirname, 'trackmania/overlay-podium.html'),
                 rl:             resolve(__dirname, 'rocket-league/index.html'),
+                rlLan:          resolve(__dirname, 'rocket-league/lan.html'),
             }
         }
     }
