@@ -49,8 +49,10 @@
   /* Tableau classement — flex pour que les 16 rows + header se répartissent
      dans la hauteur disponible quelle que soit la taille de l'écran. */
   .d-table{flex:1 1 auto;display:flex;flex-direction:column;gap:0;background:rgba(255,255,255,.02);border-radius:clamp(8px,.8vw,20px);overflow:hidden;min-height:0;position:relative}
-  /* Watermark : grand logo Springs centré derrière les rows */
-  .d-table::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('/assets/springs-logo.png') center/clamp(280px,38%,640px) no-repeat;opacity:.04;pointer-events:none;z-index:0}
+  /* Watermark : grand logo SLS centré derrière les rows. Opacité plus
+     forte que pour le Springs plein car le logo SLS est en outline
+     (moins de matière visuelle, donc moins lisible à faible opacité). */
+  .d-table::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('/assets/SpringsLeagueSeries.png') center/clamp(320px,42%,720px) no-repeat;opacity:.08;pointer-events:none;z-index:0}
   /* Mêmes grid-template-columns pour header et rows → alignement parfait.
      Numérique = text-align:right pour que les chiffres s'alignent par leur
      bord droit avec les headers (PTS / V / D / Δ). */
