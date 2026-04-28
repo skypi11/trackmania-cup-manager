@@ -419,19 +419,15 @@ function renderSwiss() {
     </div>
   ` : '';
 
-  // Rounds en accordéon : round en cours ouvert, autres fermés
-  let currentRound = 0;
-  for (let r = 1; r <= SWISS_ROUNDS; r++) {
-    if (swissMatches.some(m => getSwissRound(m.phase) === r)) currentRound = r;
-  }
-  // Le round "en cours" = le plus haut round qui a au moins 1 match non terminé.
-  // Si tous les rounds existants sont terminés, on ouvre le dernier joué.
-  let liveRound = 0;
+  // Rounds en accordéon : seul le round réellement en cours (matchs non
+  // terminés) est ouvert par défaut. Quand toute la Suisse est jouée
+  // (preview=finished, status bracket/finished), tous les accordéons sont
+  // fermés — l'utilisateur clique sur celui qu'il veut consulter.
+  let openRound = 0;
   for (let r = 1; r <= SWISS_ROUNDS; r++) {
     const ms = swissMatches.filter(m => getSwissRound(m.phase) === r);
-    if (ms.length && !isRoundComplete(swissMatches, r)) { liveRound = r; break; }
+    if (ms.length && !isRoundComplete(swissMatches, r)) { openRound = r; break; }
   }
-  const openRound = liveRound || currentRound;
 
   const roundsHtml = [];
   for (let r = 1; r <= SWISS_ROUNDS; r++) {
