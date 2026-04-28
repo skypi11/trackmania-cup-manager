@@ -57,6 +57,8 @@ function renderPairingCard(pairing, num, format) {
   const away = state.teamsMap[pairing.away];
   const homeName = home?.name || '?';
   const awayName = away?.name || '?';
+  const homeMeta = pairing.homeMeta || '';
+  const awayMeta = pairing.awayMeta || '';
   const homeLogo = home?.logoUrl
     ? `<img class="pairing-logo" src="${esc(home.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
     : `<div class="pairing-logo-ph"></div>`;
@@ -66,9 +68,21 @@ function renderPairingCard(pairing, num, format) {
   return `
     <div class="pairing-card">
       <div class="pairing-num">${num}</div>
-      <div class="pairing-team">${homeLogo}<span class="pairing-name">${esc(homeName)}</span></div>
+      <div class="pairing-team home">
+        <div class="pairing-name-block">
+          <span class="pairing-name">${esc(homeName)}</span>
+          ${homeMeta ? `<span class="pairing-meta">${esc(homeMeta)}</span>` : ''}
+        </div>
+        ${homeLogo}
+      </div>
       <div class="pairing-vs">VS<br><span style="color:var(--text3);font-weight:600;letter-spacing:0">${esc(format.toUpperCase())}</span></div>
-      <div class="pairing-team away"><span class="pairing-name">${esc(awayName)}</span>${awayLogo}</div>
+      <div class="pairing-team away">
+        ${awayLogo}
+        <div class="pairing-name-block">
+          <span class="pairing-name">${esc(awayName)}</span>
+          ${awayMeta ? `<span class="pairing-meta">${esc(awayMeta)}</span>` : ''}
+        </div>
+      </div>
     </div>
   `;
 }
