@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classement Suisse — SLS#2 LAN</title>
+<link rel="icon" href="/assets/springs-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* Reset minimal pour écran géant */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:#000;color:#f0f0f0;-webkit-font-smoothing:antialiased}
+
+  /* Variables responsives — adaptent automatiquement entre 1080p et 4K via vw/vh */
+  :root{
+    --u: max(1px, 0.052vw);  /* unité fluide ~1px@1920w / ~2px@4K */
+    --pad: clamp(24px, 2.4vw, 80px);
+    --gap: clamp(12px, 1vw, 32px);
+    --logo-sm: clamp(40px, 3vw, 96px);
+    --rank-w: clamp(48px, 3.5vw, 110px);
+    --row-h: clamp(56px, 5.4vh, 130px);
+    --t-hero: clamp(2rem, 3.4vw, 6rem);
+    --t-h1: clamp(1.4rem, 2vw, 3.4rem);
+    --t-row: clamp(1.1rem, 1.45vw, 2.4rem);
+    --t-meta: clamp(.8rem, .85vw, 1.4rem);
+    --t-stat: clamp(1rem, 1.4vw, 2.2rem);
+    --t-pts:  clamp(1.4rem, 2vw, 3.2rem);
+  }
+
+  body{display:flex;flex-direction:column;background:radial-gradient(ellipse at top,#181818,#000 70%)}
+
+  /* Header */
+  .d-hdr{flex:0 0 auto;padding:var(--pad) var(--pad) calc(var(--pad)*.6);display:flex;align-items:center;justify-content:space-between;gap:var(--gap);border-bottom:2px solid rgba(255,184,0,.25)}
+  .d-hdr-l{display:flex;align-items:center;gap:var(--gap);min-width:0}
+  .d-hdr-logo{height:clamp(44px,3.5vw,90px);width:auto}
+  .d-hdr-title{font-size:var(--t-h1);font-weight:900;letter-spacing:-.02em;line-height:1}
+  .d-hdr-title small{display:block;font-size:.42em;font-weight:700;color:rgba(255,184,0,.85);letter-spacing:.16em;margin-top:.5em;text-transform:uppercase}
+  .d-hdr-r{display:flex;align-items:center;gap:var(--gap);font-size:var(--t-meta);font-weight:700;color:rgba(255,255,255,.65)}
+  .d-live{display:inline-flex;align-items:center;gap:.4em;background:rgba(0,200,100,.14);border:1px solid rgba(0,200,100,.4);color:#0c8;padding:.3em .9em;border-radius:.4em;font-size:var(--t-meta);font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+  .d-live::before{content:'';display:inline-block;width:.55em;height:.55em;border-radius:50%;background:#0c8;animation:d-pulse 1.6s ease-in-out infinite}
+  @keyframes d-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+  /* Banner preview */
+  .d-preview{flex:0 0 auto;padding:.4em 1.2em;background:linear-gradient(90deg,rgba(255,184,0,.15),rgba(255,107,53,.1));border-bottom:1px solid rgba(255,184,0,.4);font-size:var(--t-meta);font-weight:700;color:#FFB800;text-align:center}
+  .d-preview[hidden]{display:none}
+
+  /* Body */
+  .d-body{flex:1 1 auto;padding:var(--pad);overflow:hidden;display:flex;flex-direction:column;gap:var(--gap)}
+
+  /* Tableau classement */
+  .d-table{flex:1 1 auto;display:flex;flex-direction:column;gap:0;background:rgba(255,255,255,.02);border-radius:clamp(8px,.8vw,20px);overflow:hidden}
+  .d-tbl-hdr{display:grid;grid-template-columns:var(--rank-w) var(--logo-sm) 1fr clamp(70px,5.5vw,140px) clamp(56px,4vw,110px) clamp(56px,4vw,110px) clamp(70px,5vw,130px);align-items:center;gap:clamp(8px,.8vw,20px);padding:clamp(8px,.8vw,20px) clamp(12px,1.2vw,30px);background:rgba(255,255,255,.05);font-size:var(--t-meta);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .d-row{display:grid;grid-template-columns:var(--rank-w) var(--logo-sm) 1fr clamp(70px,5.5vw,140px) clamp(56px,4vw,110px) clamp(56px,4vw,110px) clamp(70px,5vw,130px);align-items:center;gap:clamp(8px,.8vw,20px);padding:0 clamp(12px,1.2vw,30px);height:var(--row-h);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s}
+  .d-row:last-child{border-bottom:0}
+
+  /* Top 8 — qualifiés bracket */
+  .d-row.d-top8{background:linear-gradient(90deg,rgba(255,184,0,.08),rgba(255,184,0,.02))}
+  .d-row.d-top8 .d-rank{color:#FFB800;font-weight:900}
+  .d-row.d-top8 .d-rank::before{content:'';position:absolute;left:0;top:18%;bottom:18%;width:.25em;background:#FFB800;border-radius:1px}
+
+  /* Séparation top 8 / hors top 8 */
+  .d-row.d-top8 + .d-row:not(.d-top8){border-top:2px solid rgba(255,184,0,.3);position:relative}
+  .d-row.d-top8 + .d-row:not(.d-top8)::before{content:'NON QUALIFIÉS BRACKET';position:absolute;top:-.6em;left:50%;transform:translateX(-50%);background:#0a0a0a;color:rgba(255,255,255,.4);font-size:calc(var(--t-meta)*.78);font-weight:800;letter-spacing:.14em;padding:0 .8em}
+
+  .d-rank{position:relative;font-size:var(--t-row);font-weight:800;text-align:center;color:rgba(255,255,255,.55)}
+  .d-logo{width:var(--logo-sm);height:var(--logo-sm);border-radius:clamp(4px,.5vw,12px);object-fit:contain;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+  .d-logo-ph{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08)}
+  .d-name{font-size:var(--t-row);font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .d-stat{font-size:var(--t-stat);font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+  .d-pts{font-size:var(--t-pts);font-weight:900;text-align:center;color:#FFB800;font-variant-numeric:tabular-nums;line-height:1}
+  .d-loss{color:rgba(239,68,68,.75)}
+  .d-diff.d-pos{color:#0c8}
+  .d-diff.d-neg{color:rgba(239,68,68,.75)}
+
+  /* Footer simple */
+  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.4) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.05)}
+
+  /* Vue vide */
+  .d-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--t-h1);color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:var(--pad)}
+</style>
+</head>
+<body>
+
+<header class="d-hdr">
+  <div class="d-hdr-l">
+    <img src="../assets/springs-logo.png" alt="Springs" class="d-hdr-logo">
+    <div class="d-hdr-title">
+      Classement Suisse
+      <small>SLS #2 — LAN · Magny-Cours</small>
+    </div>
+  </div>
+  <div class="d-hdr-r">
+    <span id="d-round-info"></span>
+    <span class="d-live">LIVE</span>
+  </div>
+</header>
+
+<div id="d-preview" class="d-preview" hidden></div>
+
+<main class="d-body" id="d-body">
+  <div class="d-empty">Chargement…</div>
+</main>
+
+<footer class="d-foot">
+  <span>springs-esport.vercel.app/rocket-league/lan</span>
+  <span id="d-now"></span>
+</footer>
+
+<script type="module">
+  import { app } from '../shared/firebase-config.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
+
+  import('./modules/display-common.js').then(({ setupListeners, getLanStatus, esc, teamLogo, PREVIEW_STATUS }) => {
+    import('./modules/state.js').then(async ({ state }) => {
+      const { buildStandings } = await import('./modules/standings.js');
+      const { SWISS_ROUNDS, calcSeriesScore, calculateSwissStandings, getSwissMatches, getSwissRound }
+        = await import('./modules/lan-swiss.js');
+
+      // Banner preview
+      if (PREVIEW_STATUS) {
+        const banner = document.getElementById('d-preview');
+        banner.hidden = false;
+        banner.textContent = `👁 APERÇU — status forcé à "${PREVIEW_STATUS}" (données réelles)`;
+      }
+
+      function getQualifiedTeams(pool) {
+        const manual = state.lanConfig?.manualQualified || [];
+        const standings = buildStandings(pool);
+        if (manual.length) {
+          const set = new Set(manual);
+          const inPool = standings.filter(t => set.has(t.id));
+          if (inPool.length) return inPool;
+        }
+        const q = state.lanConfig?.poolQuotas || { 1: 9, 2: 7 };
+        return standings.slice(0, q[pool] ?? q[String(pool)] ?? 8);
+      }
+      function isRoundComplete(swissMatches, round) {
+        const ms = swissMatches.filter(m => getSwissRound(m.phase) === round);
+        if (!ms.length) return false;
+        return ms.every(m => m.status === 'played' || calcSeriesScore(m.games || [], m.format || 'bo5').played);
+      }
+
+      function render() {
+        if (!Object.keys(state.teamsMap || {}).length) return;
+        const swissMatches = getSwissMatches(Object.values(state.lanMatches));
+        const body = document.getElementById('d-body');
+        const roundInfo = document.getElementById('d-round-info');
+
+        if (!swissMatches.length) {
+          body.innerHTML = `<div class="d-empty">Phase Suisse pas encore démarrée</div>`;
+          roundInfo.textContent = '';
+          return;
+        }
+
+        // Round actuel = le plus haut round qui a au moins 1 match avec score, OU le dernier complet + 1
+        let currentRound = 0, lastDone = 0;
+        for (let r = 1; r <= SWISS_ROUNDS; r++) {
+          if (swissMatches.some(m => getSwissRound(m.phase) === r)) currentRound = r;
+          if (isRoundComplete(swissMatches, r)) lastDone = r;
+        }
+        roundInfo.textContent = `Round ${currentRound} / ${SWISS_ROUNDS}`;
+
+        const qIds = [...getQualifiedTeams(1), ...getQualifiedTeams(2)].map(t => t.id);
+        const standings = calculateSwissStandings(swissMatches, qIds);
+
+        if (!standings.length) {
+          body.innerHTML = `<div class="d-empty">Aucun classement à afficher</div>`;
+          return;
+        }
+
+        const rows = standings.map((row, i) => {
+          const team = state.teamsMap[row.teamId];
+          if (!team) return '';
+          const top8 = i < 8 ? 'd-top8' : '';
+          const diff = row.gw - row.gl;
+          const diffCls = diff > 0 ? 'd-pos' : (diff < 0 ? 'd-neg' : '');
+          return `
+            <div class="d-row ${top8}">
+              <div class="d-rank">${i + 1}</div>
+              ${teamLogo(team, 'd-logo')}
+              <div class="d-name">${esc(team.name)}</div>
+              <div class="d-pts">${row.pts.toFixed(1)}</div>
+              <div class="d-stat">${row.wins}V</div>
+              <div class="d-stat d-loss">${row.losses}D</div>
+              <div class="d-stat d-diff ${diffCls}">${diff >= 0 ? '+' : ''}${diff}</div>
+            </div>
+          `;
+        }).join('');
+
+        body.innerHTML = `
+          <div class="d-table">
+            <div class="d-tbl-hdr">
+              <div>#</div>
+              <div></div>
+              <div>Équipe</div>
+              <div>Pts</div>
+              <div>V</div>
+              <div>D</div>
+              <div>Δ</div>
+            </div>
+            ${rows}
+          </div>
+        `;
+      }
+
+      // Horloge dans le footer (refresh chaque minute)
+      function updateClock() {
+        const d = new Date();
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        document.getElementById('d-now').textContent = `${h}:${m}`;
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+
+      setupListeners(render);
+    });
+  });
+</script>
+
+</body>
+</html>

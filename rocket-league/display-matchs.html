@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matchs en cours — SLS#2 LAN</title>
+<link rel="icon" href="/assets/springs-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:#000;color:#f0f0f0;-webkit-font-smoothing:antialiased}
+
+  :root{
+    --pad: clamp(24px, 2.4vw, 80px);
+    --gap: clamp(12px, 1.2vw, 36px);
+    --t-h1: clamp(1.4rem, 2vw, 3.4rem);
+    --t-stage-name: clamp(2rem, 3.4vw, 6.2rem);
+    --t-stage-score: clamp(3.5rem, 5.8vw, 11rem);
+    --t-section: clamp(.9rem, 1.1vw, 1.8rem);
+    --t-card-name: clamp(1rem, 1.3vw, 2.2rem);
+    --t-card-score: clamp(1.6rem, 2.4vw, 4rem);
+    --t-meta: clamp(.8rem, .85vw, 1.4rem);
+    --logo-stage: clamp(80px, 7vw, 200px);
+    --logo-card: clamp(40px, 3vw, 90px);
+    --logo-up: clamp(28px, 2.2vw, 64px);
+  }
+
+  body{display:flex;flex-direction:column;background:radial-gradient(ellipse at top,#181818,#000 70%)}
+
+  /* Header */
+  .d-hdr{flex:0 0 auto;padding:var(--pad) var(--pad) calc(var(--pad)*.6);display:flex;align-items:center;justify-content:space-between;gap:var(--gap);border-bottom:2px solid rgba(255,184,0,.25)}
+  .d-hdr-l{display:flex;align-items:center;gap:var(--gap);min-width:0}
+  .d-hdr-logo{height:clamp(44px,3.5vw,90px);width:auto}
+  .d-hdr-title{font-size:var(--t-h1);font-weight:900;letter-spacing:-.02em;line-height:1}
+  .d-hdr-title small{display:block;font-size:.42em;font-weight:700;color:rgba(255,184,0,.85);letter-spacing:.16em;margin-top:.5em;text-transform:uppercase}
+  .d-hdr-r{display:flex;align-items:center;gap:var(--gap);font-size:var(--t-meta);font-weight:700;color:rgba(255,255,255,.65)}
+  .d-live{display:inline-flex;align-items:center;gap:.4em;background:rgba(0,200,100,.14);border:1px solid rgba(0,200,100,.4);color:#0c8;padding:.3em .9em;border-radius:.4em;font-size:var(--t-meta);font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+  .d-live::before{content:'';display:inline-block;width:.55em;height:.55em;border-radius:50%;background:#0c8;animation:d-pulse 1.6s ease-in-out infinite}
+  @keyframes d-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+  .d-preview{flex:0 0 auto;padding:.4em 1.2em;background:linear-gradient(90deg,rgba(255,184,0,.15),rgba(255,107,53,.1));border-bottom:1px solid rgba(255,184,0,.4);font-size:var(--t-meta);font-weight:700;color:#FFB800;text-align:center}
+  .d-preview[hidden]{display:none}
+
+  /* Body */
+  .d-body{flex:1 1 auto;padding:var(--pad);overflow:hidden;display:flex;flex-direction:column;gap:var(--gap)}
+
+  /* Section title */
+  .d-section-hdr{font-size:var(--t-section);font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:.6em}
+  .d-section-hdr::before{content:'';display:inline-block;width:.3em;height:1.4em;background:#FFB800;border-radius:1px;flex-shrink:0}
+  .d-section-hdr.d-live-section::before{background:#0c8}
+
+  /* === MATCH SUR SCÈNE (carte XXL) === */
+  .d-stage{flex:0 0 auto;background:linear-gradient(135deg,rgba(255,184,0,.1),rgba(255,107,53,.05));border:2px solid rgba(255,184,0,.45);border-radius:clamp(10px,1vw,28px);overflow:hidden;box-shadow:0 0 60px rgba(255,184,0,.08)}
+  .d-stage-bar{padding:.5em 1.2em;background:rgba(0,0,0,.4);font-size:var(--t-section);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#FFB800;display:flex;align-items:center;justify-content:space-between;gap:1em}
+  .d-stage-bar-l{display:flex;align-items:center;gap:.6em}
+  .d-stage-bar-l::before{content:'🎭';font-size:1.2em}
+  .d-stage-fmt{background:rgba(255,184,0,.18);border:1px solid rgba(255,184,0,.4);padding:.15em .7em;border-radius:.3em;font-size:.85em}
+  .d-stage-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:clamp(20px,2vw,60px) clamp(24px,2.5vw,80px);gap:var(--gap)}
+  .d-stage-team{display:flex;align-items:center;gap:clamp(16px,1.5vw,40px);min-width:0}
+  .d-stage-team.d-away{flex-direction:row-reverse;text-align:right}
+  .d-stage-logo{width:var(--logo-stage);height:var(--logo-stage);border-radius:clamp(8px,.8vw,20px);object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0}
+  .d-stage-name{font-size:var(--t-stage-name);font-weight:900;letter-spacing:-.02em;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-stage-score{font-size:var(--t-stage-score);font-weight:900;text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.04em;color:#fff}
+  .d-stage-score .d-sep{color:rgba(255,255,255,.3);font-weight:700;margin:0 .2em}
+  .d-stage-score .d-w{color:#0c8}
+  .d-stage-score .d-l{color:rgba(239,68,68,.7)}
+  .d-stage-empty{padding:clamp(40px,4vw,120px) var(--pad);text-align:center;color:rgba(255,255,255,.45);font-size:var(--t-h1);font-weight:700}
+
+  /* === GRILLE MATCHS EN COURS === */
+  .d-cards{flex:1 1 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(280px,22vw,540px),1fr));gap:var(--gap);overflow:hidden;align-content:start}
+  .d-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:clamp(8px,.6vw,18px);overflow:hidden;display:flex;flex-direction:column}
+  .d-card.d-played{border-left:3px solid rgba(0,200,100,.5)}
+  .d-card.d-live{border-left:3px solid rgba(255,184,0,.7);box-shadow:0 0 24px rgba(255,184,0,.12)}
+  .d-card.d-pending{border-left:3px solid rgba(255,255,255,.1)}
+  .d-card-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:clamp(10px,.9vw,24px) clamp(12px,1vw,28px);gap:clamp(8px,.7vw,18px);flex:1}
+  .d-card-team{display:flex;align-items:center;gap:clamp(8px,.7vw,18px);min-width:0}
+  .d-card-team.d-away{flex-direction:row-reverse;text-align:right}
+  .d-card-logo{width:var(--logo-card);height:var(--logo-card);border-radius:clamp(4px,.4vw,10px);object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0}
+  .d-card-name{font-size:var(--t-card-name);font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-card-name.d-w{color:#0c8}
+  .d-card-name.d-l{color:rgba(255,255,255,.45)}
+  .d-card-score{font-size:var(--t-card-score);font-weight:900;text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.03em;min-width:2.5em}
+  .d-card-score .d-sep{color:rgba(255,255,255,.25);font-weight:700;margin:0 .1em;font-size:.75em}
+  .d-card-vs{font-size:calc(var(--t-card-score)*.55);color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.1em}
+  .d-card-foot{padding:clamp(5px,.4vw,12px) clamp(12px,1vw,28px);border-top:1px solid rgba(255,255,255,.05);background:rgba(0,0,0,.2);font-size:var(--t-meta);color:rgba(255,255,255,.55);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+
+  /* Section "À venir" (compactée) */
+  .d-upcoming-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(220px,16vw,400px),1fr));gap:clamp(8px,.7vw,18px)}
+  .d-up-card{background:rgba(255,255,255,.015);border:1px solid rgba(255,255,255,.06);border-radius:clamp(6px,.4vw,12px);padding:clamp(8px,.7vw,18px);display:flex;align-items:center;gap:clamp(8px,.7vw,18px);min-width:0}
+  .d-up-team{display:flex;align-items:center;gap:.5em;min-width:0;flex:1}
+  .d-up-team.d-away{flex-direction:row-reverse;text-align:right;justify-content:flex-end}
+  .d-up-logo{width:var(--logo-up);height:var(--logo-up);border-radius:clamp(3px,.3vw,8px);object-fit:contain;background:rgba(255,255,255,.04);flex-shrink:0}
+  .d-up-name{font-size:var(--t-meta);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.75)}
+  .d-up-vs{font-size:calc(var(--t-meta)*.85);color:rgba(255,255,255,.3);font-weight:800;flex-shrink:0;letter-spacing:.05em}
+
+  .d-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--t-h1);color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:var(--pad)}
+
+  .d-foot{flex:0 0 auto;padding:calc(var(--pad)*.4) var(--pad);font-size:var(--t-meta);color:rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.05)}
+
+  .d-logo-ph{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08)}
+</style>
+</head>
+<body>
+
+<header class="d-hdr">
+  <div class="d-hdr-l">
+    <img src="../assets/springs-logo.png" alt="Springs" class="d-hdr-logo">
+    <div class="d-hdr-title">
+      Matchs en cours
+      <small>SLS #2 — LAN · Magny-Cours</small>
+    </div>
+  </div>
+  <div class="d-hdr-r">
+    <span id="d-phase-info"></span>
+    <span class="d-live">LIVE</span>
+  </div>
+</header>
+
+<div id="d-preview" class="d-preview" hidden></div>
+
+<main class="d-body" id="d-body">
+  <div class="d-empty">Chargement…</div>
+</main>
+
+<footer class="d-foot">
+  <span>springs-esport.vercel.app/rocket-league/lan</span>
+  <span id="d-now"></span>
+</footer>
+
+<script type="module">
+  import { app } from '../shared/firebase-config.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
+
+  import('./modules/display-common.js').then(({ setupListeners, getLanStatus, esc, teamLogo, PREVIEW_STATUS }) => {
+    import('./modules/state.js').then(async ({ state }) => {
+      const { SWISS_ROUNDS, calcSeriesScore, getSwissMatches, getSwissRound }
+        = await import('./modules/lan-swiss.js');
+      const { SLOT_LABEL, getBracketMatches }
+        = await import('./modules/lan-bracket.js');
+
+      if (PREVIEW_STATUS) {
+        const banner = document.getElementById('d-preview');
+        banner.hidden = false;
+        banner.textContent = `👁 APERÇU — status forcé à "${PREVIEW_STATUS}" (données réelles)`;
+      }
+
+      function isMatchPlayed(m) {
+        const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+        return ss.played || m.status === 'played';
+      }
+      function hasBothTeams(m) { return !!(m.homeTeamId && m.awayTeamId); }
+
+      function renderStageCard(m) {
+        const home = state.teamsMap[m.homeTeamId];
+        const away = state.teamsMap[m.awayTeamId];
+        if (!home || !away) {
+          return `<div class="d-stage-empty">Match en attente d'équipes</div>`;
+        }
+        const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+        const fmt = (m.format || 'bo5').toUpperCase();
+        const homeCls = ss.played ? (ss.winner === 'home' ? 'd-w' : 'd-l') : '';
+        const awayCls = ss.played ? (ss.winner === 'away' ? 'd-w' : 'd-l') : '';
+        return `
+          <div class="d-stage-bar">
+            <span class="d-stage-bar-l">SUR SCÈNE</span>
+            <span class="d-stage-fmt">${esc(fmt)}</span>
+          </div>
+          <div class="d-stage-body">
+            <div class="d-stage-team">${teamLogo(home, 'd-stage-logo')}<div class="d-stage-name">${esc(home.name)}</div></div>
+            <div class="d-stage-score"><span class="${homeCls}">${ss.home}</span><span class="d-sep">-</span><span class="${awayCls}">${ss.away}</span></div>
+            <div class="d-stage-team d-away"><div class="d-stage-name">${esc(away.name)}</div>${teamLogo(away, 'd-stage-logo')}</div>
+          </div>
+        `;
+      }
+
+      function renderMatchCard(m, slotLabel = '') {
+        const home = state.teamsMap[m.homeTeamId];
+        const away = state.teamsMap[m.awayTeamId];
+        if (!home || !away) return '';
+        const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+        const played = ss.played;
+        const live = !played && (m.games?.length > 0);
+        const cls = played ? 'd-played' : (live ? 'd-live' : 'd-pending');
+        const fmt = (m.format || 'bo5').toUpperCase();
+        const homeCls = played ? (ss.winner === 'home' ? 'd-w' : 'd-l') : '';
+        const awayCls = played ? (ss.winner === 'away' ? 'd-w' : 'd-l') : '';
+        const score = played || live
+          ? `<span class="${homeCls}">${ss.home}</span><span class="d-sep">-</span><span class="${awayCls}">${ss.away}</span>`
+          : `<span class="d-card-vs">VS</span>`;
+        const stage = m.onStage ? '🎭' : '';
+        return `
+          <div class="d-card ${cls}">
+            <div class="d-card-body">
+              <div class="d-card-team">${teamLogo(home, 'd-card-logo')}<div class="d-card-name ${homeCls}">${esc(home.name)}</div></div>
+              <div class="d-card-score">${score}</div>
+              <div class="d-card-team d-away"><div class="d-card-name ${awayCls}">${esc(away.name)}</div>${teamLogo(away, 'd-card-logo')}</div>
+            </div>
+            <div class="d-card-foot">
+              <span>${esc(slotLabel)} · ${esc(fmt)}</span>
+              <span>${stage}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderUpcomingCard(m, slotLabel = '') {
+        const home = m.homeTeamId ? state.teamsMap[m.homeTeamId] : null;
+        const away = m.awayTeamId ? state.teamsMap[m.awayTeamId] : null;
+        const homeName = home?.name || (m.homeFeeder ? feederLabel(m.homeFeeder) : '?');
+        const awayName = away?.name || (m.awayFeeder ? feederLabel(m.awayFeeder) : '?');
+        const homeLogo = home ? teamLogo(home, 'd-up-logo') : `<div class="d-up-logo d-logo-ph"></div>`;
+        const awayLogo = away ? teamLogo(away, 'd-up-logo') : `<div class="d-up-logo d-logo-ph"></div>`;
+        return `
+          <div class="d-up-card">
+            <div class="d-up-team">${homeLogo}<div class="d-up-name">${esc(homeName)}</div></div>
+            <div class="d-up-vs">VS</div>
+            <div class="d-up-team d-away"><div class="d-up-name">${esc(awayName)}</div>${awayLogo}</div>
+          </div>
+        `;
+      }
+
+      function feederLabel(feeder) {
+        const [type, slot] = (feeder || '').split(':');
+        const lbl = SLOT_LABEL[slot] || slot;
+        return type === 'winner' ? `Vainqueur ${lbl}` : `Perdant ${lbl}`;
+      }
+
+      function render() {
+        if (!Object.keys(state.teamsMap || {}).length) return;
+        const status = getLanStatus();
+        const phaseInfo = document.getElementById('d-phase-info');
+        const body = document.getElementById('d-body');
+
+        // --- Phase Suisse ---
+        if (status === 'swiss' || status === 'between') {
+          const swissMatches = getSwissMatches(Object.values(state.lanMatches));
+          if (!swissMatches.length) {
+            phaseInfo.textContent = '';
+            body.innerHTML = `<div class="d-empty">Phase Suisse pas encore démarrée</div>`;
+            return;
+          }
+          let currentRound = 0;
+          for (let r = 1; r <= SWISS_ROUNDS; r++) {
+            if (swissMatches.some(m => getSwissRound(m.phase) === r)) currentRound = r;
+          }
+          phaseInfo.textContent = `Phase Suisse · Round ${currentRound} / ${SWISS_ROUNDS}`;
+
+          const currentRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound);
+          const stageMatch = currentRoundMatches.find(m => m.onStage);
+          const otherMatches = currentRoundMatches.filter(m => m !== stageMatch);
+          const nextRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound + 1);
+
+          renderLayout(stageMatch, otherMatches, nextRoundMatches, `Round ${currentRound}`, `Round ${currentRound + 1} (à venir)`, m => `Round ${getSwissRound(m.phase)}`);
+          return;
+        }
+
+        // --- Phase Bracket ---
+        if (status === 'bracket' || status === 'finished') {
+          const bracketMatches = getBracketMatches(Object.values(state.lanMatches));
+          if (!bracketMatches.length) {
+            phaseInfo.textContent = '';
+            body.innerHTML = `<div class="d-empty">Bracket pas encore généré</div>`;
+            return;
+          }
+          phaseInfo.textContent = 'Bracket double élimination';
+
+          // Match sur scène
+          const stageMatch = bracketMatches.find(m => m.onStage && hasBothTeams(m));
+
+          // Matchs prêts (équipes connues, pas joués) sauf le match sur scène
+          const ready = bracketMatches.filter(m => m !== stageMatch && hasBothTeams(m) && !isMatchPlayed(m));
+          // Matchs en attente (au moins une équipe inconnue)
+          const upcoming = bracketMatches.filter(m => !hasBothTeams(m));
+          // Matchs déjà joués (résultats récents) — top 3 derniers
+          const recent = bracketMatches.filter(m => isMatchPlayed(m)).slice(-3);
+
+          // Si rien d'actif (status finished avec tout joué) : on affiche les derniers résultats
+          if (!stageMatch && !ready.length) {
+            renderLayout(null, recent, upcoming.slice(0, 4), 'Derniers résultats', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
+            return;
+          }
+          renderLayout(stageMatch, ready, upcoming.slice(0, 4), 'Matchs en cours', 'À venir', m => SLOT_LABEL[m.bracketSlot] || '');
+          return;
+        }
+
+        // --- Préparation / autres ---
+        phaseInfo.textContent = '';
+        body.innerHTML = `<div class="d-empty">La LAN n'a pas encore démarré · 16-17 mai 2026</div>`;
+      }
+
+      function renderLayout(stageMatch, otherMatches, upcoming, otherLabel, upcomingLabel, slotLabelFn) {
+        const body = document.getElementById('d-body');
+        const stageHtml = stageMatch
+          ? `<div class="d-stage">${renderStageCard(stageMatch)}</div>`
+          : '';
+        const otherHtml = otherMatches.length
+          ? `<div class="d-section-hdr d-live-section">${esc(otherLabel)} <span style="color:rgba(255,255,255,.35);font-weight:700;letter-spacing:0;text-transform:none">· ${otherMatches.length}</span></div>
+             <div class="d-cards">${otherMatches.map(m => renderMatchCard(m, slotLabelFn(m))).join('')}</div>`
+          : '';
+        const upcomingHtml = upcoming.length
+          ? `<div class="d-section-hdr">${esc(upcomingLabel)}</div>
+             <div class="d-upcoming-grid">${upcoming.map(m => renderUpcomingCard(m)).join('')}</div>`
+          : '';
+        body.innerHTML = stageHtml + otherHtml + upcomingHtml || `<div class="d-empty">Aucun match à afficher</div>`;
+      }
+
+      function updateClock() {
+        const d = new Date();
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        document.getElementById('d-now').textContent = `${h}:${m}`;
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+
+      setupListeners(render);
+    });
+  });
+</script>
+
+</body>
+</html>
