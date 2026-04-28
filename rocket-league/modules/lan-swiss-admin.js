@@ -220,10 +220,25 @@ window.generateSwissR1 = async function () {
   const pairings = generateR1Pairings(qP1, qP2);
   if (!pairings.length) { toast('Aucun appariement généré', 'err'); return; }
 
+  // Annoter chaque pairing avec le rang de chaque équipe dans sa poule
+  // (ex: "Poule 1 · 1er", "Poule 2 · 7e")
+  const rankP1 = new Map(qP1.map((t, i) => [t.id, i + 1]));
+  const rankP2 = new Map(qP2.map((t, i) => [t.id, i + 1]));
+  const teamMeta = teamId => {
+    if (rankP1.has(teamId)) return `Poule 1 · ${ordinal(rankP1.get(teamId))}`;
+    if (rankP2.has(teamId)) return `Poule 2 · ${ordinal(rankP2.get(teamId))}`;
+    return '';
+  };
+  const pairingsWithMeta = pairings.map(p => ({
+    ...p,
+    homeMeta: teamMeta(p.home),
+    awayMeta: teamMeta(p.away),
+  }));
+
   const ok = await showPairingsConfirmation({
     title: 'Round 1 — Génération des appariements',
-    subtitle: `${pairings.length} matchs en BO5 vont être créés (Poule 1 ↔ Poule 2 + 4P1 vs 5P1 interne).`,
-    pairings,
+    subtitle: `${pairings.length} matchs en BO5 — appariement Poule 1 ↔ Poule 2 (top P1 vs bottom P2) + 4e P1 vs 5e P1 (interne).`,
+    pairings: pairingsWithMeta,
     format: 'bo5',
   });
   if (!ok) return;
@@ -256,10 +271,24 @@ window.generateSwissNextRound = async function (round) {
   const pairings = generateNextRoundPairings(swissMatches, qIds);
   if (!pairings.length) { toast('Aucun appariement généré', 'err'); return; }
 
+  // Annoter chaque pairing avec le score V/D actuel de chaque équipe
+  // → on voit immédiatement que les 2 équipes appariées ont le même score
+  const standings = calculateSwissStandings(swissMatches, qIds);
+  const stats = new Map(standings.map(s => [s.teamId, s]));
+  const teamMeta = teamId => {
+    const s = stats.get(teamId);
+    return s ? `${s.wins}V — ${s.losses}D` : '';
+  };
+  const pairingsWithMeta = pairings.map(p => ({
+    ...p,
+    homeMeta: teamMeta(p.home),
+    awayMeta: teamMeta(p.away),
+  }));
+
   const ok = await showPairingsConfirmation({
     title: `Round ${round} — Génération des appariements`,
-    subtitle: `${pairings.length} matchs en BO5 — appariement Swiss (équipes au même score, sans revanche).`,
-    pairings,
+    subtitle: `${pairings.length} matchs en BO5 — appariement Swiss (équipes au même score, pas de revanche).`,
+    pairings: pairingsWithMeta,
     format: 'bo5',
   });
   if (!ok) return;
@@ -621,3 +650,9 @@ window.clearSwissMatch = async function (matchId) {
     toast('Manches effacées', 'ok');
   } catch (e) { console.error(e); toast('Erreur', 'err'); }
 };
+
+// Convertit 1 → "1er", 2 → "2e", 3 → "3e", etc. (rang en français)
+export function ordinal(n) {
+  if (n === 1) return '1er';
+  return `${n}e`;
+}

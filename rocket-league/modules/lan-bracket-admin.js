@@ -219,14 +219,24 @@ window.generateBracketFromTop8 = async function () {
   const bracketSpecs = generateBracketMatches(top8);
   if (!bracketSpecs.length) { toast('Génération échouée', 'err'); return; }
 
-  // Aperçu : juste les 4 quarts (les autres sont vides au départ)
+  // Aperçu : juste les 4 quarts annotés avec le seed (rang dans le top 8)
+  const seedById = new Map(top8.map((t, i) => [t.teamId, i + 1]));
+  const seedMeta = teamId => {
+    const s = seedById.get(teamId);
+    return s ? `Seed ${s} (top ${s} Suisse)` : '';
+  };
   const previewQfs = bracketSpecs
     .filter(m => m.phase === 'wb_qf')
-    .map(m => ({ home: m.homeTeamId, away: m.awayTeamId }));
+    .map(m => ({
+      home: m.homeTeamId,
+      away: m.awayTeamId,
+      homeMeta: seedMeta(m.homeTeamId),
+      awayMeta: seedMeta(m.awayTeamId),
+    }));
 
   const ok = await showPairingsConfirmation({
     title: 'Génération du bracket — Quarts WB',
-    subtitle: '4 matchs en BO5 vont être créés (1v8, 2v7, 3v6, 4v5). Les 10 autres matchs seront créés vides et se rempliront automatiquement.',
+    subtitle: '4 matchs en BO5 (1v8, 2v7, 3v6, 4v5). Les 10 autres matchs seront créés vides et se rempliront automatiquement.',
     pairings: previewQfs,
     confirmLabel: '🏆 Générer le bracket complet',
     format: 'bo5',
