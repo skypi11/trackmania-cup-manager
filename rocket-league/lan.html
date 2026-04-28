@@ -156,8 +156,11 @@
 </footer>
 
 <script type="module">
-  import { initLanPublic } from './modules/lan-public.js';
-  initLanPublic();
+  import { app } from '../shared/firebase-config.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
+
+  import('./modules/lan-public.js').then(m => m.initLanPublic());
 </script>
 
 </body>
