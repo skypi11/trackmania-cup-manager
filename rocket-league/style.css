@@ -936,3 +936,70 @@ img{display:block}
 @media(max-width:720px){
   .lan-qual-grid{grid-template-columns:1fr !important}
 }
+
+/* ── BRACKET VISUEL DOUBLE ÉLIM ── */
+.bracket-viewport{display:flex;flex-direction:column;gap:18px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.bracket-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px 18px;min-width:max-content}
+.bracket-section.wb{border-top:3px solid rgba(0,200,100,.35)}
+.bracket-section.lb{border-top:3px solid rgba(239,68,68,.4)}
+.bracket-section.gf{border-top:3px solid #FFB800;display:flex;flex-direction:column;align-items:center}
+.bracket-sec-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.bracket-sec-title{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:8px;letter-spacing:.01em}
+.bracket-sec-sub{font-size:.7rem;color:var(--text3);font-weight:600;letter-spacing:.04em}
+.bracket-rows{display:flex;gap:34px;align-items:stretch;min-height:220px}
+.bracket-round{display:flex;flex-direction:column;flex:0 0 auto;min-width:230px;width:230px}
+.bracket-round-hdr{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:800;text-align:center;margin-bottom:10px;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.07)}
+.bracket-round-hdr .fmt{display:inline-block;background:var(--bg3);color:var(--text2);font-size:.6rem;padding:1px 6px;border-radius:3px;margin-left:6px;letter-spacing:.04em;border:1px solid var(--border)}
+.bracket-round-cards{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px;position:relative}
+/* Carte de match bracket */
+.bm{background:var(--bg3);border:1px solid var(--border);border-radius:7px;overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
+.bm:hover:not(.bm-empty){border-color:rgba(245,158,11,.55);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.bm.bm-played{border-left:3px solid rgba(0,200,100,.5)}
+.bm.bm-pending{border-left:3px solid rgba(245,158,11,.45)}
+.bm.bm-empty{border-left:3px solid rgba(255,255,255,.06);opacity:.55;cursor:default}
+.bm.bm-stage{box-shadow:0 0 0 2px rgba(255,184,0,.4),0 4px 14px rgba(255,184,0,.15)}
+.bm.bm-final{min-width:260px}
+.bm-row{display:grid;grid-template-columns:1fr 44px;align-items:center;padding:7px 11px;gap:8px;min-height:38px}
+.bm-row + .bm-row{border-top:1px solid rgba(255,255,255,.05)}
+.bm-row.bm-winner{background:rgba(0,200,100,.06)}
+.bm-row.bm-loser{opacity:.55}
+.bm-team{display:flex;align-items:center;gap:8px;min-width:0}
+.bm-logo{width:22px;height:22px;border-radius:4px;background:var(--bg2);object-fit:contain;flex-shrink:0}
+.bm-logo-ph{width:22px;height:22px;border-radius:4px;background:rgba(255,255,255,.04);flex-shrink:0;border:1px dashed rgba(255,255,255,.08)}
+.bm-name{font-weight:700;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bm-name.feeder{font-weight:600;font-size:.72rem;color:var(--text3);font-style:italic}
+.bm-score-cell{font-size:1.05rem;font-weight:900;text-align:center;color:#fff;line-height:1}
+.bm-row.bm-winner .bm-score-cell{color:#0c8}
+.bm-row.bm-loser .bm-score-cell{color:rgba(239,68,68,.7)}
+.bm-score-empty{color:var(--text3);font-size:.85rem;font-weight:700;text-align:center}
+.bm-foot{padding:5px 11px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.22);gap:8px}
+.bm-foot-l{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.bm-slot{font-size:.6rem;color:var(--text3);font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm-stage-bdg{background:linear-gradient(90deg,#FFB800,#FF6B35);color:#000;font-size:.56rem;font-weight:800;padding:1px 5px;border-radius:3px;letter-spacing:.04em;flex-shrink:0}
+.bm-foot-r{display:flex;gap:5px;flex-shrink:0}
+.bm-act{background:var(--red);border:none;color:#fff;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:800;white-space:nowrap;cursor:pointer;letter-spacing:.04em}
+.bm-act:hover{background:var(--red-d)}
+.bm-act.edit{background:rgba(0,129,255,.15);border:1px solid rgba(0,129,255,.3);color:var(--rl-blue)}
+.bm-act.edit:hover{background:var(--rl-blue);color:#fff}
+.bm-act.stage{background:transparent;border:1px solid rgba(255,184,0,.4);color:#FFB800;font-size:.58rem;padding:2px 6px}
+.bm-act.stage:hover{background:rgba(255,184,0,.12)}
+.bm-pending-msg{font-size:.62rem;color:var(--text3);font-style:italic;font-weight:600}
+/* Connecteurs : ligne horizontale qui sort à gauche de chaque carte des rounds 2+ */
+.bracket-round + .bracket-round .bracket-round-cards .bm::before{
+  content:'';position:absolute;right:100%;top:50%;width:18px;height:0;
+  border-top:2px solid rgba(255,255,255,.08);
+}
+/* Et ligne qui sort à droite de chaque carte sauf la dernière colonne */
+.bracket-round:not(:last-child) .bracket-round-cards .bm::after{
+  content:'';position:absolute;left:100%;top:50%;width:18px;height:0;
+  border-top:2px solid rgba(255,255,255,.08);
+}
+/* Grand Final centrée */
+.bracket-section.gf .bracket-rows{justify-content:center}
+.bracket-section.gf .bracket-round{min-width:280px;width:280px}
+
+@media(max-width:720px){
+  .bracket-rows{gap:22px}
+  .bracket-round{min-width:200px;width:200px}
+  .bm-name{font-size:.74rem}
+}

@@ -7,12 +7,12 @@ import {
 } from './lan.js';
 import {
   SWISS_ROUNDS, calcSeriesScore, calculateSwissStandings,
-  getSwissMatches, getRoundMatches, isRoundComplete,
+  getSwissMatches, isRoundComplete,
 } from './lan-swiss.js';
 import {
-  PHASE_GROUPS, SLOT_LABEL, SLOT_FORMAT,
+  SLOT_LABEL,
   generateBracketMatches, getBracketMatches, getMatchBySlot,
-  computeProgressionUpdates, computeRetroPropagationUpdates,
+  computeRetroPropagationUpdates,
   isBracketGenerated, isBracketComplete,
 } from './lan-bracket.js';
 import { showPairingsConfirmation } from './lan-modals.js';
@@ -78,9 +78,25 @@ function renderEmptyBracket(wrap, swissComplete, swissMatches) {
   `;
 }
 
-// ── Vue "bracket généré" ──────────────────────────────────────────────
+// ── Vue "bracket généré" — vrai bracket visuel ────────────────────────
 function renderBracket(wrap, bracketMatches) {
   const complete = isBracketComplete(bracketMatches);
+
+  // Définition visuelle des sections du bracket
+  const wbRounds = [
+    { title: 'Quarts WB', fmt: 'BO5', slots: ['wb_qf1','wb_qf4','wb_qf2','wb_qf3'] },
+    { title: 'Demis WB',  fmt: 'BO5', slots: ['wb_sf1','wb_sf2'] },
+    { title: 'Finale WB', fmt: 'BO7', slots: ['wb_f'] },
+  ];
+  const lbRounds = [
+    { title: 'LB R1', fmt: 'BO5', slots: ['lb_r1_1','lb_r1_2'] },
+    { title: 'LB R2', fmt: 'BO5', slots: ['lb_r2_1','lb_r2_2'] },
+    { title: 'LB R3', fmt: 'BO7', slots: ['lb_r3'] },
+    { title: 'Finale LB', fmt: 'BO7', slots: ['lb_f'] },
+  ];
+  const gfRounds = [
+    { title: 'Grande Finale', fmt: 'BO7', slots: ['gf'] },
+  ];
 
   wrap.innerHTML = `
     <div class="stitle">🏆 Bracket — Jour 2 (dimanche)</div>
@@ -90,15 +106,41 @@ function renderBracket(wrap, bracketMatches) {
           <div style="font-weight:700;font-size:1rem">${complete ? '✓ Bracket terminé' : 'Bracket en cours'}</div>
           <div style="font-size:.78rem;color:var(--text2)">Double élimination · 8 équipes · 14 matchs au total</div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           ${complete ? `${renderChampion(bracketMatches)}` : ''}
           <button class="btn-d" onclick="resetBracket()">🗑️ Reset Bracket</button>
         </div>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:12px">
-      ${PHASE_GROUPS.map(g => renderPhaseGroup(g, bracketMatches)).join('')}
+    <div class="bracket-viewport">
+      ${renderBracketSection('wb', "🏆 Winners' Bracket", "Pas de défaite — droit à la grande finale", wbRounds, bracketMatches)}
+      ${renderBracketSection('lb', "🔥 Losers' Bracket", "Une défaite = élimination", lbRounds, bracketMatches)}
+      ${renderBracketSection('gf', '⭐ Grande Finale', 'Sans bracket reset — BO7 unique', gfRounds, bracketMatches)}
+    </div>
+  `;
+}
+
+function renderBracketSection(kind, title, subtitle, rounds, bracketMatches) {
+  return `
+    <div class="bracket-section ${kind}">
+      <div class="bracket-sec-hdr">
+        <div class="bracket-sec-title">${title}</div>
+        <div class="bracket-sec-sub">${esc(subtitle)}</div>
+      </div>
+      <div class="bracket-rows">
+        ${rounds.map(r => `
+          <div class="bracket-round">
+            <div class="bracket-round-hdr">${esc(r.title)}<span class="fmt">${esc(r.fmt)}</span></div>
+            <div class="bracket-round-cards">
+              ${r.slots.map(s => {
+                const m = getMatchBySlot(bracketMatches, s);
+                return m ? renderBracketCard(m, kind === 'gf') : '';
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 }
@@ -118,78 +160,71 @@ function renderChampion(bracketMatches) {
   `;
 }
 
-function renderPhaseGroup(group, bracketMatches) {
-  const matches = group.slots
-    .map(slot => getMatchBySlot(bracketMatches, slot))
-    .filter(Boolean);
-  const allComplete = matches.length > 0 && matches.every(m => m.status === 'played');
-
-  return `
-    <div class="adm-card">
-      <div class="adm-card-hdr" style="justify-content:space-between">
-        <span>${esc(group.label)} ${allComplete ? '<span style="font-size:.7rem;color:#0c8;margin-left:8px;font-weight:700">✓ COMPLET</span>' : ''}</span>
-        <span style="font-size:.7rem;color:var(--text3);font-weight:600">${esc(group.format.toUpperCase())} · ${matches.length} match${matches.length>1?'s':''}</span>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${matches.map(m => renderBracketCard(m)).join('')}
-      </div>
-    </div>
-  `;
-}
-
-function renderBracketCard(match) {
+function renderBracketCard(match, isFinal = false) {
   const home = match.homeTeamId ? state.teamsMap[match.homeTeamId] : null;
   const away = match.awayTeamId ? state.teamsMap[match.awayTeamId] : null;
-
-  // Si une des deux équipes n'est pas encore connue (en attente d'un match précédent)
   const homePending = !home;
   const awayPending = !away;
   const isPending = homePending || awayPending;
 
   const games = match.games || [];
   const ss = calcSeriesScore(games, match.format || 'bo5');
+  const hasScore = ss.played || games.length > 0;
 
   const homeName = home?.name || feederToLabel(match.homeFeeder);
   const awayName = away?.name || feederToLabel(match.awayFeeder);
 
   const homeLogo = home?.logoUrl
-    ? `<img class="amc-logo" src="${esc(home.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
-    : `<div class="amc-logo" style="opacity:.3"></div>`;
+    ? `<img class="bm-logo" src="${esc(home.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+    : `<div class="bm-logo-ph"></div>`;
   const awayLogo = away?.logoUrl
-    ? `<img class="amc-logo" src="${esc(away.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
-    : `<div class="amc-logo" style="opacity:.3"></div>`;
+    ? `<img class="bm-logo" src="${esc(away.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+    : `<div class="bm-logo-ph"></div>`;
 
-  const stageBadge = match.onStage
-    ? `<span style="background:linear-gradient(90deg,#FFB800,#FF6B35);color:#000;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.04em">🎭 SCÈNE</span>`
-    : '';
+  const cardClass = [
+    'bm',
+    isPending ? 'bm-empty' : (ss.played ? 'bm-played' : 'bm-pending'),
+    match.onStage ? 'bm-stage' : '',
+    isFinal ? 'bm-final' : '',
+  ].filter(Boolean).join(' ');
+
+  const homeRowClass = ss.played ? (ss.winner === 'home' ? 'bm-winner' : 'bm-loser') : '';
+  const awayRowClass = ss.played ? (ss.winner === 'away' ? 'bm-winner' : 'bm-loser') : '';
+
+  const homeNameClass = homePending ? 'bm-name feeder' : 'bm-name';
+  const awayNameClass = awayPending ? 'bm-name feeder' : 'bm-name';
+
+  const homeScoreCell = hasScore
+    ? `<div class="bm-score-cell">${ss.home}</div>`
+    : `<div class="bm-score-empty">—</div>`;
+  const awayScoreCell = hasScore
+    ? `<div class="bm-score-cell">${ss.away}</div>`
+    : `<div class="bm-score-empty">—</div>`;
 
   const slotLabel = SLOT_LABEL[match.bracketSlot] || '';
-  const playedColor = ss.played ? (ss.winner === 'home' ? '#0c8' : '#ef4444') : 'var(--text2)';
-  const homeOpacity = !ss.played ? 1 : (ss.winner === 'home' ? 1 : 0.5);
-  const awayOpacity = !ss.played ? 1 : (ss.winner === 'away' ? 1 : 0.5);
+  const stageBadge = match.onStage ? `<span class="bm-stage-bdg">🎭 SCÈNE</span>` : '';
+  const onclickAttr = isPending ? '' : `onclick="openSwissMatch('${match.id}')"`;
 
   return `
-    <div class="adm-match-card ${ss.played?'amc-played':'amc-pending'}" ${isPending?'':`onclick="openSwissMatch('${match.id}')"`} style="${isPending?'opacity:.55;cursor:default':''}">
-      <div class="amc-body">
-        <div class="amc-team" style="opacity:${homePending?0.5:homeOpacity}">${homeLogo}<div class="amc-name">${esc(homeName)}</div></div>
-        <div class="amc-center">
-          <div class="amc-score" style="color:${playedColor}">${ss.played||games.length?`${ss.home}-${ss.away}`:'—'}</div>
-          <div class="amc-vs">${esc((match.format||'bo5').toUpperCase())}${games.length?` · ${games.length} m.`:''}</div>
-        </div>
-        <div class="amc-team away" style="opacity:${awayPending?0.5:awayOpacity}"><div class="amc-name">${esc(awayName)}</div>${awayLogo}</div>
+    <div class="${cardClass}" ${onclickAttr}>
+      <div class="bm-row ${homeRowClass}">
+        <div class="bm-team">${homeLogo}<div class="${homeNameClass}">${esc(homeName)}</div></div>
+        ${homeScoreCell}
       </div>
-      <div class="amc-foot">
-        <div class="amc-meta">
-          <span style="font-size:.7rem;color:var(--text3);font-weight:700">${esc(slotLabel)}</span>
+      <div class="bm-row ${awayRowClass}">
+        <div class="bm-team">${awayLogo}<div class="${awayNameClass}">${esc(awayName)}</div></div>
+        ${awayScoreCell}
+      </div>
+      <div class="bm-foot">
+        <div class="bm-foot-l">
+          <span class="bm-slot">${esc(slotLabel)}</span>
           ${stageBadge}
-          ${!isPending ? `<button class="btn-s" onclick="event.stopPropagation();toggleBracketStage('${match.id}',${!match.onStage})" style="font-size:.7rem;padding:3px 10px">
-            ${match.onStage ? '✕ Retirer scène' : '🎭 Mettre sur scène'}
-          </button>` : ''}
         </div>
-        <div class="amc-actions">
+        <div class="bm-foot-r">
           ${isPending
-            ? `<span style="font-size:.7rem;color:var(--text3);font-style:italic">En attente du match précédent</span>`
-            : `<button class="amc-btn-main" onclick="event.stopPropagation();openSwissMatch('${match.id}')">${ss.played?'✏️ Modifier':'⚡ Saisir score'}</button>`}
+            ? `<span class="bm-pending-msg">En attente</span>`
+            : `<button class="bm-act stage" onclick="event.stopPropagation();toggleBracketStage('${match.id}',${!match.onStage})">${match.onStage ? '✕ Scène' : '🎭 Scène'}</button>
+               <button class="bm-act ${ss.played?'edit':''}" onclick="event.stopPropagation();openSwissMatch('${match.id}')">${ss.played?'✏️':'⚡ Score'}</button>`}
         </div>
       </div>
     </div>
