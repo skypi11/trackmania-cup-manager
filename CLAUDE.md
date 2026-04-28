@@ -27,7 +27,10 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 ├── assets/
 │   ├── springs-logo.png
 │   ├── trackmania.png
-│   └── rl.webp
+│   ├── rl.webp
+│   ├── SpringsLeagueSeries.png    (logo événement SLS — utilisé en watermark)
+│   ├── PAGE_404.png               (sponsor)
+│   └── Ibis-budget-2019.svg.png   (sponsor)
 ├── trackmania/
 │   ├── index.html              (hub TM — Monthly Cup + Mania Cup)
 │   ├── cup.html                (app principale — 300KB+, tout inline)
@@ -35,7 +38,19 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 │   ├── overlay-finale.html     (OBS overlay finale)
 │   └── overlay-podium.html     (OBS overlay podium animé)
 └── rocket-league/
-    └── index.html              (app RL — en construction)
+    ├── index.html              (app RL — admin + ligue + prédictions)
+    ├── lan.html                (page publique LAN, lecture seule + ?preview=swiss|bracket|finished)
+    ├── display-classement.html (écran géant salle — classement Suisse plein écran 1080p/4K)
+    ├── display-matchs.html     (écran géant salle — matchs en cours / scène / à venir)
+    └── modules/
+        ├── lan.js              (CRUD rl_lan + rl_lan_matches)
+        ├── lan-swiss.js        (algos Suisse — purs)
+        ├── lan-swiss-admin.js  (UI admin Suisse)
+        ├── lan-bracket.js      (algos bracket double élim — purs)
+        ├── lan-bracket-admin.js(UI admin bracket + visuel WB/LB/GF)
+        ├── lan-public.js       (rendu page publique lan.html)
+        ├── display-common.js   (init firebase + listeners partagés écrans géants)
+        └── ...                 (auth, admin, data, predictions, standings, state, etc.)
 ```
 
 ## Collections Firestore — Trackmania
@@ -189,10 +204,10 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ Administration : édition équipes/joueurs, forfait, reset match, gestion joueurs
 - ✅ LAN — Phase 0 : config `rl_lan`, qualifs auto/manuelles, badges "Qualifié LAN" sur classement (Phase 0 livrée 2026-04-27)
 - ✅ LAN — Phase 1 : Suisse complète — génération R1 (P1↔P2 + 4P1vs5P1) + algo Swiss greedy R2-R5, saisie scores manche par manche (table HTML), classement live, flag "match scène" (Phase 1 livrée 2026-04-28)
-- ❌ LAN — Phase 2 : Bracket double élim 8 équipes (BO5/BO7, auto-progression + rétro-propage)
-- ❌ LAN — Phase 3 : écrans géants (URLs dédiées plein écran, classement + matchs adaptatif)
+- ✅ LAN — Phase 2 : Bracket double élim 8 équipes — BO5/BO7, auto-progression + rétro-propage, visuel grille unique WB/LB/GF avec connecteurs SVG en L (Phase 2 livrée 2026-04-28)
+- ✅ LAN — Phase 5 : page publique `/rocket-league/lan.html` — hero adaptatif au status (champion XXL si finished / countdown si preparation / live indicator + match scène si en cours), Suisse compactée (top 8 + toggle, rounds en accordéon), bracket read-only, podium, sponsors. Mode aperçu via `?preview=swiss|between|bracket|finished` (Phase 5 livrée 2026-04-28)
+- ✅ LAN — Phase 3 : écrans géants — `display-classement.html` (16 équipes plein écran, top 8 surligné, watermark SLS, footer sponsors) + `display-matchs.html` (match scène XXL symétrique, max 4 simultanés respectant le format groupe 1/groupe 2). Adaptatif 1080p/4K via clamp() + vw/vh, mode preview, App Check (Phase 3 livrée 2026-04-29)
 - ❌ LAN — Phase 4 : prédictions LAN étendues (match / top 8 / podium / vainqueur)
-- ❌ LAN — Phase 5 : page publique LAN (`/rocket-league/lan.html`)
 - ❌ Mercato (transferts inter-équipes)
 - ❌ Discord webhooks
 
@@ -212,10 +227,7 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ TM : Onglet 📋 Règles et Format — éditeur admin bilingue FR/EN, fallback FR si EN vide
 
 ### Planifié (ordre priorité)
-- [ ] RL LAN Phase 2 : Bracket double élim 8 équipes (auto-progression + rétro-propage)
-- [ ] RL LAN Phase 3 : écrans géants `display-classement.html` + `display-matchs.html`
 - [ ] RL LAN Phase 4 : prédictions LAN étendues (match individuel + top 8 + podium + vainqueur)
-- [ ] RL LAN Phase 5 : page publique `/rocket-league/lan.html`
 - [ ] RL : Mercato (transferts inter-équipes, validation admin)
 - [ ] RL : Discord webhook notifications
 - [ ] TM : Système de prédictions
