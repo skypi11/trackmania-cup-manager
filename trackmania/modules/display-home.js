@@ -219,15 +219,16 @@ export function displayNextEditionBanner() {
     // peu importe le status. Si déco pendant les qualifs, le joueur revient
     // sur l'accueil et le retrouve direct (pas besoin de chercher la page édition).
     const passwordBannerHtml = (alreadyRegistered && next.password) ? `
-        <div style="background:linear-gradient(135deg,rgba(0,217,54,0.18),rgba(0,217,54,0.06));border:2px solid rgba(0,217,54,0.5);border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">
-                <span style="font-size:2rem;flex-shrink:0">🔐</span>
+        <div style="background:rgba(0,217,54,0.04);border:1px solid rgba(0,217,54,0.22);border-radius:var(--radius-md);padding:18px 22px;margin-bottom:var(--space-md);display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;position:relative;overflow:hidden">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--color-accent)"></div>
+            <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1;padding-left:8px">
+                <span style="font-size:1.6rem;flex-shrink:0;opacity:0.85">🔐</span>
                 <div style="min-width:0">
-                    <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('home.password.banner')}</div>
-                    <div style="font-size:1.7rem;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:0.04em;word-break:break-all;line-height:1">${next.password}</div>
+                    <div style="font-size:var(--text-xs);font-weight:var(--fw-bold);letter-spacing:var(--tracking-wider);text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('home.password.banner')}</div>
+                    <div style="font-size:var(--text-lg);font-weight:var(--fw-black);color:#fff;font-family:'JetBrains Mono','Courier New',monospace;letter-spacing:var(--tracking-wide);word-break:break-all;line-height:1">${next.password}</div>
                 </div>
             </div>
-            <button onclick="navigator.clipboard.writeText('${next.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:10px 18px;background:rgba(0,217,54,0.18);border:1px solid rgba(0,217,54,0.45);color:var(--color-accent);border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;white-space:nowrap">📋 ${t('detail.password.copy')}</button>
+            <button onclick="navigator.clipboard.writeText('${next.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:9px 16px;background:transparent;border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);border-radius:var(--radius-sm);font-weight:var(--fw-bold);font-size:var(--text-sm);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all var(--tr-fast)" onmouseover="this.style.background='rgba(0,217,54,0.1)';this.style.borderColor='rgba(0,217,54,0.5)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(0,217,54,0.3)'">📋 ${t('detail.password.copy')}</button>
         </div>` : '';
 
     banner.innerHTML = `
@@ -243,10 +244,10 @@ export function displayNextEditionBanner() {
                 </div>
             </div>
             <div style="text-align:right;flex-shrink:0">
-                <div style="font-size:0.68rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">${t('editions.countdown')}</div>
+                <div class="next-edition-countdown-label">${t('editions.countdown')}</div>
                 <div class="next-edition-countdown">${cd || t('editions.soon')}</div>
-                <div style="margin-top:10px;font-size:0.8rem;color:var(--color-text-secondary)">👥 ${inscritCount} ${t('editions.inscribed')}</div>
-                <div style="margin-top:4px;font-size:0.8rem;font-weight:700;color:${statusInfo.color}">${statusInfo.label}</div>
+                <div style="margin-top:12px;font-size:var(--text-sm);color:var(--color-text-secondary)">👥 ${inscritCount} ${t('editions.inscribed')}</div>
+                <div style="margin-top:4px;font-size:var(--text-sm);font-weight:var(--fw-bold);color:${statusInfo.color}">${statusInfo.label}</div>
             </div>
         </div>`;
     banner.style.display = 'block';

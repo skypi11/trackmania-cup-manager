@@ -678,15 +678,16 @@ window.openEditionDetail = (id) => {
             return p && state.currentUser && p.userId === state.currentUser.uid;
         });
         const passwordBlockHtml = (isMeRegisteredTop && e.password) ? `
-            <div style="background:linear-gradient(135deg,rgba(0,217,54,0.12),rgba(0,217,54,0.04));border:1px solid rgba(0,217,54,0.4);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-                <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">
-                    <span style="font-size:2rem;flex-shrink:0">🔐</span>
+            <div style="background:rgba(0,217,54,0.04);border:1px solid rgba(0,217,54,0.22);border-radius:var(--radius-md);padding:18px 22px;margin-bottom:var(--space-lg);display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;position:relative;overflow:hidden">
+                <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--color-accent)"></div>
+                <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1;padding-left:8px">
+                    <span style="font-size:1.6rem;flex-shrink:0;opacity:0.85">🔐</span>
                     <div style="min-width:0">
-                        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('detail.password.banner')}</div>
-                        <div style="font-size:1.6rem;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:0.04em;word-break:break-all">${e.password}</div>
+                        <div style="font-size:var(--text-xs);font-weight:var(--fw-bold);letter-spacing:var(--tracking-wider);text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('detail.password.banner')}</div>
+                        <div style="font-size:var(--text-lg);font-weight:var(--fw-black);color:#fff;font-family:'JetBrains Mono','Courier New',monospace;letter-spacing:var(--tracking-wide);word-break:break-all">${e.password}</div>
                     </div>
                 </div>
-                <button onclick="navigator.clipboard.writeText('${e.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:9px 16px;background:rgba(0,217,54,0.15);border:1px solid rgba(0,217,54,0.4);color:var(--color-accent);border-radius:8px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;white-space:nowrap">📋 ${t('detail.password.copy')}</button>
+                <button onclick="navigator.clipboard.writeText('${e.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:9px 16px;background:transparent;border:1px solid rgba(0,217,54,0.3);color:var(--color-accent);border-radius:var(--radius-sm);font-weight:var(--fw-bold);font-size:var(--text-sm);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all var(--tr-fast)" onmouseover="this.style.background='rgba(0,217,54,0.1)';this.style.borderColor='rgba(0,217,54,0.5)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(0,217,54,0.3)'">📋 ${t('detail.password.copy')}</button>
             </div>` : '';
 
         let registrantsHtml = '';
