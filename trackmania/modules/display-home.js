@@ -215,7 +215,23 @@ export function displayNextEditionBanner() {
     if (next.club)  metaItems.push(`🏛️ ${next.club}`);
     if (next.salon) metaItems.push(`🎮 ${next.salon}`);
 
+    // Bandeau "mot de passe du salon" — visible en grand pour les inscrits,
+    // peu importe le status. Si déco pendant les qualifs, le joueur revient
+    // sur l'accueil et le retrouve direct (pas besoin de chercher la page édition).
+    const passwordBannerHtml = (alreadyRegistered && next.password) ? `
+        <div style="background:linear-gradient(135deg,rgba(0,217,54,0.18),rgba(0,217,54,0.06));border:2px solid rgba(0,217,54,0.5);border-radius:12px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">
+                <span style="font-size:2rem;flex-shrink:0">🔐</span>
+                <div style="min-width:0">
+                    <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('home.password.banner')}</div>
+                    <div style="font-size:1.7rem;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:0.04em;word-break:break-all;line-height:1">${next.password}</div>
+                </div>
+            </div>
+            <button onclick="navigator.clipboard.writeText('${next.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:10px 18px;background:rgba(0,217,54,0.18);border:1px solid rgba(0,217,54,0.45);color:var(--color-accent);border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;white-space:nowrap">📋 ${t('detail.password.copy')}</button>
+        </div>` : '';
+
     banner.innerHTML = `
+        ${passwordBannerHtml}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px">
             <div style="flex:1;min-width:220px">
                 <div class="next-edition-label">${t('home.next.edition')}</div>

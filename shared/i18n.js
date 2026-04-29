@@ -115,6 +115,7 @@ const translations = {
     // ── Home section ──────────────────────────────────────────────────────
     'home.next.edition':      '🏁 Prochaine édition',
     'home.next.label':        'Prochain événement',
+    'home.password.banner':   'Mot de passe du salon',
     'home.stat.editions':     '📅 Éditions',
     'home.stat.players':      '👥 Joueurs',
     'home.stat.participations': '🎯 Participations',
@@ -193,6 +194,8 @@ const translations = {
     'detail.registered.list': 'Inscrits',
     'detail.no.reg':          'Aucune inscription pour l\'instant',
     'detail.password':        'Mot de passe du salon',
+    'detail.password.banner': 'Mot de passe du salon',
+    'detail.password.copy':   'Copier',
     'detail.cancel':          'Annuler',
     'detail.add.player.ph':   'Inscrire un joueur…',
     'detail.add.player.btn':  '➕ Inscrire',
@@ -699,6 +702,7 @@ const translations = {
     // ── Home section ──────────────────────────────────────────────────────
     'home.next.edition':      '🏁 Next edition',
     'home.next.label':        'Next event',
+    'home.password.banner':   'Game room password',
     'home.stat.editions':     '📅 Editions',
     'home.stat.players':      '👥 Players',
     'home.stat.participations': '🎯 Participations',
@@ -777,6 +781,8 @@ const translations = {
     'detail.registered.list': 'Registered',
     'detail.no.reg':          'No registrations yet',
     'detail.password':        'Room password',
+    'detail.password.banner': 'Game room password',
+    'detail.password.copy':   'Copy',
     'detail.cancel':          'Cancel',
     'detail.add.player.ph':   'Register a player…',
     'detail.add.player.btn':  '➕ Register',

@@ -276,6 +276,11 @@ function buildTemplate(type, editionId) {
         }).join('\n');
         return `🏆 Résultats de **${e.name}** !\n\n${podium}\n\nGG à tous les participants ! 👏`;
     }
+    if (type === 'mdp') {
+        const cupParam = e.cupId === 'mania' ? 'mania' : 'monthly';
+        const homeUrl = `https://springs-esport.vercel.app/trackmania/cup.html?cup=${cupParam}`;
+        return `${mentionsStr}🔐 Pas de panique pour le **mot de passe du salon** !\n\nIl est affiché en grand sur l'accueil du site dès que tu es inscrit·e à **${e.name}** :\n${homeUrl}\n\nSi tu te déconnectes pendant les qualifs ou la finale, tu le retrouveras toujours là 🎮`;
+    }
     return '';
 }
 
@@ -300,6 +305,12 @@ window.openDiscordNotifyModal = (editionId) => {
         const btn = document.getElementById(id);
         if (btn) btn.style.display = hasEdition ? '' : 'none';
     });
+    // Bouton "Rappel mdp" : seulement si l'édition a un mot de passe défini
+    const mdpBtn = document.getElementById('discordTplMdp');
+    if (mdpBtn) {
+        const ed = hasEdition ? state.data.editions.find(e => e.id === editionId) : null;
+        mdpBtn.style.display = (ed && ed.password) ? '' : 'none';
+    }
 
     document.getElementById('discordNotifyEditionId').value = editionId || '';
     document.getElementById('discordNotifyMessage').value = hasEdition ? buildTemplate('rappel', editionId) : '';

@@ -669,6 +669,26 @@ window.openEditionDetail = (id) => {
         const infoHtml = `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;font-size:0.9rem;color:var(--color-text-secondary)">${infoItems.join('')}</div>`;
 
         const inscriptions = state.data.results.filter(r => r.editionId === id && r.phase === 'inscription');
+
+        // Block "mot de passe du salon" — visible en grand en haut de la page,
+        // pour les inscrits, indépendant du status de l'édition. Comme ça si
+        // un joueur a une déco pendant les qualifs il retrouve toujours son mdp.
+        const isMeRegisteredTop = inscriptions.some(r => {
+            const p = state.data.participants.find(p => p.id === r.playerId);
+            return p && state.currentUser && p.userId === state.currentUser.uid;
+        });
+        const passwordBlockHtml = (isMeRegisteredTop && e.password) ? `
+            <div style="background:linear-gradient(135deg,rgba(0,217,54,0.12),rgba(0,217,54,0.04));border:1px solid rgba(0,217,54,0.4);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">
+                    <span style="font-size:2rem;flex-shrink:0">🔐</span>
+                    <div style="min-width:0">
+                        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">${t('detail.password.banner')}</div>
+                        <div style="font-size:1.6rem;font-weight:900;color:#fff;font-family:'Courier New',monospace;letter-spacing:0.04em;word-break:break-all">${e.password}</div>
+                    </div>
+                </div>
+                <button onclick="navigator.clipboard.writeText('${e.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))" style="padding:9px 16px;background:rgba(0,217,54,0.15);border:1px solid rgba(0,217,54,0.4);color:var(--color-accent);border-radius:8px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;white-space:nowrap">📋 ${t('detail.password.copy')}</button>
+            </div>` : '';
+
         let registrantsHtml = '';
         if (inscriptions.length === 0) {
             registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>${t('detail.no.reg')}</p></div>`;
@@ -746,6 +766,7 @@ window.openEditionDetail = (id) => {
             ${workflowHtml}
             ${twitchEmbedHtml}
             ${infoHtml}
+            ${passwordBlockHtml}
             ${e.description ? `<div style="color:var(--color-text-secondary);font-size:0.9rem;margin:16px 0;line-height:1.6">${parseMarkdown(e.description)}</div>` : ''}
             ${registrationHtml}
             <div style="margin-top:28px">
