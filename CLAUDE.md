@@ -225,12 +225,12 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ TM : Discord notifications admin avec 4 templates (Rappel, Annonce, Résultats, Libre)
 - ✅ TM : Onglet ⚔️ Duel — comparaison tête-à-tête en miroir (stats, streaks, achievements, graphe, H2H)
 - ✅ TM : Onglet 📋 Règles et Format — éditeur admin bilingue FR/EN, fallback FR si EN vide
+- ✅ TM : Système de prédictions complet (collection `predictions` : finalists 1-10 + top 3 exact, scoring +1/finalist +3/top3, leaderboard global top 10, historique perso par joueur, stats communautaires en direct, bouton admin Calculer scores)
 
 ### Planifié (ordre priorité)
 - [ ] RL LAN Phase 4 : prédictions LAN étendues (match individuel + top 8 + podium + vainqueur)
 - [ ] RL : Mercato (transferts inter-équipes, validation admin)
 - [ ] RL : Discord webhook notifications
-- [ ] TM : Système de prédictions
 - [ ] Domaine custom (Namecheap/Porkbun → Vercel)
 - [ ] OAuth Epic Games (portail dev Epic)
 - [ ] OAuth Ubisoft/Nadeo (nécessite accord)
