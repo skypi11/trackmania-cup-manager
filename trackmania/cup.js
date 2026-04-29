@@ -50,13 +50,13 @@ function showSection(id) {
     else if (id === 'stats') displayStats();
     else if (id === 'home') displayHome();
     else if (id === 'halloffame') displayHallOfFame();
-    // Toggle next-edition banner: masqué sur home (le hero a sa propre carte), visible ailleurs
-    displayNextEditionBanner();
     else if (id === 'administration') { applySiteConfig(); renderDiscordConfig(); window.displayAdminEditions?.(); window.displayAdminPlayers?.(); }
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
     else if (id === 'reglement') displayRules();
     else if (id === 'duel') displayDuel();
+    // Toggle next-edition banner: masqué sur home (le hero a sa propre carte), visible ailleurs
+    displayNextEditionBanner();
     const titles = { home: t('nav.home'), editions: t('nav.editions'), rankings: t('nav.rankings'), maps: t('nav.maps'), predictions: t('nav.predictions'), participants: t('nav.players'), stats: t('nav.stats'), halloffame: t('nav.hof'), administration: '⚙️ Administration', reglement: t('nav.reglement'), duel: t('nav.duel') };
     const titleEl = document.getElementById('topbarTitle');
     if (titleEl) titleEl.textContent = titles[id] || '';
