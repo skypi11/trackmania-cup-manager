@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, tTeam, getPoints, dateLang, buildCountryPicker, displayCountry } from './utils.js';
+import { pName, tTeam, getPoints, dateLang, buildCountryPicker, displayCountry, avatarHtml } from './utils.js';
 import { computePlayerStats, ACHIEVEMENTS, playerBadgesHtml } from './display-editions.js';
 import { updateDoc, doc, addDoc, collection } from 'firebase/firestore';
 import springsLogo from '../../assets/springs-logo.png';
@@ -35,7 +35,7 @@ export function displayParticipants() {
         const finals = state.data.results.filter(r => r.playerId === p.id && r.phase === 'finale').length;
         const del = state.isAdmin ? `<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-small" onclick="openEditParticipant('${p.id}')">✏️</button><button class="btn btn-danger btn-small" onclick="deleteParticipant('${p.id}')">🗑️</button></td>` : '';
         html += `<tr>
-            <td><strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</td>
+            <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(p, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${p.id}')">${pName(p)}</strong>${playerBadgesHtml(p.id)}</div></td>
             <td style="color:var(--color-text-secondary)">${tTeam(p.team)}</td>
             <td>${p.country ? displayCountry(p.country) : '<span style="color:var(--color-text-secondary)">—</span>'}</td>
             <td>${quals}</td>
@@ -113,7 +113,6 @@ window.openPlayerProfile = (playerId) => {
         : null;
 
     const isOwnProfile = state.currentUser && player.userId === state.currentUser.uid;
-    const avatar  = pName(player).charAt(0);
     const medals  = { 1: '🥇', 2: '🥈', 3: '🥉' };
     const pStats  = computePlayerStats(playerId);
     const avgPos  = finaleRes.length > 0
@@ -139,7 +138,7 @@ window.openPlayerProfile = (playerId) => {
     let html = `
         <div class="player-card">
             <div style="display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1">
-                <div class="player-card-avatar">${avatar}</div>
+                ${avatarHtml(player, { size: 68, ringColor: 'rgba(0,217,54,0.4)' })}
                 <div style="flex:1;min-width:0">
                     <div style="font-size:1.4rem;font-weight:900;letter-spacing:-0.5px;line-height:1.1">${pName(player)}</div>
                     <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-top:3px">${tTeam(player.team)}</div>

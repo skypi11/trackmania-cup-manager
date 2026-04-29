@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang } from './utils.js';
+import { pName, dateLang, avatarHtml } from './utils.js';
 import { updateDoc, doc, addDoc, collection, getDoc, deleteDoc } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
@@ -278,6 +278,7 @@ function globalLeaderboardHtml() {
         const isMe = state.currentUser && player?.userId === state.currentUser.uid;
         html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;margin-bottom:3px;${isMe ? 'background:rgba(0,217,54,0.05);border:1px solid rgba(0,217,54,0.14)' : 'border-bottom:1px solid rgba(255,255,255,0.04)'}">
             <span style="min-width:22px;text-align:center;font-size:${i < 3 ? '1rem' : '0.75rem'};${i >= 3 ? 'color:rgba(255,255,255,0.3)' : ''}">${medals[i] || (i + 1)}</span>
+            ${player ? avatarHtml(player, { size: 26 }) : ''}
             <span style="flex:1;font-weight:${isMe ? '700' : '400'};font-size:0.88rem">${player ? pName(player) : '?'}${isMe ? ' <span style="color:var(--color-accent);font-size:0.72rem">← toi</span>' : ''}</span>
             <span style="font-size:0.75rem;color:var(--color-text-secondary)">${data.count} éd.</span>
             <span style="font-weight:700;color:${i === 0 ? 'var(--color-accent)' : 'var(--color-text-primary)'};min-width:52px;text-align:right">${data.total} pts</span>

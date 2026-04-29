@@ -2,7 +2,7 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, tTeam, getPoints } from './utils.js';
+import { pName, tTeam, getPoints, avatarHtml } from './utils.js';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -90,6 +90,7 @@ export function displayGeneralRanking() {
         const doneCount = doneEditions.length;
         championBannerHtml = `<div style="background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div style="font-size:2.4rem;line-height:1">🏆</div>
+            ${avatarHtml(champ.player, { size: 56, ringColor: 'rgba(251,191,36,0.5)' })}
             <div style="flex:1;min-width:0">
                 <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;color:rgba(251,191,36,0.6);font-weight:700;margin-bottom:4px">${t('rankings.season.leader')} ${state.selectedRankingSeason}</div>
                 <div style="font-size:1.35rem;font-weight:900;letter-spacing:-0.5px" class="player-name-link" onclick="openPlayerProfile('${champ.player.id}')">${pName(champ.player)}</div>
@@ -167,8 +168,11 @@ export function displayGeneralRanking() {
         html += `<tr data-rank="${rank}" style="${rowStyle}">
             <td><span class="badge ${badgeClass}">${rank}</span></td>
             <td>
-                <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>${window.playerBadgesHtml ? window.playerBadgesHtml(s.player.id) : ''}
-                ${isMe ? '<span style="color:var(--color-accent);font-size:0.78rem;margin-left:6px">← toi</span>' : ''}
+                <div style="display:inline-flex;align-items:center;gap:10px">
+                    ${avatarHtml(s.player, { size: 28 })}
+                    <strong class="player-name-link" onclick="openPlayerProfile('${s.player.id}')">${pName(s.player)}</strong>${window.playerBadgesHtml ? window.playerBadgesHtml(s.player.id) : ''}
+                    ${isMe ? '<span style="color:var(--color-accent);font-size:0.78rem;margin-left:6px">← toi</span>' : ''}
+                </div>
             </td>
             <td style="color:var(--color-text-secondary)">${s.player.team || '—'}</td>
             <td><strong style="color:var(--color-accent);font-size:1.05rem">${s.points}</strong></td>
@@ -262,7 +266,7 @@ export function displayStats() {
     let html = `<table><thead><tr><th>${t('players.col.player')}</th><th>${t('stats.participations')}</th><th>${t('stats.finals')}</th><th>${t('players.col.pts')}</th><th>${t('stats.wins')}</th><th>${t('stats.podiums')}</th></tr></thead><tbody>`;
     rows.forEach(r => {
         html += `<tr>
-            <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong>${window.playerBadgesHtml ? window.playerBadgesHtml(r.p.id) : ''}</td>
+            <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(r.p, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong>${window.playerBadgesHtml ? window.playerBadgesHtml(r.p.id) : ''}</div></td>
             <td>${r.quals}</td>
             <td>${r.finals}</td>
             <td><strong style="color:var(--color-accent)">${r.points}</strong></td>
@@ -341,7 +345,7 @@ export function displayStats() {
         const isMe = state.currentUser && r.p.userId === state.currentUser.uid;
         const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
         streakHtml += `<tr style="${rowStyle}">
-            <td><strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong></td>
+            <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(r.p, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${r.p.id}')">${pName(r.p)}</strong></div></td>
             <td>${r.curPart  > 0 ? `<span style="color:${r.curPart >= 3 ? '#f97316' : '#fff'};font-weight:700">${r.curPart >= 3 ? '🔥' : ''}${r.curPart}</span>` : '—'}</td>
             <td>${r.bestPart > 0 ? r.bestPart : '—'}</td>
             <td>${r.curFin   > 0 ? `<span style="color:#fbbf24;font-weight:700">${r.curFin}</span>` : '—'}</td>

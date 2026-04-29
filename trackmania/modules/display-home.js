@@ -2,8 +2,9 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, getCountdown, getPoints } from './utils.js';
+import { pName, dateLang, getCountdown, getPoints, avatarHtml } from './utils.js';
 import springsLogo from '../../assets/springs-logo.png';
+import tm2020Bg from '../../assets/trackmania2020.webp';
 
 export function displayHome() {
     const container = document.getElementById('homeContent');
@@ -99,7 +100,7 @@ export function displayHome() {
                 <div class="home-hero-event-meta">📅 ${dateStr}${timeStr} · 👥 ${inscritCount} ${t('editions.inscribed') || 'inscrits'}</div>
                 ${countdown ? `<div class="home-hero-countdown"><span class="home-hero-countdown-label">${t('editions.countdown') || 'Dans'}</span><span class="home-hero-countdown-value">${countdown}</span></div>` : ''}
                 ${passwordInline}
-                <div class="home-hero-actions">${ctaHtml}<button class="home-hero-cta secondary" onclick="event.stopPropagation();showSection('editions');openEditionDetail('${nextEdition.id}')">Voir l'édition →</button></div>
+                <div class="home-hero-actions">${ctaHtml}<button class="home-hero-cta secondary" onclick="event.stopPropagation();showSection('editions');openEditionDetail('${nextEdition.id}')">${t('home.see.edition') || "Voir l'édition"} →</button></div>
             </div>`;
     } else {
         heroEventHtml = `
@@ -124,11 +125,10 @@ export function displayHome() {
             .sort((a, b) => b[1].points - a[1].points)
             .map(([pid]) => pid);
         const myRankAll = allRanked.indexOf(currentPlayer.id);
-        const initial = pName(currentPlayer).charAt(0).toUpperCase();
         const rankBadge = myRankAll >= 0 ? `<span class="home-personal-rank-badge" title="Classement général">#${myRankAll + 1}</span>` : '';
         personalHtml = `<div class="home-personal-card">
             <div class="home-personal-header">
-                <div class="home-personal-avatar">${initial}</div>
+                ${avatarHtml(currentPlayer, { size: 56, ringColor: 'rgba(0,217,54,0.4)' })}
                 <div class="home-personal-meta">
                     <div class="home-personal-name">${pName(currentPlayer)} ${rankBadge}</div>
                     <div class="home-personal-sub">${t('home.personal.sub') || 'Ton parcours'}</div>
@@ -162,16 +162,18 @@ export function displayHome() {
 
     // ── Actions rapides AVEC contenu ──────────────────────────────────────
     const rankingItems = topThree.length > 0
-        ? topThree.map((t, i) => `<div class="home-action-row">
+        ? topThree.map((tt, i) => `<div class="home-action-row">
             <span class="home-action-rank rank-${i + 1}">${i + 1}</span>
-            <span class="home-action-name">${pName(t.player)}</span>
-            <span class="home-action-pts">${t.points} pts</span>
+            ${avatarHtml(tt.player, { size: 24 })}
+            <span class="home-action-name">${pName(tt.player)}</span>
+            <span class="home-action-pts">${tt.points} pts</span>
         </div>`).join('')
         : `<div class="home-action-empty">${t('home.no.ranking') || 'Aucun classement encore'}</div>`;
 
     const predictorItems = topPredictor
         ? `<div class="home-action-row">
             <span class="home-action-rank rank-1">★</span>
+            ${avatarHtml(topPredictor.player, { size: 24 })}
             <span class="home-action-name">${pName(topPredictor.player)}</span>
             <span class="home-action-pts">${topPredictor.score} pts</span>
         </div>
@@ -229,19 +231,18 @@ export function displayHome() {
             const player = winner ? state.data.participants.find(p => p.id === winner.playerId) : null;
             if (!player) return '';
             const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { month: 'long', year: 'numeric' });
-            const initial = pName(player).charAt(0).toUpperCase();
             const titleCount = state.data.results.filter(r => r.playerId === player.id && r.phase === 'finale' && r.position === 1).length;
             const isLatest = i === 0;
             return `<div class="home-champion-card${isLatest ? ' latest' : ''}" onclick="showSection('editions');openEditionDetail('${e.id}')">
                 <div class="home-champion-medal">${isLatest ? '👑' : '🏆'}</div>
                 <div class="home-champion-edition">${e.name}</div>
-                <div class="home-champion-avatar-xl">${initial}</div>
+                <div class="home-champion-avatar-wrap">${avatarHtml(player, { size: 80, ringColor: 'rgba(255,184,0,0.5)' })}</div>
                 <div class="home-champion-winner-xl">${pName(player)}</div>
                 <div class="home-champion-meta">
                     <span>${dateStr}</span>
                     ${player.team && player.team !== 'Sans équipe' ? `<span>· ${player.team}</span>` : ''}
                 </div>
-                ${titleCount > 1 ? `<div class="home-champion-titles">${titleCount} titres</div>` : ''}
+                ${titleCount > 1 ? `<div class="home-champion-titles">${titleCount} ${titleCount > 1 ? (t('home.titles') || 'titres') : (t('home.title') || 'titre')}</div>` : ''}
             </div>`;
         }).join('');
         championsHtml = `<div class="home-section">
@@ -255,9 +256,15 @@ export function displayHome() {
 
     container.innerHTML = `
         <div class="home-hero">
+            <div class="home-hero-bg" style="background-image:url('${tm2020Bg}')"></div>
             <img src="${springsLogo}" class="home-hero-logo" alt="Springs Esport">
             <div class="home-hero-title">${state.siteConfig?.siteName || 'Springs Monthly Cup'}</div>
             <div class="home-hero-tagline">${state.siteConfig?.siteSubtitle || t('home.tagline') || 'La compétition Trackmania mensuelle de Springs E-Sport'}</div>
+            <div class="home-hero-badges">
+                <span class="home-hero-badge">🏆 ${t('home.badge.monthly') || 'Compétition mensuelle'}</span>
+                <span class="home-hero-badge">🎮 ${t('home.badge.tm2020') || 'Trackmania 2020'}</span>
+                <span class="home-hero-badge">${totalPlayers} ${t('home.stat.players') || 'Joueurs'}</span>
+            </div>
         </div>
 
         <div class="home-top-grid">

@@ -132,6 +132,11 @@ const translations = {
     'home.see.all':           'Voir tout',
     'home.predict':           'Faire mes prédictions',
     'home.compare':           'Lancer un duel',
+    'home.see.edition':       "Voir l'édition",
+    'home.title':             'titre',
+    'home.titles':            'titres',
+    'home.badge.monthly':     'Compétition mensuelle',
+    'home.badge.tm2020':      'Trackmania 2020',
 
     // ── Éditions ──────────────────────────────────────────────────────────
     'editions.upcoming':      'À venir',
@@ -730,6 +735,11 @@ const translations = {
     'home.see.all':           'See all',
     'home.predict':           'Make my predictions',
     'home.compare':           'Start a duel',
+    'home.see.edition':       'View edition',
+    'home.title':             'title',
+    'home.titles':            'titles',
+    'home.badge.monthly':     'Monthly competition',
+    'home.badge.tm2020':      'Trackmania 2020',
 
     // ── Éditions ──────────────────────────────────────────────────────────
     'editions.upcoming':      'Upcoming',

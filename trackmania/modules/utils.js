@@ -95,6 +95,20 @@ export function parseMarkdown(text) {
     return `<p style="margin:0">${s}</p>`;
 }
 
+// Avatar Discord (avec fallback initiale en background — toujours visible si img fail)
+export function avatarHtml(player, options = {}) {
+    const { size = 40, ringColor = null, className = '' } = options;
+    const url = player?.discordAvatar;
+    const initial = (pName(player) || '?').charAt(0).toUpperCase();
+    const fontSize = Math.max(10, Math.round(size * 0.42));
+    const ringStyle = ringColor ? `box-shadow:0 0 0 2px ${ringColor};` : '';
+    const wrapStyle = `position:relative;display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(0,217,54,0.3),rgba(0,217,54,0.08));color:var(--color-accent);font-weight:900;font-size:${fontSize}px;overflow:hidden;${ringStyle}`;
+    const imgTag = url
+        ? `<img src="${url}" alt="" loading="lazy" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
+        : '';
+    return `<span class="tm-avatar ${className}" style="${wrapStyle}">${initial}${imgTag}</span>`;
+}
+
 export function showToast(msg) {
     const el = document.getElementById('toast');
     if (!el) return;
