@@ -34,12 +34,21 @@ export function displayMapsTimeline() {
     ];
     filterBar.innerHTML = tabs.join('');
 
+    // SÉCURITÉ : on n'affiche les maps QUE pour les éditions terminées ou
+    // en cours. Les statuts 'fermee' / 'inscriptions' / 'upcoming' doivent
+    // rester secrets — les joueurs ne doivent PAS voir les maps avant la
+    // compétition (sinon ils s'entraînent dessus, ça gâche la surprise).
+    // Note : pas de bypass admin ici car l'ancien code utilisait
+    // state.isAdmin combiné à e.status === 'live' (statut qui n'existe pas
+    // dans la base — le vrai est 'en_cours'), ce qui faisait leak les maps
+    // d'éditions non publiques côté admin. L'admin peut toujours voir/éditer
+    // les maps via l'onglet Admin → Éditions.
     const editions = state.data.editions
         .filter(e => {
             if (state.selectedMapsSeason === 'all') return true;
             return (e.saison || new Date(e.date).getFullYear()) === state.selectedMapsSeason;
         })
-        .filter(e => e.status === 'terminee' || e.status === 'live' || state.isAdmin)
+        .filter(e => e.status === 'terminee' || e.status === 'en_cours')
         .filter(e => [1,2,3,4,5,6,7].some(n => e[`map${n}tmx`] || e[`map${n}name`]))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
