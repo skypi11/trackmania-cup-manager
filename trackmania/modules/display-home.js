@@ -15,9 +15,9 @@ export function displayHome() {
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee' && e.status !== 'en_cours')
         .sort((a,b) => new Date(a.date) - new Date(b.date))[0];
 
-    const totalEditions      = state.data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').length;
-    const totalPlayers       = state.data.participants.length;
     const pastEdIds = new Set(state.data.editions.filter(e => new Date(e.date) < today || e.status === 'terminee').map(e => e.id));
+    const totalEditions       = pastEdIds.size;
+    const totalPlayers        = state.data.participants.length;
     const totalParticipations = new Set(
         state.data.results.filter(r => pastEdIds.has(r.editionId)).map(r => `${r.playerId}_${r.editionId}`)
     ).size;
@@ -26,50 +26,90 @@ export function displayHome() {
         ? state.data.participants.find(p => p.userId === state.currentUser.uid)
         : null;
 
-    // ── Event card ────────────────────────────────────────────────────────
-    let featuredHtml = '';
+    // ── Top 3 général (pour la carte action Rankings) ─────────────────────
+    const playerStats = {};
+    state.data.results.filter(r => r.phase === 'finale' && pastEdIds.has(r.editionId)).forEach(r => {
+        if (!playerStats[r.playerId]) playerStats[r.playerId] = { points: 0, wins: 0 };
+        playerStats[r.playerId].points += getPoints(r.position);
+        if (r.position === 1) playerStats[r.playerId].wins += 1;
+    });
+    const topThree = Object.entries(playerStats)
+        .map(([pid, s]) => ({ ...s, player: state.data.participants.find(p => p.id === pid) }))
+        .filter(x => x.player)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 3);
+
+    // ── Top pronostiqueur (cumul des points sur toutes les éditions terminées) ─
+    const predictorStats = {};
+    (state.data.predictions || []).forEach(p => {
+        if (typeof p.score !== 'number') return;
+        const pid = p.playerId || p.userId;
+        if (!pid) return;
+        predictorStats[pid] = (predictorStats[pid] || 0) + p.score;
+    });
+    const topPredictor = Object.entries(predictorStats)
+        .map(([pid, score]) => ({ score, player: state.data.participants.find(p => p.id === pid || p.userId === pid) }))
+        .filter(x => x.player)
+        .sort((a, b) => b.score - a.score)[0];
+
+    // ── HERO : carte Next Event impactante ────────────────────────────────
+    let heroEventHtml = '';
     if (liveEdition) {
-        featuredHtml = `<div class="home-event-card live" onclick="showSection('editions');openEditionDetail('${liveEdition.id}')">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-                <span class="live-dot" style="width:8px;height:8px;animation:pulse 1.5s infinite"></span>
-                <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#ef4444">🔴 En direct maintenant</span>
-            </div>
-            <div style="font-size:1.25rem;font-weight:800;margin-bottom:16px">${liveEdition.name}</div>
-            <a href="${state.siteConfig?.twitchUrl || 'https://www.twitch.tv/springsesport'}" target="_blank" rel="noopener"
-               onclick="event.stopPropagation()"
-               style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#9146ff,#6d28d9);color:#fff;font-weight:700;font-size:0.88rem;box-shadow:0 4px 16px rgba(145,70,255,0.3)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
-                Regarder sur Twitch
-            </a>
-        </div>`;
+        heroEventHtml = `
+            <div class="home-hero-event live" onclick="showSection('editions');openEditionDetail('${liveEdition.id}')">
+                <div class="home-hero-event-status live">
+                    <span class="live-dot"></span>
+                    <span>${t('editions.status.live') || 'EN DIRECT'}</span>
+                </div>
+                <div class="home-hero-event-name">${liveEdition.name}</div>
+                <div class="home-hero-event-meta">${t('editions.status.live.desc') || 'La compétition est en cours, suivez le live'}</div>
+                <a href="${state.siteConfig?.twitchUrl || 'https://www.twitch.tv/springsesport'}" target="_blank" rel="noopener" class="home-hero-cta twitch" onclick="event.stopPropagation()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                    Regarder sur Twitch
+                </a>
+            </div>`;
     } else if (nextEdition) {
-        const dateStr = new Date(nextEdition.date).toLocaleDateString(dateLang(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const timeStr = nextEdition.time ? ` à ${nextEdition.time}` : '';
+        const dateStr = new Date(nextEdition.date).toLocaleDateString(dateLang(), { weekday: 'long', day: 'numeric', month: 'long' });
+        const timeStr = nextEdition.time ? ` · ${nextEdition.time}` : '';
         const countdown = getCountdown(nextEdition.date, nextEdition.time);
         const isRegistered = currentPlayer && state.data.results.some(
             r => r.editionId === nextEdition.id && r.playerId === currentPlayer.id && r.phase === 'inscription'
         );
+        const inscritCount = state.data.results.filter(r => r.editionId === nextEdition.id && r.phase === 'inscription').length;
+
         let ctaHtml = '';
         if (nextEdition.status === 'inscriptions') {
-            if (!state.currentUser) ctaHtml = `<button class="btn btn-primary" style="margin-top:16px" onclick="event.stopPropagation();openAuthModal()">${t('editions.login.to.reg')}</button>`;
-            else if (isRegistered) ctaHtml = `<div class="registered-badge" style="margin-top:14px">${t('editions.already.reg')}</div>`;
-            else if (currentPlayer) ctaHtml = `<button class="btn btn-primary" style="margin-top:16px" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')">${t('editions.register.btn')}</button>`;
+            if (!state.currentUser) ctaHtml = `<button class="home-hero-cta primary" onclick="event.stopPropagation();openAuthModal()">${t('editions.login.to.reg')}</button>`;
+            else if (isRegistered) ctaHtml = `<div class="home-hero-registered">✓ ${t('editions.already.reg')}</div>`;
+            else if (currentPlayer) ctaHtml = `<button class="home-hero-cta primary" onclick="event.stopPropagation();registerForEdition('${nextEdition.id}')">${t('editions.register.btn')}</button>`;
         }
-        featuredHtml = `<div class="home-event-card next" onclick="showSection('editions');openEditionDetail('${nextEdition.id}')">
-            <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-warning);margin-bottom:10px">⏰ ${t('home.next.label')}</div>
-            <div style="font-size:1.2rem;font-weight:800;margin-bottom:10px">${nextEdition.name}</div>
-            <div style="font-size:0.85rem;color:rgba(255,255,255,0.38);margin-bottom:10px">📅 ${dateStr}${timeStr}</div>
-            ${countdown ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:99px;padding:5px 14px;font-size:0.82rem;color:var(--color-warning);font-weight:600">⏱ ${countdown}</div>` : ''}
-            ${ctaHtml}
-        </div>`;
+
+        // Mot de passe salon intégré dans le hero (visible pour les inscrits)
+        const passwordInline = (isRegistered && nextEdition.password) ? `
+            <div class="home-hero-password" onclick="event.stopPropagation();navigator.clipboard.writeText('${nextEdition.password.replace(/'/g, "\\'")}').then(()=>showToast?.('✓ Copié'))">
+                <span class="home-hero-password-label">🔐 ${t('home.password.banner') || 'Mot de passe salon'}</span>
+                <span class="home-hero-password-value">${nextEdition.password}</span>
+                <span class="home-hero-password-copy">📋 Copier</span>
+            </div>` : '';
+
+        heroEventHtml = `
+            <div class="home-hero-event next" onclick="showSection('editions');openEditionDetail('${nextEdition.id}')">
+                <div class="home-hero-event-status next">⏰ ${t('home.next.label') || 'Prochaine édition'}</div>
+                <div class="home-hero-event-name">${nextEdition.name}</div>
+                <div class="home-hero-event-meta">📅 ${dateStr}${timeStr} · 👥 ${inscritCount} ${t('editions.inscribed') || 'inscrits'}</div>
+                ${countdown ? `<div class="home-hero-countdown"><span class="home-hero-countdown-label">${t('editions.countdown') || 'Dans'}</span><span class="home-hero-countdown-value">${countdown}</span></div>` : ''}
+                ${passwordInline}
+                <div class="home-hero-actions">${ctaHtml}<button class="home-hero-cta secondary" onclick="event.stopPropagation();showSection('editions');openEditionDetail('${nextEdition.id}')">Voir l'édition →</button></div>
+            </div>`;
     } else {
-        featuredHtml = `<div class="home-event-card" style="text-align:center;padding:36px 24px;cursor:default">
-            <div style="font-size:2rem;margin-bottom:10px">🏁</div>
-            <div style="color:rgba(255,255,255,0.28);font-size:0.88rem">${t('home.no.event')}</div>
-        </div>`;
+        heroEventHtml = `
+            <div class="home-hero-event empty">
+                <div style="font-size:2.4rem;margin-bottom:12px;opacity:0.4">🏁</div>
+                <div style="color:rgba(255,255,255,0.4);font-size:var(--text-base)">${t('home.no.event')}</div>
+            </div>`;
     }
 
-    // ── Carte personnelle (joueur connecté + inscrit) ──────────────────────
+    // ── Carte personnelle (à côté du hero event) ──────────────────────────
     let personalHtml = '';
     if (currentPlayer) {
         const myFinales = state.data.results.filter(r => r.playerId === currentPlayer.id && r.phase === 'finale');
@@ -80,44 +120,103 @@ export function displayHome() {
                 .filter(r => r.playerId === currentPlayer.id && pastEdIds.has(r.editionId))
                 .map(r => r.editionId)
         ).size;
+        const allRanked = Object.entries(playerStats)
+            .sort((a, b) => b[1].points - a[1].points)
+            .map(([pid]) => pid);
+        const myRankAll = allRanked.indexOf(currentPlayer.id);
         const initial = pName(currentPlayer).charAt(0).toUpperCase();
+        const rankBadge = myRankAll >= 0 ? `<span class="home-personal-rank-badge" title="Classement général">#${myRankAll + 1}</span>` : '';
         personalHtml = `<div class="home-personal-card">
-            <div class="home-personal-avatar">${initial}</div>
-            <div style="flex:1;min-width:0">
-                <div style="font-weight:700;font-size:0.95rem;margin-bottom:5px">${pName(currentPlayer)}</div>
-                <div class="home-personal-stats">
-                    <div class="home-personal-stat">
-                        <div class="home-personal-stat-val">${myPts}</div>
-                        <div class="home-personal-stat-lbl">Points</div>
-                    </div>
-                    <div class="home-personal-stat">
-                        <div class="home-personal-stat-val">${myWins}</div>
-                        <div class="home-personal-stat-lbl">${t('stats.wins')}</div>
-                    </div>
-                    <div class="home-personal-stat">
-                        <div class="home-personal-stat-val">${myParts}</div>
-                        <div class="home-personal-stat-lbl">${t('stats.participations')}</div>
-                    </div>
+            <div class="home-personal-header">
+                <div class="home-personal-avatar">${initial}</div>
+                <div class="home-personal-meta">
+                    <div class="home-personal-name">${pName(currentPlayer)} ${rankBadge}</div>
+                    <div class="home-personal-sub">${t('home.personal.sub') || 'Ton parcours'}</div>
                 </div>
             </div>
-            <button onclick="showSection('rankings')" style="flex-shrink:0;background:rgba(0,217,54,0.08);border:1px solid rgba(0,217,54,0.2);border-radius:10px;padding:8px 14px;color:var(--color-accent);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s;white-space:nowrap" onmouseover="this.style.background='rgba(0,217,54,0.14)'" onmouseout="this.style.background='rgba(0,217,54,0.08)'">Classement →</button>
+            <div class="home-personal-stats">
+                <div class="home-personal-stat">
+                    <div class="home-personal-stat-val">${myPts}</div>
+                    <div class="home-personal-stat-lbl">Points</div>
+                </div>
+                <div class="home-personal-stat">
+                    <div class="home-personal-stat-val">${myWins}</div>
+                    <div class="home-personal-stat-lbl">${t('stats.wins') || 'Wins'}</div>
+                </div>
+                <div class="home-personal-stat">
+                    <div class="home-personal-stat-val">${myParts}</div>
+                    <div class="home-personal-stat-lbl">${t('stats.participations') || 'Participations'}</div>
+                </div>
+            </div>
+            <button class="home-personal-cta" onclick="showSection('rankings')">${t('home.personal.see') || 'Voir le classement'} →</button>
+        </div>`;
+    } else {
+        // Visiteur non connecté → CTA inscription dans cet emplacement
+        personalHtml = `<div class="home-personal-card guest">
+            <div style="font-size:2.2rem;margin-bottom:var(--space-sm);opacity:0.7">🎮</div>
+            <div class="home-guest-title">${t('cta.title') || 'Rejoins la compétition'}</div>
+            <div class="home-guest-desc">${t('cta.desc') || 'Inscris-toi pour participer aux prochaines cups et apparaître au classement'}</div>
+            <button class="home-hero-cta primary" onclick="openAuthModal()">${t('cta.btn') || 'Se connecter'}</button>
         </div>`;
     }
 
-    // ── Accès rapide ──────────────────────────────────────────────────────
-    const quickNav = [
-        { icon: '🏆', label: t('nav.rankings'), section: 'rankings' },
-        { icon: '🔮', label: t('nav.predictions'), section: 'predictions' },
-        { icon: '⚔️', label: 'Duel', section: 'duel' },
-    ];
-    const quickNavHtml = `<div class="home-quicknav">
-        ${quickNav.map(q => `<button class="home-quicknav-btn" onclick="showSection('${q.section}')">
-            <div class="home-quicknav-icon">${q.icon}</div>
-            <div class="home-quicknav-label">${q.label}</div>
-        </button>`).join('')}
+    // ── Actions rapides AVEC contenu ──────────────────────────────────────
+    const rankingItems = topThree.length > 0
+        ? topThree.map((t, i) => `<div class="home-action-row">
+            <span class="home-action-rank rank-${i + 1}">${i + 1}</span>
+            <span class="home-action-name">${pName(t.player)}</span>
+            <span class="home-action-pts">${t.points} pts</span>
+        </div>`).join('')
+        : `<div class="home-action-empty">${t('home.no.ranking') || 'Aucun classement encore'}</div>`;
+
+    const predictorItems = topPredictor
+        ? `<div class="home-action-row">
+            <span class="home-action-rank rank-1">★</span>
+            <span class="home-action-name">${pName(topPredictor.player)}</span>
+            <span class="home-action-pts">${topPredictor.score} pts</span>
+        </div>
+        <div class="home-action-hint">${t('home.predictor.hint') || 'Le meilleur pronostiqueur de la communauté'}</div>`
+        : `<div class="home-action-empty">${t('home.no.predictor') || 'Pronostique le prochain event !'}</div>`;
+
+    const duelHint = currentPlayer
+        ? `${t('home.duel.hint.user') || 'Compare-toi à un autre joueur en face à face'}`
+        : `${t('home.duel.hint.guest') || 'Compare deux joueurs en face à face'}`;
+
+    const quickActionsHtml = `<div class="home-actions-grid">
+        <div class="home-action-card" onclick="showSection('rankings')">
+            <div class="home-action-header">
+                <span class="home-action-icon">🏆</span>
+                <span class="home-action-title">${t('nav.rankings') || 'Classement'}</span>
+            </div>
+            <div class="home-action-body">${rankingItems}</div>
+            <div class="home-action-footer">${t('home.see.all') || 'Voir tout'} →</div>
+        </div>
+        <div class="home-action-card" onclick="showSection('predictions')">
+            <div class="home-action-header">
+                <span class="home-action-icon">🔮</span>
+                <span class="home-action-title">${t('nav.predictions') || 'Prédictions'}</span>
+            </div>
+            <div class="home-action-body">${predictorItems}</div>
+            <div class="home-action-footer">${t('home.predict') || 'Faire mes prédictions'} →</div>
+        </div>
+        <div class="home-action-card" onclick="showSection('duel')">
+            <div class="home-action-header">
+                <span class="home-action-icon">⚔️</span>
+                <span class="home-action-title">${t('nav.duel') || 'Duel'}</span>
+            </div>
+            <div class="home-action-body">
+                <div class="home-action-duel-visual">
+                    <span class="home-action-duel-side">P1</span>
+                    <span class="home-action-duel-vs">VS</span>
+                    <span class="home-action-duel-side">P2</span>
+                </div>
+                <div class="home-action-hint">${duelHint}</div>
+            </div>
+            <div class="home-action-footer">${t('home.compare') || 'Lancer un duel'} →</div>
+        </div>
     </div>`;
 
-    // ── Derniers champions ────────────────────────────────────────────────
+    // ── Champions récents — galerie XXL ───────────────────────────────────
     const pastWithChampion = state.data.editions
         .filter(e => state.data.results.some(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1))
         .sort((a,b) => new Date(b.date) - new Date(a.date))
@@ -130,50 +229,61 @@ export function displayHome() {
             const player = winner ? state.data.participants.find(p => p.id === winner.playerId) : null;
             if (!player) return '';
             const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { month: 'long', year: 'numeric' });
-            return `<div class="home-champion-card" onclick="showSection('editions');openEditionDetail('${e.id}')">
-                <div class="home-champion-medal">${i === 0 ? '🏆' : '🥇'}</div>
+            const initial = pName(player).charAt(0).toUpperCase();
+            const titleCount = state.data.results.filter(r => r.playerId === player.id && r.phase === 'finale' && r.position === 1).length;
+            const isLatest = i === 0;
+            return `<div class="home-champion-card${isLatest ? ' latest' : ''}" onclick="showSection('editions');openEditionDetail('${e.id}')">
+                <div class="home-champion-medal">${isLatest ? '👑' : '🏆'}</div>
                 <div class="home-champion-edition">${e.name}</div>
-                <div class="home-champion-winner">${pName(player)}</div>
-                <div class="home-champion-meta">${dateStr}${player.team && player.team !== 'Sans équipe' ? ' · ' + player.team : ''}</div>
+                <div class="home-champion-avatar-xl">${initial}</div>
+                <div class="home-champion-winner-xl">${pName(player)}</div>
+                <div class="home-champion-meta">
+                    <span>${dateStr}</span>
+                    ${player.team && player.team !== 'Sans équipe' ? `<span>· ${player.team}</span>` : ''}
+                </div>
+                ${titleCount > 1 ? `<div class="home-champion-titles">${titleCount} titres</div>` : ''}
             </div>`;
         }).join('');
-        championsHtml = `<div class="home-champions">
-            <div class="home-champions-title">${t('home.champions')}</div>
+        championsHtml = `<div class="home-section">
+            <div class="home-section-title">
+                <span class="home-section-title-icon">👑</span>
+                <span>${t('home.champions') || 'Derniers champions'}</span>
+            </div>
             <div class="home-champions-grid">${cards}</div>
         </div>`;
     }
-
-    // ── CTA inscription (visiteur non connecté) ───────────────────────────
-    const guestCtaHtml = !state.currentUser ? `
-        <div style="margin:20px 40px 0;background:linear-gradient(135deg,rgba(0,217,54,0.05),rgba(0,0,0,0.1));border:1px solid rgba(0,217,54,0.12);border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px">
-            <div style="font-size:1.8rem;flex-shrink:0">🎮</div>
-            <div style="flex:1">
-                <div style="font-size:0.85rem;font-weight:700;margin-bottom:3px">${t('cta.title')}</div>
-                <div style="font-size:0.78rem;color:var(--color-text-secondary);line-height:1.5">${t('cta.desc')}</div>
-            </div>
-            <button onclick="openAuthModal()" style="flex-shrink:0;background:var(--color-accent);color:#000;border:none;border-radius:10px;padding:10px 18px;font-weight:800;font-size:0.82rem;cursor:pointer;white-space:nowrap;font-family:inherit">${t('cta.btn')}</button>
-        </div>` : '';
 
     container.innerHTML = `
         <div class="home-hero">
             <img src="${springsLogo}" class="home-hero-logo" alt="Springs Esport">
             <div class="home-hero-title">${state.siteConfig?.siteName || 'Springs Monthly Cup'}</div>
-            <div class="home-hero-sub">${state.siteConfig?.siteSubtitle || 'Springs E-Sport · EN LIGNE'}</div>
-            ${featuredHtml}
+            <div class="home-hero-tagline">${state.siteConfig?.siteSubtitle || t('home.tagline') || 'La compétition Trackmania mensuelle de Springs E-Sport'}</div>
         </div>
+
+        <div class="home-top-grid">
+            ${heroEventHtml}
+            ${personalHtml}
+        </div>
+
         <div class="home-stats">
-            <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">${t('home.stat.editions')}</div></div>
-            <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">${t('home.stat.players')}</div></div>
-            <div class="home-stat"><div class="home-stat-value">${totalParticipations}</div><div class="home-stat-label">${t('home.stat.participations')}</div></div>
+            <div class="home-stat"><div class="home-stat-value">${totalEditions}</div><div class="home-stat-label">${t('home.stat.editions') || 'Éditions'}</div></div>
+            <div class="home-stat"><div class="home-stat-value">${totalPlayers}</div><div class="home-stat-label">${t('home.stat.players') || 'Joueurs'}</div></div>
+            <div class="home-stat"><div class="home-stat-value">${totalParticipations}</div><div class="home-stat-label">${t('home.stat.participations') || 'Participations'}</div></div>
         </div>
-        ${personalHtml}
-        ${guestCtaHtml}
-        ${quickNavHtml}
+
+        ${quickActionsHtml}
         ${championsHtml}`;
 }
 
 export function displayNextEditionBanner() {
     const banner = document.getElementById('nextEditionBanner');
+    if (!banner) return;
+    // Sur l'accueil, le hero contient déjà la carte Next Event — pas besoin du gros bandeau
+    const homePanel = document.getElementById('home');
+    if (homePanel && homePanel.style.display !== 'none') {
+        banner.style.display = 'none';
+        return;
+    }
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = state.data.editions
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee')

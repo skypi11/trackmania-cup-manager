@@ -50,6 +50,8 @@ function showSection(id) {
     else if (id === 'stats') displayStats();
     else if (id === 'home') displayHome();
     else if (id === 'halloffame') displayHallOfFame();
+    // Toggle next-edition banner: masqué sur home (le hero a sa propre carte), visible ailleurs
+    displayNextEditionBanner();
     else if (id === 'administration') { applySiteConfig(); renderDiscordConfig(); window.displayAdminEditions?.(); window.displayAdminPlayers?.(); }
     else if (id === 'maps') displayMapsTimeline();
     else if (id === 'predictions') displayPredictions();
