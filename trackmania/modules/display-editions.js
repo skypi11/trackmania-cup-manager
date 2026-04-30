@@ -623,10 +623,18 @@ function buildStatusHistoryHtml(edition) {
 
 window.openEditionDetail = (id) => {
     state.currentDetailEditionId = id;
-    const e = state.data.editions.find(e => e.id === id);
+    let e = state.data.editions.find(e => e.id === id);
     if (!e) return;
     state.youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
     state.twitchCollapsed  = sessionStorage.getItem('twCollapsed_' + id) === '1';
+
+    // Mode preview admin : ?preview=en_cours|terminee|inscriptions|fermee
+    // Force le rendu sans modifier la DB — utile pour tester les heros LIVE / PODIUM
+    const previewStatus = new URLSearchParams(window.location.search).get('preview');
+    const isPreview = state.isAdmin && previewStatus && ['en_cours','terminee','inscriptions','fermee'].includes(previewStatus);
+    if (isPreview) {
+        e = { ...e, status: previewStatus };
+    }
 
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const isPast = new Date(e.date) < today || e.status === 'terminee' || e.status === 'en_cours';
@@ -636,12 +644,26 @@ window.openEditionDetail = (id) => {
     const detail = document.getElementById('editionDetail');
     const content = document.getElementById('editionDetailContent');
     const createCard = document.getElementById('createEditionCard');
+    const filterBar = document.getElementById('editionFilters');
 
     grid.style.display = 'none';
+    if (filterBar) filterBar.style.display = 'none';
     if (createCard) createCard.style.display = 'none';
     detail.classList.add('open');
+    // Masque le bandeau "Next edition" qui apparait au-dessus de la page
+    if (typeof window.displayNextEditionBanner === 'function') window.displayNextEditionBanner();
 
     let html = '';
+
+    // Banner "Mode prévisualisation" admin si ?preview=...
+    if (isPreview) {
+        html += `<div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.32);border-radius:var(--radius-md);padding:10px 16px;margin-bottom:var(--space-md);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:1.1rem">🔍</span>
+            <strong style="color:#38bdf8;font-size:var(--text-sm)">${t('detail.preview.label') || 'Mode prévisualisation'}</strong>
+            <span style="color:rgba(255,255,255,0.65);font-size:var(--text-sm)">${t('detail.preview.desc') || `Statut affiché en preview : ${previewStatus}. Aucune modification en base.`}</span>
+            <a href="?cup=${new URLSearchParams(window.location.search).get('cup') || 'monthly'}#editions" style="margin-left:auto;color:#38bdf8;font-size:var(--text-xs);font-weight:var(--fw-bold);text-decoration:underline">${t('detail.preview.exit') || 'Sortir'}</a>
+        </div>`;
+    }
 
     if (isPast) {
         // Calculer les résultats AVANT le hero (utilisés par renderEditionHeroLive/Podium)
@@ -1292,6 +1314,38 @@ function _getShareInfo() {
     const timeStr = e.time ? ` à ${e.time}` : '';
     return { e, url: url.toString(), dateStr, timeStr };
 }
+
+window.toggleShareMenu = (btn, ev) => {
+    if (ev) ev.stopPropagation();
+    const wrap = btn.parentElement;
+    const menu = wrap.querySelector('.ed-share-menu');
+    if (!menu) return;
+    const willOpen = menu.hidden;
+    menu.hidden = !willOpen;
+    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (willOpen) {
+        const closeMenu = (e) => {
+            if (!wrap.contains(e.target)) {
+                menu.hidden = true;
+                btn.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('click', closeMenu);
+                document.removeEventListener('keydown', escListener);
+            }
+        };
+        const escListener = (e) => {
+            if (e.key === 'Escape') {
+                menu.hidden = true;
+                btn.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('click', closeMenu);
+                document.removeEventListener('keydown', escListener);
+            }
+        };
+        setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+            document.addEventListener('keydown', escListener);
+        }, 0);
+    }
+};
 
 window.shareEdition = (btn) => {
     const info = _getShareInfo();
