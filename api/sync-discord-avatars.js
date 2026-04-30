@@ -98,8 +98,8 @@ export default async function handler(req, res) {
         skipped++;
       }
 
-      // Rate-limit safety : ~20 req/s max
-      await sleep(50);
+      // Rate-limit safety : ~10 req/s max (Discord per-route est strict)
+      await sleep(100);
     } catch (err) {
       failed++;
       errors.push({ id: doc.id, msg: err.message });
