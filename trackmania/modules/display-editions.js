@@ -9,6 +9,120 @@ import { notifyDiscordInscription } from './discord.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 import { DEFAULT_EDITION_FORMAT } from './site-config.js';
 
+// ── Twitch embed (avec fallback et autoplay muted) ────────────────────────
+function twitchEmbedIframe() {
+    const channel = state.siteConfig?.twitchChannel || 'springsesport';
+    const host = window.location.hostname || 'springs-esport.vercel.app';
+    // Plusieurs parents pour couvrir prod + previews Vercel + localhost
+    const parents = new Set([host, 'springs-esport.vercel.app', 'localhost']);
+    const parentParams = [...parents].map(p => `&parent=${p}`).join('');
+    return `<iframe src="https://player.twitch.tv/?channel=${channel}${parentParams}&muted=true&autoplay=true" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+}
+
+// ── Hero LIVE pour les éditions en cours ──────────────────────────────────
+function renderEditionHeroLive(e, qualResults) {
+    const editBtn = state.isAdmin
+        ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>`
+        : '';
+
+    // Stats live calculables : map actuelle + nb qualifiés
+    const mapsPlayed = qualResults.filter(r => r.map).reduce((max, r) => Math.max(max, r.map || 0), 0);
+    const totalMaps = e.nbMaps || (state.siteConfig?.editionFormat?.qualifs?.mapsCount) || 6;
+    const qualifiedCount = new Set(qualResults.map(r => r.playerId)).size;
+
+    const liveStatsHtml = `<div class="ed-hero-live-stats">
+        ${mapsPlayed > 0 ? `<span class="ed-hero-live-stat">📍 ${t('detail.live.map') || 'Map'} <strong>${mapsPlayed}/${totalMaps}</strong></span>` : ''}
+        ${qualifiedCount > 0 ? `<span class="ed-hero-live-stat">✅ <strong>${qualifiedCount}</strong> ${t('detail.live.qualified') || 'qualifiés'}</span>` : ''}
+        <span class="ed-hero-live-stat">⏱ ${t('detail.live.now') || 'En direct maintenant'}</span>
+    </div>`;
+
+    const twitchUrl = state.siteConfig?.twitchUrl;
+    const twitchBlockHtml = state.siteConfig?.twitchChannel ? `
+        <div class="ed-hero-twitch">${twitchEmbedIframe()}</div>` : `
+        <div class="ed-hero-twitch empty">
+            <div style="font-size:2rem;opacity:0.5">📺</div>
+            <div>${t('detail.live.no.channel') || 'Aucune chaîne Twitch configurée'}</div>
+            ${twitchUrl ? `<a href="${twitchUrl}" target="_blank" rel="noopener" class="ed-link-btn twitch" style="margin-top:8px">${t('detail.btn.twitch') || 'Suivre sur Twitch'}</a>` : ''}
+        </div>`;
+
+    return `<div class="ed-hero live">
+        <div class="ed-hero-bg" style="background-image:url('${tm2020Bg}')"></div>
+        <div class="ed-hero-status-row">
+            <span class="ed-hero-status en_cours"><span class="live-dot"></span> ${t('detail.live.label') || 'EN DIRECT'}</span>
+            ${e.club  ? `<span style="font-size:var(--text-xs);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:var(--tracking-wider);font-weight:var(--fw-semibold)">🏛️ ${e.club}</span>` : ''}
+            ${e.salon ? `<span style="font-size:var(--text-xs);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:var(--tracking-wider);font-weight:var(--fw-semibold)">🎮 ${e.salon}</span>` : ''}
+            ${editBtn}
+        </div>
+        <div class="ed-hero-main">
+            <div class="ed-hero-title-col">
+                <div class="ed-hero-title">${e.name}</div>
+                ${liveStatsHtml}
+            </div>
+        </div>
+        ${twitchBlockHtml}
+    </div>`;
+}
+
+// ── Hero PODIUM pour les éditions terminées ──────────────────────────────
+function renderEditionHeroPodium(e, finaleResults) {
+    const editBtn = state.isAdmin
+        ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>`
+        : '';
+
+    const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+    const top3 = [1, 2, 3].map(pos => {
+        const r = finaleResults.find(x => x.position === pos);
+        const player = r ? state.data.participants.find(p => p.id === r.playerId) : null;
+        return { pos, player };
+    });
+    const hasChampion = !!top3[0].player;
+
+    const medals = { 1: '🏆', 2: '🥈', 3: '🥉' };
+    const classNames = { 1: 'first', 2: 'second', 3: 'third' };
+    const ringColors = {
+        1: 'rgba(251,191,36,0.6)',
+        2: 'rgba(203,213,225,0.5)',
+        3: 'rgba(205,127,50,0.5)',
+    };
+    const sizes = { 1: 96, 2: 64, 3: 64 };
+
+    const podiumOrder = [2, 1, 3]; // affichage : argent | or | bronze
+    const podiumHtml = `<div class="ed-hero-podium">
+        ${podiumOrder.map(pos => {
+            const slot = top3[pos - 1];
+            if (!slot.player) return `<div class="ed-hero-podium-spot ${classNames[pos]}" style="opacity:0.4">
+                <div class="ed-hero-podium-medal">${medals[pos]}</div>
+                <div style="width:${sizes[pos]}px;height:${sizes[pos]}px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:10px"></div>
+                <div class="ed-hero-podium-name">—</div>
+            </div>`;
+            return `<div class="ed-hero-podium-spot ${classNames[pos]}" onclick="openPlayerProfile('${slot.player.id}')">
+                <div class="ed-hero-podium-medal">${medals[pos]}</div>
+                <div class="ed-hero-podium-avatar-wrap">${avatarHtml(slot.player, { size: sizes[pos], ringColor: ringColors[pos] })}</div>
+                <div class="ed-hero-podium-name">${pName(slot.player)}</div>
+                ${slot.player.team && slot.player.team !== 'Sans équipe' ? `<div class="ed-hero-podium-team">${slot.player.team}</div>` : ''}
+                <div class="ed-hero-podium-pts">+${getPoints(pos)} pts</div>
+            </div>`;
+        }).join('')}
+    </div>`;
+
+    return `<div class="ed-hero terminee">
+        <div class="ed-hero-bg" style="background-image:url('${tm2020Bg}')"></div>
+        <div class="ed-hero-status-row">
+            <span class="ed-hero-status terminee">✅ ${t('editions.status.done') || 'Terminée'}</span>
+            <span style="font-size:var(--text-xs);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:var(--tracking-wider);font-weight:var(--fw-semibold)">📅 ${dateStr}</span>
+            ${e.club  ? `<span style="font-size:var(--text-xs);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:var(--tracking-wider);font-weight:var(--fw-semibold)">🏛️ ${e.club}</span>` : ''}
+            ${editBtn}
+        </div>
+        <div class="ed-hero-main">
+            <div class="ed-hero-title-col">
+                <div class="ed-hero-title">${e.name}</div>
+            </div>
+        </div>
+        ${hasChampion ? `<div class="ed-hero-champion-banner">👑 ${t('detail.podium.champion') || 'Champion(ne) de l\'édition'}</div>` : ''}
+        ${podiumHtml}
+    </div>`;
+}
+
 // ── Rendu structuré du format d'édition ────────────────────────────────────
 // Utilise siteConfig.editionFormat (objet structuré) + e.description (markdown
 // freeform pour cette édition spécifique) → grid de cards visuelles + callouts
@@ -498,6 +612,18 @@ window.openEditionDetail = (id) => {
     let html = '';
 
     if (isPast) {
+        // Calculer les résultats AVANT le hero (utilisés par renderEditionHeroLive/Podium)
+        const edResults     = state.data.results.filter(r => r.editionId === e.id);
+        const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
+        const qualResults   = edResults.filter(r => r.phase === 'qualification');
+
+        // Hero adapté au statut : LIVE si en_cours, PODIUM si terminée
+        if (e.status === 'en_cours') {
+            html += renderEditionHeroLive(e, qualResults);
+        } else {
+            html += renderEditionHeroPodium(e, finaleResults);
+        }
+
         // Workflow panel pour les éditions en cours (transition → terminée + Discord)
         if (state.isAdmin && e.status === 'en_cours') {
             html += `<div class="card" style="margin-bottom:12px">
@@ -561,13 +687,6 @@ window.openEditionDetail = (id) => {
             </div>`;
         }
 
-        const edResults = state.data.results.filter(r => r.editionId === e.id);
-        const finaleResults = edResults.filter(r => r.phase === 'finale').sort((a, b) => a.position - b.position);
-        const qualResults = edResults.filter(r => r.phase === 'qualification');
-
-        const timeStr = e.time ? ` à ${e.time}` : '';
-        const editBtnHtml = state.isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ Modifier</button>` : '';
-
         const ytId = extractYoutubeId(e.youtubeUrl);
         const vodEmbedHtml = ytId ? `
             <div class="vod-section-label" style="justify-content:space-between;margin-bottom:0">
@@ -578,23 +697,14 @@ window.openEditionDetail = (id) => {
                 <iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen loading="lazy"></iframe>
             </div>` : '';
 
-        const twitchLiveHtml = e.status === 'en_cours' ? `
-            <div class="stream-section-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
-                <span style="display:flex;align-items:center;gap:6px">
-                    <span class="live-dot" style="width:7px;height:7px"></span>
-                    ${t('detail.live.twitch')}
-                </span>
-                <button onclick="toggleTwitchEmbed(this)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);border-radius:6px;color:var(--color-text-primary);cursor:pointer;font-size:0.78rem;font-weight:600;padding:4px 12px;font-family:inherit">${state.twitchCollapsed ? t('detail.show') : t('detail.hide')}</button>
-            </div>
-            <div id="twitchEmbedWrap" class="stream-embed-wrap" style="${state.twitchCollapsed ? 'display:none' : ''}">
-                <iframe src="https://player.twitch.tv/?channel=${state.siteConfig.twitchChannel}&parent=${window.location.hostname}&autoplay=false" allowfullscreen></iframe>
-            </div>` : '';
+        // Description markdown (si présente, hors hero) — le titre + Twitch sont déjà dans le hero
+        const descCardHtml = e.description ? `<div class="card" style="margin-bottom:var(--space-md)">
+            <div style="color:var(--color-text-secondary);font-size:0.9rem;line-height:1.6">${parseMarkdown(e.description)}</div>
+        </div>` : '';
 
-        html += `<div class="card">
-            <h2>🏆 ${e.name} <span style="color:var(--color-text-secondary);font-size:0.82rem;font-weight:400">— ${dateStr}${timeStr}</span>${editBtnHtml}</h2>
-            ${e.description ? `<div style="color:var(--color-text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.6">${parseMarkdown(e.description)}</div>` : ''}
-            ${twitchLiveHtml}
-            ${vodEmbedHtml}`;
+        html += descCardHtml;
+        if (vodEmbedHtml) html += `<div class="card">${vodEmbedHtml}</div>`;
+        html += `<div class="card">`;
 
         // ── Qualifications ──
         const playerMapCount = {};
