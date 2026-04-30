@@ -3,6 +3,7 @@
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, tTeam, getPoints, avatarHtml } from './utils.js';
+import { pointsTableHtml } from './display-rules.js';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -187,6 +188,10 @@ export function displayGeneralRanking() {
     html += '</tbody></table>';
     container.innerHTML = html;
     updateChart(ranking.slice(0, 10));
+
+    // Section "Système de points" — réutilise le même bloc que l'onglet Règles
+    const explainContainer = document.getElementById('rankingsPointsExplain');
+    if (explainContainer) explainContainer.innerHTML = pointsTableHtml();
 }
 
 // Chart

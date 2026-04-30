@@ -24,7 +24,7 @@ function renderMarkdown(text) {
     }).join('');
 }
 
-function pointsTableHtml() {
+export function pointsTableHtml() {
     // Génère la table de répartition des points à partir de la constante POINTS
     // Toujours visible — pas besoin que l'admin édite quoi que ce soit
     const medals = ['🥇', '🥈', '🥉'];
