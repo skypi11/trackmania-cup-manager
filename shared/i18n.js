@@ -605,6 +605,12 @@ const translations = {
     'rules.tab.fr':           '🇫🇷 Version française',
     'rules.tab.en':           '🇬🇧 Version anglaise',
     'rules.en.hint':          'Si vide, les visiteurs en anglais verront la version française.',
+    'rules.points.title':     'Système de points',
+    'rules.points.desc':      'Les points sont attribués lors de la finale de chaque édition selon la grille suivante (inspirée de la F1). Les joueurs qui atteignent la finale au-delà de la 10ème place reçoivent <strong style="color:var(--color-accent)">1 point</strong> chacun.',
+    'rules.points.position':  'Position',
+    'rules.points.value':     'Points',
+    'rules.points.beyond':    '11ème et au-delà',
+    'rules.points.note':      'ℹ️ Les phases de qualification ne donnent pas de points — seule la finale compte au classement général.',
   },
 
   en: {
@@ -1211,6 +1217,12 @@ const translations = {
     'rules.tab.fr':           '🇫🇷 French version',
     'rules.tab.en':           '🇬🇧 English version',
     'rules.en.hint':          'If empty, English visitors will see the French version.',
+    'rules.points.title':     'Points system',
+    'rules.points.desc':      'Points are awarded in the final of each edition according to the following grid (F1-inspired). Players who reach the final beyond 10th place receive <strong style="color:var(--color-accent)">1 point</strong> each.',
+    'rules.points.position':  'Position',
+    'rules.points.value':     'Points',
+    'rules.points.beyond':    '11th and beyond',
+    'rules.points.note':      'ℹ️ Qualification phases don\'t award points — only the final counts toward the general ranking.',
   }
 };
 
