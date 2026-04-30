@@ -9,6 +9,53 @@ import { notifyDiscordInscription } from './discord.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 import { DEFAULT_EDITION_FORMAT } from './site-config.js';
 
+// ── Bouton admin "Prévisualiser" (dropdown) ─────────────────────────────
+// Apparaît dans le hero des éditions, admin only. Permet de tester les rendus
+// LIVE / PODIUM sans modifier la DB. Stocké en sessionStorage par édition.
+function renderAdminPreviewBtn(editionId, currentStatus) {
+    if (!state.isAdmin) return '';
+    const opts = [
+        { val: 'inscriptions', label: t('detail.preview.opt.inscriptions') || 'Inscriptions ouvertes' },
+        { val: 'fermee',       label: t('detail.preview.opt.fermee')       || 'Inscriptions fermées' },
+        { val: 'en_cours',     label: t('detail.preview.opt.en_cours')     || 'En cours (LIVE)' },
+        { val: 'terminee',     label: t('detail.preview.opt.terminee')     || 'Terminée (podium)' },
+    ];
+    const itemsHtml = opts.map(o => `<button class="ed-share-item" onclick="setPreviewStatus('${editionId}', '${o.val}')" style="${o.val === currentStatus ? 'background:rgba(56,189,248,0.1);color:#38bdf8' : ''}">
+        <span style="width:16px;display:inline-flex;justify-content:center">${o.val === currentStatus ? '●' : '○'}</span>
+        <span>${o.label}</span>
+    </button>`).join('');
+    return `<div class="ed-share-wrap" style="margin-left:0">
+        <button class="ed-share-toggle" style="background:rgba(56,189,248,0.08);border-color:rgba(56,189,248,0.3);color:#38bdf8" onclick="toggleShareMenu(this, event)" aria-haspopup="true" aria-expanded="false" title="${t('detail.preview.btn.title') || 'Prévisualiser un autre statut sans modifier la base'}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>${t('detail.preview.btn') || 'Prévisualiser'}</span>
+            <svg class="ed-share-toggle-chevron" width="10" height="10" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+        </button>
+        <div class="ed-share-menu" hidden>
+            <div style="padding:6px 12px 8px;border-bottom:var(--border-subtle);margin-bottom:4px">
+                <div style="font-size:var(--text-xs);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:#38bdf8">${t('detail.preview.menu.label') || 'Mode prévisualisation'}</div>
+                <div style="font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:3px">${t('detail.preview.menu.hint') || 'Aucune modification en base'}</div>
+            </div>
+            ${itemsHtml}
+            <div style="border-top:var(--border-subtle);margin-top:4px;padding-top:4px">
+                <button class="ed-share-item" onclick="setPreviewStatus('${editionId}', null)" style="color:rgba(255,255,255,0.55)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <span>${t('detail.preview.exit.short') || 'Sortir du preview'}</span>
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+window.setPreviewStatus = (editionId, status) => {
+    if (status) {
+        sessionStorage.setItem('preview_status_' + editionId, status);
+    } else {
+        sessionStorage.removeItem('preview_status_' + editionId);
+    }
+    if (typeof window._closeAllShareMenus === 'function') window._closeAllShareMenus();
+    window.openEditionDetail(editionId);
+};
+
 // ── Section "Anciens vainqueurs" (footer page upcoming) ──────────────────
 function renderPreviousChampionsSection(currentEditionId) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -53,8 +100,12 @@ function twitchEmbedIframe() {
 
 // ── Hero LIVE pour les éditions en cours ──────────────────────────────────
 function renderEditionHeroLive(e, qualResults) {
+    const previewBtn = renderAdminPreviewBtn(e.id, sessionStorage.getItem('preview_status_' + e.id));
     const editBtn = state.isAdmin
-        ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>`
+        ? `<div style="margin-left:auto;display:inline-flex;gap:8px;align-items:center">
+            ${previewBtn}
+            <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️ ${t('common.edit') || 'Modifier'}</button>
+          </div>`
         : '';
 
     // Stats live calculables : map actuelle + nb qualifiés
@@ -97,8 +148,12 @@ function renderEditionHeroLive(e, qualResults) {
 
 // ── Hero PODIUM pour les éditions terminées ──────────────────────────────
 function renderEditionHeroPodium(e, finaleResults) {
+    const previewBtn = renderAdminPreviewBtn(e.id, sessionStorage.getItem('preview_status_' + e.id));
     const editBtn = state.isAdmin
-        ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>`
+        ? `<div style="margin-left:auto;display:inline-flex;gap:8px;align-items:center">
+            ${previewBtn}
+            <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️ ${t('common.edit') || 'Modifier'}</button>
+          </div>`
         : '';
 
     const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
@@ -628,10 +683,10 @@ window.openEditionDetail = (id) => {
     state.youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
     state.twitchCollapsed  = sessionStorage.getItem('twCollapsed_' + id) === '1';
 
-    // Mode preview admin : ?preview=en_cours|terminee|inscriptions|fermee
-    // Force le rendu sans modifier la DB — utile pour tester les heros LIVE / PODIUM
-    const previewStatus = new URLSearchParams(window.location.search).get('preview');
-    const isPreview = state.isAdmin && previewStatus && ['en_cours','terminee','inscriptions','fermee'].includes(previewStatus);
+    // Mode preview admin (sessionStorage par édition) : force le rendu d'un autre statut
+    // sans modifier la DB. Activé/désactivé via le bouton "🔍 Prévisualiser" dans le hero.
+    const previewStatus = state.isAdmin ? sessionStorage.getItem('preview_status_' + id) : null;
+    const isPreview = !!previewStatus && ['en_cours','terminee','inscriptions','fermee'].includes(previewStatus);
     if (isPreview) {
         e = { ...e, status: previewStatus };
     }
@@ -655,13 +710,13 @@ window.openEditionDetail = (id) => {
 
     let html = '';
 
-    // Banner "Mode prévisualisation" admin si ?preview=...
+    // Banner "Mode prévisualisation" admin si preview actif (sessionStorage)
     if (isPreview) {
         html += `<div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.32);border-radius:var(--radius-md);padding:10px 16px;margin-bottom:var(--space-md);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <span style="font-size:1.1rem">🔍</span>
             <strong style="color:#38bdf8;font-size:var(--text-sm)">${t('detail.preview.label') || 'Mode prévisualisation'}</strong>
-            <span style="color:rgba(255,255,255,0.65);font-size:var(--text-sm)">${t('detail.preview.desc') || `Statut affiché en preview : ${previewStatus}. Aucune modification en base.`}</span>
-            <a href="?cup=${new URLSearchParams(window.location.search).get('cup') || 'monthly'}#editions" style="margin-left:auto;color:#38bdf8;font-size:var(--text-xs);font-weight:var(--fw-bold);text-decoration:underline">${t('detail.preview.exit') || 'Sortir'}</a>
+            <span style="color:rgba(255,255,255,0.65);font-size:var(--text-sm)">${t('detail.preview.desc.short') || `Statut affiché : ${previewStatus}`}. ${t('detail.preview.desc.note') || 'Aucune modification en base.'}</span>
+            <button onclick="setPreviewStatus('${id}', null)" style="margin-left:auto;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:var(--text-xs);font-weight:var(--fw-bold);padding:5px 12px;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit">${t('detail.preview.exit') || 'Sortir du mode preview'}</button>
         </div>`;
     }
 
@@ -1083,8 +1138,12 @@ window.openEditionDetail = (id) => {
             </div>`;
         }
 
-        // Hero header (status pill + admin edit btn)
-        const editBtn = state.isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>` : '';
+        // Hero header (status pill + admin edit btn + preview dropdown)
+        const previewBtn = renderAdminPreviewBtn(e.id, sessionStorage.getItem('preview_status_' + e.id));
+        const editBtn = state.isAdmin ? `<div style="margin-left:auto;display:inline-flex;gap:8px;align-items:center">
+            ${previewBtn}
+            <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️ ${t('common.edit') || 'Modifier'}</button>
+        </div>` : '';
 
         // Action zone (Register + Discord/Twitch branded)
         const discordUrl = state.siteConfig?.discordUrl || state.siteConfig?.discordInviteUrl;
@@ -1315,37 +1374,35 @@ function _getShareInfo() {
     return { e, url: url.toString(), dateStr, timeStr };
 }
 
+function _closeAllShareMenus() {
+    document.querySelectorAll('.ed-share-menu').forEach(m => { m.hidden = true; });
+    document.querySelectorAll('.ed-share-toggle').forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+window._closeAllShareMenus = _closeAllShareMenus;
+
 window.toggleShareMenu = (btn, ev) => {
     if (ev) ev.stopPropagation();
     const wrap = btn.parentElement;
     const menu = wrap.querySelector('.ed-share-menu');
     if (!menu) return;
     const willOpen = menu.hidden;
-    menu.hidden = !willOpen;
-    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    _closeAllShareMenus();
     if (willOpen) {
-        const closeMenu = (e) => {
-            if (!wrap.contains(e.target)) {
-                menu.hidden = true;
-                btn.setAttribute('aria-expanded', 'false');
-                document.removeEventListener('click', closeMenu);
-                document.removeEventListener('keydown', escListener);
-            }
-        };
-        const escListener = (e) => {
-            if (e.key === 'Escape') {
-                menu.hidden = true;
-                btn.setAttribute('aria-expanded', 'false');
-                document.removeEventListener('click', closeMenu);
-                document.removeEventListener('keydown', escListener);
-            }
-        };
-        setTimeout(() => {
-            document.addEventListener('click', closeMenu);
-            document.addEventListener('keydown', escListener);
-        }, 0);
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
     }
 };
+
+// Click extérieur OU Esc → ferme tous les menus partage (handler global, installé une seule fois)
+if (!window._shareMenuHandlersInstalled) {
+    window._shareMenuHandlersInstalled = true;
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ed-share-wrap')) _closeAllShareMenus();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') _closeAllShareMenus();
+    });
+}
 
 window.shareEdition = (btn) => {
     const info = _getShareInfo();
