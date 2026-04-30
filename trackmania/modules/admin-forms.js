@@ -940,6 +940,86 @@ window.runCupIdMigration = async function() {
     }
 };
 
+window.diagDiscordAvatars = function() {
+    const container = document.getElementById('syncAvatarsResults');
+    if (!container) return;
+
+    const rows = [...state.data.participants]
+        .sort((a, b) => pName(a).localeCompare(pName(b)))
+        .map(p => {
+            const hasId   = !!p.discordId;
+            const hasAv   = !!p.discordAvatar;
+            const isCustom = hasAv && p.discordAvatar.includes('/avatars/');
+            const isDefault = hasAv && p.discordAvatar.includes('/embed/avatars/');
+            let status, color;
+            if (!hasId)        { status = '❌ Pas de discordId';        color = '#ef4444'; }
+            else if (!hasAv)   { status = '⚠️ ID mais pas d\'avatar';   color = '#f59e0b'; }
+            else if (isCustom) { status = '✅ Avatar custom';            color = '#22c55e'; }
+            else if (isDefault){ status = '⚪ Avatar Discord par défaut'; color = '#94a3b8'; }
+            else               { status = '❓ URL inconnue';              color = '#94a3b8'; }
+            return { p, status, color, hasId };
+        });
+
+    const stats = {
+        custom:  rows.filter(r => r.status.startsWith('✅')).length,
+        default: rows.filter(r => r.status.startsWith('⚪')).length,
+        noAvatar: rows.filter(r => r.status.startsWith('⚠️')).length,
+        noId:    rows.filter(r => r.status.startsWith('❌')).length,
+    };
+
+    container.innerHTML = `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;font-size:0.82rem;margin-bottom:12px;display:flex;gap:18px;flex-wrap:wrap">
+            <span><strong style="color:#22c55e">${stats.custom}</strong> avec avatar custom</span>
+            <span><strong style="color:#94a3b8">${stats.default}</strong> avec avatar Discord par défaut</span>
+            <span><strong style="color:#f59e0b">${stats.noAvatar}</strong> sans avatar</span>
+            <span><strong style="color:#ef4444">${stats.noId}</strong> sans discordId</span>
+        </div>
+        <div style="max-height:420px;overflow-y:auto;border:1px solid rgba(255,255,255,0.06);border-radius:10px">
+            <table style="font-size:0.82rem">
+                <thead><tr><th>Joueur</th><th>Discord ID</th><th>État</th><th>Action</th></tr></thead>
+                <tbody>
+                    ${rows.map(r => `
+                        <tr>
+                            <td style="font-weight:600">${pName(r.p)}</td>
+                            <td style="color:var(--color-text-secondary);font-family:monospace;font-size:0.78rem">${r.p.discordId || '—'}</td>
+                            <td style="color:${r.color}">${r.status}</td>
+                            <td><button class="btn btn-secondary btn-small" onclick="setPlayerDiscordId('${r.p.id}')">✏️ Set ID</button></td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size:0.78rem;color:var(--color-text-secondary);margin-top:10px">Clique <strong>✏️ Set ID</strong> pour corriger un Discord ID, puis relance la synchro pour récupérer son avatar.</p>`;
+};
+
+window.setPlayerDiscordId = async function(playerId) {
+    const player = state.data.participants.find(p => p.id === playerId);
+    if (!player) return;
+    const current = player.discordId || '';
+    const input = prompt(`Discord ID (snowflake) pour ${pName(player)} :\n\nID actuel : ${current || '(vide)'}`, current);
+    if (input === null) return;
+    const trimmed = input.trim();
+    if (trimmed && !/^\d{15,20}$/.test(trimmed)) {
+        alert('Format invalide. Un Discord ID est un nombre de 15-20 chiffres.');
+        return;
+    }
+    try {
+        await updateDoc(doc(db, 'participants', playerId), {
+            discordId: trimmed || null,
+            // Si on change l'ID, on vide l'avatar pour forcer un re-fetch au prochain sync
+            ...(trimmed && trimmed !== current ? { discordAvatar: '' } : {}),
+        });
+        // Update local state pour refresh immédiat du diagnostic
+        player.discordId = trimmed || null;
+        if (trimmed && trimmed !== current) player.discordAvatar = '';
+        showToast(trimmed ? `✓ Discord ID mis à jour pour ${pName(player)}` : `✓ Discord ID retiré`);
+        logAdminAction('set_discord_id', `Discord ID modifié pour ${pName(player)} : ${current || '(vide)'} → ${trimmed || '(vide)'}`);
+        // Rafraîchit le diagnostic
+        diagDiscordAvatars();
+    } catch(e) {
+        alert(`Erreur : ${e.message}`);
+    }
+};
+
 window.syncDiscordAvatars = async function(force = false) {
     const container = document.getElementById('syncAvatarsResults');
     if (!container) return;
