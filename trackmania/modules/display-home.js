@@ -40,7 +40,7 @@ export function displayHome() {
         .sort((a, b) => b.points - a.points)
         .slice(0, 3);
 
-    // ── Top pronostiqueur (cumul des points sur toutes les éditions terminées) ─
+    // ── Top 3 pronostiqueurs (cumul des points sur toutes les éditions terminées) ─
     const predictorStats = {};
     (state.data.predictions || []).forEach(p => {
         if (typeof p.score !== 'number') return;
@@ -48,10 +48,11 @@ export function displayHome() {
         if (!pid) return;
         predictorStats[pid] = (predictorStats[pid] || 0) + p.score;
     });
-    const topPredictor = Object.entries(predictorStats)
+    const topPredictors = Object.entries(predictorStats)
         .map(([pid, score]) => ({ score, player: state.data.participants.find(p => p.id === pid || p.userId === pid) }))
         .filter(x => x.player)
-        .sort((a, b) => b.score - a.score)[0];
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
 
     // ── HERO : carte Next Event impactante ────────────────────────────────
     let heroEventHtml = '';
@@ -170,19 +171,54 @@ export function displayHome() {
         </div>`).join('')
         : `<div class="home-action-empty">${t('home.no.ranking') || 'Aucun classement encore'}</div>`;
 
-    const predictorItems = topPredictor
-        ? `<div class="home-action-row">
-            <span class="home-action-rank rank-1">★</span>
-            ${avatarHtml(topPredictor.player, { size: 24 })}
-            <span class="home-action-name">${pName(topPredictor.player)}</span>
-            <span class="home-action-pts">${topPredictor.score} pts</span>
-        </div>
-        <div class="home-action-hint">${t('home.predictor.hint') || 'Le meilleur pronostiqueur de la communauté'}</div>`
+    const predictorItems = topPredictors.length > 0
+        ? topPredictors.map((tp, i) => `<div class="home-action-row">
+            <span class="home-action-rank rank-${i + 1}">${i + 1}</span>
+            ${avatarHtml(tp.player, { size: 24 })}
+            <span class="home-action-name">${pName(tp.player)}</span>
+            <span class="home-action-pts">${tp.score} pts</span>
+        </div>`).join('')
         : `<div class="home-action-empty">${t('home.no.predictor') || 'Pronostique le prochain event !'}</div>`;
 
-    const duelHint = currentPlayer
-        ? `${t('home.duel.hint.user') || 'Compare-toi à un autre joueur en face à face'}`
-        : `${t('home.duel.hint.guest') || 'Compare deux joueurs en face à face'}`;
+    // ── Duel suggéré (toi vs leader, ou leader vs second) ─────────────────
+    let duelSuggestion = null;
+    if (topThree.length >= 2) {
+        const top1 = topThree[0].player;
+        const top2 = topThree[1].player;
+        if (currentPlayer && currentPlayer.id !== top1.id) {
+            duelSuggestion = {
+                left: currentPlayer, right: top1,
+                label: t('home.duel.suggest.you') || 'Affronte le leader',
+            };
+        } else {
+            duelSuggestion = {
+                left: top1, right: top2,
+                label: t('home.duel.suggest.leaders') || 'Le duel des leaders',
+            };
+        }
+    }
+    const duelBody = duelSuggestion
+        ? `<div class="home-action-duel-real">
+            <div class="home-action-duel-side-real">
+                ${avatarHtml(duelSuggestion.left, { size: 44, ringColor: 'rgba(0,217,54,0.4)' })}
+                <span class="home-action-duel-name">${pName(duelSuggestion.left)}</span>
+            </div>
+            <span class="home-action-duel-vs">VS</span>
+            <div class="home-action-duel-side-real">
+                ${avatarHtml(duelSuggestion.right, { size: 44, ringColor: 'rgba(123,47,190,0.5)' })}
+                <span class="home-action-duel-name">${pName(duelSuggestion.right)}</span>
+            </div>
+        </div>
+        <div class="home-action-hint">${duelSuggestion.label}</div>`
+        : `<div class="home-action-duel-visual">
+            <span class="home-action-duel-side">P1</span>
+            <span class="home-action-duel-vs">VS</span>
+            <span class="home-action-duel-side">P2</span>
+        </div>
+        <div class="home-action-hint">${currentPlayer ? (t('home.duel.hint.user') || 'Compare-toi à un autre joueur en face à face') : (t('home.duel.hint.guest') || 'Compare deux joueurs en face à face')}</div>`;
+    const duelOnClick = duelSuggestion
+        ? `showSection('duel');setDuelPlayer('A','${duelSuggestion.left.id}');setDuelPlayer('B','${duelSuggestion.right.id}')`
+        : `showSection('duel')`;
 
     const quickActionsHtml = `<div class="home-actions-grid">
         <div class="home-action-card" onclick="showSection('rankings')">
@@ -201,19 +237,12 @@ export function displayHome() {
             <div class="home-action-body">${predictorItems}</div>
             <div class="home-action-footer">${t('home.predict') || 'Faire mes prédictions'} →</div>
         </div>
-        <div class="home-action-card" onclick="showSection('duel')">
+        <div class="home-action-card" onclick="${duelOnClick}">
             <div class="home-action-header">
                 <span class="home-action-icon">⚔️</span>
                 <span class="home-action-title">${t('nav.duel') || 'Duel'}</span>
             </div>
-            <div class="home-action-body">
-                <div class="home-action-duel-visual">
-                    <span class="home-action-duel-side">P1</span>
-                    <span class="home-action-duel-vs">VS</span>
-                    <span class="home-action-duel-side">P2</span>
-                </div>
-                <div class="home-action-hint">${duelHint}</div>
-            </div>
+            <div class="home-action-body">${duelBody}</div>
             <div class="home-action-footer">${t('home.compare') || 'Lancer un duel'} →</div>
         </div>
     </div>`;

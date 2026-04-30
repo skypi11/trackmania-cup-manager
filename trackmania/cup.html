@@ -722,8 +722,27 @@ body.admin-mode .admin-only { display: block; }
 }
 .home-action-duel-vs {
     font-size: var(--text-md); font-weight: var(--fw-black);
-    color: var(--springs-orange);
+    background: linear-gradient(135deg, var(--color-accent), var(--springs-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: var(--tracking-tight);
+    flex-shrink: 0;
+}
+.home-action-duel-real {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 8px 4px 4px;
+}
+.home-action-duel-side-real {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center;
+}
+.home-action-duel-side-real:first-child .home-action-duel-name { color: var(--color-accent); }
+.home-action-duel-side-real:last-child .home-action-duel-name { color: #c5a4ff; }
+.home-action-duel-name {
+    font-size: var(--text-sm); font-weight: var(--fw-bold);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
 }
 
 /* ── HOME SECTION (champions) ──────────────────── */
