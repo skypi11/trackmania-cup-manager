@@ -257,6 +257,9 @@ const translations = {
     'detail.live.now':                 'En direct maintenant',
     'detail.live.no.channel':          'Aucune chaîne Twitch configurée',
     'detail.podium.champion':          'Champion(ne) de l\'édition',
+    'detail.prev.champions':           'Anciens champions',
+    'share.twitter.text':              'Rejoins-nous pour la prochaine cup Trackmania !',
+    'share.discord.copied':            '✓ Message Discord copié dans le presse-papier',
     // ── Admin form format ──
     'admin.format.template':           'Template format d\'édition',
     'admin.format.template.hint':      'Configure les phases, le format et les pénalités. Ce template s\'applique à toutes les éditions sauf si une édition a sa propre description.',
@@ -946,6 +949,9 @@ const translations = {
     'detail.live.now':                 'Live right now',
     'detail.live.no.channel':          'No Twitch channel configured',
     'detail.podium.champion':          'Champion of the edition',
+    'detail.prev.champions':           'Past champions',
+    'share.twitter.text':              'Join us for the next Trackmania cup!',
+    'share.discord.copied':            '✓ Discord message copied to clipboard',
     // ── Admin format form ──
     'admin.format.template':           'Edition format template',
     'admin.format.template.hint':      'Configure the phases, format and penalties. This template applies to all editions unless one has its own description.',

@@ -9,6 +9,38 @@ import { notifyDiscordInscription } from './discord.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 import { DEFAULT_EDITION_FORMAT } from './site-config.js';
 
+// ── Section "Anciens vainqueurs" (footer page upcoming) ──────────────────
+function renderPreviousChampionsSection(currentEditionId) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const past = state.data.editions
+        .filter(ed => ed.id !== currentEditionId && (new Date(ed.date) < today || ed.status === 'terminee'))
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3);
+    if (past.length === 0) return '';
+
+    const cards = past.map(ed => {
+        const winRes = state.data.results.find(r => r.editionId === ed.id && r.phase === 'finale' && r.position === 1);
+        const player = winRes ? state.data.participants.find(p => p.id === winRes.playerId) : null;
+        if (!player) return '';
+        const dateStr = new Date(ed.date).toLocaleDateString(dateLang(), { month: 'long', year: 'numeric' });
+        const titleCount = state.data.results.filter(r => r.playerId === player.id && r.phase === 'finale' && r.position === 1).length;
+        return `<div class="ed-prev-champion-card" onclick="openEditionDetail('${ed.id}')">
+            ${avatarHtml(player, { size: 56, ringColor: 'rgba(251,191,36,0.5)' })}
+            <div class="ed-prev-champion-info">
+                <div class="ed-prev-champion-edition">${ed.name}</div>
+                <div class="ed-prev-champion-name">🏆 ${pName(player)}</div>
+                <div class="ed-prev-champion-meta">${dateStr}${titleCount > 1 ? ` · ${titleCount} ${t('home.titles') || 'titres'}` : ''}</div>
+            </div>
+        </div>`;
+    }).filter(Boolean).join('');
+
+    if (!cards) return '';
+    return `<div class="card" style="margin-top:var(--space-md)">
+        <h2 style="margin:0 0 var(--space-md)">👑 ${t('detail.prev.champions') || 'Anciens champions'}</h2>
+        <div class="ed-prev-champions-grid">${cards}</div>
+    </div>`;
+}
+
 // ── Twitch embed (avec fallback et autoplay muted) ────────────────────────
 function twitchEmbedIframe() {
     const channel = state.siteConfig?.twitchChannel || 'springsesport';
@@ -1084,7 +1116,8 @@ window.openEditionDetail = (id) => {
                 </div>
                 ${registrantsHtml}
                 ${adminInscriptionHtml}
-            </div>`;
+            </div>
+            ${renderPreviousChampionsSection(id)}`;
     }
 
     content.innerHTML = html;
@@ -1248,12 +1281,49 @@ window.closeEditionDetail = () => {
     if (typeof window.displayNextEditionBanner === 'function') window.displayNextEditionBanner();
 };
 
-window.shareEdition = () => {
-    if (!state.currentDetailEditionId) return;
+// Helpers partage : récupère URL + textes pour l'édition courante
+function _getShareInfo() {
+    if (!state.currentDetailEditionId) return null;
+    const e = state.data.editions.find(ed => ed.id === state.currentDetailEditionId);
+    if (!e) return null;
     const url = new URL(window.location);
     url.searchParams.set('edition', state.currentDetailEditionId);
-    navigator.clipboard.writeText(url.toString()).then(() => {
-        showToast(t('player.link.copied'));
+    const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+    const timeStr = e.time ? ` à ${e.time}` : '';
+    return { e, url: url.toString(), dateStr, timeStr };
+}
+
+window.shareEdition = (btn) => {
+    const info = _getShareInfo();
+    if (!info) return;
+    navigator.clipboard.writeText(info.url).then(() => {
+        showToast(t('player.link.copied') || '✓ Lien copié');
+        if (btn) {
+            btn.classList.add('copied');
+            setTimeout(() => btn.classList.remove('copied'), 1500);
+        }
+    });
+};
+
+window.shareEditionTwitter = () => {
+    const info = _getShareInfo();
+    if (!info) return;
+    const text = `🏆 ${info.e.name} — ${info.dateStr}${info.timeStr}\n${t('share.twitter.text') || 'Rejoins-nous pour la prochaine cup Trackmania !'}`;
+    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(info.url)}`;
+    window.open(intent, '_blank', 'noopener,noreferrer');
+};
+
+window.shareEditionDiscord = (btn) => {
+    const info = _getShareInfo();
+    if (!info) return;
+    // Format Discord-friendly avec embeds auto
+    const msg = `**🏆 ${info.e.name}**\n📅 ${info.dateStr}${info.timeStr}\n${info.url}`;
+    navigator.clipboard.writeText(msg).then(() => {
+        showToast(t('share.discord.copied') || '✓ Message Discord copié dans le presse-papier');
+        if (btn) {
+            btn.classList.add('copied');
+            setTimeout(() => btn.classList.remove('copied'), 1500);
+        }
     });
 };
 
