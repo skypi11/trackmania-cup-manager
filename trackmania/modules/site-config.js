@@ -11,23 +11,60 @@ const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly
 const cupLabel = cupId === 'mania' ? 'LAN' : t('msg.online');
 const cupName  = cupId === 'mania' ? 'Springs Mania Cup' : 'Springs Monthly Cup';
 
-// Template par défaut du format d'édition — utilisé tant que l'admin
-// n'a pas écrit le sien dans le panel Configuration. Markdown supporté.
-const DEFAULT_EDITION_FORMAT = `## :gear: Phases
+// Format d'édition structuré — défaut utilisé si l'admin n'a pas configuré
+// le sien dans le panel Configuration. Champs explicites au lieu de markdown.
+export const DEFAULT_EDITION_FORMAT = {
+    qualifs: {
+        mapsCount: 6,
+        qualifPerMap: 3,
+        roundsPerMap: 5,
+        stylesCount: 3,
+        mapsPerStyle: 2,
+        sources: ['TMX', 'COTD'],
+    },
+    finale: {
+        mapsCount: 1,
+        description: 'Map créée pour l\'événement, combinant tous les styles des qualifications',
+    },
+    format: {
+        type: 'Fast Learn',          // 'Fast Learn' | 'Standard' | 'Custom'
+        warmupMinutes: 2,
+        hiddenMaps: true,            // maps non révélées à l'avance
+    },
+    qualification: {
+        topN: 3,
+        extraLifeIfQualified: true,
+        pointsResetPerMap: true,
+    },
+    penalty: {
+        enabled: true,
+        type: 'cumulative_pct',      // 'cumulative_pct' | 'fixed_pct'
+        value: 15,
+        appliesTo: 'qualif_and_lives', // 'qualifs' | 'lives' | 'qualif_and_lives'
+    },
+    notes: '',                       // markdown freeform additionnel
+};
 
-- :one: **Qualifications** : 6 maps sélectionnées sur **TMX** ou **COTD**, 3 styles différents (2 maps par style), 5 rounds par map.
-- :two: **Finale KO** : 1 map créée pour l'événement, combinant les 3 styles des qualifications.
-
-## :zap: Format Fast Learn
-
-- Les maps ne sont **jamais révélées à l'avance**.
-- Tout le monde découvre en même temps, **2 minutes de warmup** par map.
-- À la fin de chaque map de qualif, le **top 3** se qualifie pour la finale ou gagne une **vie supplémentaire** dans le KO si déjà qualifié.
-- Les points sont **remis à zéro** au début de chaque nouvelle map.
-
-## :warning: Pénalité
-
-Chaque qualification ou vie obtenue déclenche une **pénalité cumulée de 15%** sur les maps suivantes. Performe au bon moment et **survis** !`;
+// Migration ancien format (string markdown) → nouveau (object structuré)
+// L'ancien texte devient les "notes additionnelles".
+function migrateEditionFormat(raw) {
+    if (!raw) return { ...DEFAULT_EDITION_FORMAT };
+    if (typeof raw === 'string') {
+        return { ...DEFAULT_EDITION_FORMAT, notes: raw };
+    }
+    if (typeof raw === 'object') {
+        return {
+            ...DEFAULT_EDITION_FORMAT,
+            ...raw,
+            qualifs:      { ...DEFAULT_EDITION_FORMAT.qualifs,      ...(raw.qualifs      || {}) },
+            finale:       { ...DEFAULT_EDITION_FORMAT.finale,       ...(raw.finale       || {}) },
+            format:       { ...DEFAULT_EDITION_FORMAT.format,       ...(raw.format       || {}) },
+            qualification:{ ...DEFAULT_EDITION_FORMAT.qualification,...(raw.qualification|| {}) },
+            penalty:      { ...DEFAULT_EDITION_FORMAT.penalty,      ...(raw.penalty      || {}) },
+        };
+    }
+    return { ...DEFAULT_EDITION_FORMAT };
+}
 
 export const CONFIG_DEFAULTS = {
     siteName: cupName,
@@ -47,7 +84,15 @@ state.siteConfig = { ...CONFIG_DEFAULTS };
 export async function loadSiteConfig() {
     try {
         const snap = await getDoc(doc(db, 'siteContent', `config_${cupId}`));
-        if (snap.exists()) state.siteConfig = { ...CONFIG_DEFAULTS, ...snap.data() };
+        if (snap.exists()) {
+            const raw = snap.data();
+            // Migration éventuelle de l'ancien editionFormat (string markdown) → object structuré
+            state.siteConfig = {
+                ...CONFIG_DEFAULTS,
+                ...raw,
+                editionFormat: migrateEditionFormat(raw.editionFormat),
+            };
+        }
     } catch { /* keep defaults */ }
     applySiteConfig();
     displayHome();
@@ -71,8 +116,10 @@ export function applySiteConfig() {
     const sidebarDiscord = document.getElementById('sidebarDiscordBtn');
     if (sidebarDiscord) sidebarDiscord.href = c.discordInviteUrl;
     // Populate form fields
-    const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl, cfgEditionFormat: c.editionFormat };
+    const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl };
     Object.entries(fields).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val || ''; });
+    // Populate edition format structured fields
+    populateFormatForm(c.editionFormat || DEFAULT_EDITION_FORMAT);
     // Overlay URL
     const overlayContainer = document.getElementById('overlayUrlsContainer');
     if (overlayContainer) {
@@ -86,10 +133,90 @@ export function applySiteConfig() {
     }
 }
 
+// ── Helpers : populate / read structured edition format form ────────────
+function populateFormatForm(fmt) {
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+    const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+    // Qualifs
+    setVal('cfgFmt_qualifs_mapsCount',   fmt.qualifs?.mapsCount);
+    setVal('cfgFmt_qualifs_qualifPerMap', fmt.qualifs?.qualifPerMap);
+    setVal('cfgFmt_qualifs_roundsPerMap', fmt.qualifs?.roundsPerMap);
+    setVal('cfgFmt_qualifs_stylesCount',  fmt.qualifs?.stylesCount);
+    setVal('cfgFmt_qualifs_mapsPerStyle', fmt.qualifs?.mapsPerStyle);
+    const sources = Array.isArray(fmt.qualifs?.sources) ? fmt.qualifs.sources : [];
+    setChk('cfgFmt_qualifs_sourceTMX',  sources.includes('TMX'));
+    setChk('cfgFmt_qualifs_sourceCOTD', sources.includes('COTD'));
+    const customSources = sources.filter(s => s !== 'TMX' && s !== 'COTD').join(', ');
+    setVal('cfgFmt_qualifs_sourceCustom', customSources);
+    // Finale
+    setVal('cfgFmt_finale_mapsCount',   fmt.finale?.mapsCount);
+    setVal('cfgFmt_finale_description', fmt.finale?.description);
+    // Format
+    setVal('cfgFmt_format_type',          fmt.format?.type);
+    setVal('cfgFmt_format_warmupMinutes', fmt.format?.warmupMinutes);
+    setChk('cfgFmt_format_hiddenMaps',    fmt.format?.hiddenMaps);
+    // Qualification
+    setVal('cfgFmt_qualification_topN',                 fmt.qualification?.topN);
+    setChk('cfgFmt_qualification_extraLifeIfQualified', fmt.qualification?.extraLifeIfQualified);
+    setChk('cfgFmt_qualification_pointsResetPerMap',    fmt.qualification?.pointsResetPerMap);
+    // Penalty
+    setChk('cfgFmt_penalty_enabled',   fmt.penalty?.enabled);
+    setVal('cfgFmt_penalty_type',      fmt.penalty?.type);
+    setVal('cfgFmt_penalty_value',     fmt.penalty?.value);
+    setVal('cfgFmt_penalty_appliesTo', fmt.penalty?.appliesTo);
+    // Notes (markdown)
+    setVal('cfgFmt_notes', fmt.notes);
+}
+
+function readFormatForm() {
+    const num = id => {
+        const v = parseInt(document.getElementById(id)?.value, 10);
+        return Number.isFinite(v) ? v : null;
+    };
+    const str = id => (document.getElementById(id)?.value || '').trim();
+    const raw = id => document.getElementById(id)?.value || '';
+    const chk = id => !!document.getElementById(id)?.checked;
+    const sources = [];
+    if (chk('cfgFmt_qualifs_sourceTMX'))  sources.push('TMX');
+    if (chk('cfgFmt_qualifs_sourceCOTD')) sources.push('COTD');
+    const customSrc = str('cfgFmt_qualifs_sourceCustom');
+    if (customSrc) customSrc.split(',').map(s => s.trim()).filter(Boolean).forEach(s => sources.push(s));
+    return {
+        qualifs: {
+            mapsCount:    num('cfgFmt_qualifs_mapsCount')    ?? DEFAULT_EDITION_FORMAT.qualifs.mapsCount,
+            qualifPerMap: num('cfgFmt_qualifs_qualifPerMap') ?? DEFAULT_EDITION_FORMAT.qualifs.qualifPerMap,
+            roundsPerMap: num('cfgFmt_qualifs_roundsPerMap') ?? DEFAULT_EDITION_FORMAT.qualifs.roundsPerMap,
+            stylesCount:  num('cfgFmt_qualifs_stylesCount')  ?? DEFAULT_EDITION_FORMAT.qualifs.stylesCount,
+            mapsPerStyle: num('cfgFmt_qualifs_mapsPerStyle') ?? DEFAULT_EDITION_FORMAT.qualifs.mapsPerStyle,
+            sources,
+        },
+        finale: {
+            mapsCount:   num('cfgFmt_finale_mapsCount') ?? DEFAULT_EDITION_FORMAT.finale.mapsCount,
+            description: str('cfgFmt_finale_description') || DEFAULT_EDITION_FORMAT.finale.description,
+        },
+        format: {
+            type:          str('cfgFmt_format_type')          || DEFAULT_EDITION_FORMAT.format.type,
+            warmupMinutes: num('cfgFmt_format_warmupMinutes') ?? DEFAULT_EDITION_FORMAT.format.warmupMinutes,
+            hiddenMaps:    chk('cfgFmt_format_hiddenMaps'),
+        },
+        qualification: {
+            topN:                 num('cfgFmt_qualification_topN') ?? DEFAULT_EDITION_FORMAT.qualification.topN,
+            extraLifeIfQualified: chk('cfgFmt_qualification_extraLifeIfQualified'),
+            pointsResetPerMap:    chk('cfgFmt_qualification_pointsResetPerMap'),
+        },
+        penalty: {
+            enabled:   chk('cfgFmt_penalty_enabled'),
+            type:      str('cfgFmt_penalty_type')      || DEFAULT_EDITION_FORMAT.penalty.type,
+            value:     num('cfgFmt_penalty_value')     ?? DEFAULT_EDITION_FORMAT.penalty.value,
+            appliesTo: str('cfgFmt_penalty_appliesTo') || DEFAULT_EDITION_FORMAT.penalty.appliesTo,
+        },
+        notes: raw('cfgFmt_notes'),
+    };
+}
+
 window.saveSiteConfig = async (e) => {
     e.preventDefault();
     const get = id => document.getElementById(id)?.value.trim() || '';
-    const getRaw = id => document.getElementById(id)?.value || '';
     const cfg = {
         siteName:         get('cfgSiteName')         || CONFIG_DEFAULTS.siteName,
         siteSubtitle:     get('cfgSiteSubtitle')     || CONFIG_DEFAULTS.siteSubtitle,
@@ -101,7 +228,7 @@ window.saveSiteConfig = async (e) => {
         tiktokUrl:        get('cfgTiktokUrl')        || CONFIG_DEFAULTS.tiktokUrl,
         twitchUrl:        get('cfgTwitchUrl')        || CONFIG_DEFAULTS.twitchUrl,
         discordInviteUrl: get('cfgDiscordInviteUrl') || CONFIG_DEFAULTS.discordInviteUrl,
-        editionFormat:    getRaw('cfgEditionFormat') || CONFIG_DEFAULTS.editionFormat,
+        editionFormat:    readFormatForm(),
     };
     try {
         // merge: true → on n'écrase pas rules / rulesEn (sauvés séparément par display-rules.js)

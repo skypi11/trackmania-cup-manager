@@ -7,6 +7,112 @@ import { dateLang, pName, tTeam, getPoints, getCountdown, showToast, parseMarkdo
 import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { notifyDiscordInscription } from './discord.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
+import { DEFAULT_EDITION_FORMAT } from './site-config.js';
+
+// ── Rendu structuré du format d'édition ────────────────────────────────────
+// Utilise siteConfig.editionFormat (objet structuré) + e.description (markdown
+// freeform pour cette édition spécifique) → grid de cards visuelles + callouts
+// auto-générés (warning pénalité, info maps cachées).
+function renderFormatCard(e) {
+    const fmt = state.siteConfig?.editionFormat || DEFAULT_EDITION_FORMAT;
+    const editionNotes = (e.description && e.description.trim()) || '';
+    const templateNotes = (fmt.notes && fmt.notes.trim()) || '';
+    // Notes affichées : la description de l'édition prend le pas, sinon les notes du template
+    const notesMarkdown = editionNotes || templateNotes;
+    const usingTemplate = !editionNotes;
+
+    // ── Block Qualifications ──
+    const q = fmt.qualifs || {};
+    const sourcesStr = Array.isArray(q.sources) && q.sources.length > 0 ? q.sources.join(' · ') : '';
+    const qualifsBlock = `<div class="ed-format-block qualifs">
+        <div class="ed-format-block-header">
+            <span class="ed-format-block-icon">🎯</span>
+            <span class="ed-format-block-title">${t('detail.fmt.qualifs') || 'Qualifications'}</span>
+        </div>
+        <div class="ed-format-stat"><span class="ed-format-stat-value">${q.mapsCount ?? 6}</span><span class="ed-format-stat-label">${t('detail.fmt.qualifs.maps') || 'maps'}</span></div>
+        ${q.stylesCount ? `<div class="ed-format-stat"><span class="ed-format-stat-value">${q.stylesCount}</span><span class="ed-format-stat-label">${t('detail.fmt.qualifs.styles') || 'styles différents'}${q.mapsPerStyle ? ` (${q.mapsPerStyle} ${t('detail.fmt.qualifs.mapsPerStyle') || 'maps/style'})` : ''}</span></div>` : ''}
+        ${q.roundsPerMap ? `<div class="ed-format-stat"><span class="ed-format-stat-value">${q.roundsPerMap}</span><span class="ed-format-stat-label">${t('detail.fmt.qualifs.rounds') || 'rounds par map'}</span></div>` : ''}
+        ${sourcesStr ? `<div class="ed-format-meta">${t('detail.fmt.qualifs.sources') || 'Sources'} : <strong>${sourcesStr}</strong></div>` : ''}
+    </div>`;
+
+    // ── Block Finale ──
+    const fin = fmt.finale || {};
+    const finaleBlock = `<div class="ed-format-block finale">
+        <div class="ed-format-block-header">
+            <span class="ed-format-block-icon">🏆</span>
+            <span class="ed-format-block-title">${t('detail.fmt.finale') || 'Finale'}</span>
+        </div>
+        <div class="ed-format-stat"><span class="ed-format-stat-value">${fin.mapsCount ?? 1}</span><span class="ed-format-stat-label">${(fin.mapsCount === 1 ? (t('detail.fmt.finale.map') || 'map') : (t('detail.fmt.finale.maps') || 'maps'))}</span></div>
+        ${fin.description ? `<div class="ed-format-meta">${fin.description}</div>` : ''}
+    </div>`;
+
+    // ── Block Format ──
+    const f = fmt.format || {};
+    const warmup = f.warmupMinutes;
+    const formatBlock = `<div class="ed-format-block format">
+        <div class="ed-format-block-header">
+            <span class="ed-format-block-icon">⚡</span>
+            <span class="ed-format-block-title">${f.type || 'Standard'}</span>
+        </div>
+        ${(typeof warmup === 'number' && warmup > 0) ? `<div class="ed-format-stat"><span class="ed-format-stat-value">${warmup}</span><span class="ed-format-stat-label">${t('detail.fmt.format.warmup') || 'min de warmup par map'}</span></div>` : ''}
+        <span class="ed-format-flag ${f.hiddenMaps ? 'on' : 'off'}">${f.hiddenMaps ? '🔒' : '👁️'} ${f.hiddenMaps ? (t('detail.fmt.format.hidden.on') || 'Maps cachées jusqu\'au lancement') : (t('detail.fmt.format.hidden.off') || 'Maps connues à l\'avance')}</span>
+    </div>`;
+
+    // ── Block Qualification logic ──
+    const ql = fmt.qualification || {};
+    const qualificationBlock = `<div class="ed-format-block qualification">
+        <div class="ed-format-block-header">
+            <span class="ed-format-block-icon">🔒</span>
+            <span class="ed-format-block-title">${t('detail.fmt.qualification') || 'Qualification → KO'}</span>
+        </div>
+        <div class="ed-format-stat"><span class="ed-format-stat-value">Top ${ql.topN ?? 3}</span><span class="ed-format-stat-label">${t('detail.fmt.qualification.topN') || 'qualifié par map'}</span></div>
+        ${ql.extraLifeIfQualified ? `<span class="ed-format-flag on">❤️ ${t('detail.fmt.qualification.extraLife') || 'Vie supplémentaire si déjà qualifié'}</span>` : ''}
+        ${ql.pointsResetPerMap ? `<span class="ed-format-flag on">🔄 ${t('detail.fmt.qualification.reset') || 'Points reset par map'}</span>` : ''}
+    </div>`;
+
+    // ── Penalty banner (warning callout) ──
+    const p = fmt.penalty || {};
+    let penaltyHtml = '';
+    if (p.enabled && (p.value ?? 0) > 0) {
+        const typeLabel = p.type === 'cumulative_pct'
+            ? (t('detail.fmt.penalty.type.cumul') || 'cumulée')
+            : (t('detail.fmt.penalty.type.fixed') || 'fixe');
+        const appliesLabel = {
+            qualif_and_lives: t('detail.fmt.penalty.applies.both')    || 'pour chaque qualification ou vie obtenue',
+            qualifs:          t('detail.fmt.penalty.applies.qualifs') || 'pour chaque qualification',
+            lives:            t('detail.fmt.penalty.applies.lives')   || 'pour chaque vie obtenue',
+        }[p.appliesTo] || (t('detail.fmt.penalty.applies.both') || 'pour chaque qualification ou vie obtenue');
+        penaltyHtml = `<div class="ed-format-penalty">
+            <span class="ed-format-penalty-icon">⚠️</span>
+            <div class="ed-format-penalty-text">
+                <strong>${t('detail.fmt.penalty.label') || 'Pénalité'} ${typeLabel}</strong> ${appliesLabel}. ${t('detail.fmt.penalty.note') || 'Performe au bon moment et survis.'}
+            </div>
+            <div class="ed-format-penalty-value">−${p.value}%</div>
+        </div>`;
+    }
+
+    // ── Notes additionnelles (markdown, optionnel) ──
+    const notesHtml = notesMarkdown ? `<div class="ed-format-notes">
+        <div class="ed-format-notes-title">📝 ${t('detail.fmt.notes') || 'Notes additionnelles'}</div>
+        <div class="ed-format-content">${parseMarkdown(notesMarkdown)}</div>
+    </div>` : '';
+
+    return `<div class="ed-format-card">
+        <div class="ed-format-header">
+            <span class="ed-format-icon">🎮</span>
+            <span class="ed-format-title">${t('detail.format.title') || 'Format de l\'édition'}</span>
+            ${usingTemplate ? `<span class="ed-format-badge">📋 ${t('detail.format.template') || 'Template'}</span>` : ''}
+        </div>
+        <div class="ed-format-grid">
+            ${qualifsBlock}
+            ${finaleBlock}
+            ${formatBlock}
+            ${qualificationBlock}
+        </div>
+        ${penaltyHtml}
+        ${notesHtml}
+    </div>`;
+}
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
@@ -852,20 +958,8 @@ window.openEditionDetail = (id) => {
             </div>
         </div>`;
 
-        // ── Format card (markdown enhanced) ────────────────
-        // Si l'édition n'a pas de description custom, on utilise le template global de la cup
-        const formatSource = (e.description && e.description.trim())
-            ? e.description
-            : (state.siteConfig?.editionFormat || '');
-        const formatCardHtml = formatSource ? `<div class="ed-format-card">
-            <div class="ed-format-header">
-                <span class="ed-format-icon">🎮</span>
-                <span class="ed-format-title">${t('detail.format.title') || 'Format de l\'édition'}</span>
-                ${(!e.description || !e.description.trim()) && state.siteConfig?.editionFormat
-                    ? `<span class="ed-format-badge">📋 ${t('detail.format.template') || 'Template'}</span>` : ''}
-            </div>
-            <div class="ed-format-content">${parseMarkdown(formatSource)}</div>
-        </div>` : '';
+        // ── Format card — rendu structuré + notes markdown ──
+        const formatCardHtml = renderFormatCard(e);
 
         html = `${heroHtml}
             ${workflowHtml ? `<div class="card" style="margin-bottom:var(--space-md);padding:0">${workflowHtml}</div>` : ''}
