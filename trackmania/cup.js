@@ -6,6 +6,7 @@ import { state } from './modules/state.js';
 import { buildRankingStats, displayGeneralRanking, displayStats } from './modules/display-rankings.js';
 import { displayMapsTimeline } from './modules/display-maps.js';
 import { displayHome, displayNextEditionBanner } from './modules/display-home.js';
+window.displayNextEditionBanner = displayNextEditionBanner;
 import { displayHallOfFame } from './modules/display-hof.js';
 import { displayEditions } from './modules/display-editions.js';
 import { displayParticipants } from './modules/display-players.js';

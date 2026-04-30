@@ -787,26 +787,33 @@ window.openEditionDetail = (id) => {
         const statusLabel = statusLabels[statusKey] || statusLabels.inscriptions;
         const countdown = getCountdown(e.date, e.time);
 
-        // KPI strip — date / time / participants / format
+        // KPI strip — date / time / participants / format (countdown sorti en bloc XL séparé)
         const kpis = [
             { icon: '📅', label: t('detail.kpi.date') || 'Date', value: dateStr },
             ...(e.time ? [{ icon: '🕐', label: t('detail.kpi.time') || 'Heure', value: e.time }] : []),
-            ...(countdown ? [{ icon: '⏱', label: t('detail.kpi.countdown') || 'Dans', value: countdown, accent: true }] : []),
             { icon: '🎯', label: t('detail.kpi.maps') || 'Maps qualifs', value: `${e.nbMaps || 6}` },
             { icon: '🏁', label: t('detail.kpi.qualifs') || 'Qualifs / map', value: `${e.nbQualifPerMap || 3}` },
             { icon: '👥', label: t('detail.kpi.registered') || 'Inscrits', value: `${inscriptions.length}` },
         ];
         const kpisHtml = `<div class="ed-kpis">${kpis.map(k => `
-            <div class="ed-kpi${k.accent ? ' accent' : ''}">
+            <div class="ed-kpi">
                 <div class="ed-kpi-label">${k.icon} ${k.label}</div>
                 <div class="ed-kpi-value">${k.value}</div>
             </div>`).join('')}</div>`;
 
-        // Tagline = première ligne de la description si présente
-        const firstLine = (e.description || '').split('\n').map(l => l.trim()).find(l => l && !l.startsWith('#') && !l.startsWith('-')) || '';
-        const taglineHtml = firstLine
-            ? `<div class="ed-hero-tagline">${firstLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`
-            : '';
+        // Countdown XL à droite (upcoming uniquement) — ou badge LIVE si en_cours
+        let countdownXlHtml = '';
+        if (statusKey === 'en_cours') {
+            countdownXlHtml = `<div class="ed-hero-countdown live">
+                <div class="ed-hero-countdown-label"><span class="live-dot"></span> ${t('editions.status.live') || 'EN DIRECT'}</div>
+                <div class="ed-hero-countdown-value">LIVE</div>
+            </div>`;
+        } else if (countdown && statusKey !== 'terminee') {
+            countdownXlHtml = `<div class="ed-hero-countdown">
+                <div class="ed-hero-countdown-label">${t('detail.kpi.countdown') || 'Dans'}</div>
+                <div class="ed-hero-countdown-value">${countdown}</div>
+            </div>`;
+        }
 
         // Hero header (status pill + admin edit btn)
         const editBtn = state.isAdmin ? `<button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')" style="margin-left:auto">✏️ ${t('common.edit') || 'Modifier'}</button>` : '';
@@ -831,8 +838,12 @@ window.openEditionDetail = (id) => {
                 ${e.salon ? `<span style="font-size:var(--text-xs);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:var(--tracking-wider);font-weight:var(--fw-semibold)">🎮 ${e.salon}</span>` : ''}
                 ${editBtn}
             </div>
-            <div class="ed-hero-title">${e.name}</div>
-            ${taglineHtml}
+            <div class="ed-hero-main">
+                <div class="ed-hero-title-col">
+                    <div class="ed-hero-title">${e.name}</div>
+                </div>
+                ${countdownXlHtml}
+            </div>
             ${kpisHtml}
             <div class="ed-action-zone">
                 ${registrationHtml}
@@ -842,20 +853,18 @@ window.openEditionDetail = (id) => {
         </div>`;
 
         // ── Format card (markdown enhanced) ────────────────
-        // Skip the first line (used as tagline) for the format card content
-        const remainingDesc = e.description
-            ? e.description.split('\n').filter((line, idx) => {
-                const trimmed = line.trim();
-                if (idx === 0 && trimmed === firstLine) return false;
-                return true;
-            }).join('\n').trim()
-            : '';
-        const formatCardHtml = remainingDesc ? `<div class="ed-format-card">
+        // Si l'édition n'a pas de description custom, on utilise le template global de la cup
+        const formatSource = (e.description && e.description.trim())
+            ? e.description
+            : (state.siteConfig?.editionFormat || '');
+        const formatCardHtml = formatSource ? `<div class="ed-format-card">
             <div class="ed-format-header">
                 <span class="ed-format-icon">🎮</span>
                 <span class="ed-format-title">${t('detail.format.title') || 'Format de l\'édition'}</span>
+                ${(!e.description || !e.description.trim()) && state.siteConfig?.editionFormat
+                    ? `<span class="ed-format-badge">📋 ${t('detail.format.template') || 'Template'}</span>` : ''}
             </div>
-            <div class="ed-format-content">${parseMarkdown(remainingDesc)}</div>
+            <div class="ed-format-content">${parseMarkdown(formatSource)}</div>
         </div>` : '';
 
         html = `${heroHtml}
@@ -877,6 +886,22 @@ window.openEditionDetail = (id) => {
     }
 
     content.innerHTML = html;
+
+    // Post-process : convertit les <li>/<p> qui commencent par certains emojis en callouts visuels
+    // ⚠️ → warning (rouge), ⚡ → info (jaune), 🔒 → neutre (bleu)
+    const formatContent = content.querySelector('.ed-format-content');
+    if (formatContent) {
+        const calloutMap = [
+            { emoji: '⚠️', cls: 'warning' },
+            { emoji: '⚡',  cls: 'info' },
+            { emoji: '🔒', cls: 'neutral' },
+        ];
+        formatContent.querySelectorAll('li, p').forEach(el => {
+            const txt = el.textContent.trim();
+            const found = calloutMap.find(c => txt.startsWith(c.emoji));
+            if (found) el.classList.add(`ed-format-callout`, found.cls);
+        });
+    }
 
     const adminInscForm = document.getElementById('adminInscriptionForm');
     if (adminInscForm) {
@@ -1017,6 +1042,8 @@ window.closeEditionDetail = () => {
     const url = new URL(window.location);
     url.searchParams.delete('edition');
     history.replaceState(null, '', url);
+    // Ré-affiche le bandeau "next edition" maintenant qu'on quitte le détail
+    if (typeof window.displayNextEditionBanner === 'function') window.displayNextEditionBanner();
 };
 
 window.shareEdition = () => {

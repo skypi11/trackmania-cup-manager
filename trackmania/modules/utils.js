@@ -40,6 +40,7 @@ const EMOJI_MAP = {
     green_circle:'🟢', red_circle:'🔴', yellow_circle:'🟡', blue_circle:'🔵',
     white_circle:'⚪', black_circle:'⚫', small_red_triangle:'🔺',
     arrow_up:'⬆️', arrow_down:'⬇️', arrows_counterclockwise:'🔄',
+    gear:'⚙️', sparkles:'✨', crown:'👑', dart:'🎯', racing_car:'🏎️',
 };
 
 // Convertisseur Markdown (safe — échappe le HTML avant parsing)

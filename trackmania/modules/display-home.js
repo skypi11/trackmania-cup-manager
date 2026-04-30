@@ -320,6 +320,11 @@ export function displayNextEditionBanner() {
         banner.style.display = 'none';
         return;
     }
+    // Sur la page détail d'une édition, le hero de l'édition contient déjà toutes les infos
+    if (state.currentDetailEditionId) {
+        banner.style.display = 'none';
+        return;
+    }
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = state.data.editions
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee')

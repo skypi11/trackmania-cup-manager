@@ -11,6 +11,24 @@ const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly
 const cupLabel = cupId === 'mania' ? 'LAN' : t('msg.online');
 const cupName  = cupId === 'mania' ? 'Springs Mania Cup' : 'Springs Monthly Cup';
 
+// Template par défaut du format d'édition — utilisé tant que l'admin
+// n'a pas écrit le sien dans le panel Configuration. Markdown supporté.
+const DEFAULT_EDITION_FORMAT = `## :gear: Phases
+
+- :one: **Qualifications** : 6 maps sélectionnées sur **TMX** ou **COTD**, 3 styles différents (2 maps par style), 5 rounds par map.
+- :two: **Finale KO** : 1 map créée pour l'événement, combinant les 3 styles des qualifications.
+
+## :zap: Format Fast Learn
+
+- Les maps ne sont **jamais révélées à l'avance**.
+- Tout le monde découvre en même temps, **2 minutes de warmup** par map.
+- À la fin de chaque map de qualif, le **top 3** se qualifie pour la finale ou gagne une **vie supplémentaire** dans le KO si déjà qualifié.
+- Les points sont **remis à zéro** au début de chaque nouvelle map.
+
+## :warning: Pénalité
+
+Chaque qualification ou vie obtenue déclenche une **pénalité cumulée de 15%** sur les maps suivantes. Performe au bon moment et **survis** !`;
+
 export const CONFIG_DEFAULTS = {
     siteName: cupName,
     siteSubtitle: `Springs E-Sport · ${cupLabel}`,
@@ -22,6 +40,7 @@ export const CONFIG_DEFAULTS = {
     twitchUrl: 'https://www.twitch.tv/springsesport',
     discordInviteUrl: 'https://discord.gg/ZXHRRd95C3',
     copyrightText: '© 2026 Springs E-Sport',
+    editionFormat: DEFAULT_EDITION_FORMAT,
 };
 state.siteConfig = { ...CONFIG_DEFAULTS };
 
@@ -52,7 +71,7 @@ export function applySiteConfig() {
     const sidebarDiscord = document.getElementById('sidebarDiscordBtn');
     if (sidebarDiscord) sidebarDiscord.href = c.discordInviteUrl;
     // Populate form fields
-    const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl };
+    const fields = { cfgSiteName: c.siteName, cfgSiteSubtitle: c.siteSubtitle, cfgCopyright: c.copyrightText, cfgTwitchChannel: c.twitchChannel, cfgYoutubeUrl: c.youtubeUrl, cfgInstagramUrl: c.instagramUrl, cfgTwitterUrl: c.twitterUrl, cfgTiktokUrl: c.tiktokUrl, cfgTwitchUrl: c.twitchUrl, cfgDiscordInviteUrl: c.discordInviteUrl, cfgEditionFormat: c.editionFormat };
     Object.entries(fields).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val || ''; });
     // Overlay URL
     const overlayContainer = document.getElementById('overlayUrlsContainer');
@@ -70,6 +89,7 @@ export function applySiteConfig() {
 window.saveSiteConfig = async (e) => {
     e.preventDefault();
     const get = id => document.getElementById(id)?.value.trim() || '';
+    const getRaw = id => document.getElementById(id)?.value || '';
     const cfg = {
         siteName:         get('cfgSiteName')         || CONFIG_DEFAULTS.siteName,
         siteSubtitle:     get('cfgSiteSubtitle')     || CONFIG_DEFAULTS.siteSubtitle,
@@ -81,10 +101,12 @@ window.saveSiteConfig = async (e) => {
         tiktokUrl:        get('cfgTiktokUrl')        || CONFIG_DEFAULTS.tiktokUrl,
         twitchUrl:        get('cfgTwitchUrl')        || CONFIG_DEFAULTS.twitchUrl,
         discordInviteUrl: get('cfgDiscordInviteUrl') || CONFIG_DEFAULTS.discordInviteUrl,
+        editionFormat:    getRaw('cfgEditionFormat') || CONFIG_DEFAULTS.editionFormat,
     };
     try {
-        await setDoc(doc(db, 'siteContent', `config_${cupId}`), cfg);
-        state.siteConfig = { ...cfg };
+        // merge: true → on n'écrase pas rules / rulesEn (sauvés séparément par display-rules.js)
+        await setDoc(doc(db, 'siteContent', `config_${cupId}`), cfg, { merge: true });
+        state.siteConfig = { ...state.siteConfig, ...cfg };
         applySiteConfig();
         displayHome();
         const status = document.getElementById('cfgSaveStatus');
