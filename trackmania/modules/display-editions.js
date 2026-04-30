@@ -104,10 +104,10 @@ function renderFormatCard(e) {
             ${usingTemplate ? `<span class="ed-format-badge">📋 ${t('detail.format.template') || 'Template'}</span>` : ''}
         </div>
         <div class="ed-format-grid">
-            ${qualifsBlock}
-            ${finaleBlock}
             ${formatBlock}
+            ${qualifsBlock}
             ${qualificationBlock}
+            ${finaleBlock}
         </div>
         ${penaltyHtml}
         ${notesHtml}
@@ -893,12 +893,10 @@ window.openEditionDetail = (id) => {
         const statusLabel = statusLabels[statusKey] || statusLabels.inscriptions;
         const countdown = getCountdown(e.date, e.time);
 
-        // KPI strip — date / time / participants / format (countdown sorti en bloc XL séparé)
+        // KPI strip — date / time / inscrits (countdown XL à part, maps/qualifs dans la grid format)
         const kpis = [
             { icon: '📅', label: t('detail.kpi.date') || 'Date', value: dateStr },
             ...(e.time ? [{ icon: '🕐', label: t('detail.kpi.time') || 'Heure', value: e.time }] : []),
-            { icon: '🎯', label: t('detail.kpi.maps') || 'Maps qualifs', value: `${e.nbMaps || 6}` },
-            { icon: '🏁', label: t('detail.kpi.qualifs') || 'Qualifs / map', value: `${e.nbQualifPerMap || 3}` },
             { icon: '👥', label: t('detail.kpi.registered') || 'Inscrits', value: `${inscriptions.length}` },
         ];
         const kpisHtml = `<div class="ed-kpis">${kpis.map(k => `
