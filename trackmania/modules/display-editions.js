@@ -558,9 +558,13 @@ window.openEditionDetail = (id) => {
                     if (!player) return;
                     const viesCountP = qualResults.filter(q => q.playerId === player.id).length - 1;
                     const viesHtml = viesCountP > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${viesCountP}</div>` : '';
+                    const ringColor = r.position === 1 ? 'rgba(251,191,36,0.6)'
+                                    : r.position === 2 ? 'rgba(203,213,225,0.6)'
+                                    : 'rgba(205,127,50,0.6)';
                     html += `<div class="podium-spot">
                         <div class="podium-player">
                             <div class="podium-medal">${medals[r.position] || r.position}</div>
+                            <div style="display:flex;justify-content:center;margin-bottom:6px">${avatarHtml(player, { size: 48, ringColor })}</div>
                             <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
                             <div>${playerBadgesHtml(player.id)}</div>
                             ${viesHtml}
@@ -599,7 +603,7 @@ window.openEditionDetail = (id) => {
                 const del = state.isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                 html += `<tr>
                     <td><span class="badge ${badgeClass}">${r.position}</span></td>
-                    <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</td>
+                    <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(player, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</div></td>
                     <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                     <td style="color:#ef4444;font-size:0.85rem">${vies}</td>
                     <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
@@ -746,7 +750,7 @@ window.openEditionDetail = (id) => {
                 }
                 registrantsHtml += `<tr style="${meStyle}">
                     <td style="color:var(--color-text-secondary)">${i + 1}</td>
-                    <td><strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ` <span style="color:var(--color-accent);font-size:0.8rem">${t('msg.you')}</span>` : ''}</td>
+                    <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(player, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}${isMe ? ` <span style="color:var(--color-accent);font-size:0.8rem">${t('msg.you')}</span>` : ''}</div></td>
                     <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                     ${passwordCell}
                     ${actionCell}
