@@ -209,15 +209,23 @@ onAuthStateChanged(auth, async (user) => {
         state.isAdmin = adminSnap.exists();
         state.currentUserProfile = !partSnap.empty ? partSnap.docs[0].data() : null;
 
-        // Auto-patch : si joueur Discord sans discordId dans son profil, on le rempli
+        // Auto-patch : maintient à jour discordId / username / avatar à chaque connexion
+        // - discordId : rempli si manquant (legacy migration)
+        // - discordUsername / discordAvatar : refresh à chaque login pour rester sync avec Discord
         if (!partSnap.empty && user.uid.startsWith('discord_')) {
             const pDoc = partSnap.docs[0];
             const pData = pDoc.data();
+            const patch = {};
             if (!pData.discordId) {
-                const snowflake = user.uid.replace('discord_', '');
-                const patch = { discordId: snowflake };
-                if (!pData.discordUsername && state.discordUsername) patch.discordUsername = state.discordUsername;
-                if (!pData.discordAvatar   && state.discordAvatar)   patch.discordAvatar   = state.discordAvatar;
+                patch.discordId = user.uid.replace('discord_', '');
+            }
+            if (state.discordUsername && pData.discordUsername !== state.discordUsername) {
+                patch.discordUsername = state.discordUsername;
+            }
+            if (state.discordAvatar && pData.discordAvatar !== state.discordAvatar) {
+                patch.discordAvatar = state.discordAvatar;
+            }
+            if (Object.keys(patch).length > 0) {
                 updateDoc(doc(db, 'participants', pDoc.id), patch).catch(() => {});
             }
         }

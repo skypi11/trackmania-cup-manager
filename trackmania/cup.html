@@ -1992,6 +1992,18 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 
             <!-- Sous-panel : Migration Discord -->
             <div class="adm-panel" id="admtab-discord">
+              <div class="card" style="margin-bottom:16px">
+                <h2 style="margin-bottom:8px">🖼️ Synchronisation des avatars Discord</h2>
+                <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:14px">
+                  Récupère les avatars Discord à jour pour tous les joueurs qui ont un <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px">discordId</code>.
+                  Utile si certains joueurs apparaissent avec leur initiale au lieu de leur photo.
+                </p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                  <button class="btn btn-secondary" onclick="syncDiscordAvatars(false)">🔄 Synchroniser les manquants</button>
+                  <button class="btn btn-secondary" onclick="syncDiscordAvatars(true)" style="opacity:0.8">🔁 Tout rafraîchir (force)</button>
+                </div>
+                <div id="syncAvatarsResults" style="margin-top:14px"></div>
+              </div>
               <div class="card">
                 <h2>🔗 Migration Discord</h2>
                 <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px">

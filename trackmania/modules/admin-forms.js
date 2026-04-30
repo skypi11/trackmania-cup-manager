@@ -1,6 +1,6 @@
 // modules/admin-forms.js — Formulaires admin (CRUD participants & éditions)
 
-import { db } from '../../shared/firebase-config.js';
+import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
 import { pName, showToast, buildCountryPicker, displayCountry } from './utils.js';
@@ -936,6 +936,58 @@ window.runCupIdMigration = async function() {
         logAdminAction('migration_cupid', `Migration cupId : ${totalPatched} docs patchés (participants + editions + results)`);
     } catch(e) {
         console.error('Migration error:', e);
+        container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">❌ Erreur : ${e.message}</p>`;
+    }
+};
+
+window.syncDiscordAvatars = async function(force = false) {
+    const container = document.getElementById('syncAvatarsResults');
+    if (!container) return;
+    if (!auth.currentUser) {
+        container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">❌ Tu dois être connecté en admin.</p>`;
+        return;
+    }
+    const msg = force
+        ? 'Forcer le rafraîchissement de TOUS les avatars Discord (40+ requêtes API) ?'
+        : 'Récupérer les avatars Discord manquants ?';
+    if (!confirm(msg)) return;
+
+    container.innerHTML = '<p style="color:var(--color-text-secondary);font-size:0.85rem">⏳ Synchronisation en cours…</p>';
+
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+        const url = force ? '/api/sync-discord-avatars?force=1' : '/api/sync-discord-avatars';
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${idToken}` },
+        });
+
+        const data = await r.json();
+        if (!r.ok) {
+            container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">❌ Erreur ${r.status} : ${data.error || 'inconnue'}</p>`;
+            return;
+        }
+
+        const errsHtml = data.errors && data.errors.length > 0
+            ? `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--color-warning);font-size:0.78rem">${data.errors.length} erreur(s) — voir détails</summary><pre style="margin-top:6px;font-size:0.72rem;background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;overflow-x:auto">${JSON.stringify(data.errors, null, 2)}</pre></details>`
+            : '';
+
+        container.innerHTML = `
+            <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:12px 16px;font-size:0.85rem">
+                <strong style="color:var(--color-accent)">✅ Synchronisation terminée</strong>
+                <ul style="margin:8px 0 0;padding-left:20px;color:var(--color-text-secondary)">
+                    <li>Total parcourus : ${data.total}</li>
+                    <li>Mis à jour : <strong style="color:var(--color-accent)">${data.updated}</strong></li>
+                    <li>Inchangés : ${data.skipped}</li>
+                    <li>Discord introuvables : ${data.notFound}</li>
+                    <li>Échecs : ${data.failed}</li>
+                </ul>
+                ${errsHtml}
+                <p style="margin:10px 0 0;color:var(--color-text-secondary);font-size:0.78rem">Recharge la page pour voir les nouveaux avatars.</p>
+            </div>`;
+        logAdminAction('sync_discord_avatars', `Sync avatars Discord : ${data.updated} mis à jour, ${data.skipped} inchangés, ${data.failed} échecs (force=${force})`);
+    } catch(e) {
+        console.error('Sync avatars error:', e);
         container.innerHTML = `<p style="color:var(--color-danger);font-size:0.85rem">❌ Erreur : ${e.message}</p>`;
     }
 };
