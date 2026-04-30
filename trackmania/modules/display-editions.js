@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { dateLang, pName, tTeam, getPoints, getCountdown, showToast, parseMarkdown } from './utils.js';
+import { dateLang, pName, tTeam, getPoints, getCountdown, showToast, parseMarkdown, avatarHtml } from './utils.js';
 import { collection, addDoc, deleteDoc, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { notifyDiscordInscription } from './discord.js';
 
@@ -209,6 +209,22 @@ export function displayEditions() {
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
+        // Gagnant pour les past events : avatar + pseudo en miniature
+        let winnerHtml = '';
+        if (isPast) {
+            const winRes = state.data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
+            const winner = winRes ? state.data.participants.find(p => p.id === winRes.playerId) : null;
+            if (winner) {
+                winnerHtml = `<div class="event-row-winner" title="${t('editions.winner') || 'Vainqueur'}">
+                    ${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.5)' })}
+                    <div class="event-row-winner-info">
+                        <span class="event-row-winner-label">🏆 ${t('editions.winner') || 'Vainqueur'}</span>
+                        <span class="event-row-winner-name">${pName(winner)}</span>
+                    </div>
+                </div>`;
+            }
+        }
+
         return `<div class="event-row ${cardClass}" onclick="openEditionDetail('${e.id}')">
             <div class="event-row-accent"></div>
             <div class="event-row-body">
@@ -224,6 +240,7 @@ export function displayEditions() {
                     ${descHtml}
                 </div>
                 <div class="event-row-right">
+                    ${winnerHtml}
                     ${liveBadgeHtml}
                     ${playerBadgeHtml}
                     <span class="event-row-cta">${t('editions.see')}</span>
