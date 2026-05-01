@@ -591,6 +591,18 @@ window.admSubmitFinaleResult = async function(editionId) {
 
 // ── Liste admin : Éditions ────────────────────────────────────────────────────
 
+window.copyEditionId = async function(editionId, btn) {
+    try {
+        await navigator.clipboard.writeText(editionId);
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copié';
+        setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    } catch {
+        // Fallback : prompt classique
+        prompt('ID de l\'édition (à coller dans le script TM) :', editionId);
+    }
+};
+
 window.displayAdminEditions = function() {
     const container = document.getElementById('adminEditionsList');
     if (!container) return;
@@ -625,6 +637,7 @@ window.displayAdminEditions = function() {
                 ${inscrits} inscrits · ${qualifies} qualif · ${finalistes} finalistes
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0">
+                <button onclick="copyEditionId('${e.id}', this)" style="padding:5px 12px;border-radius:7px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);color:#38bdf8;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Copier l'ID pour le script Trackmania">📋 ID</button>
                 <button onclick="openEditEdition('${e.id}')" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--color-text-primary);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Modifier">✏️ Modifier</button>
                 <button onclick="deleteEdition('${e.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Supprimer">🗑️</button>
             </div>
