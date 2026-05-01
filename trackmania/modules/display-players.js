@@ -619,10 +619,33 @@ window.copyPodium = async (editionId, btn) => {
         img.src = src;
     });
 
+    // Pour les CDN qui bloquent CORS (TMX) : fallback via proxy → blob URL same-origin
+    const loadImgViaProxy = async (src) => {
+        if (!src) return null;
+        const direct = await loadImg(src);
+        if (direct) return direct;
+        try {
+            const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(src)}`;
+            const r = await fetch(proxyUrl);
+            if (!r.ok) return null;
+            const blob = await r.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const img = await new Promise(resolve => {
+                const i = new Image();
+                i.onload = () => resolve(i);
+                i.onerror = () => resolve(null);
+                i.src = blobUrl;
+            });
+            return img;
+        } catch {
+            return null;
+        }
+    };
+
     const mapBgUrl = edition.map7thumbUrl || edition.map6thumbUrl || edition.map1thumbUrl || null;
     const [logo, mapBg, av1, av2, av3] = await Promise.all([
         loadImg(springsLogo),
-        loadImg(mapBgUrl),
+        loadImgViaProxy(mapBgUrl),
         loadImg(top3[0].player?.discordAvatar),
         loadImg(top3[1].player?.discordAvatar),
         loadImg(top3[2].player?.discordAvatar),
