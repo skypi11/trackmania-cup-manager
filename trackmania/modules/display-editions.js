@@ -1019,23 +1019,21 @@ window.openEditionDetail = (id) => {
                 </div>`;
             }
 
-            // 2) Helper event épuré (sans chiffres, le tableau les a)
+            // 2) Helper event épuré (icône + nom + compteur de vies si applicable)
             const renderEventRow = (ev) => {
                 const player = state.data.participants.find(p => p.id === ev.playerId);
                 if (!player) return '';
                 const isLifeLost = ev.eventType === 'life_lost';
                 const cls = isLifeLost ? 'life-lost' : 'eliminated';
                 const icon = isLifeLost ? '❤️' : '❌';
-                const meta = isLifeLost
-                    ? `<span class="finale-lives-count">${'❤️'.repeat(Math.max(0, ev.value))}</span>`
-                    : (t('detail.finale.eliminated') || 'éliminé');
+                const livesHtml = isLifeLost && ev.value > 0
+                    ? `<span class="finale-lives-count">${'❤️'.repeat(ev.value)}</span>`
+                    : '';
                 return `<div class="finale-tl-event ${cls}" onclick="openPlayerProfile('${player.id}')">
                     <div class="finale-tl-icon">${icon}</div>
                     <div class="finale-tl-avatar">${avatarHtml(player, { size: 28 })}</div>
-                    <div class="finale-tl-text">
-                        <span class="finale-tl-name">${pName(player)}</span>
-                        ${meta ? `<span class="finale-tl-meta">${meta}</span>` : ''}
-                    </div>
+                    <span class="finale-tl-name">${pName(player)}</span>
+                    ${livesHtml}
                 </div>`;
             };
 
@@ -1070,10 +1068,7 @@ window.openEditionDetail = (id) => {
                         <div class="finale-tl-event eliminated" onclick="openPlayerProfile('${r.player.id}')">
                             <div class="finale-tl-icon">❌</div>
                             <div class="finale-tl-avatar">${avatarHtml(r.player, { size: 28 })}</div>
-                            <div class="finale-tl-text">
-                                <span class="finale-tl-name">${pName(r.player)}</span>
-                                <span class="finale-tl-meta">${t('detail.finale.eliminated') || 'éliminé'}</span>
-                            </div>
+                            <span class="finale-tl-name">${pName(r.player)}</span>
                         </div>
                     </div>
                 </div>`).join('');
@@ -1100,14 +1095,18 @@ window.openEditionDetail = (id) => {
         const qualIds    = new Set(qualResults.map(r => r.playerId));
         const presentOnly = [...inscritIds].filter(pid => !qualIds.has(pid));
         if (presentOnly.length > 0) {
-            html += `<div class="phase-title" style="margin-top:20px">${t('detail.present.notq')} (${presentOnly.length})</div>
-                <div class="chips">`;
-            presentOnly.forEach(pid => {
+            const chipsHtml = presentOnly.map(pid => {
                 const player = state.data.participants.find(p => p.id === pid);
-                if (!player) return;
-                html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}</span>`;
-            });
-            html += '</div>';
+                if (!player) return '';
+                return `<span class="ed-notq-chip" onclick="openPlayerProfile('${player.id}')">
+                    ${avatarHtml(player, { size: 22 })}
+                    <span>${pName(player)}</span>
+                </span>`;
+            }).filter(Boolean).join('');
+            html += `<div class="ed-notqualified">
+                <div class="finale-section-header">👥 ${t('detail.present.notq') || 'Présents non qualifiés'} <span class="ed-notq-count">${presentOnly.length}</span></div>
+                <div class="ed-notq-chips">${chipsHtml}</div>
+            </div>`;
         }
 
         html += '</div>';

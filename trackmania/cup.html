@@ -1434,26 +1434,67 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     content: ''; flex: 1; height: 1px;
     background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
 }
-/* Tableau ranking compact à droite */
+/* Tableau ranking aéré à droite */
 .finale-ranking-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
 }
 .finale-ranking-table th {
     text-align: left;
-    padding: 6px 10px;
-    font-size: 0.7rem; font-weight: var(--fw-bold);
+    padding: 10px 14px;
+    font-size: 0.78rem; font-weight: var(--fw-bold);
     text-transform: uppercase; letter-spacing: var(--tracking-wide);
-    color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.45);
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .finale-ranking-table td {
-    padding: 8px 10px;
+    padding: 12px 14px;
     border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .finale-ranking-table tr:last-child td { border-bottom: none; }
-.finale-ranking-table tr:hover td { background: rgba(255,255,255,0.02); }
+.finale-ranking-table tr:hover td { background: rgba(255,255,255,0.025); }
+
+/* ── Section "Présents non qualifiés" ── */
+.ed-notqualified {
+    margin-top: var(--space-md);
+    padding: 22px 22px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(160deg, rgba(255,255,255,0.025), rgba(0,0,0,0.05));
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.ed-notq-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 24px; height: 22px;
+    padding: 0 8px;
+    margin-left: auto;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; font-weight: var(--fw-black);
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0;
+    text-transform: none;
+}
+.ed-notq-chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.ed-notq-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    font-size: var(--text-sm); font-weight: var(--fw-medium);
+    color: rgba(255,255,255,0.75);
+    transition: background var(--tr-fast), border-color var(--tr-fast), color var(--tr-fast);
+}
+.ed-notq-chip:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.18);
+    color: #fff;
+}
 
 @media (max-width: 900px) {
     .finale-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -1536,29 +1577,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 }
 .finale-tl-icon { font-size: 1.05rem; flex-shrink: 0; }
 .finale-tl-avatar { flex-shrink: 0; }
-.finale-tl-text {
-    display: flex; flex-direction: column;
-    line-height: 1.2; min-width: 0;
-}
 .finale-tl-name {
+    flex: 1; min-width: 0;
     font-size: var(--text-sm); font-weight: var(--fw-bold);
     color: rgba(255,255,255,0.92);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.finale-tl-meta {
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.55);
-    margin-top: 3px;
-}
-.finale-tl-event.eliminated .finale-tl-meta {
-    color: var(--color-warning);
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
-}
 .finale-lives-count {
-    margin-left: 6px;
-    font-size: 0.68rem;
+    flex-shrink: 0;
+    font-size: 0.85rem;
     letter-spacing: 1px;
 }
 
