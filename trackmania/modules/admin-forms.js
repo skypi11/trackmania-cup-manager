@@ -591,6 +591,13 @@ window.admSubmitFinaleResult = async function(editionId) {
 
 // ── Liste admin : Éditions ────────────────────────────────────────────────────
 
+window.toggleEditionHidden = async function(editionId, currentHidden) {
+    await updateDoc(doc(db, 'editions', editionId), { hidden: !currentHidden });
+    const ed = state.data.editions.find(e => e.id === editionId);
+    logAdminAction('toggle_hidden', `Édition ${!currentHidden ? 'cachée' : 'rendue visible'} : ${ed ? ed.name : editionId}`);
+    window.reloadData?.();
+};
+
 window.copyEditionId = async function(editionId, btn) {
     try {
         await navigator.clipboard.writeText(editionId);
@@ -626,6 +633,10 @@ window.displayAdminEditions = function() {
         const inscrits   = state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
         const qualifies  = state.data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length;
         const finalistes = state.data.results.filter(r => r.editionId === e.id && r.phase === 'finale').length;
+        const hiddenBadge = e.hidden ? '<span style="padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;background:rgba(168,85,247,0.15);color:#a855f7;white-space:nowrap" title="Visible des admins uniquement">🔒 Cachée</span>' : '';
+        const hiddenBtn = e.hidden
+            ? `<button onclick="toggleEditionHidden('${e.id}', true)" style="padding:5px 12px;border-radius:7px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:#a855f7;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Rendre visible aux joueurs">👁 Rendre visible</button>`
+            : `<button onclick="toggleEditionHidden('${e.id}', false)" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Cacher des joueurs (admins seulement)">🔒 Cacher</button>`;
         return `
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <div style="flex:1;min-width:160px">
@@ -633,11 +644,13 @@ window.displayAdminEditions = function() {
                 <div style="font-size:0.78rem;color:var(--color-text-secondary)">${e.date}${e.time ? ' · ' + e.time : ''} · Saison ${e.saison || '?'}</div>
             </div>
             <span style="padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;background:${s.color};color:${s.text};white-space:nowrap">${s.label}</span>
+            ${hiddenBadge}
             <div style="font-size:0.78rem;color:var(--color-text-secondary);white-space:nowrap">
                 ${inscrits} inscrits · ${qualifies} qualif · ${finalistes} finalistes
             </div>
-            <div style="display:flex;gap:6px;flex-shrink:0">
+            <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
                 <button onclick="copyEditionId('${e.id}', this)" style="padding:5px 12px;border-radius:7px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);color:#38bdf8;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Copier l'ID pour le script Trackmania">📋 ID</button>
+                ${hiddenBtn}
                 <button onclick="openEditEdition('${e.id}')" style="padding:5px 12px;border-radius:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--color-text-primary);font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Modifier">✏️ Modifier</button>
                 <button onclick="deleteEdition('${e.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit" title="Supprimer">🗑️</button>
             </div>

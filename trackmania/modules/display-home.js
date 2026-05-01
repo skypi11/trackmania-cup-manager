@@ -333,7 +333,7 @@ export function displayNextEditionBanner() {
     }
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = state.data.editions
-        .filter(e => new Date(e.date) >= today && e.status !== 'terminee')
+        .filter(e => new Date(e.date) >= today && e.status !== 'terminee' && (!e.hidden || state.isAdmin))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (upcoming.length === 0) { banner.style.display = 'none'; return; }

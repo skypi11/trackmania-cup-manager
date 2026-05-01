@@ -472,7 +472,9 @@ export function displayEditions() {
     const sortFn = state.editionSort === 'asc'
         ? (a, b) => new Date(a.date) - new Date(b.date)
         : (a, b) => new Date(b.date) - new Date(a.date);
-    const sorted   = [...state.data.editions].sort(sortFn);
+    // Cacher les éditions flag hidden=true aux non-admins
+    const visibleEditions = state.data.editions.filter(e => !e.hidden || state.isAdmin);
+    const sorted   = [...visibleEditions].sort(sortFn);
     const allUpcoming = sorted.filter(e => new Date(e.date) >= today && e.status !== 'terminee');
     const allPast     = sorted.filter(e => new Date(e.date) <  today || e.status === 'terminee');
 
