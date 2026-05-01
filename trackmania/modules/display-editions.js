@@ -1013,7 +1013,7 @@ window.openEditionDetail = (id) => {
                 if (!winner) return '';
                 return `<div class="finale-winner-hero" onclick="openPlayerProfile('${winner.id}')">
                     <div class="finale-winner-crown">👑</div>
-                    <div class="finale-winner-avatar">${avatarHtml(winner, { size: 96, ringColor: 'rgba(251,191,36,0.85)' })}</div>
+                    <div class="finale-winner-avatar">${avatarHtml(winner, { size: 72, ringColor: 'rgba(251,191,36,0.7)' })}</div>
                     <div class="finale-winner-name">${pName(winner)}</div>
                     <div class="finale-winner-label">${(t('detail.finale.winner') || 'vainqueur').toUpperCase()}</div>
                 </div>`;

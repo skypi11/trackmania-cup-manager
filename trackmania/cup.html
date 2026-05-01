@@ -1476,20 +1476,24 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     border-color: rgba(255,255,255,0.12);
 }
 .finale-tl-event.life-lost {
-    background: rgba(239,68,68,0.04);
-    border-color: rgba(239,68,68,0.12);
+    background: rgba(255,255,255,0.02);
+    border-color: rgba(255,255,255,0.05);
+    border-left: 3px solid rgba(239,68,68,0.4);
+    padding-left: 10px;
 }
 .finale-tl-event.life-lost:hover {
-    background: rgba(239,68,68,0.08);
-    border-color: rgba(239,68,68,0.25);
+    background: rgba(255,255,255,0.04);
+    border-left-color: rgba(239,68,68,0.7);
 }
 .finale-tl-event.eliminated {
-    background: rgba(245,158,11,0.05);
-    border-color: rgba(245,158,11,0.18);
+    background: rgba(255,255,255,0.025);
+    border-color: rgba(255,255,255,0.06);
+    border-left: 3px solid rgba(245,158,11,0.55);
+    padding-left: 10px;
 }
 .finale-tl-event.eliminated:hover {
-    background: rgba(245,158,11,0.1);
-    border-color: rgba(245,158,11,0.32);
+    background: rgba(255,255,255,0.05);
+    border-left-color: rgba(245,158,11,0.85);
 }
 .finale-tl-icon { font-size: 1.05rem; flex-shrink: 0; }
 .finale-tl-avatar { flex-shrink: 0; }
@@ -1519,48 +1523,43 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     letter-spacing: 1px;
 }
 
-/* ── Vainqueur — hero card ── */
+/* ── Vainqueur — hero card (centré, taille modérée) ── */
 .finale-winner-hero {
     position: relative;
-    margin-top: 22px;
-    padding: 28px 24px;
+    margin: 22px auto 0;
+    max-width: 360px;
+    padding: 22px 28px;
     border-radius: var(--radius-lg);
-    background:
-        radial-gradient(ellipse at top, rgba(251,191,36,0.18), transparent 60%),
-        linear-gradient(160deg, rgba(251,191,36,0.08), rgba(245,158,11,0.04));
-    border: 2px solid rgba(251,191,36,0.4);
-    box-shadow: 0 0 0 1px rgba(251,191,36,0.15) inset, 0 0 60px rgba(251,191,36,0.18);
+    background: linear-gradient(160deg, rgba(251,191,36,0.06), rgba(245,158,11,0.02));
+    border: 1px solid rgba(251,191,36,0.32);
+    box-shadow: 0 0 0 1px rgba(251,191,36,0.08) inset, 0 8px 28px rgba(251,191,36,0.1);
     text-align: center;
     cursor: pointer;
-    transition: transform var(--tr-base), box-shadow var(--tr-base);
+    transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
     overflow: hidden;
-    animation: winner-glow 3s ease-in-out infinite;
-}
-@keyframes winner-glow {
-    0%, 100% { box-shadow: 0 0 0 1px rgba(251,191,36,0.15) inset, 0 0 60px rgba(251,191,36,0.18); }
-    50%      { box-shadow: 0 0 0 1px rgba(251,191,36,0.28) inset, 0 0 90px rgba(251,191,36,0.32); }
 }
 .finale-winner-hero:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
+    border-color: rgba(251,191,36,0.55);
+    box-shadow: 0 0 0 1px rgba(251,191,36,0.18) inset, 0 12px 40px rgba(251,191,36,0.18);
 }
 .finale-winner-crown {
-    font-size: 2.4rem;
+    font-size: 1.8rem;
     line-height: 1;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 2px 8px rgba(251,191,36,0.4));
+    margin-bottom: 2px;
+    filter: drop-shadow(0 2px 6px rgba(251,191,36,0.35));
 }
 .finale-winner-avatar {
     display: flex; justify-content: center;
-    margin: 8px 0 14px;
+    margin: 6px 0 12px;
 }
 .finale-winner-name {
-    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    font-size: 1.4rem;
     font-weight: var(--fw-black);
     letter-spacing: var(--tracking-tight);
     color: #fff;
     line-height: 1.1;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.6);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 .finale-winner-label {
     font-size: var(--text-xs); font-weight: var(--fw-black);
