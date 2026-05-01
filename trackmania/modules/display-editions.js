@@ -999,11 +999,61 @@ window.openEditionDetail = (id) => {
             html += '</tbody></table>';
 
             // ── Timeline KO : raconte l'histoire de la finale ─────────────
-            // Format : 1 élim par manche → la position est l'inverse chronologique.
-            // Manche M élimine le joueur en position (N - M + 1). Le vainqueur (P1) n'est jamais éliminé.
-            if (finaleResults.length >= 2) {
+            // Si on a des finale_events (auto-saisie ManiaScript), on affiche la
+            // timeline détaillée round-by-round avec les pertes de vies. Sinon,
+            // fallback : on déduit depuis les positions (1 élim par manche).
+            const detailedEvents = (state.data.finaleEvents || [])
+                .filter(ev => ev.editionId === e.id)
+                .sort((a, b) => (a.round - b.round) || (a.createdAt?.seconds - b.createdAt?.seconds));
+
+            const winner = state.data.participants.find(p => p.id === finaleResults.find(r => r.position === 1)?.playerId);
+
+            if (detailedEvents.length > 0) {
+                // Mode détaillé : un item par event (life_lost ou eliminated)
+                const items = detailedEvents.map(ev => {
+                    const player = state.data.participants.find(p => p.id === ev.playerId);
+                    if (!player) return '';
+                    if (ev.eventType === 'life_lost') {
+                        return `<div class="finale-timeline-item life-lost" onclick="openPlayerProfile('${player.id}')">
+                            <div class="finale-timeline-round">M${ev.round}</div>
+                            <div class="finale-timeline-icon">❤️</div>
+                            <div class="finale-timeline-avatar">${avatarHtml(player, { size: 28 })}</div>
+                            <div class="finale-timeline-text">
+                                <span class="finale-timeline-name">${pName(player)}</span>
+                                <span class="finale-timeline-meta">${t('detail.finale.life.lost') || 'a perdu une vie'} · ❤️×${ev.value}</span>
+                            </div>
+                        </div>`;
+                    }
+                    // eliminated
+                    return `<div class="finale-timeline-item" onclick="openPlayerProfile('${player.id}')">
+                        <div class="finale-timeline-round">M${ev.round}</div>
+                        <div class="finale-timeline-icon">❌</div>
+                        <div class="finale-timeline-avatar">${avatarHtml(player, { size: 28 })}</div>
+                        <div class="finale-timeline-text">
+                            <span class="finale-timeline-name">${pName(player)}</span>
+                            <span class="finale-timeline-meta">${t('detail.finale.eliminated') || 'éliminé'}</span>
+                        </div>
+                    </div>`;
+                }).filter(Boolean).join('');
+
+                html += `<div class="finale-timeline">
+                    <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
+                    <div class="finale-timeline-list">
+                        ${items}
+                        ${winner ? `<div class="finale-timeline-item winner" onclick="openPlayerProfile('${winner.id}')">
+                            <div class="finale-timeline-round">🏆</div>
+                            <div class="finale-timeline-icon">👑</div>
+                            <div class="finale-timeline-avatar">${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.6)' })}</div>
+                            <div class="finale-timeline-text">
+                                <span class="finale-timeline-name">${pName(winner)}</span>
+                                <span class="finale-timeline-meta">${t('detail.finale.winner') || 'vainqueur'}</span>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            } else if (finaleResults.length >= 2) {
+                // Fallback : timeline déduite depuis position (compat éditions sans auto-saisie)
                 const N = finaleResults.length;
-                const winner = state.data.participants.find(p => p.id === finaleResults.find(r => r.position === 1)?.playerId);
                 const rounds = [];
                 for (let m = 1; m < N; m++) {
                     const elimPos = N - m + 1;

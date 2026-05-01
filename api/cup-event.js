@@ -74,7 +74,7 @@ export default async function handler(req, res) {
   if (!editionId || !type) {
     return res.status(400).json({ error: 'Missing editionId or type' });
   }
-  if (!['qualif_map_end', 'finale_end'].includes(type)) {
+  if (!['qualif_map_end', 'finale_end', 'finale_round'].includes(type)) {
     return res.status(400).json({ error: `Unknown type "${type}"` });
   }
 
@@ -194,6 +194,51 @@ export default async function handler(req, res) {
       }
       await db.collection('results').add({
         editionId, playerId, phase: 'finale', position: pos, cupId,
+        source: 'maniascript',
+        createdAt: new Date(),
+      });
+      written++;
+    }
+  }
+
+  // ── Handler finale round (events round-by-round : life_lost, eliminated) ──
+  if (type === 'finale_round') {
+    const round = Number(body.round);
+    const events = Array.isArray(body.events) ? body.events : [];
+    if (!Number.isInteger(round) || round < 1) {
+      return res.status(400).json({ error: 'round must be >= 1' });
+    }
+    if (events.length === 0) {
+      return res.status(400).json({ error: 'events array is empty' });
+    }
+
+    for (const ev of events) {
+      const { login, eventType, value } = ev;
+      const playerId = findPlayerId(login);
+      if (!playerId) {
+        unknownLogins.push(login);
+        continue;
+      }
+      if (!['life_lost', 'eliminated'].includes(eventType)) {
+        skipped.push({ login, reason: `unknown eventType "${eventType}"` });
+        continue;
+      }
+      // Idempotence : un seul event par (edition, round, login, eventType)
+      const dup = await db.collection('finale_events')
+        .where('editionId', '==', editionId)
+        .where('round', '==', round)
+        .where('playerId', '==', playerId)
+        .where('eventType', '==', eventType)
+        .limit(1)
+        .get();
+      if (!dup.empty) {
+        skipped.push({ login, reason: 'already exists' });
+        continue;
+      }
+      await db.collection('finale_events').add({
+        editionId, playerId, round, eventType,
+        value: Number(value) || 0,
+        cupId,
         source: 'maniascript',
         createdAt: new Date(),
       });

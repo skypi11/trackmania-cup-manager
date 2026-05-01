@@ -118,17 +118,19 @@ loadSiteConfig();
 // Chargement unique des données (remplace les listeners temps réel)
 async function loadData() {
     try {
-        const [pSnap, eSnap, rSnap, predSnap] = await Promise.all([
+        const [pSnap, eSnap, rSnap, predSnap, feSnap] = await Promise.all([
             getDocs(query(collection(db, 'participants'), where('cupId', '==', cupId))),
             getDocs(query(collection(db, 'editions'), where('cupId', '==', cupId))),
             getDocs(query(collection(db, 'results'), where('cupId', '==', cupId))),
             getDocs(query(collection(db, 'predictions'), where('cupId', '==', cupId))),
+            getDocs(query(collection(db, 'finale_events'), where('cupId', '==', cupId))).catch(() => ({ docs: [] })),
         ]);
 
         state.data.participants = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         state.data.editions = eSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         state.data.results = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         state.data.predictions = predSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.data.finaleEvents = feSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         ['participants', 'editions', 'results', 'predictions'].forEach(k => { state.loaded[k] = true; });
         checkLoaded();
@@ -167,10 +169,11 @@ function _scheduleReload() {
 }
 
 const _queries = [
-    query(collection(db, 'participants'), where('cupId', '==', cupId)),
-    query(collection(db, 'editions'),    where('cupId', '==', cupId)),
-    query(collection(db, 'results'),     where('cupId', '==', cupId)),
-    query(collection(db, 'predictions'), where('cupId', '==', cupId)),
+    query(collection(db, 'participants'),   where('cupId', '==', cupId)),
+    query(collection(db, 'editions'),       where('cupId', '==', cupId)),
+    query(collection(db, 'results'),        where('cupId', '==', cupId)),
+    query(collection(db, 'predictions'),    where('cupId', '==', cupId)),
+    query(collection(db, 'finale_events'),  where('cupId', '==', cupId)),
 ];
 
 // On ignore le premier fire de chaque snapshot (= état initial, déjà chargé par loadData)
