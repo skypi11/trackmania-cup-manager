@@ -21,11 +21,27 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+// On désactive le bodyParser Vercel pour pouvoir lire le raw stream nous-mêmes.
+// Raison : ManiaScript Http.CreatePost envoie un content-type 'application/binary'
+// que le parser Vercel ne reconnaît pas → req.body serait undefined sinon.
+export const config = {
+  api: { bodyParser: false },
+};
+
 function initAdmin() {
   if (!getApps().length) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     initializeApp({ credential: cert(serviceAccount) });
   }
+}
+
+async function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+    req.on('error', reject);
+  });
 }
 
 export default async function handler(req, res) {
@@ -41,27 +57,17 @@ export default async function handler(req, res) {
   if (!expected) {
     return res.status(500).json({ error: 'CUP_API_KEY not configured on server' });
   }
-  // ManiaScript Http.CreatePost envoie un content-type inattendu
-  // (application/binary ou similar) → Vercel ne parse pas le JSON automatiquement.
-  // On reparse manuellement si req.body n'est pas déjà un objet JSON.
-  let body = req.body;
-  if (Buffer.isBuffer(body)) {
-    try { body = JSON.parse(body.toString('utf-8')); } catch { body = {}; }
-  } else if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { body = {}; }
-  } else if (!body || typeof body !== 'object') {
-    body = {};
+  // bodyParser désactivé → on lit le raw stream et on parse JSON manuellement
+  const raw = await readRawBody(req);
+  let body = {};
+  try { body = raw ? JSON.parse(raw) : {}; } catch (err) {
+    console.log(`[parse-fail] err=${err.message} rawLen=${raw.length} sample=${raw.slice(0, 80)}`);
+    return res.status(400).json({ error: 'Invalid JSON body' });
   }
+
   const provided = req.headers['x-api-key'] || body.apiKey || '';
-  // DEBUG TEMPORAIRE — split en plusieurs lignes courtes (Vercel logs tronquent)
-  const dbgKey = typeof body.apiKey === 'string' ? body.apiKey : '';
-  const rawSample = Buffer.isBuffer(req.body) ? req.body.slice(0, 80).toString('utf-8')
-                  : typeof req.body === 'string' ? req.body.slice(0, 80) : '';
-  console.log(`[A] ct=${req.headers['content-type']}`);
-  console.log(`[B] rawType=${typeof req.body} isBuf=${Buffer.isBuffer(req.body)}`);
-  console.log(`[C] bodyKeys=[${Object.keys(body).join(',')}]`);
-  console.log(`[D] keyLen=${dbgKey.length} expLen=${expected.length} match=${provided === expected}`);
-  console.log(`[E] rawSample=${JSON.stringify(rawSample)}`);
+  // DEBUG TEMPORAIRE
+  console.log(`[ok] ct=${req.headers['content-type']} rawLen=${raw.length} keys=[${Object.keys(body).join(',')}] match=${provided === expected}`);
   if (provided !== expected) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
