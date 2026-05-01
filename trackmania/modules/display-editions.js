@@ -907,11 +907,10 @@ window.openEditionDetail = (id) => {
                         const playerQualsSorted = qualResults.filter(q => q.playerId === r.playerId && q.map).sort((a, b) => a.map - b.map);
                         const appearanceIndex = playerQualsSorted.findIndex(q => q.map === m);
                         const viesHtml = appearanceIndex > 0 ? `<span class="vie-badge">❤️×${appearanceIndex}</span>` : '';
-                        const del = state.isAdmin ? `<button class="chip-delete" onclick="event.stopPropagation();deleteResult('${r.id}')">✕</button>` : '';
                         html += `<div class="map-slot map-slot-filled" onclick="openPlayerProfile('${player?.id}')">
                             <span class="map-medal">${medals3[pos-1]}</span>
                             <span class="map-player-name">${player ? pName(player) : '?'}</span>
-                            ${viesHtml}${del}
+                            ${viesHtml}
                         </div>`;
                     } else {
                         html += `<div class="map-slot map-slot-empty"><span class="map-medal">${medals3[pos-1]}</span><span style="font-size:0.8rem">—</span></div>`;
@@ -925,8 +924,7 @@ window.openEditionDetail = (id) => {
                 legacyQuals.forEach(r => {
                     const player = state.data.participants.find(p => p.id === r.playerId);
                     if (!player) return;
-                    const del = state.isAdmin ? `<button class="chip-delete" onclick="deleteResult('${r.id}')">✕</button>` : '';
-                    html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
+                    html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}</span>`;
                 });
                 html += '</div>';
             }
@@ -934,7 +932,6 @@ window.openEditionDetail = (id) => {
 
         // ── Finale KO ──
         if (finaleResults.length > 0) {
-            const adminCol = state.isAdmin ? '<th></th>' : '';
             html += `<div class="phase-title" style="display:flex;align-items:center;justify-content:space-between">
                 <span>${t('detail.finale.title')}</span>
                 <button class="btn btn-secondary btn-small" onclick="copyPodium('${e.id}', this)">${t('detail.share.podium')}</button>
@@ -950,21 +947,19 @@ window.openEditionDetail = (id) => {
                 </div>`;
             }
             html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
-            html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th>${adminCol}</tr></thead><tbody>`;
+            html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th></tr></thead><tbody>`;
             finaleResults.forEach(r => {
                 const player = state.data.participants.find(p => p.id === r.playerId);
                 if (!player) return;
                 const viesCount = qualResults.filter(q => q.playerId === player.id).length - 1;
                 const vies = viesCount > 0 ? `×${viesCount}` : '—';
                 const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
-                const del = state.isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>` : '';
                 html += `<tr>
                     <td><span class="badge ${badgeClass}">${r.position}</span></td>
                     <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(player, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</div></td>
                     <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
                     <td style="color:#ef4444;font-size:0.85rem">${vies}</td>
                     <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
-                    ${del}
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -983,13 +978,31 @@ window.openEditionDetail = (id) => {
             presentOnly.forEach(pid => {
                 const player = state.data.participants.find(p => p.id === pid);
                 if (!player) return;
-                const del = state.isAdmin ? `<button class="chip-delete" onclick="deleteResult('${edResults.find(r => r.playerId === pid && r.phase === 'inscription')?.id}')">✕</button>` : '';
-                html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}${del}</span>`;
+                html += `<span class="chip" onclick="openPlayerProfile('${player.id}')">${pName(player)}</span>`;
             });
             html += '</div>';
         }
 
         html += '</div>';
+
+        // ── Footer : prochaine édition (si une upcoming existe) ──
+        const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+        const nextEdition = [...state.data.editions]
+            .filter(ed => ed.id !== id && new Date(ed.date) >= todayMidnight && ed.status !== 'terminee')
+            .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+        if (nextEdition) {
+            const nextDateStr = new Date(nextEdition.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+            const nextTime = nextEdition.time ? ` · ${nextEdition.time}` : '';
+            const nextCd = getCountdown(nextEdition.date, nextEdition.time);
+            html += `<div class="next-edition-footer" onclick="openEditionDetail('${nextEdition.id}')">
+                <div class="next-edition-footer-left">
+                    <div class="next-edition-footer-label">${t('detail.next.edition') || 'Prochaine édition'}</div>
+                    <div class="next-edition-footer-name">${nextEdition.name}</div>
+                    <div class="next-edition-footer-meta">📅 ${nextDateStr}${nextTime}${nextCd ? ` · ⏱ ${nextCd}` : ''}</div>
+                </div>
+                <div class="next-edition-footer-arrow">→</div>
+            </div>`;
+        }
 
     } else {
         // Upcoming edition
@@ -1065,7 +1078,7 @@ window.openEditionDetail = (id) => {
         if (inscriptions.length === 0) {
             registrantsHtml = `<div class="empty-state" style="padding:30px 20px"><span class="empty-state-icon">👥</span><p>${t('detail.no.reg')}</p></div>`;
         } else {
-            const showActionsCol = state.isAdmin || inscriptions.some(r => {
+            const showActionsCol = inscriptions.some(r => {
                 const p = state.data.participants.find(p => p.id === r.playerId);
                 return p && state.currentUser && p.userId === state.currentUser.uid;
             });
@@ -1090,9 +1103,7 @@ window.openEditionDetail = (id) => {
                 }
                 let actionCell = '';
                 if (showActionsCol) {
-                    if (state.isAdmin) {
-                        actionCell = `<td><button class="btn btn-danger btn-small" onclick="deleteResult('${r.id}')">✕</button></td>`;
-                    } else if (isMe) {
+                    if (isMe) {
                         actionCell = `<td><button class="btn btn-danger btn-small" onclick="cancelInscription('${r.id}', '${id}')">${t('detail.cancel')}</button></td>`;
                     } else {
                         actionCell = '<td></td>';

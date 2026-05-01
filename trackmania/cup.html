@@ -1313,6 +1313,48 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     line-height: 1.15;
     max-width: 50%;
 }
+/* ── Footer "Prochaine édition" (sur édition terminée) ── */
+.next-edition-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: var(--space-md);
+    padding: 18px 24px;
+    background: linear-gradient(105deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
+    border: 1px solid rgba(245,158,11,0.22);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: transform var(--tr-fast), border-color var(--tr-fast), background var(--tr-fast);
+    gap: 16px;
+}
+.next-edition-footer:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245,158,11,0.45);
+    background: linear-gradient(105deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04));
+}
+.next-edition-footer-left { flex: 1; min-width: 0; }
+.next-edition-footer-label {
+    font-size: var(--text-xs); font-weight: var(--fw-bold);
+    text-transform: uppercase; letter-spacing: var(--tracking-wider);
+    color: var(--color-warning);
+    margin-bottom: 4px;
+}
+.next-edition-footer-name {
+    font-size: var(--text-md); font-weight: var(--fw-black);
+    color: #fff;
+    margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.next-edition-footer-meta {
+    font-size: var(--text-sm);
+    color: rgba(255,255,255,0.55);
+}
+.next-edition-footer-arrow {
+    font-size: 1.8rem; font-weight: var(--fw-black);
+    color: var(--color-warning);
+    transition: transform var(--tr-fast);
+    flex-shrink: 0;
+}
+.next-edition-footer:hover .next-edition-footer-arrow { transform: translateX(6px); }
+
 /* Map info inline dans la meta line (past events) */
 .event-map-meta {
     display: inline-flex; align-items: center; gap: 4px;
