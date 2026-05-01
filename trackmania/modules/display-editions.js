@@ -574,10 +574,6 @@ export function displayEditions() {
                     <div class="event-featured-countdown-value">${cd}</div>
                 </div>` : ''}
             </div>
-            ${state.isAdmin ? `<div class="event-featured-admin" onclick="event.stopPropagation()">
-                <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button>
-                <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
-            </div>` : ''}
         </div>`;
     };
 
@@ -667,10 +663,6 @@ export function displayEditions() {
                     ${liveBadgeHtml}
                     ${playerBadgeHtml}
                     <span class="event-row-cta">${t('editions.see')}</span>
-                    ${state.isAdmin ? `<div class="edition-card-admin" onclick="event.stopPropagation()">
-                        <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
-                    </div>` : ''}
                 </div>
             </div>
         </div>`;

@@ -1427,7 +1427,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     color: #fff; margin-top: 2px;
     max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.edition-card-admin { display: flex; gap: 5px; }
 
 /* ── EVENT FEATURED — mini-hero (next upcoming) ───────────────── */
 .event-featured {
@@ -1467,8 +1466,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         rgba(15,15,15,0.35) 100%);
 }
 .event-featured > .event-featured-accent,
-.event-featured > .event-featured-body,
-.event-featured > .event-featured-admin { position: relative; z-index: 2; }
+.event-featured > .event-featured-body { position: relative; z-index: 2; }
 .event-featured.en-cours {
     border-color: rgba(251,191,36,0.65);
     animation: featured-glow-live 2.5s ease-in-out infinite;
@@ -1571,10 +1569,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     line-height: 1; letter-spacing: var(--tracking-tight);
 }
 .event-featured.en-cours .event-featured-countdown-value { color: #fbbf24; }
-.event-featured-admin {
-    position: absolute; top: 14px; right: 14px;
-    display: flex; gap: 5px; z-index: 2;
-}
 
 /* ── EVENT ROW — mini-podium (past events) ─────────────── */
 .event-row-podium {
