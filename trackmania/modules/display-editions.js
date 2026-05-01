@@ -995,6 +995,48 @@ window.openEditionDetail = (id) => {
                 </tr>`;
             });
             html += '</tbody></table>';
+
+            // ── Timeline KO : raconte l'histoire de la finale ─────────────
+            // Format : 1 élim par manche → la position est l'inverse chronologique.
+            // Manche M élimine le joueur en position (N - M + 1). Le vainqueur (P1) n'est jamais éliminé.
+            if (finaleResults.length >= 2) {
+                const N = finaleResults.length;
+                const winner = state.data.participants.find(p => p.id === finaleResults.find(r => r.position === 1)?.playerId);
+                const rounds = [];
+                for (let m = 1; m < N; m++) {
+                    const elimPos = N - m + 1;
+                    const r = finaleResults.find(x => x.position === elimPos);
+                    if (!r) continue;
+                    const player = state.data.participants.find(p => p.id === r.playerId);
+                    if (!player) continue;
+                    rounds.push({ round: m, player, position: elimPos });
+                }
+                if (rounds.length > 0) {
+                    html += `<div class="finale-timeline">
+                        <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
+                        <div class="finale-timeline-list">
+                            ${rounds.map(r => `<div class="finale-timeline-item" onclick="openPlayerProfile('${r.player.id}')">
+                                <div class="finale-timeline-round">M${r.round}</div>
+                                <div class="finale-timeline-icon">❌</div>
+                                <div class="finale-timeline-avatar">${avatarHtml(r.player, { size: 28 })}</div>
+                                <div class="finale-timeline-text">
+                                    <span class="finale-timeline-name">${pName(r.player)}</span>
+                                    <span class="finale-timeline-meta">${t('detail.finale.eliminated') || 'éliminé'} · P${r.position}</span>
+                                </div>
+                            </div>`).join('')}
+                            ${winner ? `<div class="finale-timeline-item winner" onclick="openPlayerProfile('${winner.id}')">
+                                <div class="finale-timeline-round">🏆</div>
+                                <div class="finale-timeline-icon">👑</div>
+                                <div class="finale-timeline-avatar">${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.6)' })}</div>
+                                <div class="finale-timeline-text">
+                                    <span class="finale-timeline-name">${pName(winner)}</span>
+                                    <span class="finale-timeline-meta">${t('detail.finale.winner') || 'vainqueur'}</span>
+                                </div>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+                }
+            }
         }
 
         if (finaleResults.length === 0 && qualResults.length === 0) {

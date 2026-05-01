@@ -1401,6 +1401,80 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     font-style: italic;
 }
 
+/* ── Timeline KO finale ── */
+.finale-timeline {
+    margin: var(--space-md) 0 var(--space-sm);
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.finale-timeline-header {
+    font-size: var(--text-xs); font-weight: var(--fw-bold);
+    text-transform: uppercase; letter-spacing: var(--tracking-wider);
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 14px;
+}
+.finale-timeline-list {
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative;
+}
+.finale-timeline-list::before {
+    content: ''; position: absolute;
+    left: 21px; top: 14px; bottom: 14px;
+    width: 2px; background: linear-gradient(180deg,
+        rgba(239,68,68,0.4) 0%,
+        rgba(239,68,68,0.2) 70%,
+        rgba(251,191,36,0.5) 100%);
+}
+.finale-timeline-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px; border-radius: 8px;
+    cursor: pointer; position: relative;
+    transition: background var(--tr-fast);
+}
+.finale-timeline-item:hover { background: rgba(255,255,255,0.04); }
+.finale-timeline-round {
+    width: 38px; flex-shrink: 0;
+    font-size: var(--text-xs); font-weight: var(--fw-black);
+    text-align: center;
+    color: rgba(255,255,255,0.55);
+    background: rgba(15,15,15,0.85);
+    padding: 4px 0; border-radius: 6px;
+    z-index: 1; position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.finale-timeline-item.winner .finale-timeline-round {
+    color: #fbbf24;
+    background: rgba(251,191,36,0.12);
+    border-color: rgba(251,191,36,0.4);
+    font-size: var(--text-sm);
+}
+.finale-timeline-icon { font-size: 1rem; flex-shrink: 0; opacity: 0.7; }
+.finale-timeline-item.winner .finale-timeline-icon { opacity: 1; }
+.finale-timeline-avatar { flex-shrink: 0; }
+.finale-timeline-text {
+    display: flex; flex-direction: column;
+    line-height: 1.2; min-width: 0;
+}
+.finale-timeline-name {
+    font-size: var(--text-sm); font-weight: var(--fw-bold);
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.finale-timeline-item.winner .finale-timeline-name {
+    color: #fff; font-size: var(--text-md);
+}
+.finale-timeline-meta {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: var(--tracking-wide);
+    margin-top: 2px;
+}
+.finale-timeline-item.winner .finale-timeline-meta {
+    color: var(--springs-orange);
+}
+
 /* ── Footer "Prochaine édition" (sur édition terminée) ── */
 .next-edition-footer {
     display: flex; align-items: center; justify-content: space-between;
