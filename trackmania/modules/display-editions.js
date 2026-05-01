@@ -857,55 +857,6 @@ window.openEditionDetail = (id) => {
             </div>`;
         }
 
-        if (state.isAdmin) {
-            // Phase inscription : tous les participants (défaut)
-            const playerOptions = state.data.participants
-                .sort((a, b) => pName(a).localeCompare(pName(b)))
-                .map(p => `<option value="${p.id}">${pName(p)}</option>`).join('');
-            html += `<div class="card">
-                <h2>${t('detail.add.result')}</h2>
-                <form id="detailAddResultForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>${t('detail.phase')}</label>
-                            <select id="detailResultPhase" required onchange="detailOnPhaseChange()">
-                                <option value="">${t('detail.phase.ph')}</option>
-                                <option value="inscription">${t('detail.phase.inscription')}</option>
-                                <option value="qualification">${t('detail.phase.quals')}</option>
-                                <option value="finale">${t('detail.phase.finale')}</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="detailMapField" style="display:none">
-                            <label>${t('detail.map')}</label>
-                            <select id="detailResultMap">
-                                ${Array.from({length: e.nbMaps || 6}, (_, i) => i + 1).map(n => `<option value="${n}">${t('detail.map.n')} ${n}</option>`).join('')}
-                                <option value="7">${t('detail.map.finale')}</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>${t('detail.player')}</label>
-                            <select id="detailResultPlayer" required onchange="detailOnPlayerChange()">
-                                <option value="">${t('detail.player.select')}</option>
-                                ${playerOptions}
-                            </select>
-                        </div>
-                        <div id="detailViesBonusInfo" style="display:none;background:rgba(239,68,68,0.1);color:#ef4444;font-size:0.82rem;padding:8px 12px;border-radius:8px;border:1px solid rgba(239,68,68,0.2)"></div>
-                        <div class="form-group" id="detailQualPosField" style="display:none">
-                            <label>${t('detail.pos.map')}</label>
-                            <select id="detailResultQualPos">
-                                ${Array.from({length: e.nbQualifPerMap || 3}, (_, i) => i + 1).map(pos => `<option value="${pos}">${t(`detail.pos.${pos}`) || `${pos}e`}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group" id="detailPositionField" style="display:none">
-                            <label>${t('detail.pos.final')}</label>
-                            <input type="number" id="detailResultPosition" min="1" placeholder="Ex: 1">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">${t('detail.save')}</button>
-                </form>
-            </div>`;
-        }
-
         const ytId = extractYoutubeId(e.youtubeUrl);
         const vodEmbedHtml = ytId ? `
             <div class="vod-section-label" style="justify-content:space-between;margin-bottom:0">
@@ -983,36 +934,6 @@ window.openEditionDetail = (id) => {
 
         // ── Finale KO ──
         if (finaleResults.length > 0) {
-            const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-            const podiumOrder = [2, 1, 3]
-                .map(pos => finaleResults.find(r => r.position === pos))
-                .filter(Boolean);
-            if (podiumOrder.length > 0) {
-                html += '<div class="podium">';
-                podiumOrder.forEach(r => {
-                    const player = state.data.participants.find(p => p.id === r.playerId);
-                    if (!player) return;
-                    const viesCountP = qualResults.filter(q => q.playerId === player.id).length - 1;
-                    const viesHtml = viesCountP > 0 ? `<div style="font-size:0.75rem;color:#ef4444;margin-top:2px">❤️×${viesCountP}</div>` : '';
-                    const ringColor = r.position === 1 ? 'rgba(251,191,36,0.6)'
-                                    : r.position === 2 ? 'rgba(203,213,225,0.6)'
-                                    : 'rgba(205,127,50,0.6)';
-                    html += `<div class="podium-spot">
-                        <div class="podium-player">
-                            <div class="podium-medal">${medals[r.position] || r.position}</div>
-                            <div style="display:flex;justify-content:center;margin-bottom:6px">${avatarHtml(player, { size: 48, ringColor })}</div>
-                            <div class="podium-name player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</div>
-                            <div>${playerBadgesHtml(player.id)}</div>
-                            ${viesHtml}
-                            <div class="podium-team">${tTeam(player.team)}</div>
-                            <div class="podium-pts">+${getPoints(r.position)} pts</div>
-                        </div>
-                        <div class="podium-block podium-block-${r.position}">${r.position}</div>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-
             const adminCol = state.isAdmin ? '<th></th>' : '';
             html += `<div class="phase-title" style="display:flex;align-items:center;justify-content:space-between">
                 <span>${t('detail.finale.title')}</span>
