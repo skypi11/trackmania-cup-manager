@@ -485,6 +485,62 @@ export function displayEditions() {
         terminee:     t('editions.status.done'),
     };
 
+    const renderPlayerBadge = (e) => {
+        if (!currentPlayer) return '';
+        const isFinaliste = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
+        const isQualified = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
+        const isInscrit   = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+        if (isFinaliste)      return `<div class="edition-card-player-badge finalist">${t('editions.finalist')}</div>`;
+        if (isQualified)      return `<div class="edition-card-player-badge qualified">${t('editions.participated')}</div>`;
+        if (isInscrit)        return `<div class="edition-card-player-badge">${t('editions.registered')}</div>`;
+        return '';
+    };
+
+    // ── FEATURED UPCOMING : mini-hero (image TM2020 + countdown XL) ─────────
+    const renderFeaturedUpcoming = (e) => {
+        let cardClass = 'event-featured upcoming';
+        if (e.status === 'fermee')   cardClass = 'event-featured fermee';
+        if (e.status === 'en_cours') cardClass = 'event-featured en-cours';
+
+        const statusLabel = WORKFLOW_LABELS[e.status] || t('editions.status.open');
+        const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
+        const cardTime = e.time ? ` · ${e.time}` : '';
+
+        const inscritsCount = state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
+        const cd = getCountdown(e.date, e.time);
+
+        const liveBadgeHtml = (e.status === 'en_cours')
+            ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
+            : '';
+
+        return `<div class="${cardClass}" onclick="openEditionDetail('${e.id}')" style="background-image:linear-gradient(105deg, rgba(15,15,15,0.92) 0%, rgba(15,15,15,0.78) 50%, rgba(15,15,15,0.55) 100%), url('${tm2020Bg}')">
+            <div class="event-featured-accent"></div>
+            <div class="event-featured-body">
+                <div class="event-featured-left">
+                    <div class="event-featured-pill-row">
+                        <div class="event-featured-status">${statusLabel}</div>
+                        ${liveBadgeHtml}
+                        ${renderPlayerBadge(e)}
+                    </div>
+                    <div class="event-featured-name">${e.name}</div>
+                    <div class="event-featured-meta">
+                        <span>📅 ${dateStr}${cardTime}</span>
+                        <span>👥 ${inscritsCount} ${t('editions.participants')}</span>
+                    </div>
+                    <div class="event-featured-cta">${t('editions.see')} →</div>
+                </div>
+                ${cd ? `<div class="event-featured-countdown">
+                    <div class="event-featured-countdown-label">${t('editions.starts.in') || 'Démarre dans'}</div>
+                    <div class="event-featured-countdown-value">${cd}</div>
+                </div>` : ''}
+            </div>
+            ${state.isAdmin ? `<div class="event-featured-admin" onclick="event.stopPropagation()">
+                <button class="btn btn-secondary btn-small" onclick="openEditEdition('${e.id}')">✏️</button>
+                <button class="btn btn-danger btn-small" onclick="deleteEdition('${e.id}')">🗑️</button>
+            </div>` : ''}
+        </div>`;
+    };
+
     const renderEditionRow = (e, isPast) => {
         let cardClass = isPast ? 'past-event' : 'upcoming';
         if (!isPast && e.status === 'fermee')   cardClass = 'fermee upcoming';
@@ -497,15 +553,7 @@ export function displayEditions() {
         const dateStr = new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
         const cardTime = e.time ? ` · ${e.time}` : '';
 
-        let playerBadgeHtml = '';
-        if (currentPlayer) {
-            const isFinaliste = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
-            const isQualified = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'qualification');
-            const isInscrit   = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
-            if (isFinaliste)      playerBadgeHtml = `<div class="edition-card-player-badge finalist">${t('editions.finalist')}</div>`;
-            else if (isQualified) playerBadgeHtml = `<div class="edition-card-player-badge qualified">${t('editions.participated')}</div>`;
-            else if (isInscrit)   playerBadgeHtml = `<div class="edition-card-player-badge">${t('editions.registered')}</div>`;
-        }
+        const playerBadgeHtml = renderPlayerBadge(e);
 
         const participantCount = isPast
             ? state.data.results.filter(r => r.editionId === e.id && r.phase === 'qualification').length
@@ -517,19 +565,28 @@ export function displayEditions() {
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
-        // Gagnant pour les past events : avatar + pseudo en miniature
-        let winnerHtml = '';
+        // Past events : mini-podium 1/2/3 avec avatars
+        let podiumHtml = '';
         if (isPast) {
-            const winRes = state.data.results.find(r => r.editionId === e.id && r.phase === 'finale' && r.position === 1);
-            const winner = winRes ? state.data.participants.find(p => p.id === winRes.playerId) : null;
-            if (winner) {
-                winnerHtml = `<div class="event-row-winner" title="${t('editions.winner') || 'Vainqueur'}">
-                    ${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.5)' })}
-                    <div class="event-row-winner-info">
-                        <span class="event-row-winner-label">🏆 ${t('editions.winner') || 'Vainqueur'}</span>
-                        <span class="event-row-winner-name">${pName(winner)}</span>
-                    </div>
-                </div>`;
+            const podium = [1, 2, 3].map(pos => {
+                const r = state.data.results.find(x => x.editionId === e.id && x.phase === 'finale' && x.position === pos);
+                return r ? state.data.participants.find(p => p.id === r.playerId) : null;
+            });
+            if (podium[0]) {
+                const ringColors = ['rgba(251,191,36,0.6)', 'rgba(192,192,192,0.5)', 'rgba(205,127,50,0.5)'];
+                const medals = ['🥇', '🥈', '🥉'];
+                const sizes = [44, 32, 32];
+                const items = podium.map((pl, i) => {
+                    if (!pl) return '';
+                    return `<div class="event-row-podium-item rank-${i+1}">
+                        ${avatarHtml(pl, { size: sizes[i], ringColor: ringColors[i] })}
+                        <div class="event-row-podium-info">
+                            <span class="event-row-podium-medal">${medals[i]}</span>
+                            <span class="event-row-podium-name">${pName(pl)}</span>
+                        </div>
+                    </div>`;
+                }).filter(Boolean).join('');
+                podiumHtml = `<div class="event-row-podium" title="${t('editions.podium') || 'Podium'}">${items}</div>`;
             }
         }
 
@@ -548,7 +605,7 @@ export function displayEditions() {
                     ${descHtml}
                 </div>
                 <div class="event-row-right">
-                    ${winnerHtml}
+                    ${podiumHtml}
                     ${liveBadgeHtml}
                     ${playerBadgeHtml}
                     <span class="event-row-cta">${t('editions.see')}</span>
@@ -561,13 +618,18 @@ export function displayEditions() {
         </div>`;
     };
 
+    // Featured = upcoming le plus proche (date min >= today, statut != terminee)
+    const featuredCandidate = [...allUpcoming].sort((a, b) => new Date(a.date) - new Date(b.date))[0] || null;
+    const featuredId = (state.editionFilter !== 'past' && featuredCandidate) ? featuredCandidate.id : null;
+
     let html = '<div class="event-list">';
     if (upcoming.length > 0) {
-        html += `<div class="event-list-section-label">${t('editions.upcoming')}</div>`;
-        upcoming.forEach(e => { html += renderEditionRow(e, false); });
+        html += `<div class="event-list-section-label upcoming-label"><span>${t('editions.upcoming')}</span></div>`;
+        if (featuredId) html += renderFeaturedUpcoming(featuredCandidate);
+        upcoming.filter(e => e.id !== featuredId).forEach(e => { html += renderEditionRow(e, false); });
     }
     if (past.length > 0) {
-        html += `<div class="event-list-section-label" style="margin-top:${upcoming.length ? 24 : 0}px">${t('editions.past')}</div>`;
+        html += `<div class="event-list-section-label past-label" style="margin-top:${upcoming.length ? 24 : 0}px"><span>${t('editions.past')}</span></div>`;
         past.forEach(e => { html += renderEditionRow(e, true); });
     }
     html += '</div>';
