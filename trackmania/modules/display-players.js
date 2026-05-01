@@ -603,134 +603,193 @@ window.copyPodium = async (editionId, btn) => {
     const finaleResults = state.data.results.filter(r => r.editionId === editionId && r.phase === 'finale').sort((a, b) => a.position - b.position);
     if (finaleResults.length === 0) return;
 
-    const logo = await new Promise(resolve => {
+    const top3 = [1, 2, 3].map(pos => {
+        const r = finaleResults.find(x => x.position === pos);
+        const player = r ? state.data.participants.find(p => p.id === r.playerId) : null;
+        return { pos, player, points: r ? getPoints(pos) : 0 };
+    });
+    if (!top3[0].player) return;
+
+    const loadImg = (src) => new Promise(resolve => {
+        if (!src) return resolve(null);
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
         img.onerror = () => resolve(null);
-        img.src = springsLogo;
+        img.src = src;
     });
 
-    const W = 680, H = 400;
+    const mapBgUrl = edition.map7thumbUrl || edition.map6thumbUrl || edition.map1thumbUrl || null;
+    const [logo, mapBg, av1, av2, av3] = await Promise.all([
+        loadImg(springsLogo),
+        loadImg(mapBgUrl),
+        loadImg(top3[0].player?.discordAvatar),
+        loadImg(top3[1].player?.discordAvatar),
+        loadImg(top3[2].player?.discordAvatar),
+    ]);
+
+    const W = 1080, H = 1080;
     const canvas = document.createElement('canvas');
-    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
-    ctx.scale(2, 2);
 
-    const ACCENT = CUP.color || '#00d936';
+    const GOLD = '#fbbf24';
+    const SILVER = '#cbd5e1';
+    const BRONZE = '#cd7f32';
     const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial';
-
-    const roundRect = (x, y, w, h, r) => {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-    };
 
     // Background
     ctx.fillStyle = '#0e0e0e';
-    roundRect(0, 0, W, H, 16); ctx.fill();
+    ctx.fillRect(0, 0, W, H);
 
-    // Radial glow centre
-    const grd = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 280);
-    grd.addColorStop(0, ACCENT + '18');
-    grd.addColorStop(1, 'transparent');
-    roundRect(0, 0, W, H, 16);
-    ctx.fillStyle = grd; ctx.fill();
-
-    // Border + bottom bar
-    roundRect(0, 0, W, H, 16);
-    ctx.strokeStyle = ACCENT + '77'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.fillStyle = ACCENT;
-    ctx.fillRect(0, H - 5, W, 5);
-
-    // Logo top-right
-    if (logo) {
-        const lh = 22, lw = logo.naturalWidth * (lh / logo.naturalHeight);
-        ctx.globalAlpha = 0.5;
-        ctx.drawImage(logo, W - lw - 20, 16, lw, lh);
-        ctx.globalAlpha = 1;
+    if (mapBg) {
+        const ratio = Math.max(W / mapBg.width, H / mapBg.height);
+        const sw = mapBg.width * ratio, sh = mapBg.height * ratio;
+        ctx.drawImage(mapBg, (W - sw) / 2, (H - sh) / 2, sw, sh);
+        // Overlay sombre dégradé
+        const grd = ctx.createLinearGradient(0, 0, 0, H);
+        grd.addColorStop(0,   'rgba(15,15,15,0.78)');
+        grd.addColorStop(0.35,'rgba(15,15,15,0.55)');
+        grd.addColorStop(0.7, 'rgba(15,15,15,0.85)');
+        grd.addColorStop(1,   'rgba(15,15,15,0.97)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, W, H);
     }
 
-    // Cup label top-left
-    ctx.fillStyle = ACCENT + 'cc';
-    ctx.font = `bold 10px Arial`;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillText(state.siteConfig.siteName.toUpperCase(), 24, 20);
+    // Top + bottom accent bar (doré)
+    const accentGrd = ctx.createLinearGradient(0, 0, W, 0);
+    accentGrd.addColorStop(0, GOLD);
+    accentGrd.addColorStop(0.5, '#f59e0b');
+    accentGrd.addColorStop(1, GOLD);
+    ctx.fillStyle = accentGrd;
+    ctx.fillRect(0, 0, W, 8);
+    ctx.fillRect(0, H - 8, W, 8);
 
-    // Edition name
+    // Logo Springs en haut centre
+    if (logo) {
+        const lh = 70;
+        const lw = logo.naturalWidth * (lh / logo.naturalHeight);
+        ctx.drawImage(logo, (W - lw) / 2, 50, lw, lh);
+    }
+
+    // Titre édition
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold 22px Arial`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText(edition.name, W / 2, 60);
+    ctx.font = `900 56px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(edition.name.toUpperCase(), W / 2, 145);
 
     // Date
+    ctx.fillStyle = GOLD;
+    ctx.font = `bold 22px Arial`;
     const dateStr = new Date(edition.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' });
-    ctx.fillStyle = '#64748b';
-    ctx.font = `13px Arial`;
-    ctx.fillText(dateStr, W / 2, 78);
+    ctx.fillText(dateStr.toUpperCase(), W / 2, 215);
 
-    // Podium blocks: order 2, 1, 3
-    const podiumOrder   = [2, 1, 3];
-    const podiumHeights = { 1: 110, 2: 80, 3: 60 };
-    const podiumColors  = { 1: 'rgba(251,191,36,0.18)', 2: 'rgba(148,163,184,0.14)', 3: 'rgba(180,83,9,0.14)' };
-    const podiumBorders = { 1: 'rgba(251,191,36,0.55)', 2: 'rgba(148,163,184,0.4)',  3: 'rgba(180,83,9,0.45)' };
-    const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-    const blockW = 180, gap = 14;
-    const totalW = blockW * 3 + gap * 2;
-    const startX = (W - totalW) / 2;
-    const baseY  = H - 55;
+    // Trophy emoji XL
+    ctx.font = `100px ${EMOJI_FONT}`;
+    ctx.textBaseline = 'top';
+    ctx.fillText('🏆', W / 2, 255);
 
-    podiumOrder.forEach((pos, i) => {
-        const result = finaleResults.find(r => r.position === pos);
-        const player = result ? state.data.participants.find(p => p.id === result.playerId) : null;
-        const bh = podiumHeights[pos];
-        const x  = startX + i * (blockW + gap);
-        const y  = baseY - bh;
+    // Label "PODIUM"
+    ctx.fillStyle = GOLD;
+    ctx.font = `900 22px Arial`;
+    ctx.fillText('PODIUM', W / 2, 380);
 
-        roundRect(x, y, blockW, bh, 10);
-        ctx.fillStyle = podiumColors[pos]; ctx.fill();
-        roundRect(x, y, blockW, bh, 10);
-        ctx.strokeStyle = podiumBorders[pos]; ctx.lineWidth = 1.2; ctx.stroke();
+    // Podium positions : 2 | 1 (centré, plus haut) | 3
+    const positions = [
+        { pos: 2, x: W * 0.20, cy: 600, radius: 95, ring: SILVER, isFirst: false },
+        { pos: 1, x: W * 0.50, cy: 560, radius: 130, ring: GOLD,  isFirst: true },
+        { pos: 3, x: W * 0.80, cy: 600, radius: 95, ring: BRONZE, isFirst: false },
+    ];
+    const avatars = { 1: av1, 2: av2, 3: av3 };
+    const medalEmojis = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
-        ctx.fillStyle = pos === 1 ? '#fbbf24' : pos === 2 ? '#94a3b8' : '#b45309';
-        ctx.font = `bold 28px Arial`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(String(pos), x + blockW / 2, y + bh / 2 + 8);
+    positions.forEach(({ pos, x, cy, radius, ring, isFirst }) => {
+        const slot = top3[pos - 1];
+        if (!slot.player) return;
 
-        if (!player) return;
+        // Cercle ring
+        ctx.beginPath();
+        ctx.arc(x, cy, radius + 8, 0, Math.PI * 2);
+        ctx.fillStyle = ring;
+        ctx.fill();
 
-        ctx.font = `26px ${EMOJI_FONT}`;
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillText(medals[pos], x + blockW / 2, y - 30);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold 15px Arial`;
-        ctx.textBaseline = 'alphabetic';
-        let name = pName(player);
-        while (ctx.measureText(name).width > blockW - 10 && name.length > 1) name = name.slice(0, -1);
-        if (name !== pName(player)) name += '…';
-        ctx.fillText(name, x + blockW / 2, y - 56);
-
-        ctx.fillStyle = '#64748b';
-        ctx.font = `11px Arial`;
-        let team = player.team || '';
-        while (ctx.measureText(team).width > blockW - 10 && team.length > 1) team = team.slice(0, -1);
-        if (team !== (player.team || '')) team += '…';
-        ctx.fillText(team, x + blockW / 2, y - 40);
-
-        if (result) {
-            const pts = getPoints(result.position);
-            ctx.fillStyle = ACCENT;
-            ctx.font = `bold 12px Arial`;
-            ctx.fillText(`+${pts} pts`, x + blockW / 2, y + bh - 8);
+        // Avatar (image ou initiales)
+        const av = avatars[pos];
+        if (av) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, cy, radius, 0, Math.PI * 2);
+            ctx.clip();
+            const avRatio = Math.max(radius * 2 / av.width, radius * 2 / av.height);
+            const sw = av.width * avRatio, sh = av.height * avRatio;
+            ctx.drawImage(av, x - sw / 2, cy - sh / 2, sw, sh);
+            ctx.restore();
+        } else {
+            ctx.beginPath();
+            ctx.arc(x, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `900 ${radius * 0.9}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(pName(slot.player).charAt(0).toUpperCase(), x, cy);
         }
+
+        // Médaille en bas-droite du cercle
+        const medalSize = isFirst ? 70 : 52;
+        const medalX = x + radius * 0.70;
+        const medalY = cy + radius * 0.60;
+        // Cercle de fond derrière la médaille pour la séparer du visage
+        ctx.beginPath();
+        ctx.arc(medalX, medalY, medalSize * 0.55, 0, Math.PI * 2);
+        ctx.fillStyle = '#0e0e0e';
+        ctx.fill();
+        ctx.font = `${medalSize}px ${EMOJI_FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(medalEmojis[pos], medalX, medalY);
+
+        // Texte sous l'avatar
+        const textY = cy + radius + 50;
+        const fontScale = isFirst ? 1.0 : 0.78;
+        const maxW = (isFirst ? 320 : 240);
+
+        // Nom
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `900 ${36 * fontScale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        let name = pName(slot.player);
+        while (ctx.measureText(name).width > maxW && name.length > 1) name = name.slice(0, -1);
+        if (name !== pName(slot.player)) name += '…';
+        ctx.fillText(name, x, textY);
+
+        // Team
+        let teamY = textY + 44 * fontScale;
+        if (slot.player.team && slot.player.team !== 'Sans équipe') {
+            ctx.fillStyle = 'rgba(255,255,255,0.55)';
+            ctx.font = `${20 * fontScale}px Arial`;
+            let team = slot.player.team;
+            while (ctx.measureText(team).width > maxW && team.length > 1) team = team.slice(0, -1);
+            if (team !== slot.player.team) team += '…';
+            ctx.fillText(team, x, teamY);
+            teamY += 28 * fontScale;
+        }
+
+        // Points
+        ctx.fillStyle = ring;
+        ctx.font = `900 ${30 * fontScale}px Arial`;
+        ctx.fillText(`+${slot.points} PTS`, x, teamY + 4);
     });
 
-    // Footer
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.font = `10px Arial`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText('Springs E-Sport', W / 2, H - 14);
+    // Footer URL
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `bold 18px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('SPRINGS-ESPORT.VERCEL.APP', W / 2, H - 35);
 
     canvas.toBlob(async blob => {
         const orig = btn ? btn.textContent : '';

@@ -207,6 +207,12 @@ function renderEditionHeroPodium(e, finaleResults) {
         </div>
         ${hasChampion ? `<div class="ed-hero-champion-banner">👑 ${t('detail.podium.champion') || 'Champion(ne) de l\'édition'}</div>` : ''}
         ${podiumHtml}
+        ${hasChampion ? `<div class="ed-hero-podium-actions">
+            <button class="btn btn-secondary btn-small ed-hero-share-btn" onclick="event.stopPropagation();copyPodium('${e.id}', this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                <span>${t('detail.share.podium') || 'Partager le podium'}</span>
+            </button>
+        </div>` : ''}
     </div>`;
 }
 
@@ -845,20 +851,14 @@ window.openEditionDetail = (id) => {
 
         // ── Bloc stats édition (uniquement pour les éditions terminées) ──
         if (e.status !== 'en_cours' && (finaleResults.length > 0 || qualResults.length > 0)) {
-            const inscritsCount   = edResults.filter(r => r.phase === 'inscription').length;
-            const qualifiedSet    = new Set(qualResults.map(r => r.playerId));
+            const inscritsSet     = new Set(edResults.filter(r => r.phase === 'inscription').map(r => r.playerId));
             const finalistesCount = finaleResults.length;
-            const totalMaps       = e.nbMaps || 6;
+            const totalMaps       = (e.nbMaps || 6) + 1; // +1 pour la finale
             html += `<div class="edition-stats-grid">
                 <div class="edition-stat-card">
                     <div class="edition-stat-icon">📥</div>
-                    <div class="edition-stat-value">${inscritsCount}</div>
+                    <div class="edition-stat-value">${inscritsSet.size}</div>
                     <div class="edition-stat-label">${t('detail.stats.participants') || 'Participants'}</div>
-                </div>
-                <div class="edition-stat-card">
-                    <div class="edition-stat-icon">🎯</div>
-                    <div class="edition-stat-value">${qualifiedSet.size}</div>
-                    <div class="edition-stat-label">${t('detail.stats.qualified') || 'Qualifiés'}</div>
                 </div>
                 <div class="edition-stat-card">
                     <div class="edition-stat-icon">🏆</div>
@@ -866,7 +866,7 @@ window.openEditionDetail = (id) => {
                     <div class="edition-stat-label">${t('detail.stats.finalists') || 'Finalistes'}</div>
                 </div>
                 <div class="edition-stat-card">
-                    <div class="edition-stat-icon">🗺</div>
+                    <div class="edition-stat-icon">🏁</div>
                     <div class="edition-stat-value">${totalMaps}</div>
                     <div class="edition-stat-label">${t('detail.stats.maps') || 'Maps'}</div>
                 </div>
@@ -962,10 +962,7 @@ window.openEditionDetail = (id) => {
 
         // ── Finale KO ──
         if (finaleResults.length > 0) {
-            html += `<div class="phase-title" style="display:flex;align-items:center;justify-content:space-between">
-                <span>${t('detail.finale.title')}</span>
-                <button class="btn btn-secondary btn-small" onclick="copyPodium('${e.id}', this)">${t('detail.share.podium')}</button>
-            </div>`;
+            html += `<div class="phase-title">${t('detail.finale.title')}</div>`;
             const finaleThumbUrl = e.map7thumbUrl || '';
             const finaleMapName  = e.map7name || '';
             const finaleMapper   = e.map7mapper || '';
