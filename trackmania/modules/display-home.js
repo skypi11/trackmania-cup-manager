@@ -325,6 +325,12 @@ export function displayNextEditionBanner() {
         banner.style.display = 'none';
         return;
     }
+    // Sur l'onglet Éditions, le featured mini-hero remplit déjà ce rôle
+    const editionsPanel = document.getElementById('editions');
+    if (editionsPanel && editionsPanel.style.display !== 'none') {
+        banner.style.display = 'none';
+        return;
+    }
     const today = new Date(); today.setHours(0,0,0,0);
     const upcoming = state.data.editions
         .filter(e => new Date(e.date) >= today && e.status !== 'terminee')

@@ -1260,9 +1260,31 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .event-row.past-event {
     background: linear-gradient(145deg, #181818, #131313);
     border-color: rgba(255,255,255,0.04);
-    opacity: 0.78;
+    opacity: 0.85;
+    position: relative;
 }
 .event-row.past-event:hover { opacity: 1; }
+.event-row.past-event.has-podium {
+    background: linear-gradient(145deg, rgba(40,30,10,0.9), rgba(20,16,8,0.95)), linear-gradient(145deg, #181818, #131313);
+    border-color: rgba(251,191,36,0.12);
+}
+.event-row.past-event.has-podium:hover {
+    border-color: rgba(251,191,36,0.28);
+    box-shadow: var(--shadow-hover), 0 0 35px rgba(251,191,36,0.08);
+}
+/* Image de map en fond très atténuée */
+.event-row .event-row-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity var(--tr-base);
+}
+.event-row.past-event.has-podium .event-row-bg { opacity: 0.12; }
+.event-row:hover .event-row-bg { opacity: 0.18; }
+.event-row > .event-row-accent,
+.event-row > .event-row-body { position: relative; z-index: 1; }
 
 /* En-cours: featured hero */
 .event-row.en-cours {
@@ -1370,15 +1392,33 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .event-featured {
     position: relative;
     display: flex; align-items: stretch;
-    min-height: 220px;
+    min-height: 240px;
     border-radius: var(--radius-lg);
     border: 1px solid rgba(245,158,11,0.28);
     overflow: hidden; cursor: pointer;
-    background-size: cover; background-position: center;
+    background: #0f0f0f;
     box-shadow: var(--shadow-md), 0 0 0 1px rgba(245,158,11,0.06) inset;
     transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
     margin-bottom: var(--space-sm);
 }
+.event-featured-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 6s ease-out;
+    z-index: 0;
+}
+.event-featured:hover .event-featured-bg { transform: scale(1.08); }
+.event-featured-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(105deg,
+        rgba(15,15,15,0.95) 0%,
+        rgba(15,15,15,0.82) 45%,
+        rgba(15,15,15,0.55) 80%,
+        rgba(15,15,15,0.35) 100%);
+}
+.event-featured > .event-featured-accent,
+.event-featured > .event-featured-body,
+.event-featured > .event-featured-admin { position: relative; z-index: 2; }
 .event-featured.en-cours {
     border-color: rgba(251,191,36,0.4);
     box-shadow: var(--shadow-md), 0 0 0 1px rgba(251,191,36,0.1) inset, 0 0 40px rgba(251,191,36,0.06);
@@ -1439,6 +1479,15 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     font-size: var(--text-md); color: rgba(255,255,255,0.7);
     font-weight: var(--fw-medium);
     margin-bottom: 18px;
+}
+.event-featured-actions {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.event-featured-register {
+    padding: 10px 22px !important;
+    font-size: var(--text-sm) !important;
+    font-weight: var(--fw-bold) !important;
+    box-shadow: 0 4px 16px rgba(0,217,54,0.25);
 }
 .event-featured-cta {
     display: inline-flex; align-items: center; gap: 6px;

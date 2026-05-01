@@ -485,6 +485,14 @@ export function displayEditions() {
         terminee:     t('editions.status.done'),
     };
 
+    // Premier thumb de map disponible pour une édition (sinon null)
+    const getEditionMapThumb = (e) => {
+        for (let n = 1; n <= 7; n++) {
+            if (e[`map${n}thumbUrl`]) return e[`map${n}thumbUrl`];
+        }
+        return null;
+    };
+
     const renderPlayerBadge = (e) => {
         if (!currentPlayer) return '';
         const isFinaliste = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
@@ -496,7 +504,7 @@ export function displayEditions() {
         return '';
     };
 
-    // ── FEATURED UPCOMING : mini-hero (image TM2020 + countdown XL) ─────────
+    // ── FEATURED UPCOMING : mini-hero (image map ou TM2020 + countdown XL) ──
     const renderFeaturedUpcoming = (e) => {
         let cardClass = 'event-featured upcoming';
         if (e.status === 'fermee')   cardClass = 'event-featured fermee';
@@ -508,12 +516,29 @@ export function displayEditions() {
 
         const inscritsCount = state.data.results.filter(r => r.editionId === e.id && r.phase === 'inscription').length;
         const cd = getCountdown(e.date, e.time);
+        const nbMaps = e.nbMaps || (state.siteConfig?.editionFormat?.qualifs?.mapsCount) || 6;
 
         const liveBadgeHtml = (e.status === 'en_cours')
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
-        return `<div class="${cardClass}" onclick="openEditionDetail('${e.id}')" style="background-image:linear-gradient(105deg, rgba(15,15,15,0.92) 0%, rgba(15,15,15,0.78) 50%, rgba(15,15,15,0.55) 100%), url('${tm2020Bg}')">
+        // CTA inscription intégré si possible
+        const alreadyRegistered = currentPlayer && state.data.results.some(r =>
+            r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'inscription');
+        let registerBtnHtml = '';
+        if (e.status === 'inscriptions' && !alreadyRegistered) {
+            if (!state.currentUser) {
+                registerBtnHtml = `<button class="btn btn-primary event-featured-register" onclick="event.stopPropagation();openAuthModal()">${t('editions.login.to.reg')}</button>`;
+            } else if (currentPlayer) {
+                registerBtnHtml = `<button class="btn btn-primary event-featured-register" onclick="event.stopPropagation();registerForEdition('${e.id}')">${t('editions.register.btn')}</button>`;
+            }
+        }
+
+        const mapThumb = getEditionMapThumb(e) || tm2020Bg;
+
+        return `<div class="${cardClass}" onclick="openEditionDetail('${e.id}')">
+            <div class="event-featured-bg" style="background-image:url('${mapThumb}')"></div>
+            <div class="event-featured-overlay"></div>
             <div class="event-featured-accent"></div>
             <div class="event-featured-body">
                 <div class="event-featured-left">
@@ -526,8 +551,12 @@ export function displayEditions() {
                     <div class="event-featured-meta">
                         <span>📅 ${dateStr}${cardTime}</span>
                         <span>👥 ${inscritsCount} ${t('editions.participants')}</span>
+                        <span>🗺 ${nbMaps} ${t('editions.maps') || 'maps'}</span>
                     </div>
-                    <div class="event-featured-cta">${t('editions.see')} →</div>
+                    <div class="event-featured-actions">
+                        ${registerBtnHtml}
+                        <span class="event-featured-cta">${t('editions.see')} →</span>
+                    </div>
                 </div>
                 ${cd ? `<div class="event-featured-countdown">
                     <div class="event-featured-countdown-label">${t('editions.starts.in') || 'Démarre dans'}</div>
@@ -565,6 +594,15 @@ export function displayEditions() {
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
+        // Past events : image map en fond (très dim) + gradient doré subtil
+        let pastBgHtml = '';
+        if (isPast) {
+            const thumb = getEditionMapThumb(e);
+            if (thumb) {
+                pastBgHtml = `<div class="event-row-bg" style="background-image:url('${thumb}')"></div>`;
+            }
+        }
+
         // Past events : mini-podium 1/2/3 avec avatars
         let podiumHtml = '';
         if (isPast) {
@@ -590,7 +628,8 @@ export function displayEditions() {
             }
         }
 
-        return `<div class="event-row ${cardClass}" onclick="openEditionDetail('${e.id}')">
+        return `<div class="event-row ${cardClass}${podiumHtml ? ' has-podium' : ''}" onclick="openEditionDetail('${e.id}')">
+            ${pastBgHtml}
             <div class="event-row-accent"></div>
             <div class="event-row-body">
                 <div class="event-row-left">
