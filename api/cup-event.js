@@ -53,9 +53,15 @@ export default async function handler(req, res) {
     body = {};
   }
   const provided = req.headers['x-api-key'] || body.apiKey || '';
-  // DEBUG TEMPORAIRE — à retirer après validation auto-saisie ManiaScript
+  // DEBUG TEMPORAIRE — split en plusieurs lignes courtes (Vercel logs tronquent)
   const dbgKey = typeof body.apiKey === 'string' ? body.apiKey : '';
-  console.log(`[auth] ct=${req.headers['content-type']} rawBodyType=${typeof req.body} isBuffer=${Buffer.isBuffer(req.body)} bodyKeys=[${Object.keys(body).join(',')}] apiKeyLen=${dbgKey.length} match=${provided === expected}`);
+  const rawSample = Buffer.isBuffer(req.body) ? req.body.slice(0, 80).toString('utf-8')
+                  : typeof req.body === 'string' ? req.body.slice(0, 80) : '';
+  console.log(`[A] ct=${req.headers['content-type']}`);
+  console.log(`[B] rawType=${typeof req.body} isBuf=${Buffer.isBuffer(req.body)}`);
+  console.log(`[C] bodyKeys=[${Object.keys(body).join(',')}]`);
+  console.log(`[D] keyLen=${dbgKey.length} expLen=${expected.length} match=${provided === expected}`);
+  console.log(`[E] rawSample=${JSON.stringify(rawSample)}`);
   if (provided !== expected) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
