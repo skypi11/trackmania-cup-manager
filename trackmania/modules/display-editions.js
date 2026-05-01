@@ -601,18 +601,16 @@ export function displayEditions() {
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
-        // Past events : image map en fond + caption nom map / créateur
+        // Past events : image map en fond + info map dans la meta line
         let pastBgHtml = '';
-        let mapCaptionHtml = '';
+        let mapMetaHtml = '';
         if (isPast) {
             const mapInfo = getEditionMapInfo(e);
             if (mapInfo?.thumb) {
                 pastBgHtml = `<div class="event-row-bg" style="background-image:url('${mapInfo.thumb}')"></div><div class="event-row-bg-overlay"></div>`;
                 if (mapInfo.name) {
-                    mapCaptionHtml = `<div class="event-map-caption">
-                        <span class="event-map-caption-name">📍 ${mapInfo.name}</span>
-                        ${mapInfo.mapper ? `<span class="event-map-caption-mapper">${t('editions.map.by') || 'par'} ${mapInfo.mapper}</span>` : ''}
-                    </div>`;
+                    const mapperPart = mapInfo.mapper ? ` · ${t('editions.map.by') || 'par'} ${mapInfo.mapper}` : '';
+                    mapMetaHtml = `<span class="event-map-meta">📍 ${mapInfo.name}${mapperPart}</span>`;
                 }
             }
         }
@@ -644,7 +642,6 @@ export function displayEditions() {
 
         return `<div class="event-row ${cardClass}${podiumHtml ? ' has-podium' : ''}" onclick="openEditionDetail('${e.id}')">
             ${pastBgHtml}
-            ${mapCaptionHtml}
             <div class="event-row-accent"></div>
             <div class="event-row-body">
                 <div class="event-row-left">
@@ -654,6 +651,7 @@ export function displayEditions() {
                         <span>📅 ${dateStr}${cardTime}</span>
                         <span>👥 ${participantCount} ${t('editions.participants')}</span>
                         ${isPast ? `<span>🏆 ${finals} ${t('editions.finalists')}</span>` : ''}
+                        ${mapMetaHtml}
                         ${!isPast && getCountdown(e.date, e.time) ? `<span class="event-countdown-pill">⏱ ${getCountdown(e.date, e.time)}</span>` : ''}
                     </div>
                     ${descHtml}

@@ -1262,7 +1262,6 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     background: #0f0f0f;
     border-color: rgba(255,255,255,0.06);
     position: relative;
-    min-height: 140px;
 }
 .event-row.past-event:hover { border-color: rgba(255,255,255,0.18); }
 .event-row.past-event.has-podium { border-color: rgba(251,191,36,0.15); }
@@ -1314,10 +1313,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     line-height: 1.15;
     max-width: 50%;
 }
-/* Past events : caption en bas-gauche pour ne pas chevaucher le podium (en haut-droite) */
-.event-row.past-event .event-map-caption {
-    right: auto; left: 22px;
-    align-items: flex-start;
+/* Map info inline dans la meta line (past events) */
+.event-map-meta {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: rgba(255,255,255,0.55) !important;
+    font-style: italic;
+    max-width: 280px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .event-map-caption-name {
     font-size: var(--text-xs);
