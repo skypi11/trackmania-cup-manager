@@ -34,17 +34,20 @@ export default async function handler(req, res) {
   }
 
   // ── Auth API Key ──────────────────────────────────────────────────────────
+  // Accepte la clé via header X-API-Key OU via body.apiKey (ManiaScript ne
+  // peut pas définir de headers HTTP custom dans la version actuelle de l'API
+  // CHttpRequest).
   const expected = process.env.CUP_API_KEY;
   if (!expected) {
     return res.status(500).json({ error: 'CUP_API_KEY not configured on server' });
   }
-  const provided = req.headers['x-api-key'] || '';
+  const body = req.body || {};
+  const provided = req.headers['x-api-key'] || body.apiKey || '';
   if (provided !== expected) {
-    return res.status(401).json({ error: 'Invalid X-API-Key' });
+    return res.status(401).json({ error: 'Invalid API key' });
   }
 
   // ── Validation payload ────────────────────────────────────────────────────
-  const body = req.body || {};
   const { editionId, type } = body;
   if (!editionId || !type) {
     return res.status(400).json({ error: 'Missing editionId or type' });
