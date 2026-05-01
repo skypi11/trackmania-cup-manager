@@ -599,7 +599,7 @@ export function displayEditions() {
         if (isPast) {
             const thumb = getEditionMapThumb(e);
             if (thumb) {
-                pastBgHtml = `<div class="event-row-bg" style="background-image:url('${thumb}')"></div>`;
+                pastBgHtml = `<div class="event-row-bg" style="background-image:url('${thumb}')"></div><div class="event-row-bg-overlay"></div>`;
             }
         }
 
