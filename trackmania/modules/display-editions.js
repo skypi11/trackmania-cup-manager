@@ -485,14 +485,19 @@ export function displayEditions() {
         terminee:     t('editions.status.done'),
     };
 
-    // Thumb de la "map finale" = dernière map dispo (map7 → map1)
-    const getEditionMapThumb = (e) => {
+    // Info de la "map finale" = dernière map dispo (map7 → map1)
+    const getEditionMapInfo = (e) => {
         for (let n = 7; n >= 1; n--) {
-            if (e[`map${n}thumbUrl`]) return e[`map${n}thumbUrl`];
+            if (e[`map${n}thumbUrl`]) {
+                return {
+                    thumb:  e[`map${n}thumbUrl`],
+                    name:   e[`map${n}name`]   || null,
+                    mapper: e[`map${n}mapper`] || null,
+                };
+            }
         }
         return null;
     };
-
     const renderPlayerBadge = (e) => {
         if (!currentPlayer) return '';
         const isFinaliste = state.data.results.some(r => r.editionId === e.id && r.playerId === currentPlayer.id && r.phase === 'finale');
@@ -534,11 +539,17 @@ export function displayEditions() {
             }
         }
 
-        const mapThumb = getEditionMapThumb(e) || tm2020Bg;
+        const mapInfo = getEditionMapInfo(e);
+        const mapThumb = mapInfo?.thumb || tm2020Bg;
+        const mapCaptionHtml = (mapInfo?.name) ? `<div class="event-map-caption">
+            <span class="event-map-caption-name">📍 ${mapInfo.name}</span>
+            ${mapInfo.mapper ? `<span class="event-map-caption-mapper">${t('editions.map.by') || 'par'} ${mapInfo.mapper}</span>` : ''}
+        </div>` : '';
 
         return `<div class="${cardClass}" onclick="openEditionDetail('${e.id}')">
             <div class="event-featured-bg" style="background-image:url('${mapThumb}')"></div>
             <div class="event-featured-overlay"></div>
+            ${mapCaptionHtml}
             <div class="event-featured-accent"></div>
             <div class="event-featured-body">
                 <div class="event-featured-left">
@@ -594,12 +605,19 @@ export function displayEditions() {
             ? `<span class="event-row-live"><span class="live-dot"></span>LIVE</span>`
             : '';
 
-        // Past events : image map en fond (très dim) + gradient doré subtil
+        // Past events : image map en fond + caption nom map / créateur
         let pastBgHtml = '';
+        let mapCaptionHtml = '';
         if (isPast) {
-            const thumb = getEditionMapThumb(e);
-            if (thumb) {
-                pastBgHtml = `<div class="event-row-bg" style="background-image:url('${thumb}')"></div><div class="event-row-bg-overlay"></div>`;
+            const mapInfo = getEditionMapInfo(e);
+            if (mapInfo?.thumb) {
+                pastBgHtml = `<div class="event-row-bg" style="background-image:url('${mapInfo.thumb}')"></div><div class="event-row-bg-overlay"></div>`;
+                if (mapInfo.name) {
+                    mapCaptionHtml = `<div class="event-map-caption">
+                        <span class="event-map-caption-name">📍 ${mapInfo.name}</span>
+                        ${mapInfo.mapper ? `<span class="event-map-caption-mapper">${t('editions.map.by') || 'par'} ${mapInfo.mapper}</span>` : ''}
+                    </div>`;
+                }
             }
         }
 
@@ -630,6 +648,7 @@ export function displayEditions() {
 
         return `<div class="event-row ${cardClass}${podiumHtml ? ' has-podium' : ''}" onclick="openEditionDetail('${e.id}')">
             ${pastBgHtml}
+            ${mapCaptionHtml}
             <div class="event-row-accent"></div>
             <div class="event-row-body">
                 <div class="event-row-left">
