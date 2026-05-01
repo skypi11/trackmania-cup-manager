@@ -1054,7 +1054,7 @@ window.openEditionDetail = (id) => {
                     const events = byRound[r];
                     const intensity = Math.round((r / totalRounds) * 100);
                     return `<div class="finale-tl-round" style="--progress:${intensity}%">
-                        <div class="finale-tl-round-num">M${r}</div>
+                        <div class="finale-tl-round-num" title="Round ${r}">R${r}</div>
                         <div class="finale-tl-round-events">
                             ${events.map(ev => renderEventRow(ev, r, totalRounds)).join('')}
                         </div>
