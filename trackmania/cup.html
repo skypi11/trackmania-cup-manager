@@ -1314,6 +1314,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     line-height: 1.15;
     max-width: 50%;
 }
+/* Past events : caption en bas-gauche pour ne pas chevaucher le podium (en haut-droite) */
+.event-row.past-event .event-map-caption {
+    right: auto; left: 22px;
+    align-items: flex-start;
+}
 .event-map-caption-name {
     font-size: var(--text-xs);
     font-weight: var(--fw-bold);
