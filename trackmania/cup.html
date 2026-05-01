@@ -1401,24 +1401,63 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     font-style: italic;
 }
 
-/* ── Timeline KO finale (refonte v2) ── */
-.finale-timeline {
+/* ── Layout 2 colonnes finale (timeline gauche + ranking droite) ── */
+.finale-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
     margin: var(--space-md) 0 var(--space-sm);
-    padding: 22px 24px;
+    align-items: start;
+}
+.finale-grid-timeline,
+.finale-grid-ranking {
+    padding: 22px 22px;
     border-radius: var(--radius-md);
     background: linear-gradient(160deg, rgba(255,255,255,0.025), rgba(0,0,0,0.05));
     border: 1px solid rgba(255,255,255,0.06);
+    min-width: 0;
 }
-.finale-timeline-header {
+.finale-grid-ranking {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+}
+.finale-section-header {
     font-size: var(--text-xs); font-weight: var(--fw-black);
     text-transform: uppercase; letter-spacing: var(--tracking-widest);
     color: rgba(255,255,255,0.55);
     margin-bottom: 18px;
     display: flex; align-items: center; gap: 10px;
 }
-.finale-timeline-header::after {
+.finale-section-header::after {
     content: ''; flex: 1; height: 1px;
     background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
+}
+/* Tableau ranking compact à droite */
+.finale-ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+}
+.finale-ranking-table th {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 0.7rem; font-weight: var(--fw-bold);
+    text-transform: uppercase; letter-spacing: var(--tracking-wide);
+    color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.finale-ranking-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.finale-ranking-table tr:last-child td { border-bottom: none; }
+.finale-ranking-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+@media (max-width: 900px) {
+    .finale-grid { grid-template-columns: 1fr; gap: 16px; }
+    .finale-grid-ranking { position: static; max-height: none; }
 }
 
 /* Liste des rounds */

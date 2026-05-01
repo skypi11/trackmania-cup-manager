@@ -981,14 +981,15 @@ window.openEditionDetail = (id) => {
             } else {
                 html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
             }
-            html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th></tr></thead><tbody>`;
+            // Construction du tableau ranking (sera placé à droite dans le layout 2 cols)
+            let rankingTableHtml = `<table class="finale-ranking-table"><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th></tr></thead><tbody>`;
             finaleResults.forEach(r => {
                 const player = state.data.participants.find(p => p.id === r.playerId);
                 if (!player) return;
                 const viesCount = qualResults.filter(q => q.playerId === player.id).length - 1;
                 const vies = viesCount > 0 ? `×${viesCount}` : '—';
                 const badgeClass = r.position <= 3 ? `badge-${r.position}` : 'badge-other';
-                html += `<tr>
+                rankingTableHtml += `<tr>
                     <td><span class="badge ${badgeClass}">${r.position}</span></td>
                     <td><div style="display:inline-flex;align-items:center;gap:10px">${avatarHtml(player, { size: 28 })}<strong class="player-name-link" onclick="openPlayerProfile('${player.id}')">${pName(player)}</strong>${playerBadgesHtml(player.id)}</div></td>
                     <td style="color:var(--color-text-secondary)">${tTeam(player.team)}</td>
@@ -996,7 +997,7 @@ window.openEditionDetail = (id) => {
                     <td><span class="pts-badge">+${getPoints(r.position)} pts</span></td>
                 </tr>`;
             });
-            html += '</tbody></table>';
+            rankingTableHtml += '</tbody></table>';
 
             // ── Timeline KO : raconte l'histoire de la finale ─────────────
             // Si on a des finale_events (auto-saisie ManiaScript), on affiche la
@@ -1008,101 +1009,87 @@ window.openEditionDetail = (id) => {
 
             const winner = state.data.participants.find(p => p.id === finaleResults.find(r => r.position === 1)?.playerId);
 
-            // Helper : card hero pour le vainqueur (utilisé dans les 2 modes)
-            const renderWinnerHero = () => {
-                if (!winner) return '';
-                return `<div class="finale-winner-hero" onclick="openPlayerProfile('${winner.id}')">
+            // 1) Hero vainqueur en pleine largeur AU-DESSUS des 2 colonnes
+            if (winner) {
+                html += `<div class="finale-winner-hero" onclick="openPlayerProfile('${winner.id}')">
                     <div class="finale-winner-crown">👑</div>
                     <div class="finale-winner-avatar">${avatarHtml(winner, { size: 72, ringColor: 'rgba(251,191,36,0.7)' })}</div>
                     <div class="finale-winner-name">${pName(winner)}</div>
                     <div class="finale-winner-label">${(t('detail.finale.winner') || 'vainqueur').toUpperCase()}</div>
                 </div>`;
-            };
+            }
 
-            // Helper : ligne d'event
-            const renderEventRow = (ev, round, totalRounds) => {
+            // 2) Helper event épuré (sans chiffres, le tableau les a)
+            const renderEventRow = (ev) => {
                 const player = state.data.participants.find(p => p.id === ev.playerId);
                 if (!player) return '';
-                const progressPct = Math.round((round / Math.max(totalRounds, 1)) * 100);
                 const isLifeLost = ev.eventType === 'life_lost';
                 const cls = isLifeLost ? 'life-lost' : 'eliminated';
                 const icon = isLifeLost ? '❤️' : '❌';
                 const meta = isLifeLost
-                    ? `${t('detail.finale.life.lost') || 'a perdu une vie'} <span class="finale-lives-count">${'❤️'.repeat(Math.max(0, ev.value))}</span>`
+                    ? `<span class="finale-lives-count">${'❤️'.repeat(Math.max(0, ev.value))}</span>`
                     : (t('detail.finale.eliminated') || 'éliminé');
-                return `<div class="finale-tl-event ${cls}" data-progress="${progressPct}" onclick="openPlayerProfile('${player.id}')">
+                return `<div class="finale-tl-event ${cls}" onclick="openPlayerProfile('${player.id}')">
                     <div class="finale-tl-icon">${icon}</div>
-                    <div class="finale-tl-avatar">${avatarHtml(player, { size: 32 })}</div>
+                    <div class="finale-tl-avatar">${avatarHtml(player, { size: 28 })}</div>
                     <div class="finale-tl-text">
                         <span class="finale-tl-name">${pName(player)}</span>
-                        <span class="finale-tl-meta">${meta}</span>
+                        ${meta ? `<span class="finale-tl-meta">${meta}</span>` : ''}
                     </div>
                 </div>`;
             };
 
+            // 3) Construction de la timeline (round par round)
+            let timelineHtml = '';
             if (detailedEvents.length > 0) {
-                // Mode détaillé : grouper par round
                 const byRound = {};
                 detailedEvents.forEach(ev => {
                     if (!byRound[ev.round]) byRound[ev.round] = [];
                     byRound[ev.round].push(ev);
                 });
                 const rounds = Object.keys(byRound).map(Number).sort((a, b) => a - b);
-                const totalRounds = rounds.length > 0 ? rounds[rounds.length - 1] : 1;
-
-                const roundsHtml = rounds.map(r => {
-                    const events = byRound[r];
-                    const intensity = Math.round((r / totalRounds) * 100);
-                    return `<div class="finale-tl-round" style="--progress:${intensity}%">
-                        <div class="finale-tl-round-num" title="Round ${r}">R${r}</div>
-                        <div class="finale-tl-round-events">
-                            ${events.map(ev => renderEventRow(ev, r, totalRounds)).join('')}
-                        </div>
-                    </div>`;
-                }).join('');
-
-                html += `<div class="finale-timeline">
-                    <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
-                    <div class="finale-tl-rounds">${roundsHtml}</div>
-                    ${renderWinnerHero()}
-                </div>`;
+                timelineHtml = rounds.map(r => `<div class="finale-tl-round">
+                    <div class="finale-tl-round-num" title="Round ${r}">R${r}</div>
+                    <div class="finale-tl-round-events">${byRound[r].map(renderEventRow).join('')}</div>
+                </div>`).join('');
             } else if (finaleResults.length >= 2) {
-                // Fallback : timeline déduite depuis position (1 élim/round assumé)
+                // Fallback : 1 élim/round assumé depuis positions
                 const N = finaleResults.length;
-                const rounds = [];
+                const fallbackRounds = [];
                 for (let m = 1; m < N; m++) {
                     const elimPos = N - m + 1;
                     const r = finaleResults.find(x => x.position === elimPos);
                     if (!r) continue;
                     const player = state.data.participants.find(p => p.id === r.playerId);
                     if (!player) continue;
-                    rounds.push({ round: m, player, position: elimPos });
+                    fallbackRounds.push({ round: m, player });
                 }
-                if (rounds.length > 0) {
-                    const totalRounds = rounds.length;
-                    const roundsHtml = rounds.map(r => {
-                        const intensity = Math.round((r.round / totalRounds) * 100);
-                        return `<div class="finale-tl-round" style="--progress:${intensity}%">
-                            <div class="finale-tl-round-num">M${r.round}</div>
-                            <div class="finale-tl-round-events">
-                                <div class="finale-tl-event eliminated" onclick="openPlayerProfile('${r.player.id}')">
-                                    <div class="finale-tl-icon">❌</div>
-                                    <div class="finale-tl-avatar">${avatarHtml(r.player, { size: 32 })}</div>
-                                    <div class="finale-tl-text">
-                                        <span class="finale-tl-name">${pName(r.player)}</span>
-                                        <span class="finale-tl-meta">${t('detail.finale.eliminated') || 'éliminé'} · P${r.position}</span>
-                                    </div>
-                                </div>
+                timelineHtml = fallbackRounds.map(r => `<div class="finale-tl-round">
+                    <div class="finale-tl-round-num" title="Round ${r.round}">R${r.round}</div>
+                    <div class="finale-tl-round-events">
+                        <div class="finale-tl-event eliminated" onclick="openPlayerProfile('${r.player.id}')">
+                            <div class="finale-tl-icon">❌</div>
+                            <div class="finale-tl-avatar">${avatarHtml(r.player, { size: 28 })}</div>
+                            <div class="finale-tl-text">
+                                <span class="finale-tl-name">${pName(r.player)}</span>
+                                <span class="finale-tl-meta">${t('detail.finale.eliminated') || 'éliminé'}</span>
                             </div>
-                        </div>`;
-                    }).join('');
-                    html += `<div class="finale-timeline">
-                        <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
-                        <div class="finale-tl-rounds">${roundsHtml}</div>
-                        ${renderWinnerHero()}
-                    </div>`;
-                }
+                        </div>
+                    </div>
+                </div>`).join('');
             }
+
+            // 4) Layout 2 cols : timeline (gauche) + tableau ranking sticky (droite)
+            html += `<div class="finale-grid">
+                <div class="finale-grid-timeline">
+                    <div class="finale-section-header">📜 ${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
+                    <div class="finale-tl-rounds">${timelineHtml}</div>
+                </div>
+                <div class="finale-grid-ranking">
+                    <div class="finale-section-header">📊 ${t('detail.finale.ranking') || 'Classement final'}</div>
+                    ${rankingTableHtml}
+                </div>
+            </div>`;
         }
 
         if (finaleResults.length === 0 && qualResults.length === 0) {
