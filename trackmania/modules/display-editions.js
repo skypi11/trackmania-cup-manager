@@ -843,6 +843,36 @@ window.openEditionDetail = (id) => {
             html += renderEditionHeroPodium(e, finaleResults);
         }
 
+        // ── Bloc stats édition (uniquement pour les éditions terminées) ──
+        if (e.status !== 'en_cours' && (finaleResults.length > 0 || qualResults.length > 0)) {
+            const inscritsCount   = edResults.filter(r => r.phase === 'inscription').length;
+            const qualifiedSet    = new Set(qualResults.map(r => r.playerId));
+            const finalistesCount = finaleResults.length;
+            const totalMaps       = e.nbMaps || 6;
+            html += `<div class="edition-stats-grid">
+                <div class="edition-stat-card">
+                    <div class="edition-stat-icon">📥</div>
+                    <div class="edition-stat-value">${inscritsCount}</div>
+                    <div class="edition-stat-label">${t('detail.stats.participants') || 'Participants'}</div>
+                </div>
+                <div class="edition-stat-card">
+                    <div class="edition-stat-icon">🎯</div>
+                    <div class="edition-stat-value">${qualifiedSet.size}</div>
+                    <div class="edition-stat-label">${t('detail.stats.qualified') || 'Qualifiés'}</div>
+                </div>
+                <div class="edition-stat-card">
+                    <div class="edition-stat-icon">🏆</div>
+                    <div class="edition-stat-value">${finalistesCount}</div>
+                    <div class="edition-stat-label">${t('detail.stats.finalists') || 'Finalistes'}</div>
+                </div>
+                <div class="edition-stat-card">
+                    <div class="edition-stat-icon">🗺</div>
+                    <div class="edition-stat-value">${totalMaps}</div>
+                    <div class="edition-stat-label">${t('detail.stats.maps') || 'Maps'}</div>
+                </div>
+            </div>`;
+        }
+
         // Workflow panel pour les éditions en cours (transition → terminée + Discord)
         if (state.isAdmin && e.status === 'en_cours') {
             html += `<div class="card" style="margin-bottom:12px">
@@ -940,13 +970,18 @@ window.openEditionDetail = (id) => {
             const finaleMapName  = e.map7name || '';
             const finaleMapper   = e.map7mapper || '';
             if (finaleThumbUrl) {
-                html += `<div class="map-card" style="max-width:340px;margin-bottom:14px">
-                    <div class="tmx-thumb-wrap"><img src="${finaleThumbUrl}" class="tmx-thumb" alt="Map Finale"></div>
-                    <div class="map-card-header">${t('detail.map.final.label')}</div>
-                    ${finaleMapName ? `<div style="padding:4px 12px 6px;font-size:0.85rem;font-weight:600;color:#f1f5f9;line-height:1.3">${finaleMapName}${finaleMapper ? `<span style="font-weight:400;color:var(--color-text-secondary);font-size:0.78rem"> ${t('detail.by')} ${finaleMapper}</span>` : ''}</div>` : ''}
+                html += `<div class="finale-hero" style="background-image:url('${finaleThumbUrl}')">
+                    <div class="finale-hero-overlay"></div>
+                    <div class="finale-hero-content">
+                        <div class="finale-hero-label">🏁 ${t('detail.map.final.label')}</div>
+                        ${finaleMapName ? `<div class="finale-hero-name">${finaleMapName}</div>` : ''}
+                        ${finaleMapper ? `<div class="finale-hero-mapper">${t('detail.by')} ${finaleMapper}</div>` : ''}
+                        <div class="finale-hero-desc">${t('detail.finale.desc')}</div>
+                    </div>
                 </div>`;
+            } else {
+                html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
             }
-            html += `<p style="color:var(--color-text-secondary);font-size:0.8rem;margin:-6px 0 10px">${t('detail.finale.desc')}</p>`;
             html += `<table><thead><tr><th>${t('detail.col.pos')}</th><th>${t('detail.col.player')}</th><th>${t('detail.col.team')}</th><th>${t('detail.col.lives')}</th><th>${t('detail.col.points')}</th></tr></thead><tbody>`;
             finaleResults.forEach(r => {
                 const player = state.data.participants.find(p => p.id === r.playerId);

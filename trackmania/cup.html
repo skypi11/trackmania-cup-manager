@@ -1313,6 +1313,94 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     line-height: 1.15;
     max-width: 50%;
 }
+/* ── Bloc stats édition (édition terminée) ── */
+.edition-stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin: var(--space-md) 0;
+}
+.edition-stat-card {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 18px 14px;
+    background: linear-gradient(145deg, #1c1c1c, #161616);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius-md);
+    transition: transform var(--tr-fast), border-color var(--tr-fast);
+}
+.edition-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,0.14);
+}
+.edition-stat-icon { font-size: 1.4rem; line-height: 1; margin-bottom: 8px; }
+.edition-stat-value {
+    font-size: clamp(1.6rem, 2vw, 2rem);
+    font-weight: var(--fw-black);
+    color: #fff;
+    line-height: 1;
+    letter-spacing: var(--tracking-tight);
+}
+.edition-stat-label {
+    font-size: var(--text-xs); font-weight: var(--fw-bold);
+    text-transform: uppercase; letter-spacing: var(--tracking-wider);
+    color: rgba(255,255,255,0.5);
+    margin-top: 6px;
+}
+
+/* ── Hero finale pleine largeur (édition terminée) ── */
+.finale-hero {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 220px;
+    background-size: cover; background-position: center;
+    margin-bottom: var(--space-md);
+    border: 1px solid rgba(251,191,36,0.22);
+    box-shadow: var(--shadow-md), 0 0 0 1px rgba(251,191,36,0.06) inset;
+}
+.finale-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg,
+        rgba(15,15,15,0.92) 0%,
+        rgba(15,15,15,0.75) 45%,
+        rgba(15,15,15,0.4) 80%,
+        rgba(15,15,15,0.2) 100%);
+}
+.finale-hero-content {
+    position: relative; z-index: 1;
+    padding: 32px 36px;
+    display: flex; flex-direction: column; gap: 6px;
+    max-width: 70%;
+}
+.finale-hero-label {
+    display: inline-flex; align-self: flex-start; align-items: center;
+    font-size: var(--text-xs); font-weight: var(--fw-black);
+    text-transform: uppercase; letter-spacing: var(--tracking-widest);
+    padding: 5px 14px; border-radius: 99px;
+    background: rgba(251,191,36,0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.4);
+    margin-bottom: 10px;
+}
+.finale-hero-name {
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: var(--fw-black);
+    letter-spacing: var(--tracking-tight);
+    color: #fff;
+    line-height: 1.1;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+}
+.finale-hero-mapper {
+    font-size: var(--text-md);
+    color: rgba(255,255,255,0.65);
+    font-weight: var(--fw-medium);
+    margin-bottom: 8px;
+}
+.finale-hero-desc {
+    margin-top: 10px;
+    font-size: var(--text-sm);
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+}
+
 /* ── Footer "Prochaine édition" (sur édition terminée) ── */
 .next-edition-footer {
     display: flex; align-items: center; justify-content: space-between;
@@ -2493,6 +2581,13 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     .event-row-podium-item.rank-2,
     .event-row-podium-item.rank-3 { display: none; }
     .event-row-podium { padding: 6px 12px 6px 6px; }
+    /* Stats édition : 2x2 sur mobile */
+    .edition-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .edition-stat-card { padding: 14px 10px; }
+    /* Hero finale : full width sur mobile */
+    .finale-hero { min-height: 180px; }
+    .finale-hero-content { max-width: 100%; padding: 22px 20px; }
+    .finale-hero-name { font-size: 1.3rem; }
     .player-profile-stats { grid-template-columns: repeat(2, 1fr); }
     /* Forms: 1 colonne */
     .form-row { grid-template-columns: 1fr; }
