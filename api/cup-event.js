@@ -61,13 +61,10 @@ export default async function handler(req, res) {
   const raw = await readRawBody(req);
   let body = {};
   try { body = raw ? JSON.parse(raw) : {}; } catch (err) {
-    console.log(`[parse-fail] err=${err.message} rawLen=${raw.length} sample=${raw.slice(0, 80)}`);
     return res.status(400).json({ error: 'Invalid JSON body' });
   }
 
   const provided = req.headers['x-api-key'] || body.apiKey || '';
-  // DEBUG TEMPORAIRE
-  console.log(`[ok] ct=${req.headers['content-type']} rawLen=${raw.length} keys=[${Object.keys(body).join(',')}] match=${provided === expected}`);
   if (provided !== expected) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
