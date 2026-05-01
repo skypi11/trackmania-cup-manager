@@ -1257,55 +1257,43 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     box-shadow: var(--shadow-md);
     transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
 }
-/* Past events: dimmed */
+/* Past events: image map en fond avec overlay pour lisibilité */
 .event-row.past-event {
-    background: linear-gradient(145deg, #181818, #131313);
-    border-color: rgba(255,255,255,0.04);
-    opacity: 0.85;
+    background: #0f0f0f;
+    border-color: rgba(255,255,255,0.06);
     position: relative;
 }
-.event-row.past-event:hover { opacity: 1; }
-.event-row.past-event.has-podium {
-    background: linear-gradient(145deg, rgba(40,30,10,0.9), rgba(20,16,8,0.95)), linear-gradient(145deg, #181818, #131313);
-    border-color: rgba(251,191,36,0.12);
-}
+.event-row.past-event:hover { border-color: rgba(255,255,255,0.18); }
+.event-row.past-event.has-podium { border-color: rgba(251,191,36,0.15); }
 .event-row.past-event.has-podium:hover {
-    border-color: rgba(251,191,36,0.28);
-    box-shadow: var(--shadow-hover), 0 0 35px rgba(251,191,36,0.08);
+    border-color: rgba(251,191,36,0.32);
+    box-shadow: var(--shadow-hover), 0 0 30px rgba(251,191,36,0.06);
 }
-/* Image de map en fond très atténuée + overlay sombre par-dessus */
+/* Image de map en fond pleine + overlay neutre pour lisibilité texte */
 .event-row .event-row-bg {
     position: absolute; inset: 0;
     background-size: cover; background-position: center;
-    opacity: 0.22;
-    filter: saturate(0.85);
+    filter: saturate(0.9);
     pointer-events: none;
     z-index: 0;
-    transition: opacity var(--tr-base), transform 6s ease-out;
+    transition: transform 6s ease-out;
 }
 .event-row .event-row-bg-overlay {
     position: absolute; inset: 0;
     background: linear-gradient(95deg,
-        rgba(15,15,15,0.96) 0%,
-        rgba(15,15,15,0.88) 35%,
-        rgba(15,15,15,0.78) 65%,
-        rgba(15,15,15,0.7) 100%);
+        rgba(15,15,15,0.92) 0%,
+        rgba(15,15,15,0.78) 35%,
+        rgba(15,15,15,0.5) 65%,
+        rgba(15,15,15,0.35) 100%);
     pointer-events: none;
     z-index: 0;
 }
-.event-row.past-event.has-podium .event-row-bg-overlay {
-    background: linear-gradient(95deg,
-        rgba(15,15,15,0.95) 0%,
-        rgba(20,16,8,0.88) 40%,
-        rgba(30,22,8,0.78) 75%,
-        rgba(40,28,10,0.7) 100%);
-}
-.event-row:hover .event-row-bg { opacity: 0.32; transform: scale(1.04); }
+.event-row:hover .event-row-bg { transform: scale(1.04); }
 .event-row > .event-row-accent,
 .event-row > .event-row-body { position: relative; z-index: 1; }
 /* Renforcer la lisibilité du texte sur fond image */
 .event-row .event-row-name {
-    text-shadow: 0 1px 8px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.6);
+    text-shadow: 0 1px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7);
 }
 
 /* En-cours: featured hero */

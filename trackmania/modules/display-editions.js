@@ -485,9 +485,9 @@ export function displayEditions() {
         terminee:     t('editions.status.done'),
     };
 
-    // Premier thumb de map disponible pour une édition (sinon null)
+    // Thumb de la "map finale" = dernière map dispo (map7 → map1)
     const getEditionMapThumb = (e) => {
-        for (let n = 1; n <= 7; n++) {
+        for (let n = 7; n >= 1; n--) {
             if (e[`map${n}thumbUrl`]) return e[`map${n}thumbUrl`];
         }
         return null;
