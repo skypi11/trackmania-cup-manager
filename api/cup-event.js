@@ -43,6 +43,17 @@ export default async function handler(req, res) {
   }
   const body = req.body || {};
   const provided = req.headers['x-api-key'] || body.apiKey || '';
+  // DEBUG TEMPORAIRE — à retirer après validation auto-saisie ManiaScript
+  console.log('[cup-event] auth check', {
+    hasHeaderKey: !!req.headers['x-api-key'],
+    bodyKeyType: typeof body.apiKey,
+    bodyKeyLen: typeof body.apiKey === 'string' ? body.apiKey.length : 0,
+    expectedLen: expected.length,
+    keysMatch: provided === expected,
+    bodyKeys: Object.keys(body),
+    contentType: req.headers['content-type'],
+    rawBodyType: typeof req.body,
+  });
   if (provided !== expected) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
