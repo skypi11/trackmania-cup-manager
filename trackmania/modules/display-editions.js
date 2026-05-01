@@ -1008,51 +1008,66 @@ window.openEditionDetail = (id) => {
 
             const winner = state.data.participants.find(p => p.id === finaleResults.find(r => r.position === 1)?.playerId);
 
+            // Helper : card hero pour le vainqueur (utilisé dans les 2 modes)
+            const renderWinnerHero = () => {
+                if (!winner) return '';
+                return `<div class="finale-winner-hero" onclick="openPlayerProfile('${winner.id}')">
+                    <div class="finale-winner-crown">👑</div>
+                    <div class="finale-winner-avatar">${avatarHtml(winner, { size: 96, ringColor: 'rgba(251,191,36,0.85)' })}</div>
+                    <div class="finale-winner-name">${pName(winner)}</div>
+                    <div class="finale-winner-label">${(t('detail.finale.winner') || 'vainqueur').toUpperCase()}</div>
+                </div>`;
+            };
+
+            // Helper : ligne d'event
+            const renderEventRow = (ev, round, totalRounds) => {
+                const player = state.data.participants.find(p => p.id === ev.playerId);
+                if (!player) return '';
+                const progressPct = Math.round((round / Math.max(totalRounds, 1)) * 100);
+                const isLifeLost = ev.eventType === 'life_lost';
+                const cls = isLifeLost ? 'life-lost' : 'eliminated';
+                const icon = isLifeLost ? '❤️' : '❌';
+                const meta = isLifeLost
+                    ? `${t('detail.finale.life.lost') || 'a perdu une vie'} <span class="finale-lives-count">${'❤️'.repeat(Math.max(0, ev.value))}</span>`
+                    : (t('detail.finale.eliminated') || 'éliminé');
+                return `<div class="finale-tl-event ${cls}" data-progress="${progressPct}" onclick="openPlayerProfile('${player.id}')">
+                    <div class="finale-tl-icon">${icon}</div>
+                    <div class="finale-tl-avatar">${avatarHtml(player, { size: 32 })}</div>
+                    <div class="finale-tl-text">
+                        <span class="finale-tl-name">${pName(player)}</span>
+                        <span class="finale-tl-meta">${meta}</span>
+                    </div>
+                </div>`;
+            };
+
             if (detailedEvents.length > 0) {
-                // Mode détaillé : un item par event (life_lost ou eliminated)
-                const items = detailedEvents.map(ev => {
-                    const player = state.data.participants.find(p => p.id === ev.playerId);
-                    if (!player) return '';
-                    if (ev.eventType === 'life_lost') {
-                        return `<div class="finale-timeline-item life-lost" onclick="openPlayerProfile('${player.id}')">
-                            <div class="finale-timeline-round">M${ev.round}</div>
-                            <div class="finale-timeline-icon">❤️</div>
-                            <div class="finale-timeline-avatar">${avatarHtml(player, { size: 28 })}</div>
-                            <div class="finale-timeline-text">
-                                <span class="finale-timeline-name">${pName(player)}</span>
-                                <span class="finale-timeline-meta">${t('detail.finale.life.lost') || 'a perdu une vie'} · ❤️×${ev.value}</span>
-                            </div>
-                        </div>`;
-                    }
-                    // eliminated
-                    return `<div class="finale-timeline-item" onclick="openPlayerProfile('${player.id}')">
-                        <div class="finale-timeline-round">M${ev.round}</div>
-                        <div class="finale-timeline-icon">❌</div>
-                        <div class="finale-timeline-avatar">${avatarHtml(player, { size: 28 })}</div>
-                        <div class="finale-timeline-text">
-                            <span class="finale-timeline-name">${pName(player)}</span>
-                            <span class="finale-timeline-meta">${t('detail.finale.eliminated') || 'éliminé'}</span>
+                // Mode détaillé : grouper par round
+                const byRound = {};
+                detailedEvents.forEach(ev => {
+                    if (!byRound[ev.round]) byRound[ev.round] = [];
+                    byRound[ev.round].push(ev);
+                });
+                const rounds = Object.keys(byRound).map(Number).sort((a, b) => a - b);
+                const totalRounds = rounds.length > 0 ? rounds[rounds.length - 1] : 1;
+
+                const roundsHtml = rounds.map(r => {
+                    const events = byRound[r];
+                    const intensity = Math.round((r / totalRounds) * 100);
+                    return `<div class="finale-tl-round" style="--progress:${intensity}%">
+                        <div class="finale-tl-round-num">M${r}</div>
+                        <div class="finale-tl-round-events">
+                            ${events.map(ev => renderEventRow(ev, r, totalRounds)).join('')}
                         </div>
                     </div>`;
-                }).filter(Boolean).join('');
+                }).join('');
 
                 html += `<div class="finale-timeline">
                     <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
-                    <div class="finale-timeline-list">
-                        ${items}
-                        ${winner ? `<div class="finale-timeline-item winner" onclick="openPlayerProfile('${winner.id}')">
-                            <div class="finale-timeline-round">🏆</div>
-                            <div class="finale-timeline-icon">👑</div>
-                            <div class="finale-timeline-avatar">${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.6)' })}</div>
-                            <div class="finale-timeline-text">
-                                <span class="finale-timeline-name">${pName(winner)}</span>
-                                <span class="finale-timeline-meta">${t('detail.finale.winner') || 'vainqueur'}</span>
-                            </div>
-                        </div>` : ''}
-                    </div>
+                    <div class="finale-tl-rounds">${roundsHtml}</div>
+                    ${renderWinnerHero()}
                 </div>`;
             } else if (finaleResults.length >= 2) {
-                // Fallback : timeline déduite depuis position (compat éditions sans auto-saisie)
+                // Fallback : timeline déduite depuis position (1 élim/round assumé)
                 const N = finaleResults.length;
                 const rounds = [];
                 for (let m = 1; m < N; m++) {
@@ -1064,28 +1079,27 @@ window.openEditionDetail = (id) => {
                     rounds.push({ round: m, player, position: elimPos });
                 }
                 if (rounds.length > 0) {
+                    const totalRounds = rounds.length;
+                    const roundsHtml = rounds.map(r => {
+                        const intensity = Math.round((r.round / totalRounds) * 100);
+                        return `<div class="finale-tl-round" style="--progress:${intensity}%">
+                            <div class="finale-tl-round-num">M${r.round}</div>
+                            <div class="finale-tl-round-events">
+                                <div class="finale-tl-event eliminated" onclick="openPlayerProfile('${r.player.id}')">
+                                    <div class="finale-tl-icon">❌</div>
+                                    <div class="finale-tl-avatar">${avatarHtml(r.player, { size: 32 })}</div>
+                                    <div class="finale-tl-text">
+                                        <span class="finale-tl-name">${pName(r.player)}</span>
+                                        <span class="finale-tl-meta">${t('detail.finale.eliminated') || 'éliminé'} · P${r.position}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
                     html += `<div class="finale-timeline">
                         <div class="finale-timeline-header">${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
-                        <div class="finale-timeline-list">
-                            ${rounds.map(r => `<div class="finale-timeline-item" onclick="openPlayerProfile('${r.player.id}')">
-                                <div class="finale-timeline-round">M${r.round}</div>
-                                <div class="finale-timeline-icon">❌</div>
-                                <div class="finale-timeline-avatar">${avatarHtml(r.player, { size: 28 })}</div>
-                                <div class="finale-timeline-text">
-                                    <span class="finale-timeline-name">${pName(r.player)}</span>
-                                    <span class="finale-timeline-meta">${t('detail.finale.eliminated') || 'éliminé'} · P${r.position}</span>
-                                </div>
-                            </div>`).join('')}
-                            ${winner ? `<div class="finale-timeline-item winner" onclick="openPlayerProfile('${winner.id}')">
-                                <div class="finale-timeline-round">🏆</div>
-                                <div class="finale-timeline-icon">👑</div>
-                                <div class="finale-timeline-avatar">${avatarHtml(winner, { size: 32, ringColor: 'rgba(251,191,36,0.6)' })}</div>
-                                <div class="finale-timeline-text">
-                                    <span class="finale-timeline-name">${pName(winner)}</span>
-                                    <span class="finale-timeline-meta">${t('detail.finale.winner') || 'vainqueur'}</span>
-                                </div>
-                            </div>` : ''}
-                        </div>
+                        <div class="finale-tl-rounds">${roundsHtml}</div>
+                        ${renderWinnerHero()}
                     </div>`;
                 }
             }
