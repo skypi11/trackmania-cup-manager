@@ -41,11 +41,21 @@ export default async function handler(req, res) {
   if (!expected) {
     return res.status(500).json({ error: 'CUP_API_KEY not configured on server' });
   }
-  const body = req.body || {};
+  // ManiaScript Http.CreatePost envoie un content-type inattendu
+  // (application/binary ou similar) → Vercel ne parse pas le JSON automatiquement.
+  // On reparse manuellement si req.body n'est pas déjà un objet JSON.
+  let body = req.body;
+  if (Buffer.isBuffer(body)) {
+    try { body = JSON.parse(body.toString('utf-8')); } catch { body = {}; }
+  } else if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  } else if (!body || typeof body !== 'object') {
+    body = {};
+  }
   const provided = req.headers['x-api-key'] || body.apiKey || '';
   // DEBUG TEMPORAIRE — à retirer après validation auto-saisie ManiaScript
   const dbgKey = typeof body.apiKey === 'string' ? body.apiKey : '';
-  console.log(`[auth] ct=${req.headers['content-type']} rawBodyType=${typeof req.body} bodyKeys=[${Object.keys(body).join(',')}] hasHdr=${!!req.headers['x-api-key']} apiKeyType=${typeof body.apiKey} apiKeyLen=${dbgKey.length} expectedLen=${expected.length} keyHead=${dbgKey.slice(0,8)} expHead=${expected.slice(0,8)} match=${provided === expected}`);
+  console.log(`[auth] ct=${req.headers['content-type']} rawBodyType=${typeof req.body} isBuffer=${Buffer.isBuffer(req.body)} bodyKeys=[${Object.keys(body).join(',')}] apiKeyLen=${dbgKey.length} match=${provided === expected}`);
   if (provided !== expected) {
     return res.status(401).json({ error: 'Invalid API key' });
   }
