@@ -8,6 +8,20 @@ export const pName = p => p?.pseudoTM || p?.pseudo || p?.name || '?';
 export const POINTS_SYSTEM = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 export const getPoints = (pos) => pos > 0 ? (POINTS_SYSTEM[pos - 1] ?? 1) : 0;
 
+// Normalise un login Trackmania saisi par l'utilisateur.
+// Beaucoup de joueurs collent par erreur leur "Account ID" (UUID) au lieu de
+// leur "Login" (base64url) depuis trackmania.io. Les deux encodent les mêmes
+// 16 bytes — on convertit automatiquement le format UUID vers le format login.
+export function normalizeLoginTM(input) {
+    const trimmed = String(input || '').trim();
+    const m = trimmed.match(/^([0-9a-f]{8})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{12})$/i);
+    if (!m) return trimmed;
+    const hex = (m[1] + m[2] + m[3] + m[4] + m[5]).toLowerCase();
+    let binary = '';
+    for (let i = 0; i < 32; i += 2) binary += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 export function getCountdown(dateStr, timeStr) {
     const now = new Date();
     const target = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));

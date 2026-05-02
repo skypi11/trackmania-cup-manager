@@ -3,7 +3,7 @@
 import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast, buildCountryPicker, displayCountry } from './utils.js';
+import { pName, showToast, buildCountryPicker, displayCountry, normalizeLoginTM } from './utils.js';
 import { storeTmxThumbs } from './display-editions.js';
 import { updateDoc, deleteDoc, addDoc, doc, collection, arrayUnion, getDocs, query, where, writeBatch, orderBy, limit } from 'firebase/firestore';
 
@@ -72,7 +72,7 @@ document.getElementById('addParticipantForm').addEventListener('submit', async (
     e.preventDefault();
     const name     = document.getElementById('playerName').value.trim();
     const pseudoTM = document.getElementById('playerPseudoTM').value.trim();
-    const loginTM  = document.getElementById('playerLoginTM').value.trim();
+    const loginTM  = normalizeLoginTM(document.getElementById('playerLoginTM').value);
     const country  = document.getElementById('playerCountry').value.trim();
     const team     = document.getElementById('playerTeam').value.trim();
     if (state.data.participants.some(p => pName(p).toLowerCase() === name.toLowerCase())) {
@@ -152,7 +152,7 @@ document.getElementById('editParticipantForm').addEventListener('submit', async 
     const id       = document.getElementById('editParticipantId').value;
     const name     = document.getElementById('editPlayerName').value.trim();
     const pseudoTM = document.getElementById('editPlayerPseudoTM').value.trim();
-    const loginTM  = document.getElementById('editPlayerLoginTM').value.trim();
+    const loginTM  = normalizeLoginTM(document.getElementById('editPlayerLoginTM').value);
     const country  = document.getElementById('editPlayerCountry').value.trim();
     const team     = document.getElementById('editPlayerTeam').value.trim();
     const duplicate = state.data.participants.find(p => (p.pseudo || pName(p)).toLowerCase() === name.toLowerCase() && p.id !== id);

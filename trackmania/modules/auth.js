@@ -3,7 +3,7 @@
 import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast, buildCountryPicker } from './utils.js';
+import { pName, showToast, buildCountryPicker, normalizeLoginTM } from './utils.js';
 import { addDoc, getDoc, getDocs, updateDoc, doc, collection, query, where } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { handleDiscordCallback, updateDiscordReminders, maybeShowDiscordPrompt } from './discord.js';
@@ -312,7 +312,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
     if (!state.currentUser) return;
     const pseudo    = document.getElementById('newProfilePseudo').value.trim();
     const pseudoTM  = document.getElementById('newProfilePseudoTM').value.trim();
-    const loginTM   = document.getElementById('newProfileLoginTM').value.trim();
+    const loginTM   = normalizeLoginTM(document.getElementById('newProfileLoginTM').value);
     const country   = document.getElementById('newProfileCountry').value.trim();
     const team      = document.getElementById('newProfileTeam').value.trim() || 'Sans équipe';
     const msg       = document.getElementById('createProfileMsg');
