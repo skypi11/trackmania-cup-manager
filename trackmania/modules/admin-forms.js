@@ -591,6 +591,31 @@ window.admSubmitFinaleResult = async function(editionId) {
 
 // ── Liste admin : Éditions ────────────────────────────────────────────────────
 
+window.migrateLoginsTM = async function() {
+    const UUID_RE = /^([0-9a-f]{8})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{12})$/i;
+    const candidates = state.data.participants
+        .filter(p => p.loginTM && UUID_RE.test(p.loginTM.trim()))
+        .map(p => ({ p, before: p.loginTM.trim(), after: normalizeLoginTM(p.loginTM) }));
+    if (candidates.length === 0) { showToast('Aucun login UUID à convertir.'); return; }
+
+    const previewLines = candidates.map(c => `• ${pName(c.p) || c.p.pseudo || '?'} :\n    ${c.before}\n  → ${c.after}`).join('\n\n');
+    const ok = confirm(`Convertir ${candidates.length} login(s) ?\n\n${previewLines}\n\nClique OK pour appliquer.`);
+    if (!ok) return;
+
+    let updated = 0; const failed = [];
+    for (const c of candidates) {
+        try {
+            await updateDoc(doc(db, 'participants', c.p.id), { loginTM: c.after });
+            updated++;
+        } catch (err) {
+            failed.push({ pseudo: pName(c.p), err: err.message });
+        }
+    }
+    logAdminAction('migrate_logins_tm', `Conversion Account ID → Login : ${updated}/${candidates.length} réussie(s)${failed.length ? `, ${failed.length} échec(s)` : ''}`);
+    showToast(`✅ ${updated}/${candidates.length} login(s) converti(s)${failed.length ? ` · ${failed.length} échec(s)` : ''}`);
+    window.reloadData?.();
+};
+
 window.toggleEditionHidden = async function(editionId, currentHidden) {
     await updateDoc(doc(db, 'editions', editionId), { hidden: !currentHidden });
     const ed = state.data.editions.find(e => e.id === editionId);
@@ -728,7 +753,19 @@ window.displayAdminPlayers = function() {
         </div>`).join('')}
     </div>`;
 
-    container.innerHTML = duplicatesHtml + `
+    // ── Détection logins TM saisis comme UUID (Account ID au lieu de Login) ──
+    const UUID_RE = /^([0-9a-f]{8})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{4})-?([0-9a-f]{12})$/i;
+    const uuidCandidates = state.data.participants.filter(p => p.loginTM && UUID_RE.test(p.loginTM.trim()));
+    const migrateBannerHtml = uuidCandidates.length > 0 ? `
+    <div style="margin-bottom:16px;padding:12px 16px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+            <div style="font-weight:700;color:#38bdf8;margin-bottom:3px;font-size:0.88rem">🔧 ${uuidCandidates.length} login${uuidCandidates.length>1?'s':''} TM saisi${uuidCandidates.length>1?'s':''} en format Account ID (UUID)</div>
+            <div style="font-size:0.78rem;color:var(--color-text-secondary)">Conversion automatique en format Login (base64url) — nécessaire pour l'auto-saisie ManiaScript.</div>
+        </div>
+        <button onclick="migrateLoginsTM()" style="padding:8px 16px;border-radius:8px;background:#38bdf8;color:#0a1628;border:none;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Convertir les ${uuidCandidates.length} login${uuidCandidates.length>1?'s':''}</button>
+    </div>` : '';
+
+    container.innerHTML = duplicatesHtml + migrateBannerHtml + `
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
         <thead>
