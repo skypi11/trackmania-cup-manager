@@ -215,6 +215,13 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - **Ligue uniquement** — tournois supprimés, code propre centré sur la ligue
 - Collection `rl_competitions` (type toujours `'league'`)
 
+### Fonctionnalités TM livrées (sessions 2026-05-01/02)
+- ✅ TM : Refonte visuelle v2 — liste éditions avec featured mini-hero (image map + countdown XL + KPI + bouton inscription intégré), past events avec image map en fond + caption nom/créateur. Détail édition avec hero finale XL pleine largeur, bloc stats édition, layout finale 2 colonnes (timeline narrative gauche / ranking sticky droite), hero vainqueur centré, footer "Prochaine édition →"
+- ✅ TM : Auto-saisie résultats depuis ManiaScript — endpoint Vercel `/api/cup-event` (auth API key, idempotence, mapping login→playerId), lib `SiteSync.Script.txt` côté serveur TM, collection `finale_events` Firestore pour timeline round-by-round. Bouton "📋 Copier l'ID" dans panel admin
+- ✅ TM : Conversion automatique Account ID (UUID) → Login (base64url) — helper `normalizeLoginTM`, appliqué à la saisie + bouton migration des cas existants en DB. Helper text 💡 sous les inputs
+- ✅ TM : Flag `hidden` sur édition (toggle admin) — pour tests sans pollution publique
+- ✅ TM : Image podium partagée 1080×1080 (Instagram-friendly) avec image map finale en fond + avatars Discord + fallback proxy CORS
+
 ### Fonctionnalités TM livrées (session 2026-04-05)
 - ✅ TM : Auth Discord unifiée — joueurs TM connectés via Discord (même flow que RL), admins conservent Google
 - ✅ TM : Formulaire profil enrichi — pseudo site (pré-rempli Discord), pseudo TM (affiché en course), login TM (compte Ubisoft), équipe
