@@ -215,6 +215,13 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - **Ligue uniquement** — tournois supprimés, code propre centré sur la ligue
 - Collection `rl_competitions` (type toujours `'league'`)
 
+### Fonctionnalités TM livrées (session 2026-05-03)
+- ✅ TM : Sons custom OGG dans le mode TM (qualified, life-up, life-down, eliminated) — joués côté client via Manialink CMlMediaPlayer (pas MP3, pas via PlaySound serveur). Délai 3000ms en finale pour caler avec l'animation Scoreboard. Volume 1.7. Pré-load au démarrage. Stop forcé pour éviter pause/resume si focus perdu
+- ✅ TM : Intro de cup Manialink fullscreen avec logo + titre + compteur géant + liste des joueurs adaptative (1-5 colonnes selon nb joueurs, max 100) + musique intro.ogg 27s. Joué à la 1ère map de qualif uniquement. Tout en anglais
+- ✅ TM : Hash URL persistant `#editions/abc123` pour le détail édition (F5 garde la page ouverte)
+- ✅ TM : Compteur d'events live dans la timeline finale (badge bleu)
+- ✅ TM : 💔 + "Reste X ❤️" dans la timeline pour clarté
+
 ### Fonctionnalités TM livrées (sessions 2026-05-01/02)
 - ✅ TM : Refonte visuelle v2 — liste éditions avec featured mini-hero (image map + countdown XL + KPI + bouton inscription intégré), past events avec image map en fond + caption nom/créateur. Détail édition avec hero finale XL pleine largeur, bloc stats édition, layout finale 2 colonnes (timeline narrative gauche / ranking sticky droite), hero vainqueur centré, footer "Prochaine édition →"
 - ✅ TM : Auto-saisie résultats depuis ManiaScript — endpoint Vercel `/api/cup-event` (auth API key, idempotence, mapping login→playerId), lib `SiteSync.Script.txt` côté serveur TM, collection `finale_events` Firestore pour timeline round-by-round. Bouton "📋 Copier l'ID" dans panel admin
