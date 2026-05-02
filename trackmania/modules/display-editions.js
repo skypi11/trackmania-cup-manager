@@ -1025,9 +1025,9 @@ window.openEditionDetail = (id) => {
                 if (!player) return '';
                 const isLifeLost = ev.eventType === 'life_lost';
                 const cls = isLifeLost ? 'life-lost' : 'eliminated';
-                const icon = isLifeLost ? '❤️' : '❌';
-                const livesHtml = isLifeLost && ev.value > 0
-                    ? `<span class="finale-lives-count">${'❤️'.repeat(ev.value)}</span>`
+                const icon = isLifeLost ? '💔' : '❌';
+                const livesHtml = isLifeLost
+                    ? `<span class="finale-lives-count">${t('detail.finale.lives.left') || 'Reste'} ${ev.value} ❤️</span>`
                     : '';
                 return `<div class="finale-tl-event ${cls}" onclick="openPlayerProfile('${player.id}')">
                     <div class="finale-tl-icon">${icon}</div>
