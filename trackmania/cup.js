@@ -78,16 +78,40 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     });
 });
 
-// Bouton retour/avant du navigateur
-window.addEventListener('popstate', () => {
-    const id = location.hash.slice(1) || 'home';
-    if (document.getElementById(id)) showSection(id);
-});
+// Parse le hash : peut être "editions/abc123" pour ouvrir le détail directement
+function _parseHash() {
+    const raw = location.hash.slice(1);
+    if (!raw) return { section: 'home', editionId: null };
+    const slash = raw.indexOf('/');
+    if (slash === -1) return { section: raw, editionId: null };
+    return { section: raw.slice(0, slash), editionId: raw.slice(slash + 1) };
+}
 
-// Chargement direct avec un hash dans l'URL (ex: cup.html#rankings)
+function _applyHash() {
+    const { section, editionId } = _parseHash();
+    if (document.getElementById(section)) showSection(section);
+    if (section === 'editions' && editionId) {
+        // Attendre que les données soient chargées avant d'ouvrir
+        const tryOpen = () => {
+            if (state.data.editions.find(e => e.id === editionId)) {
+                window.openEditionDetail(editionId);
+            } else if (Object.values(state.loaded).every(Boolean)) {
+                // Données chargées mais édition introuvable → ne rien faire
+            } else {
+                setTimeout(tryOpen, 100);
+            }
+        };
+        tryOpen();
+    }
+}
+
+// Bouton retour/avant du navigateur
+window.addEventListener('popstate', _applyHash);
+
+// Chargement initial : applique le hash si présent
 const _initHash = location.hash.slice(1);
-if (_initHash && document.getElementById(_initHash)) {
-    showSection(_initHash);
+if (_initHash) {
+    _applyHash();
 } else {
     history.replaceState(null, '', '#home');
 }

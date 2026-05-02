@@ -796,6 +796,9 @@ function buildStatusHistoryHtml(edition) {
 
 window.openEditionDetail = (id) => {
     state.currentDetailEditionId = id;
+    // Persist l'ID dans le hash pour que F5 garde le détail ouvert
+    const targetHash = '#editions/' + id;
+    if (location.hash !== targetHash) history.replaceState(null, '', targetHash);
     let e = state.data.editions.find(e => e.id === id);
     if (!e) return;
     state.youtubeCollapsed = sessionStorage.getItem('ytCollapsed_' + id) === '1';
@@ -1075,9 +1078,13 @@ window.openEditionDetail = (id) => {
             }
 
             // 4) Layout 2 cols : timeline (gauche) + tableau ranking sticky (droite)
+            const eventsCount = detailedEvents.length;
+            const countBadge = eventsCount > 0
+                ? `<span class="finale-events-count" title="Events round-by-round (live pendant la finale)">${eventsCount}</span>`
+                : '';
             html += `<div class="finale-grid">
                 <div class="finale-grid-timeline">
-                    <div class="finale-section-header">📜 ${t('detail.finale.timeline') || 'Déroulement de la finale'}</div>
+                    <div class="finale-section-header">📜 ${t('detail.finale.timeline') || 'Déroulement de la finale'}${countBadge}</div>
                     <div class="finale-tl-rounds">${timelineHtml}</div>
                 </div>
                 <div class="finale-grid-ranking">
@@ -1518,6 +1525,7 @@ window.detailOnPlayerChange = () => {
 
 window.closeEditionDetail = () => {
     state.currentDetailEditionId = null;
+    if (location.hash.startsWith('#editions/')) history.replaceState(null, '', '#editions');
     document.getElementById('editionsList').style.display = '';
     document.getElementById('editionDetail').classList.remove('open');
     document.getElementById('editionFilters').style.display = '';
