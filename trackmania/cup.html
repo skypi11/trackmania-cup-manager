@@ -1149,18 +1149,182 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .pred-body { padding: 16px 18px; }
 .pred-player-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
 .pred-player-chip {
-    padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 12px 4px 4px; border-radius: 99px; font-size: 0.85rem; font-weight: 500;
     border: 2px solid transparent; cursor: pointer; background: rgba(255,255,255,0.06);
-    transition: all 0.15s; user-select: none;
+    transition: all 0.15s ease; user-select: none;
 }
-.pred-player-chip:hover { background: rgba(255,255,255,0.1); }
-.pred-player-chip.selected-finalist { background: rgba(0,217,54,0.12); border-color: var(--color-accent); color: var(--color-accent); }
+.pred-player-chip:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.pred-player-chip .tm-avatar { width: 24px; height: 24px; font-size: 11px; }
+.pred-player-chip.selected-finalist { background: rgba(0,217,54,0.14); border-color: var(--color-accent); color: var(--color-accent); }
 .pred-player-chip.selected-top1 { background: rgba(251,191,36,0.18); border-color: #fbbf24; color: #fbbf24; }
 .pred-player-chip.selected-top2 { background: rgba(148,163,184,0.18); border-color: #94a3b8; color: #94a3b8; }
 .pred-player-chip.selected-top3 { background: rgba(180,83,9,0.18); border-color: #cd7c3a; color: #cd7c3a; }
+.pred-player-chip.selected-finalist .tm-avatar { box-shadow: 0 0 0 1.5px rgba(0,217,54,0.5); }
 .pred-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.35); margin: 14px 0 6px; }
 .pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
 .pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
+
+/* ── PREDICTIONS HERO (cup à venir / en cours) ─────── */
+.pred-hero {
+    position: relative; overflow: hidden; border-radius: 16px;
+    border: 1px solid rgba(0,217,54,0.18);
+    margin-bottom: 16px; min-height: 180px;
+    transition: all 0.3s ease;
+}
+.pred-hero.live { border-color: rgba(251,191,36,0.35); animation: predHeroLivePulse 2.4s ease-in-out infinite; }
+.pred-hero.predicted { border-color: rgba(0,217,54,0.4); }
+@keyframes predHeroLivePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.0); }
+    50% { box-shadow: 0 0 28px 2px rgba(251,191,36,0.18); }
+}
+.pred-hero-bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    transform: scale(1.02); transition: transform 0.6s ease;
+    filter: blur(0px) saturate(1.05);
+}
+.pred-hero:hover .pred-hero-bg { transform: scale(1.06); }
+.pred-hero-overlay {
+    position: absolute; inset: 0;
+    background:
+        linear-gradient(90deg, rgba(15,15,15,0.92) 0%, rgba(15,15,15,0.78) 55%, rgba(15,15,15,0.55) 100%),
+        linear-gradient(180deg, rgba(15,15,15,0.0) 30%, rgba(15,15,15,0.85) 100%);
+}
+.pred-hero-accent {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, #00D936, #00b82e);
+}
+.pred-hero.live .pred-hero-accent { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+.pred-hero-body {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 22px;
+    padding: 22px 26px; min-height: 180px;
+}
+.pred-hero-left { flex: 1; min-width: 0; }
+.pred-hero-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.pred-hero-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1px;
+    background: rgba(0,217,54,0.18); color: #00D936; border: 1px solid rgba(0,217,54,0.3);
+}
+.pred-hero.live .pred-hero-status { background: rgba(251,191,36,0.18); color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+.pred-hero-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fbbf24; animation: predLiveDotPulse 1.2s ease-in-out infinite; }
+@keyframes predLiveDotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pred-hero-pred-count {
+    font-size: 0.72rem; color: rgba(255,255,255,0.55); font-weight: 600;
+    padding: 3px 9px; border-radius: 99px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.pred-hero-mine-badge {
+    font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 99px;
+    background: rgba(0,217,54,0.2); color: #00D936; border: 1px solid rgba(0,217,54,0.35);
+    text-transform: uppercase; letter-spacing: 0.8px;
+}
+.pred-hero-name {
+    font-size: 1.7rem; font-weight: 900; color: #fff; line-height: 1.15;
+    margin-bottom: 8px; letter-spacing: -0.01em;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.7);
+}
+.pred-hero-meta {
+    display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;
+    font-size: 0.85rem; color: rgba(255,255,255,0.7);
+}
+.pred-hero-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.pred-hero-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 10px;
+    background: linear-gradient(135deg, #00D936, #00b82e); color: #000;
+    font-weight: 800; font-size: 0.92rem; cursor: pointer; user-select: none;
+    border: none; transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,217,54,0.3);
+}
+.pred-hero-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(0,217,54,0.45); }
+.pred-hero-cta.locked {
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.1); box-shadow: none; cursor: default;
+}
+.pred-hero-cta.locked:hover { transform: none; box-shadow: none; }
+.pred-hero-countdown {
+    flex-shrink: 0; min-width: 160px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(0,217,54,0.2);
+    text-align: center;
+}
+.pred-hero.live .pred-hero-countdown { border-color: rgba(251,191,36,0.3); }
+.pred-hero-countdown-label {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px;
+    color: rgba(255,255,255,0.45); margin-bottom: 4px;
+}
+.pred-hero-countdown-value {
+    font-size: 1.3rem; font-weight: 900; color: #00D936; letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.pred-hero.live .pred-hero-countdown-value { color: #fbbf24; }
+@media (max-width: 700px) {
+    .pred-hero-body { flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px 18px; }
+    .pred-hero-name { font-size: 1.35rem; }
+    .pred-hero-countdown { width: 100%; min-width: 0; padding: 12px 16px; box-sizing: border-box; }
+}
+
+/* ── PREDICTORS PODIUM (top 3 prédicteurs all-time) ─── */
+.pred-podium {
+    display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 14px;
+    align-items: end; padding: 28px 12px 18px; margin-bottom: 18px;
+    background: linear-gradient(180deg, rgba(251,191,36,0.04) 0%, rgba(255,255,255,0.0) 100%);
+    border-radius: 16px; border: 1px solid rgba(255,255,255,0.06);
+}
+.pred-podium-step {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 14px 10px 16px; border-radius: 12px; text-align: center;
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+    transition: transform 0.25s ease;
+}
+.pred-podium-step:hover { transform: translateY(-3px); }
+.pred-podium-step.gold {
+    background: linear-gradient(180deg, rgba(251,191,36,0.18) 0%, rgba(251,191,36,0.04) 100%);
+    border-color: rgba(251,191,36,0.4);
+    box-shadow: 0 4px 24px rgba(251,191,36,0.12);
+    transform: translateY(-12px);
+}
+.pred-podium-step.silver {
+    background: linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%);
+    border-color: rgba(148,163,184,0.35);
+}
+.pred-podium-step.bronze {
+    background: linear-gradient(180deg, rgba(205,124,58,0.15) 0%, rgba(205,124,58,0.03) 100%);
+    border-color: rgba(205,124,58,0.35);
+}
+.pred-podium-medal { font-size: 1.6rem; line-height: 1; }
+.pred-podium-step.gold .pred-podium-medal { font-size: 2rem; }
+.pred-podium-avatar { position: relative; }
+.pred-podium-avatar .tm-avatar { width: 56px !important; height: 56px !important; font-size: 22px !important; }
+.pred-podium-step.gold .pred-podium-avatar .tm-avatar { width: 72px !important; height: 72px !important; font-size: 28px !important; box-shadow: 0 0 0 3px rgba(251,191,36,0.5), 0 4px 18px rgba(251,191,36,0.25); }
+.pred-podium-step.silver .pred-podium-avatar .tm-avatar { box-shadow: 0 0 0 2.5px rgba(148,163,184,0.5); }
+.pred-podium-step.bronze .pred-podium-avatar .tm-avatar { box-shadow: 0 0 0 2.5px rgba(205,124,58,0.5); }
+.pred-podium-name {
+    font-weight: 800; font-size: 0.92rem; line-height: 1.2;
+    color: #f0f0f0; max-width: 100%; word-wrap: break-word;
+}
+.pred-podium-step.gold .pred-podium-name { font-size: 1rem; }
+.pred-podium-pts {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; border-radius: 99px; font-weight: 800; font-size: 0.85rem;
+    background: rgba(0,217,54,0.12); color: var(--color-accent); border: 1px solid rgba(0,217,54,0.25);
+}
+.pred-podium-step.gold .pred-podium-pts {
+    background: rgba(251,191,36,0.18); color: #fbbf24; border-color: rgba(251,191,36,0.4);
+    font-size: 0.95rem; padding: 5px 14px;
+}
+.pred-podium-eds { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+@media (max-width: 540px) {
+    .pred-podium { grid-template-columns: 1fr 1.15fr 1fr; gap: 6px; padding: 22px 6px 14px; }
+    .pred-podium-step { padding: 10px 6px 12px; }
+    .pred-podium-name { font-size: 0.78rem; }
+    .pred-podium-step.gold .pred-podium-name { font-size: 0.88rem; }
+    .pred-podium-avatar .tm-avatar { width: 44px !important; height: 44px !important; font-size: 17px !important; }
+    .pred-podium-step.gold .pred-podium-avatar .tm-avatar { width: 56px !important; height: 56px !important; font-size: 22px !important; }
+}
 
 @media (max-width: 600px) { .maps-timeline-grid { grid-template-columns: repeat(2, 1fr); } }
 
