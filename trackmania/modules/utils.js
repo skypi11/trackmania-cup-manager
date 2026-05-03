@@ -119,11 +119,12 @@ export function parseMarkdown(text) {
 //   + pts prédictions ÷ 2 (récompense moindre que jouer)
 //
 // Le tier est UNE IDENTITÉ, pas un classement.
-// 5 paliers : Bronze < 15 < Silver < 40 < Gold < 80 < Platinum < 150 < Diamond
+// 5 paliers : Bronze < 15 < Silver < 60 < Gold < 110 < Platinum < 200 < Diamond
+// Ajustés pour rendre Gold/Platinum/Diamond plus exigeants.
 export const SPRINGS_TIERS = [
-    { key: 'diamond',  min: 150, label: 'Diamond',  color: '#a78bfa', glow: 'rgba(167,139,250,0.45)', icon: '💎' },
-    { key: 'platinum', min: 80,  label: 'Platinum', color: '#22d3ee', glow: 'rgba(34,211,238,0.45)',  icon: '🏆' },
-    { key: 'gold',     min: 40,  label: 'Gold',     color: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  icon: '🥇' },
+    { key: 'diamond',  min: 200, label: 'Diamond',  color: '#a78bfa', glow: 'rgba(167,139,250,0.45)', icon: '💎' },
+    { key: 'platinum', min: 110, label: 'Platinum', color: '#22d3ee', glow: 'rgba(34,211,238,0.45)',  icon: '🏆' },
+    { key: 'gold',     min: 60,  label: 'Gold',     color: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  icon: '🥇' },
     { key: 'silver',   min: 15,  label: 'Silver',   color: '#94a3b8', glow: 'rgba(148,163,184,0.45)', icon: '🥈' },
     { key: 'bronze',   min: 0,   label: 'Bronze',   color: '#cd7c3a', glow: 'rgba(205,124,58,0.45)',  icon: '🥉' },
 ];

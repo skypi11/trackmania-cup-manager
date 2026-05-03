@@ -42,6 +42,9 @@ export const state = {
     selectedMapsSeason: null,
     selectedRankingSeason: null,
 
+    // UI — Rankings : 'competition' (pts F1) ou 'springs' (Springs Rank combiné)
+    rankingMode: 'competition',
+
     // UI — prédictions
     predState: {},
 

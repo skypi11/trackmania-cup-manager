@@ -2,12 +2,13 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, tTeam, getPoints, avatarHtml } from './utils.js';
+import { pName, tTeam, getPoints, avatarHtml, computeSpringsScore, getSpringsTier, getNextSpringsTier, tierBadgeHtml } from './utils.js';
 import { pointsTableHtml } from './display-rules.js';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
 
 window.setRankingSeason = (s) => { state.selectedRankingSeason = s; displayGeneralRanking(); };
+window.setRankingMode = (m) => { state.rankingMode = m; displayGeneralRanking(); };
 
 export function buildRankingStats(finaleResults) {
     const stats = {};
@@ -46,7 +47,7 @@ export function displayGeneralRanking() {
     }
     const currentSeason = seasons[0] || null;
 
-    // Build tab bar
+    // Build tab bar (saisons)
     const filterBar = document.getElementById('rankingSeasonFilter');
     if (filterBar) {
         const tabs = [
@@ -55,6 +56,21 @@ export function displayGeneralRanking() {
             ...seasons.slice(1).map(s => `<button class="filter-btn${state.selectedRankingSeason === s ? ' active' : ''}" onclick="setRankingSeason(${s})">${s}</button>`)
         ].filter(Boolean);
         filterBar.innerHTML = tabs.join('');
+    }
+
+    // Mode bar (Compétition / Springs Rank)
+    const modeBar = document.getElementById('rankingModeFilter');
+    if (modeBar) {
+        modeBar.innerHTML = `
+            <button class="filter-btn${state.rankingMode === 'competition' ? ' active' : ''}" onclick="setRankingMode('competition')">${t('rankings.mode.competition')}</button>
+            <button class="filter-btn${state.rankingMode === 'springs' ? ' active' : ''}" onclick="setRankingMode('springs')">${t('rankings.mode.springs')}</button>
+            <span style="margin-left:auto;font-size:0.75rem;color:rgba(255,255,255,0.35);font-style:italic">${t('rankings.mode.help')}</span>`;
+    }
+
+    // ── Mode Springs Rank : classement combiné ──────────────────────────────
+    if (state.rankingMode === 'springs') {
+        renderSpringsRankingTable(container);
+        return;
     }
 
     // Filter editions by selected season
@@ -359,6 +375,159 @@ export function displayStats() {
     });
     streakHtml += '</tbody></table>';
     streaksContainer.innerHTML = streakHtml;
+}
+
+// ── SPRINGS RANK : classement global combiné (assiduité + perf + prédictions) ──
+//
+// Affiche tous les joueurs ayant un Springs Score > 0 avec leur tier,
+// le score total et le breakdown détaillé (cups · finales · F1 · pred).
+// Option saison : si saison sélectionnée, on filtre les résultats à cette saison.
+
+function renderSpringsRankingTable(container) {
+    // Filtrer les résultats à la saison sélectionnée si applicable
+    const seasonEditionIds = state.selectedRankingSeason === 'all'
+        ? null
+        : new Set(state.data.editions
+            .filter(e => (e.saison || new Date(e.date).getFullYear()) === state.selectedRankingSeason)
+            .map(e => e.id));
+
+    const filterByEd = (r) => seasonEditionIds === null || seasonEditionIds.has(r.editionId);
+    const scopedResults = state.data.results.filter(filterByEd);
+    const scopedPreds = state.data.predictions.filter(p => p.scored && filterByEd(p));
+
+    // Pour chaque participant, calculer Springs Score + breakdown
+    const rows = state.data.participants.map(p => {
+        const myResults = scopedResults.filter(r => r.playerId === p.id);
+        const cupsParticipated = new Set(myResults.filter(r => r.phase === 'inscription').map(r => r.editionId)).size;
+        const finalesQualified = new Set(myResults.filter(r => r.phase === 'finale').map(r => r.editionId)).size;
+        const f1Points = myResults.filter(r => r.phase === 'finale').reduce((s, r) => s + getPoints(r.position), 0);
+        const myPreds = scopedPreds.filter(p2 => p2.playerId === p.id);
+        const predPoints = myPreds.reduce((s, p2) => s + (p2.score || 0), 0);
+        const score = Math.floor(cupsParticipated * 7 + finalesQualified * 15 + f1Points + predPoints * 0.5);
+        return { player: p, score, cups: cupsParticipated, finales: finalesQualified, f1: f1Points, pred: predPoints };
+    }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
+
+    if (rows.length === 0) {
+        container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">💎</span><p>${t('rankings.springs.empty')}</p></div>`;
+        return;
+    }
+
+    // Banner "ma position" Springs
+    const myEntry = state.currentUser ? rows.find(r => r.player.userId === state.currentUser.uid) : null;
+    const myRank = myEntry ? rows.indexOf(myEntry) + 1 : null;
+    let myBannerHtml = '';
+    if (state.currentUser && myEntry) {
+        const tier = getSpringsTier(myEntry.score);
+        const next = getNextSpringsTier(myEntry.score);
+        const progressLine = next
+            ? t('rankings.springs.next').replace('{n}', next.min - myEntry.score).replace('{tier}', `<b style="color:${next.color}">${next.icon} ${next.label}</b>`)
+            : t('rankings.springs.max');
+        myBannerHtml = `<div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:linear-gradient(90deg,rgba(0,217,54,0.08),rgba(0,217,54,0.02));border:1px solid rgba(0,217,54,0.22);border-radius:12px;margin-bottom:18px;flex-wrap:wrap">
+            ${avatarHtml(myEntry.player, { size: 42 })}
+            <div style="flex:1;min-width:0">
+                <div style="font-weight:800;font-size:1rem">${t('rankings.springs.you.are')} <span style="color:var(--color-accent)">#${myRank}</span> · <b style="color:${tier.color}">${tier.icon} ${tier.label}</b></div>
+                <div style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-top:2px">${t('rankings.springs.you.score').replace('{n}', myEntry.score)} — ${progressLine}</div>
+            </div>
+            ${tierBadgeHtml(tier, { size: 'lg', score: myEntry.score, tooltip: `${tier.label} · ${myEntry.score} pts Springs` })}
+        </div>`;
+    }
+
+    // Top 3 banner (champions Springs)
+    let podiumHtml = '';
+    if (rows.length > 0) {
+        const top3 = rows.slice(0, 3);
+        const order = [top3[1], top3[0], top3[2]]; // 2-1-3 visuel
+        const cls = ['silver', 'gold', 'bronze'];
+        const medals = ['🥈', '🥇', '🥉'];
+        podiumHtml = `<div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end;margin-bottom:22px;padding:22px 14px 14px;background:radial-gradient(ellipse at top,rgba(167,139,250,0.06),transparent 60%);border-radius:14px;border:1px solid rgba(167,139,250,0.15)">`;
+        order.forEach((r, i) => {
+            if (!r) { podiumHtml += '<div></div>'; return; }
+            const tier = getSpringsTier(r.score);
+            const isGold = cls[i] === 'gold';
+            const isMe = state.currentUser && r.player.userId === state.currentUser.uid;
+            podiumHtml += `<div style="background:linear-gradient(180deg, ${tier.color}22 0%, ${tier.color}05 100%);border:1.5px solid ${tier.color};border-radius:12px;padding:${isGold ? '18px 10px 20px' : '14px 10px 16px'};text-align:center;${isGold ? 'transform:translateY(-12px);box-shadow:0 8px 28px ' + tier.glow + ';' : ''}cursor:pointer" onclick="openPlayerProfile('${r.player.id}')">
+                <div style="font-size:${isGold ? '2rem' : '1.5rem'};line-height:1;margin-bottom:8px">${medals[i]}</div>
+                ${avatarHtml(r.player, { size: isGold ? 80 : 56, ringColor: tier.color })}
+                <div style="font-weight:800;font-size:${isGold ? '1.05rem' : '0.92rem'};margin-top:8px;color:#f0f0f0">${pName(r.player)}${isMe ? ' <span style="color:var(--color-accent);font-size:0.7rem;display:block;margin-top:2px">← toi</span>' : ''}</div>
+                <div style="margin-top:8px"><span class="tier-pill md tier-${tier.key}" style="--tier-color:${tier.color}">${tier.icon} ${tier.label}</span></div>
+                <div style="margin-top:6px;font-size:${isGold ? '1.1rem' : '0.95rem'};font-weight:900;color:${tier.color}">${r.score} <span style="font-size:0.7em;font-weight:600;opacity:0.6">pts</span></div>
+            </div>`;
+        });
+        podiumHtml += `</div>`;
+    }
+
+    // Tableau complet avec breakdown
+    let html = myBannerHtml + podiumHtml + `<table>
+        <thead><tr>
+            <th>${t('rankings.col.pos')}</th>
+            <th>${t('rankings.col.player')}</th>
+            <th>${t('rankings.springs.col.tier')}</th>
+            <th>${t('rankings.springs.col.score')}</th>
+            <th title="Cups participées">${t('rankings.springs.col.cups')}</th>
+            <th title="Qualifications finale">${t('rankings.springs.col.fin')}</th>
+            <th title="Pts F1 cumulés en finale">${t('rankings.springs.col.f1')}</th>
+            <th title="Pts prédictions cumulés (÷2 dans le calcul)">${t('rankings.springs.col.pred')}</th>
+            <th>${t('rankings.col.team')}</th>
+        </tr></thead>
+        <tbody>`;
+    rows.forEach((r, i) => {
+        const rank = i + 1;
+        const tier = getSpringsTier(r.score);
+        const isMe = state.currentUser && r.player.userId === state.currentUser.uid;
+        const rowStyle = isMe ? 'background:rgba(0,217,54,0.05);outline:1px solid rgba(0,217,54,0.12)' : '';
+        const badgeClass = rank <= 3 ? `badge-${rank}` : 'badge-other';
+        html += `<tr style="${rowStyle}">
+            <td><span class="badge ${badgeClass}">${rank}</span></td>
+            <td>
+                <div style="display:inline-flex;align-items:center;gap:10px">
+                    ${avatarHtml(r.player, { size: 28 })}
+                    <strong class="player-name-link" onclick="openPlayerProfile('${r.player.id}')">${pName(r.player)}</strong>
+                    ${isMe ? '<span style="color:var(--color-accent);font-size:0.78rem;margin-left:6px">← toi</span>' : ''}
+                </div>
+            </td>
+            <td>${tierBadgeHtml(tier, { size: 'md', tooltip: `${tier.label} · ${r.score} pts Springs` })}</td>
+            <td><strong style="color:${tier.color};font-size:1.05rem">${r.score}</strong></td>
+            <td style="color:rgba(255,255,255,0.65)">${r.cups || '—'}</td>
+            <td style="color:rgba(255,255,255,0.65)">${r.finales || '—'}</td>
+            <td style="color:rgba(255,255,255,0.65)">${r.f1 || '—'}</td>
+            <td style="color:rgba(255,255,255,0.65)">${r.pred || '—'}</td>
+            <td style="color:var(--color-text-secondary)">${r.player.team || '—'}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+
+    // Note : on ne met pas à jour le chart ici (Mode Springs n'utilise pas le chart F1)
+    if (state.rankingChart) { state.rankingChart.destroy(); state.rankingChart = null; }
+    const chartCanvas = document.getElementById('rankingChart');
+    if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        state.rankingChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rows.slice(0, 10).map(r => pName(r.player)),
+                datasets: [{
+                    data: rows.slice(0, 10).map(r => r.score),
+                    backgroundColor: rows.slice(0, 10).map(r => getSpringsTier(r.score).color + 'CC'),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    // Cacher le bloc "système de points F1" sur le mode Springs
+    const explainContainer = document.getElementById('rankingsPointsExplain');
+    if (explainContainer) explainContainer.innerHTML = '';
 }
 
 // Export CSV
