@@ -94,6 +94,23 @@ window.deletePrediction = async function(predId, playerName) {
     displayPredictions();
 };
 
+// Barème de points :
+//   - +1 par finaliste correctement prédit
+//   - +3 par position du top 3 exacte (1er, 2ème ou 3ème pile à la bonne place)
+//   - +1 BONUS PARTIEL si pick top3 dans le podium mais mauvaise place
+// Max théorique : 10 finalistes + 3 top3 exacts = 19 pts
+function computePredScore(pred, finalistIds, top3) {
+    const realPodiumSet = new Set(top3.filter(Boolean));
+    let score = 0;
+    (pred.finalists || []).forEach(pid => { if (finalistIds.has(pid)) score += 1; });
+    (pred.top3 || []).forEach((pid, i) => {
+        if (!pid) return;
+        if (pid === top3[i]) score += 3;
+        else if (realPodiumSet.has(pid)) score += 1;
+    });
+    return score;
+}
+
 window.calculatePredictionScores = async function(edId) {
     if (!state.isAdmin) return;
     const finaleRes = state.data.results.filter(r => r.editionId === edId && r.phase === 'finale');
@@ -104,9 +121,7 @@ window.calculatePredictionScores = async function(edId) {
 
     const preds = state.data.predictions.filter(p => p.editionId === edId);
     for (const pred of preds) {
-        let score = 0;
-        (pred.finalists || []).forEach(pid => { if (finalistIds.has(pid)) score += 1; });
-        (pred.top3 || []).forEach((pid, i) => { if (pid && pid === top3[i]) score += 3; });
+        const score = computePredScore(pred, finalistIds, top3);
         await updateDoc(doc(db, 'predictions', pred.id), { score, scored: true });
     }
     alert(t('predictions.calc', {n: preds.length}));
@@ -131,15 +146,20 @@ function recapCardHtml(pred, players, finaleResults = null) {
         return `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border-radius:99px;padding:2px 10px 2px 3px;font-size:0.8rem">${avatar}<span>${name}</span></span>`;
     });
 
+    const realPodiumSet = realTop3 ? new Set(realTop3.filter(Boolean)) : null;
     const top3Parts = (pred.top3 || []).map((id, i) => {
         if (!id) return null;
         const p = players.find(pl => pl.id === id);
         const name = pName(p) || '?';
         if (realTop3) {
             const exact = realTop3[i] === id;
+            const inPodium = realPodiumSet.has(id);
             const inFinale = realFinalistIds?.has(id);
-            const color = exact ? 'var(--color-accent)' : (inFinale ? 'var(--color-warning)' : '#ef4444');
-            const icon = exact ? '✓' : (inFinale ? '↕' : '✗');
+            let color, icon;
+            if (exact)        { color = 'var(--color-accent)'; icon = '✓'; }       // +3
+            else if (inPodium){ color = '#fbbf24';            icon = '↕'; }        // +1 partiel
+            else if (inFinale){ color = 'rgba(255,255,255,0.45)'; icon = '◌'; }    // 0 (juste +1 finaliste)
+            else              { color = '#ef4444';            icon = '✗'; }        // 0
             return `<span style="color:${color};font-size:0.85rem">${rankLabels[i]} ${icon} ${name}</span>`;
         }
         return `<span style="font-size:0.85rem">${rankLabels[i]} ${name}</span>`;
@@ -575,8 +595,28 @@ export function displayPredictions() {
 
     let html = '';
 
+    // ── Bloc "Comment ça marche" (pliable, fermé par défaut) ──
+    html += `<details class="pred-howto">
+        <summary class="pred-howto-summary">
+            <span class="pred-howto-summary-icon">📖</span>
+            <span>${t('predictions.howto.title')}</span>
+            <span class="pred-howto-summary-arrow">▼</span>
+        </summary>
+        <div class="pred-howto-body">
+            <p>${t('predictions.howto.intro')}</p>
+            <div class="pred-howto-rules">
+                <div class="pred-howto-rule"><span class="pred-howto-rule-icon">+1</span><span>${t('predictions.howto.rule1')}</span></div>
+                <div class="pred-howto-rule exact"><span class="pred-howto-rule-icon">+3</span><span>${t('predictions.howto.rule2')}</span></div>
+                <div class="pred-howto-rule bonus"><span class="pred-howto-rule-icon">+1</span><span>${t('predictions.howto.rule3')}</span></div>
+            </div>
+            <div class="pred-howto-example">💡 ${t('predictions.howto.example')}</div>
+            <div class="pred-howto-max">🎯 ${t('predictions.howto.max')}</div>
+            <div class="pred-howto-auto">⚡ ${t('predictions.howto.auto')}</div>
+        </div>
+    </details>`;
+
     if (upcoming.length === 0 && past.length === 0) {
-        html = `<div class="card"><div class="empty-state"><span class="empty-state-icon">🔮</span><p>${t('predictions.no.pred.yet')}</p></div></div>`;
+        html += `<div class="card"><div class="empty-state"><span class="empty-state-icon">🔮</span><p>${t('predictions.no.pred.yet')}</p></div></div>`;
         container.innerHTML = html;
         return;
     }

@@ -16,7 +16,12 @@
 //
 //   { editionId, type: "finale_end", ranking: [{login, position}] }
 //
-// La réponse JSON contient { ok, written, skipped, unknownLogins }.
+// La réponse JSON contient { ok, written, skipped, unknownLogins, scoresCalculated }.
+//
+// Sur l'event finale_end, le serveur recalcule automatiquement les scores de
+// prédiction (collection `predictions`) et bascule l'édition en `terminee`.
+// Barème : +1 par finaliste correct, +3 top3 exact, +1 si top3 dans le podium
+// mais mauvaise place. Max théorique 19 pts.
 
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -116,6 +121,7 @@ export default async function handler(req, res) {
   };
 
   let written = 0;
+  let scoresCalculated = 0;
   const skipped = [];
   const unknownLogins = [];
 
@@ -199,6 +205,51 @@ export default async function handler(req, res) {
       });
       written++;
     }
+
+    // ── Auto-calcul des scores de prédiction après la finale ──
+    // Barème : +1 par finaliste correctement prédit, +3 par position top3 exacte,
+    // +1 BONUS partiel si pick top3 dans le podium mais mauvaise place.
+    // En cas d'erreur on log mais on ne fait pas planter le finale_end —
+    // l'admin a toujours le bouton "Recalculer" pour rattraper.
+    try {
+      const finaleSnap = await db.collection('results')
+        .where('editionId', '==', editionId)
+        .where('phase', '==', 'finale')
+        .get();
+      const finalistIds = new Set();
+      const top3 = [null, null, null];
+      finaleSnap.forEach(d => {
+        const r = d.data();
+        finalistIds.add(r.playerId);
+        if (r.position >= 1 && r.position <= 3) top3[r.position - 1] = r.playerId;
+      });
+      const realPodiumSet = new Set(top3.filter(Boolean));
+
+      const predsSnap = await db.collection('predictions')
+        .where('editionId', '==', editionId)
+        .get();
+      const batch = db.batch();
+      predsSnap.forEach(d => {
+        const pred = d.data();
+        let score = 0;
+        (pred.finalists || []).forEach(pid => { if (finalistIds.has(pid)) score += 1; });
+        (pred.top3 || []).forEach((pid, i) => {
+          if (!pid) return;
+          if (pid === top3[i]) score += 3;
+          else if (realPodiumSet.has(pid)) score += 1;
+        });
+        batch.update(d.ref, { score, scored: true });
+        scoresCalculated++;
+      });
+      if (scoresCalculated > 0) await batch.commit();
+
+      // Bascule l'édition en 'terminee' si pas déjà fait
+      if (edition.status && edition.status !== 'terminee') {
+        await db.collection('editions').doc(editionId).update({ status: 'terminee' });
+      }
+    } catch (err) {
+      console.error('Auto-score calculation failed:', err);
+    }
   }
 
   // ── Handler finale round (events round-by-round : life_lost, eliminated) ──
@@ -253,5 +304,6 @@ export default async function handler(req, res) {
     written,
     skipped,
     unknownLogins,
+    scoresCalculated,
   });
 }
