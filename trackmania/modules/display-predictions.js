@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, avatarHtml, getCountdown } from './utils.js';
+import { pName, dateLang, avatarHtml, getCountdown, computeSpringsScore, getSpringsTier, getNextSpringsTier, SPRINGS_TIERS } from './utils.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 import { updateDoc, doc, addDoc, collection, getDoc, deleteDoc } from 'firebase/firestore';
 
@@ -17,27 +17,33 @@ function getEditionMapInfo(e) {
     return null;
 }
 
-// ── Tier system : palier de progression basé sur les pts cumulés ──────────────
-// Bronze 0-9 · Silver 10-29 · Gold 30-59 · Platinum 60-99 · Diamond 100+
-const TIERS = [
-    { key: 'diamond',  min: 100, label: 'Diamond',  color: '#a78bfa', glow: 'rgba(167,139,250,0.45)', icon: '💎' },
-    { key: 'platinum', min: 60,  label: 'Platinum', color: '#22d3ee', glow: 'rgba(34,211,238,0.45)',  icon: '🏆' },
-    { key: 'gold',     min: 30,  label: 'Gold',     color: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  icon: '🥇' },
-    { key: 'silver',   min: 10,  label: 'Silver',   color: '#94a3b8', glow: 'rgba(148,163,184,0.45)', icon: '🥈' },
-    { key: 'bronze',   min: 0,   label: 'Bronze',   color: '#cd7c3a', glow: 'rgba(205,124,58,0.45)',  icon: '🥉' },
-];
+// ── Re-export de SPRINGS_TIERS pour usage local (alias TIERS pour compatibilité) ──
+// Le système de tiers est désormais centralisé dans utils.js (computeSpringsScore +
+// getSpringsTier). On garde l'alias `TIERS` pour les appels locaux existants
+// (dashboard, hall of fame, etc.).
+const TIERS = SPRINGS_TIERS;
+const getTier = getSpringsTier;
+const getNextTier = getNextSpringsTier;
 
-function getTier(pts) {
-    return TIERS.find(t => pts >= t.min) || TIERS[TIERS.length - 1];
+// Stats prédiction PURES d'un joueur (pour le Hall of Fame et le ranking pred).
+// Le tier renvoyé est calculé sur le SPRINGS SCORE (assiduité + perf + pred),
+// pas sur les pts pred — pour cohérence partout sur le site.
+function getPlayerStats(playerId) {
+    const preds = state.data.predictions.filter(p => p.playerId === playerId && p.scored);
+    const totalPts = preds.reduce((s, p) => s + (p.score || 0), 0);
+    const bestScore = preds.length > 0 ? Math.max(...preds.map(p => p.score || 0)) : 0;
+    const cupsPredicted = preds.length;
+    const springsScore = computeSpringsScore(playerId, {
+        results: state.data.results,
+        predictions: state.data.predictions,
+    });
+    const tier = getSpringsTier(springsScore);
+    return { totalPts, bestScore, cupsPredicted, tier, springsScore };
 }
 
-function getNextTier(pts) {
-    // Le tier supérieur immédiat (null si déjà Diamond)
-    const sorted = [...TIERS].sort((a, b) => a.min - b.min);
-    return sorted.find(t => t.min > pts) || null;
-}
-
-// ── Stats personnelles d'un joueur (pour la stat bar) ─────────────────────────
+// ── Stats personnelles complètes (pour la stat bar predictions) ───────────────
+// Combine les stats prédiction (pts, best, cups, accuracy) + le Springs Rank
+// (tier + progression). Le tier et la progression utilisent le Springs Score.
 function getMyPredStats() {
     if (!state.currentUser) return null;
     const me = state.data.participants.find(p => p.userId === state.currentUser.uid);
@@ -49,7 +55,8 @@ function getMyPredStats() {
     const cupsPredicted = myPreds.length;
 
     // Précision podium = (top3 picks corrects ou partiels) / (top3 picks émis)
-    let top3Total = 0, top3Hits = 0;
+    let top3Total = 0;
+    let top3Hits = 0;
     myPreds.forEach(pred => {
         const finaleRes = state.data.results.filter(r => r.editionId === pred.editionId && r.phase === 'finale');
         const realTop3 = [1,2,3].map(pos => finaleRes.find(r => r.position === pos)?.playerId ?? null);
@@ -62,32 +69,27 @@ function getMyPredStats() {
     });
     const podiumAccuracy = top3Total > 0 ? Math.round(top3Hits / top3Total * 100) : 0;
 
-    // Calcul du rang au classement global
-    const allTotals = {};
+    // Rang prédicteur (basé sur les pts pred uniquement — c'est le rang dans le HoF)
+    const allPredTotals = {};
     state.data.predictions.filter(p => p.scored).forEach(pred => {
-        if (!allTotals[pred.playerId]) allTotals[pred.playerId] = 0;
-        allTotals[pred.playerId] += pred.score || 0;
+        if (!allPredTotals[pred.playerId]) allPredTotals[pred.playerId] = 0;
+        allPredTotals[pred.playerId] += pred.score || 0;
     });
-    const ranked = Object.entries(allTotals).sort((a, b) => b[1] - a[1]);
+    const ranked = Object.entries(allPredTotals).sort((a, b) => b[1] - a[1]);
     const rankIdx = ranked.findIndex(([id]) => id === me.id);
     const rank = rankIdx >= 0 ? rankIdx + 1 : null;
     const totalPredictors = ranked.length;
 
-    const tier = getTier(totalPts);
-    const nextTier = getNextTier(totalPts);
-    const ptsToNext = nextTier ? nextTier.min - totalPts : 0;
+    // Springs Score combiné (assiduité + perf + pred)
+    const springsScore = computeSpringsScore(me.id, {
+        results: state.data.results,
+        predictions: state.data.predictions,
+    });
+    const tier = getSpringsTier(springsScore);
+    const nextTier = getNextSpringsTier(springsScore);
+    const ptsToNext = nextTier ? nextTier.min - springsScore : 0;
 
-    return { me, totalPts, bestScore, cupsPredicted, podiumAccuracy, rank, totalPredictors, tier, nextTier, ptsToNext };
-}
-
-// Stats agrégées d'un autre joueur (pour le hall of fame / classement)
-function getPlayerStats(playerId) {
-    const preds = state.data.predictions.filter(p => p.playerId === playerId && p.scored);
-    const totalPts = preds.reduce((s, p) => s + (p.score || 0), 0);
-    const bestScore = preds.length > 0 ? Math.max(...preds.map(p => p.score || 0)) : 0;
-    const cupsPredicted = preds.length;
-    const tier = getTier(totalPts);
-    return { totalPts, bestScore, cupsPredicted, tier };
+    return { me, totalPts, bestScore, cupsPredicted, podiumAccuracy, rank, totalPredictors, tier, nextTier, ptsToNext, springsScore };
 }
 
 // ── Carte "Dernier résultat" comparative (toi vs best) ──────────────────────
@@ -287,16 +289,16 @@ function statBarHtml() {
         </div>`;
     }
 
-    const { me, totalPts, bestScore, cupsPredicted, podiumAccuracy, rank, totalPredictors, tier, nextTier, ptsToNext } = stats;
+    const { me, totalPts, bestScore, cupsPredicted, podiumAccuracy, rank, totalPredictors, tier, nextTier, ptsToNext, springsScore } = stats;
     const rankLine = rank
-        ? `${t('predictions.dash.rank')} <b>#${rank}</b> / ${totalPredictors}`
-        : t('predictions.dash.no.preds');
+        ? `${t('predictions.dash.rank')} <b>#${rank}</b> / ${totalPredictors} · <span style="color:rgba(255,255,255,0.5)">${springsScore} pts Springs</span>`
+        : `<span style="color:rgba(255,255,255,0.5)">${springsScore} pts Springs</span>`;
 
-    // Barre de progression vers le tier suivant
+    // Barre de progression basée sur le SPRINGS SCORE (combiné assiduité + perf + pred)
     let progressHtml = '';
     if (nextTier) {
         const span = nextTier.min - tier.min;
-        const within = totalPts - tier.min;
+        const within = springsScore - tier.min;
         const pct = Math.min(100, Math.max(0, Math.round(within / span * 100)));
         progressHtml = `<div class="pred-dash-progress" style="--tier-color:${tier.color}">
             <div class="pred-dash-progress-bar"><div class="pred-dash-progress-fill" style="width:${pct}%"></div></div>
@@ -308,7 +310,7 @@ function statBarHtml() {
         </div>`;
     }
 
-    const tierTooltip = t('predictions.tiers.tooltip').replace('{tier}', tier.label).replace('{pts}', totalPts);
+    const tierTooltip = t('predictions.tiers.tooltip').replace('{tier}', tier.label).replace('{pts}', springsScore);
     return `<div class="pred-dashboard tier-${tier.key}" style="--tier-color:${tier.color};--tier-glow:${tier.glow}">
         <div class="pred-dash-row">
             <div class="pred-dash-tier tier-${tier.key}" title="${tierTooltip}" style="cursor:help">

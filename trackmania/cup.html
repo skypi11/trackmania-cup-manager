@@ -1165,6 +1165,41 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
 .pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
 
+/* ── TIER PILL (composant réutilisable Springs Rank, partout) ── */
+.tier-pill {
+    display: inline-flex; align-items: center; flex-shrink: 0;
+    border-radius: 99px; line-height: 1;
+    border: 1px solid var(--tier-color);
+    background: rgba(255,255,255,0.03);
+    color: var(--tier-color);
+    font-weight: 800; letter-spacing: 0.6px;
+    transition: transform 0.15s ease;
+}
+.tier-pill:hover { transform: translateY(-1px); }
+.tier-pill.sm {
+    padding: 2px 7px; font-size: 0.85rem; gap: 0;
+    width: 24px; height: 24px; justify-content: center;
+}
+.tier-pill.md {
+    padding: 3px 10px 3px 6px; font-size: 0.7rem; gap: 5px;
+    text-transform: uppercase;
+}
+.tier-pill.lg {
+    padding: 6px 14px 6px 8px; font-size: 0.8rem; gap: 8px;
+    text-transform: uppercase;
+    box-shadow: 0 0 14px var(--tier-glow, transparent);
+}
+.tier-pill .tier-icon { font-size: 1em; line-height: 1; }
+.tier-pill.lg .tier-icon { font-size: 1.2em; }
+.tier-pill .tier-score { color: rgba(255,255,255,0.55); font-weight: 600; font-size: 0.92em; padding-left: 6px; border-left: 1px solid rgba(255,255,255,0.1); }
+.tier-pill.tier-diamond.lg, .tier-pill.tier-diamond.md {
+    animation: tierDiamondShine 3s ease-in-out infinite;
+}
+@keyframes tierDiamondShine {
+    0%, 100% { box-shadow: 0 0 14px rgba(167,139,250,0.4); }
+    50% { box-shadow: 0 0 24px rgba(167,139,250,0.7); }
+}
+
 /* ── PREDICTIONS DASHBOARD (stat bar perso en haut) ── */
 .pred-dashboard {
     position: relative; overflow: hidden;

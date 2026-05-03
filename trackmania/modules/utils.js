@@ -110,6 +110,82 @@ export function parseMarkdown(text) {
     return `<p style="margin:0">${s}</p>`;
 }
 
+// ── SPRINGS RANK : tier system global qui combine assiduité + perf + prédictions ──
+//
+// Calcul du Springs Score (option drastique validée par l'utilisateur) :
+//   +7 par cup participée (inscription)
+//   +15 par qualification finale (atteindre la finale)
+//   + pts F1 cumulés en finale (positions 1-10 = barème [25,18,15,12,10,8,6,4,2,1])
+//   + pts prédictions ÷ 2 (récompense moindre que jouer)
+//
+// Le tier est UNE IDENTITÉ, pas un classement.
+// 5 paliers : Bronze < 15 < Silver < 40 < Gold < 80 < Platinum < 150 < Diamond
+export const SPRINGS_TIERS = [
+    { key: 'diamond',  min: 150, label: 'Diamond',  color: '#a78bfa', glow: 'rgba(167,139,250,0.45)', icon: '💎' },
+    { key: 'platinum', min: 80,  label: 'Platinum', color: '#22d3ee', glow: 'rgba(34,211,238,0.45)',  icon: '🏆' },
+    { key: 'gold',     min: 40,  label: 'Gold',     color: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  icon: '🥇' },
+    { key: 'silver',   min: 15,  label: 'Silver',   color: '#94a3b8', glow: 'rgba(148,163,184,0.45)', icon: '🥈' },
+    { key: 'bronze',   min: 0,   label: 'Bronze',   color: '#cd7c3a', glow: 'rgba(205,124,58,0.45)',  icon: '🥉' },
+];
+
+export function getSpringsTier(score) {
+    return SPRINGS_TIERS.find(t => score >= t.min) || SPRINGS_TIERS[SPRINGS_TIERS.length - 1];
+}
+
+export function getNextSpringsTier(score) {
+    const sorted = [...SPRINGS_TIERS].sort((a, b) => a.min - b.min);
+    return sorted.find(t => t.min > score) || null;
+}
+
+// Calcul du Springs Score d'un joueur. Reçoit results et predictions
+// directement (pas via state) pour rester pure et utilisable côté admin/serveur.
+export function computeSpringsScore(playerId, { results, predictions }) {
+    const myResults = results.filter(r => r.playerId === playerId);
+
+    // Cups participées = éditions distinctes avec phase=inscription
+    const cupsParticipated = new Set(
+        myResults.filter(r => r.phase === 'inscription').map(r => r.editionId)
+    ).size;
+
+    // Qualifications en finale = éditions distinctes avec phase=finale
+    const finalesQualified = new Set(
+        myResults.filter(r => r.phase === 'finale').map(r => r.editionId)
+    ).size;
+
+    // Pts F1 cumulés en finale
+    const f1Points = myResults
+        .filter(r => r.phase === 'finale')
+        .reduce((sum, r) => sum + getPoints(r.position), 0);
+
+    // Pts prédictions ÷ 2 (assouplit la progression du prédicteur pur)
+    const myPreds = predictions.filter(p => p.playerId === playerId && p.scored);
+    const predPoints = myPreds.reduce((sum, p) => sum + (p.score || 0), 0);
+
+    return Math.floor(cupsParticipated * 7 + finalesQualified * 15 + f1Points + predPoints * 0.5);
+}
+
+// Tier badge réutilisable. Déclinaisons : 'sm' (icône seule), 'md' (icône+label),
+// 'lg' (icône XL + label + barre de progression). Couleur du tier appliquée.
+export function tierBadgeHtml(tier, options = {}) {
+    const { size = 'md', tooltip = '', score = null } = options;
+    if (!tier) return '';
+    const titleAttr = tooltip ? ` title="${tooltip}"` : '';
+    if (size === 'sm') {
+        return `<span class="tier-pill sm tier-${tier.key}" style="--tier-color:${tier.color}"${titleAttr}>${tier.icon}</span>`;
+    }
+    if (size === 'lg') {
+        return `<span class="tier-pill lg tier-${tier.key}" style="--tier-color:${tier.color};--tier-glow:${tier.glow}"${titleAttr}>
+            <span class="tier-icon">${tier.icon}</span>
+            <span class="tier-label">${tier.label}</span>
+            ${score !== null ? `<span class="tier-score">${score} pts</span>` : ''}
+        </span>`;
+    }
+    return `<span class="tier-pill md tier-${tier.key}" style="--tier-color:${tier.color}"${titleAttr}>
+        <span class="tier-icon">${tier.icon}</span>
+        <span class="tier-label">${tier.label}</span>
+    </span>`;
+}
+
 // Avatar Discord (avec fallback initiale en background — toujours visible si img fail)
 export function avatarHtml(player, options = {}) {
     const { size = 40, ringColor = null, className = '' } = options;
