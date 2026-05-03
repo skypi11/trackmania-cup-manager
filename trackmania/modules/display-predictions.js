@@ -599,7 +599,9 @@ export function displayPredictions() {
             const myPred = myPart ? state.data.predictions.find(p => p.editionId === e.id && p.playerId === myPart.id) : null;
 
             // ── HERO CARD ─────────────────────────────────────────────────
-            const mapInfo = getEditionMapInfo(e);
+            // ⚠️ Maps SECRÈTES jusqu'au lancement : pas d'image map en fond avant en_cours/terminee
+            const mapsRevealed = (e.status === 'en_cours' || e.status === 'terminee');
+            const mapInfo = mapsRevealed ? getEditionMapInfo(e) : null;
             const heroBg = mapInfo?.thumb || tm2020Bg;
             const cd = !isLive ? getCountdown(e.date, e.time) : null;
 

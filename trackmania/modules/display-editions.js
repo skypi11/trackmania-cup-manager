@@ -547,7 +547,10 @@ export function displayEditions() {
             }
         }
 
-        const mapInfo = getEditionMapInfo(e);
+        // ⚠️ Les maps sont SECRÈTES jusqu'au lancement de la cup.
+        // On ne dévoile la map (image + nom + mapper) que si la cup est en_cours ou terminée.
+        const mapsRevealed = (e.status === 'en_cours' || e.status === 'terminee');
+        const mapInfo = mapsRevealed ? getEditionMapInfo(e) : null;
         const mapThumb = mapInfo?.thumb || tm2020Bg;
         const mapCaptionHtml = (mapInfo?.name) ? `<div class="event-map-caption">
             <span class="event-map-caption-name">📍 ${mapInfo.name}</span>
