@@ -688,6 +688,16 @@ const translations = {
     'predictions.live.predicted.of':'{n}/{total} ont prédit',
     'predictions.progress.title': 'Ma progression',
     'predictions.progress.empty': 'Tes scores des cups passées apparaîtront ici.',
+    'predictions.tiers.title':    'Les rangs',
+    'predictions.tiers.intro':    'Ton tier est calculé automatiquement à partir de ton total de points cumulé sur toutes les cups. Plus tu prédis juste, plus tu montes.',
+    'predictions.tiers.bronze':   'Bronze',
+    'predictions.tiers.silver':   'Silver',
+    'predictions.tiers.gold':     'Gold',
+    'predictions.tiers.platinum': 'Platinum',
+    'predictions.tiers.diamond':  'Diamond',
+    'predictions.tiers.range':    '{min} pts',
+    'predictions.tiers.range.max':'{min}+ pts',
+    'predictions.tiers.tooltip':  'Tier {tier} · {pts} pts cumulés',
     'predictions.legend':         '✓ position exacte (+3) · ↕ podium mais mauvaise place (+1) · ◌ en finale hors podium · ✗ absent de la finale',
 
     // ── Achievements ──────────────────────────────────────────────────────
@@ -1459,6 +1469,16 @@ const translations = {
     'predictions.live.predicted.of':'{n}/{total} predicted',
     'predictions.progress.title': 'My progression',
     'predictions.progress.empty': 'Your past cup scores will appear here.',
+    'predictions.tiers.title':    'The ranks',
+    'predictions.tiers.intro':    'Your tier is calculated automatically from your total points across all cups. The more accurate your predictions, the higher you climb.',
+    'predictions.tiers.bronze':   'Bronze',
+    'predictions.tiers.silver':   'Silver',
+    'predictions.tiers.gold':     'Gold',
+    'predictions.tiers.platinum': 'Platinum',
+    'predictions.tiers.diamond':  'Diamond',
+    'predictions.tiers.range':    '{min} pts',
+    'predictions.tiers.range.max':'{min}+ pts',
+    'predictions.tiers.tooltip':  '{tier} tier · {pts} pts total',
 
     // ── Achievements ──────────────────────────────────────────────────────
     'ach.rookie':           'Rookie',

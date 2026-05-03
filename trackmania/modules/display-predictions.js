@@ -308,9 +308,10 @@ function statBarHtml() {
         </div>`;
     }
 
+    const tierTooltip = t('predictions.tiers.tooltip').replace('{tier}', tier.label).replace('{pts}', totalPts);
     return `<div class="pred-dashboard tier-${tier.key}" style="--tier-color:${tier.color};--tier-glow:${tier.glow}">
         <div class="pred-dash-row">
-            <div class="pred-dash-tier tier-${tier.key}">
+            <div class="pred-dash-tier tier-${tier.key}" title="${tierTooltip}" style="cursor:help">
                 <span class="pred-dash-tier-icon">${tier.icon}</span>
                 <span>${tier.label}</span>
             </div>
@@ -1072,42 +1073,85 @@ export function displayPredictions() {
                 </summary>
                 <div style="margin-top:14px">`;
 
+            // ── Cards admin "non calculé" ──
             adminUnscored.forEach(e => {
-                html += `<div class="pred-edition-card">
-                    <div class="pred-edition-header">
-                        <div style="flex:1;font-weight:700">${e.name}</div>
-                        <span class="pred-badge closed">${t('predictions.not.calc')}</span>
+                const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' }) : '';
+                html += `<div class="pred-past">
+                    <div class="pred-past-header">
+                        <div class="pred-past-header-overlay"></div>
+                        <div class="pred-past-header-row">
+                            <div style="flex:1">
+                                <div class="pred-past-name">${e.name}</div>
+                                <div class="pred-past-date">${dateStr}</div>
+                            </div>
+                            <span class="pred-past-badge unscored">${t('predictions.not.calc')}</span>
+                        </div>
                     </div>
-                    <div class="pred-body">
+                    <div class="pred-past-empty">
                         <button class="btn btn-secondary" onclick="calculatePredictionScores('${e.id}')">${t('predictions.calc.btn')}</button>
                     </div>
                 </div>`;
             });
 
+            // ── Cards "calculé" — style premium ──
             scored.forEach(e => {
                 const preds = state.data.predictions.filter(p => p.editionId === e.id && p.scored);
                 const ranked = [...preds].sort((a, b) => (b.score || 0) - (a.score || 0));
-                const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long' }) : '';
-                const adminCalc = state.isAdmin ? `<button class="btn btn-secondary btn-small" style="margin-left:auto" onclick="calculatePredictionScores('${e.id}')">${t('predictions.recalc')}</button>` : '';
-                html += `<div class="pred-edition-card">
-                    <div class="pred-edition-header">
-                        <div style="flex:1;font-weight:700">${e.name}</div>
-                        <div style="font-size:0.8rem;color:var(--color-text-secondary)">${dateStr}</div>
-                        <span class="pred-badge scored">${t('predictions.scored')}</span>
-                        ${adminCalc}
+                const dateStr = e.date ? new Date(e.date).toLocaleDateString(dateLang(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                const mapInfo = getEditionMapInfo(e);
+                const bgImg = mapInfo?.thumb ? `<div class="pred-past-header-bg" style="background-image:url('${mapInfo.thumb}')"></div>` : '';
+                const adminCalc = state.isAdmin
+                    ? `<button class="pred-past-recalc-btn" onclick="event.stopPropagation();calculatePredictionScores('${e.id}')">${t('predictions.recalc')}</button>`
+                    : '';
+
+                html += `<div class="pred-past">
+                    <div class="pred-past-header">
+                        ${bgImg}
+                        <div class="pred-past-header-overlay"></div>
+                        <div class="pred-past-header-row">
+                            <div style="flex:1;min-width:0">
+                                <div class="pred-past-name">${e.name}</div>
+                                <div class="pred-past-date">${dateStr} · ${preds.length} ${preds.length === 1 ? 'prédicteur' : 'prédicteurs'}</div>
+                            </div>
+                            <span class="pred-past-badge">${t('predictions.scored')}</span>
+                            ${adminCalc}
+                        </div>
                     </div>
-                    <div class="pred-body">`;
+                    <div class="pred-past-rows">`;
+
                 ranked.forEach((pred, i) => {
                     const player = state.data.participants.find(p => p.id === pred.playerId);
                     const isMe = state.currentUser && player?.userId === state.currentUser.uid;
                     const rName = player ? pName(player) : '?';
+                    // Tier basé sur le score CUMULÉ all-time (plus représentatif que le score d'1 cup)
+                    const playerCumStats = player ? getPlayerStats(player.id) : null;
+                    const tier = playerCumStats?.tier || getTier(0);
+
+                    let rowClass = '';
+                    if (i === 0) rowClass = 'gold';
+                    else if (i === 1) rowClass = 'silver';
+                    else if (i === 2) rowClass = 'bronze';
+                    if (isMe) rowClass += ' me';
+                    if (pred.score === 0) rowClass += ' zero-pts';
+
+                    let rankCell;
+                    if (i === 0) rankCell = '🥇';
+                    else if (i === 1) rankCell = '🥈';
+                    else if (i === 2) rankCell = '🥉';
+                    else rankCell = `#${i + 1}`;
+
                     const adminDel = state.isAdmin
-                        ? `<button onclick="deletePrediction('${pred.id}','${rName.replace(/'/g,"\\'")}\")" title="Supprimer" style="background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.4);font-size:0.8rem;padding:0 2px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(239,68,68,0.4)'">🗑️</button>`
+                        ? `<button onclick="event.stopPropagation();deletePrediction('${pred.id}','${rName.replace(/'/g,"\\'")}\")" title="Supprimer" style="background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.4);font-size:0.85rem;padding:2px 4px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(239,68,68,0.4)'">🗑️</button>`
                         : '';
-                    html += `<div class="pred-score-row" style="${isMe ? 'background:rgba(0,217,54,0.04);border-radius:6px;padding:8px 6px;' : ''}">
-                        <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;min-width:22px">${i+1}.</span>
-                        <span style="flex:1;font-weight:${isMe?'700':'400'}">${rName}${isMe ? ' <span style="color:var(--color-accent);font-size:0.75rem">← toi</span>' : ''}</span>
-                        <span class="pred-score-pts">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>
+
+                    html += `<div class="pred-past-row ${rowClass}">
+                        <span class="pred-past-rank">${rankCell}</span>
+                        <span class="pred-past-name-cell">
+                            ${player ? avatarHtml(player, { size: 30 }) : ''}
+                            <span class="pred-past-name-text">${rName}${isMe ? ` <span style="color:var(--color-accent);font-size:0.7rem;font-weight:800;margin-left:4px;text-transform:uppercase;letter-spacing:0.8px">← ${t('predictions.hof.you')}</span>` : ''}</span>
+                        </span>
+                        <span class="pred-past-tier" style="color:${tier.color}">${tier.icon} ${tier.label}</span>
+                        <span class="pred-past-pts">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>
                         ${adminDel}
                     </div>`;
                 });
@@ -1118,6 +1162,21 @@ export function displayPredictions() {
     }
 
     // ─── 8. COMMENT ÇA MARCHE (pliable, en bas) ───
+    // Construction du bloc "Les rangs" : 5 cards Bronze/Silver/Gold/Platinum/Diamond
+    // dans l'ordre croissant pour montrer la progression.
+    const tiersAsc = [...TIERS].reverse(); // bronze→diamond
+    const tiersGridHtml = tiersAsc.map((tier, i) => {
+        const next = tiersAsc[i + 1];
+        const range = next
+            ? t('predictions.tiers.range').replace('{min}', `${tier.min}-${next.min - 1}`)
+            : t('predictions.tiers.range.max').replace('{min}', tier.min);
+        return `<div class="pred-tier-card ${tier.key}">
+            <div class="pred-tier-card-icon">${tier.icon}</div>
+            <div class="pred-tier-card-name">${t('predictions.tiers.' + tier.key)}</div>
+            <div class="pred-tier-card-range">${range}</div>
+        </div>`;
+    }).join('');
+
     html += `<details class="pred-howto">
         <summary class="pred-howto-summary">
             <span class="pred-howto-summary-icon">📖</span>
@@ -1134,6 +1193,11 @@ export function displayPredictions() {
             <div class="pred-howto-example">💡 ${t('predictions.howto.example')}</div>
             <div class="pred-howto-max">🎯 ${t('predictions.howto.max')}</div>
             <div class="pred-howto-auto">⚡ ${t('predictions.howto.auto')}</div>
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+                <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px">🏅 ${t('predictions.tiers.title')}</div>
+                <p style="margin:0 0 4px;font-size:0.85rem">${t('predictions.tiers.intro')}</p>
+                <div class="pred-tiers-grid">${tiersGridHtml}</div>
+            </div>
         </div>
     </details>`;
 
