@@ -1165,6 +1165,114 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
 .pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
 
+/* ── PREDICTIONS DASHBOARD (stat bar perso en haut) ── */
+.pred-dashboard {
+    position: relative; overflow: hidden;
+    border-radius: 18px; padding: 22px 26px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #131313 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.3s ease;
+}
+.pred-dashboard::before {
+    content: ''; position: absolute; top: -60px; right: -60px; width: 220px; height: 220px;
+    border-radius: 50%; opacity: 0.18; pointer-events: none; filter: blur(60px);
+    background: var(--tier-color, var(--color-accent));
+    transition: background 0.4s ease;
+}
+.pred-dashboard.tier-bronze   { --tier-color: #cd7c3a; }
+.pred-dashboard.tier-silver   { --tier-color: #94a3b8; }
+.pred-dashboard.tier-gold     { --tier-color: #fbbf24; }
+.pred-dashboard.tier-platinum { --tier-color: #22d3ee; }
+.pred-dashboard.tier-diamond  { --tier-color: #a78bfa; }
+.pred-dashboard.tier-gold     { border-color: rgba(251,191,36,0.25); }
+.pred-dashboard.tier-platinum { border-color: rgba(34,211,238,0.3); }
+.pred-dashboard.tier-diamond  {
+    border-color: rgba(167,139,250,0.4);
+    box-shadow: 0 0 36px rgba(167,139,250,0.15);
+}
+.pred-dash-row {
+    display: flex; align-items: center; gap: 22px; margin-bottom: 18px;
+    position: relative; z-index: 1;
+}
+.pred-dash-tier {
+    flex-shrink: 0; padding: 8px 14px 8px 10px; border-radius: 99px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04); border: 1.5px solid var(--tier-color);
+    font-weight: 800; font-size: 0.82rem; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--tier-color);
+    box-shadow: 0 0 18px var(--tier-glow, rgba(255,255,255,0.05));
+}
+.pred-dash-tier-icon { font-size: 1.1rem; }
+.pred-dash-tier.tier-diamond {
+    animation: predTierShine 3s ease-in-out infinite;
+}
+@keyframes predTierShine {
+    0%, 100% { box-shadow: 0 0 18px rgba(167,139,250,0.4); }
+    50% { box-shadow: 0 0 28px rgba(167,139,250,0.7); }
+}
+.pred-dash-identity { flex: 1; min-width: 0; }
+.pred-dash-name {
+    font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pred-dash-rank {
+    font-size: 0.85rem; color: rgba(255,255,255,0.55); margin-top: 2px;
+}
+.pred-dash-rank b { color: var(--tier-color); font-weight: 800; }
+.pred-dash-cards {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    position: relative; z-index: 1;
+}
+.pred-dash-card {
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.pred-dash-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+.pred-dash-card-label {
+    font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.2px; color: rgba(255,255,255,0.4); margin-bottom: 6px;
+}
+.pred-dash-card-value {
+    font-size: 1.55rem; font-weight: 900; color: #fff; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.pred-dash-card-suffix { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-left: 3px; font-weight: 600; }
+.pred-dash-card.highlight .pred-dash-card-value { color: var(--tier-color); }
+.pred-dash-progress {
+    margin-top: 16px; padding: 10px 14px; border-radius: 10px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 12px;
+}
+.pred-dash-progress-bar {
+    flex: 1; height: 8px; border-radius: 99px;
+    background: rgba(255,255,255,0.06); overflow: hidden;
+}
+.pred-dash-progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--tier-color), var(--tier-color));
+    box-shadow: 0 0 10px var(--tier-color);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pred-dash-progress-label {
+    font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+}
+.pred-dash-progress-label b { color: var(--tier-color); font-weight: 800; }
+.pred-dash-empty {
+    text-align: center; padding: 18px 0;
+    font-size: 0.92rem; color: rgba(255,255,255,0.5);
+}
+@media (max-width: 700px) {
+    .pred-dashboard { padding: 18px 18px; }
+    .pred-dash-row { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .pred-dash-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pred-dash-card-value { font-size: 1.35rem; }
+}
+
 /* ── PREDICTIONS HOW-TO (bloc pliable explicatif) ──── */
 .pred-howto {
     background: linear-gradient(135deg, rgba(0,217,54,0.04) 0%, rgba(251,191,36,0.04) 100%);
@@ -1316,6 +1424,281 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
     .pred-hero-body { flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px 18px; }
     .pred-hero-name { font-size: 1.35rem; }
     .pred-hero-countdown { width: 100%; min-width: 0; padding: 12px 16px; box-sizing: border-box; }
+}
+
+/* ── HALL OF FAME (refonte XL premium du podium) ───── */
+.pred-hof {
+    position: relative; overflow: hidden;
+    border-radius: 18px; padding: 26px 22px 22px;
+    margin-bottom: 18px;
+    background:
+        radial-gradient(ellipse at top, rgba(251,191,36,0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #1a1a1a 0%, #131313 100%);
+    border: 1px solid rgba(251,191,36,0.2);
+}
+.pred-hof::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(251,191,36,0.06) 0%, transparent 35%),
+        radial-gradient(circle at 70% 80%, rgba(167,139,250,0.04) 0%, transparent 35%);
+}
+.pred-hof-header {
+    text-align: center; margin-bottom: 24px;
+    position: relative; z-index: 1;
+}
+.pred-hof-title {
+    font-size: 1.5rem; font-weight: 900; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+    text-shadow: 0 0 30px rgba(251,191,36,0.15);
+}
+.pred-hof-subtitle {
+    font-size: 0.85rem; color: rgba(255,255,255,0.45);
+    text-transform: uppercase; letter-spacing: 2px;
+}
+.pred-hof-podium {
+    display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 16px;
+    align-items: end;
+    position: relative; z-index: 1;
+}
+.pred-hof-step {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 18px 12px 20px; border-radius: 14px; text-align: center;
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+    transition: transform 0.3s ease;
+    position: relative;
+}
+.pred-hof-step:hover { transform: translateY(-4px); }
+.pred-hof-step.gold {
+    background: linear-gradient(180deg, rgba(251,191,36,0.22) 0%, rgba(251,191,36,0.05) 100%);
+    border: 1.5px solid rgba(251,191,36,0.5);
+    box-shadow: 0 8px 36px rgba(251,191,36,0.18);
+    transform: translateY(-16px);
+    padding-top: 22px; padding-bottom: 24px;
+}
+.pred-hof-step.gold:hover { transform: translateY(-20px); }
+.pred-hof-step.gold::after {
+    content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 14px; pointer-events: none;
+    background: linear-gradient(135deg, transparent 30%, rgba(251,191,36,0.4) 50%, transparent 70%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; animation: predHofShine 4s ease-in-out infinite;
+}
+@keyframes predHofShine {
+    0%, 100% { opacity: 0; transform: translateX(-100%); }
+    50% { opacity: 1; transform: translateX(100%); }
+}
+.pred-hof-step.silver {
+    background: linear-gradient(180deg, rgba(148,163,184,0.18) 0%, rgba(148,163,184,0.04) 100%);
+    border: 1px solid rgba(148,163,184,0.4);
+}
+.pred-hof-step.bronze {
+    background: linear-gradient(180deg, rgba(205,124,58,0.18) 0%, rgba(205,124,58,0.04) 100%);
+    border: 1px solid rgba(205,124,58,0.4);
+}
+.pred-hof-medal {
+    font-size: 1.8rem; line-height: 1;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+.pred-hof-step.gold .pred-hof-medal { font-size: 2.4rem; }
+.pred-hof-avatar { position: relative; }
+.pred-hof-avatar .tm-avatar {
+    width: 64px !important; height: 64px !important; font-size: 26px !important;
+}
+.pred-hof-step.gold .pred-hof-avatar .tm-avatar {
+    width: 90px !important; height: 90px !important; font-size: 36px !important;
+    box-shadow: 0 0 0 4px rgba(251,191,36,0.55), 0 6px 24px rgba(251,191,36,0.3);
+}
+.pred-hof-step.silver .pred-hof-avatar .tm-avatar { box-shadow: 0 0 0 3px rgba(148,163,184,0.5); }
+.pred-hof-step.bronze .pred-hof-avatar .tm-avatar { box-shadow: 0 0 0 3px rgba(205,124,58,0.5); }
+.pred-hof-name {
+    font-weight: 800; font-size: 1rem; line-height: 1.2;
+    color: #f0f0f0; max-width: 100%;
+}
+.pred-hof-step.gold .pred-hof-name { font-size: 1.15rem; }
+.pred-hof-pts {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 14px; border-radius: 99px;
+    font-weight: 800; font-size: 0.92rem;
+    background: rgba(0,217,54,0.15); color: var(--color-accent);
+    border: 1px solid rgba(0,217,54,0.28);
+}
+.pred-hof-step.gold .pred-hof-pts {
+    background: rgba(251,191,36,0.22); color: #fbbf24;
+    border-color: rgba(251,191,36,0.5);
+    font-size: 1.08rem; padding: 6px 18px;
+    box-shadow: 0 0 16px rgba(251,191,36,0.2);
+}
+.pred-hof-step.silver .pred-hof-pts {
+    background: rgba(148,163,184,0.18); color: #cbd5e1;
+    border-color: rgba(148,163,184,0.4);
+}
+.pred-hof-step.bronze .pred-hof-pts {
+    background: rgba(205,124,58,0.18); color: #f0a050;
+    border-color: rgba(205,124,58,0.4);
+}
+.pred-hof-meta {
+    font-size: 0.72rem; color: rgba(255,255,255,0.45);
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.pred-hof-tier-badge {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    text-transform: uppercase; letter-spacing: 1px;
+    border: 1px solid currentColor;
+}
+.pred-hof-list {
+    margin-top: 22px; padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    position: relative; z-index: 1;
+}
+.pred-hof-list-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 12px; border-radius: 8px;
+    transition: background 0.15s ease;
+}
+.pred-hof-list-row:hover { background: rgba(255,255,255,0.03); }
+.pred-hof-list-row.me {
+    background: linear-gradient(90deg, rgba(0,217,54,0.08) 0%, rgba(0,217,54,0.02) 100%);
+    border: 1px solid rgba(0,217,54,0.22);
+}
+.pred-hof-list-rank {
+    min-width: 26px; text-align: center; font-weight: 800;
+    color: rgba(255,255,255,0.4); font-size: 0.85rem;
+}
+.pred-hof-list-row.me .pred-hof-list-rank { color: var(--color-accent); }
+.pred-hof-list-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
+.pred-hof-list-tier {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+.pred-hof-list-pts {
+    font-weight: 800; font-size: 0.9rem; min-width: 60px; text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.pred-hof-list-pts.me { color: var(--color-accent); }
+@media (max-width: 540px) {
+    .pred-hof { padding: 22px 14px 18px; }
+    .pred-hof-title { font-size: 1.25rem; }
+    .pred-hof-podium { gap: 8px; }
+    .pred-hof-step { padding: 14px 8px 16px; }
+    .pred-hof-name { font-size: 0.85rem; }
+    .pred-hof-step.gold .pred-hof-name { font-size: 0.95rem; }
+    .pred-hof-avatar .tm-avatar { width: 50px !important; height: 50px !important; font-size: 20px !important; }
+    .pred-hof-step.gold .pred-hof-avatar .tm-avatar { width: 70px !important; height: 70px !important; font-size: 28px !important; }
+}
+
+/* ── DERNIER RÉSULTAT (carte comparative toi vs best) ── */
+.pred-last-result {
+    position: relative; overflow: hidden; border-radius: 16px;
+    margin-bottom: 18px; min-height: 180px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.pred-last-bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    filter: brightness(0.4) saturate(1.1);
+}
+.pred-last-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(15,15,15,0.9) 0%, rgba(15,15,15,0.65) 100%);
+}
+.pred-last-content {
+    position: relative; z-index: 2;
+    padding: 22px 24px;
+}
+.pred-last-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+}
+.pred-last-label {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+}
+.pred-last-name {
+    font-size: 1.4rem; font-weight: 900; color: #fff; line-height: 1.15;
+    margin-top: 2px;
+}
+.pred-last-cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.pred-last-card {
+    padding: 16px 18px; border-radius: 12px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+}
+.pred-last-card.you { border-color: rgba(0,217,54,0.3); background: rgba(0,217,54,0.06); }
+.pred-last-card.best { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05); }
+.pred-last-card-label {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.pred-last-card.you .pred-last-card-label { color: var(--color-accent); }
+.pred-last-card.best .pred-last-card-label { color: #fbbf24; }
+.pred-last-card-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.pred-last-card-name {
+    flex: 1; font-weight: 700; font-size: 0.92rem; color: #f0f0f0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pred-last-card-pts {
+    font-weight: 900; font-size: 1.4rem; line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.pred-last-card.you .pred-last-card-pts { color: var(--color-accent); }
+.pred-last-card.best .pred-last-card-pts { color: #fbbf24; }
+.pred-last-card-detail {
+    font-size: 0.78rem; color: rgba(255,255,255,0.55);
+    line-height: 1.4;
+}
+.pred-last-empty {
+    font-size: 0.82rem; color: rgba(255,255,255,0.4);
+    font-style: italic;
+}
+.pred-last-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75);
+    text-decoration: none; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.18s ease; cursor: pointer;
+}
+.pred-last-cta:hover {
+    background: rgba(255,255,255,0.1); color: #fff;
+    border-color: rgba(255,255,255,0.18);
+}
+@media (max-width: 600px) {
+    .pred-last-content { padding: 18px 16px; }
+    .pred-last-name { font-size: 1.15rem; }
+    .pred-last-cards { grid-template-columns: 1fr; gap: 10px; }
+    .pred-last-card { padding: 14px 16px; }
+}
+
+/* ── SPARKLINE ma progression ──────────────────────── */
+.pred-sparkline {
+    padding: 18px 22px; border-radius: 14px;
+    margin-bottom: 18px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+}
+.pred-sparkline-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; gap: 12px;
+}
+.pred-sparkline-title {
+    font-weight: 800; font-size: 0.95rem; color: #f0f0f0;
+}
+.pred-sparkline-stats {
+    display: flex; gap: 16px; font-size: 0.78rem; color: rgba(255,255,255,0.55);
+}
+.pred-sparkline-stats b { color: var(--color-accent); font-weight: 800; }
+.pred-sparkline-svg { width: 100%; height: 80px; display: block; }
+.pred-sparkline-empty {
+    text-align: center; padding: 22px 0; font-size: 0.85rem;
+    color: rgba(255,255,255,0.4); font-style: italic;
 }
 
 /* ── PREDICTORS PODIUM (top 3 prédicteurs all-time) ─── */
