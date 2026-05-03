@@ -17,13 +17,9 @@ function getEditionMapInfo(e) {
     return null;
 }
 
-// ── Re-export de SPRINGS_TIERS pour usage local (alias TIERS pour compatibilité) ──
-// Le système de tiers est désormais centralisé dans utils.js (computeSpringsScore +
-// getSpringsTier). On garde l'alias `TIERS` pour les appels locaux existants
-// (dashboard, hall of fame, etc.).
-const TIERS = SPRINGS_TIERS;
-const getTier = getSpringsTier;
-const getNextTier = getNextSpringsTier;
+// Le système de tiers est centralisé dans utils.js (computeSpringsScore +
+// getSpringsTier). Plus d'alias local — on appelle directement les fonctions
+// importées partout dans le fichier.
 
 // Stats prédiction PURES d'un joueur (pour le Hall of Fame et le ranking pred).
 // Le tier renvoyé est calculé sur le SPRINGS SCORE (assiduité + perf + pred),
@@ -678,7 +674,8 @@ function hallOfFameHtml() {
         const isMe = state.currentUser && player?.userId === state.currentUser.uid;
         const name = player ? pName(player) : '?';
         const av = player ? avatarHtml(player, { size: cls === 'gold' ? 90 : 64 }) : '';
-        const tier = getTier(data.total);
+        // Pas de tier badge ici : le HoF est déjà un classement spécifique aux prédictions
+        // (basé sur les pts pred), afficher le tier global Springs Rank serait redondant.
         return `<div class="pred-hof-step ${cls}">
             <div class="pred-hof-medal">${medal}</div>
             <div class="pred-hof-avatar">${av}</div>
@@ -686,7 +683,6 @@ function hallOfFameHtml() {
             <div class="pred-hof-pts">${data.total} pt${data.total !== 1 ? 's' : ''}</div>
             <div class="pred-hof-meta">
                 <span>${data.count} cups</span>
-                <span class="pred-hof-tier-badge" style="color:${tier.color}">${tier.icon} ${tier.label}</span>
             </div>
         </div>`;
     };
@@ -708,12 +704,10 @@ function hallOfFameHtml() {
     if (myIdx >= 10) {
         const [id, data] = ranked[myIdx];
         const player = state.data.participants.find(p => p.id === id);
-        const tier = getTier(data.total);
         myInjected = `<div class="pred-hof-list-row me" style="margin-top:8px">
             <span class="pred-hof-list-rank">#${myIdx + 1}</span>
             ${avatarHtml(player, { size: 28 })}
             <span class="pred-hof-list-name">${pName(player)} <span style="color:var(--color-accent);font-size:0.72rem;font-weight:800;margin-left:6px;text-transform:uppercase;letter-spacing:1px">← ${t('predictions.hof.you')}</span></span>
-            <span class="pred-hof-list-tier" style="color:${tier.color};border:1px solid currentColor">${tier.icon} ${tier.label}</span>
             <span class="pred-hof-list-pts me">${data.total} pts</span>
         </div>`;
     }
@@ -724,12 +718,10 @@ function hallOfFameHtml() {
             const rank = i + 4;
             const player = state.data.participants.find(p => p.id === id);
             const isMe = state.currentUser && player?.userId === state.currentUser.uid;
-            const tier = getTier(data.total);
             html += `<div class="pred-hof-list-row${isMe ? ' me' : ''}">
                 <span class="pred-hof-list-rank">#${rank}</span>
                 ${player ? avatarHtml(player, { size: 28 }) : ''}
                 <span class="pred-hof-list-name">${player ? pName(player) : '?'}${isMe ? ` <span style="color:var(--color-accent);font-size:0.72rem;font-weight:800;margin-left:6px;text-transform:uppercase;letter-spacing:1px">← ${t('predictions.hof.you')}</span>` : ''}</span>
-                <span class="pred-hof-list-tier" style="color:${tier.color};border:1px solid currentColor">${tier.icon} ${tier.label}</span>
                 <span class="pred-hof-list-pts${isMe ? ' me' : ''}">${data.total} pts</span>
             </div>`;
         });
@@ -1125,9 +1117,6 @@ export function displayPredictions() {
                     const player = state.data.participants.find(p => p.id === pred.playerId);
                     const isMe = state.currentUser && player?.userId === state.currentUser.uid;
                     const rName = player ? pName(player) : '?';
-                    // Tier basé sur le score CUMULÉ all-time (plus représentatif que le score d'1 cup)
-                    const playerCumStats = player ? getPlayerStats(player.id) : null;
-                    const tier = playerCumStats?.tier || getTier(0);
 
                     let rowClass = '';
                     if (i === 0) rowClass = 'gold';
@@ -1146,13 +1135,14 @@ export function displayPredictions() {
                         ? `<button onclick="event.stopPropagation();deletePrediction('${pred.id}','${rName.replace(/'/g,"\\'")}\")" title="Supprimer" style="background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.4);font-size:0.85rem;padding:2px 4px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='rgba(239,68,68,0.4)'">🗑️</button>`
                         : '';
 
+                    // Pas de tier badge ici : le classement par cup est déjà sur les pts pred
+                    // de cette cup, le tier global Springs serait redondant et confus.
                     html += `<div class="pred-past-row ${rowClass}">
                         <span class="pred-past-rank">${rankCell}</span>
                         <span class="pred-past-name-cell">
                             ${player ? avatarHtml(player, { size: 30 }) : ''}
                             <span class="pred-past-name-text">${rName}${isMe ? ` <span style="color:var(--color-accent);font-size:0.7rem;font-weight:800;margin-left:4px;text-transform:uppercase;letter-spacing:0.8px">← ${t('predictions.hof.you')}</span>` : ''}</span>
                         </span>
-                        <span class="pred-past-tier" style="color:${tier.color}">${tier.icon} ${tier.label}</span>
                         <span class="pred-past-pts">${pred.score} pt${pred.score !== 1 ? 's' : ''}</span>
                         ${adminDel}
                     </div>`;
