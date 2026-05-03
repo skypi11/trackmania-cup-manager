@@ -188,9 +188,12 @@ export function tierBadgeHtml(tier, options = {}) {
 }
 
 // ── Bloc unifié "Comment ça marche" — Springs Rank + Prédictions + Achievements ─
-// Réutilisable sur la home et sur l'onglet predictions. Doit être passé `t` pour
-// éviter une dépendance d'import.
-export function springsHowItWorksHtml(t) {
+// Réutilisable sur la home, predictions et rules. Doit être passé `t` pour éviter
+// une dépendance d'import.
+//   options.expanded: true = rendu en card toujours déployée (pour Rules)
+//                     false (default) = rendu en <details> pliable (home, predictions)
+export function springsHowItWorksHtml(t, options = {}) {
+    const expanded = options.expanded === true;
     // Grille des 5 tiers Bronze→Diamond avec couleurs et plages de points
     const tiersGrid = [
         { key: 'bronze',   icon: '🥉', label: 'Bronze',   color: '#cd7c3a', range: '0–14' },
@@ -206,42 +209,53 @@ export function springsHowItWorksHtml(t) {
         </div>
     `).join('');
 
+    const bodyHtml = `
+        <p class="springs-howto-intro">${t('howto.intro')}</p>
+
+        <div class="springs-howto-section">
+            <h3 class="springs-howto-section-title">${t('howto.springs.title')}</h3>
+            <p>${t('howto.springs.formula')}</p>
+            <ul class="springs-howto-list">
+                <li>${t('howto.springs.cup')}</li>
+                <li>${t('howto.springs.qualif')}</li>
+                <li>${t('howto.springs.f1')}</li>
+                <li>${t('howto.springs.pred')}</li>
+            </ul>
+            <div class="springs-howto-note">${t('howto.springs.note')}</div>
+            <div class="springs-howto-tiers">${tiersGrid}</div>
+        </div>
+
+        <div class="springs-howto-section">
+            <h3 class="springs-howto-section-title">${t('howto.predictions.title')}</h3>
+            <ul class="springs-howto-list">
+                <li>${t('howto.predictions.rule1')}</li>
+                <li>${t('howto.predictions.rule2')}</li>
+                <li>${t('howto.predictions.rule3')}</li>
+            </ul>
+            <div class="springs-howto-note">${t('howto.predictions.max')}</div>
+        </div>
+
+        <div class="springs-howto-section">
+            <h3 class="springs-howto-section-title">${t('howto.achievements.title')}</h3>
+            <p>${t('howto.achievements.intro')}</p>
+        </div>`;
+
+    if (expanded) {
+        // Mode expanded : carte simple toujours visible (utilisée dans l'onglet Rules)
+        return `<div class="springs-howto springs-howto-expanded">
+            <div class="springs-howto-summary" style="cursor:default">
+                <span>${t('howto.title')}</span>
+            </div>
+            <div class="springs-howto-body">${bodyHtml}</div>
+        </div>`;
+    }
+
     return `<details class="springs-howto">
         <summary class="springs-howto-summary">
             <span>${t('howto.title')}</span>
             <span class="springs-howto-arrow">▼</span>
         </summary>
-        <div class="springs-howto-body">
-            <p class="springs-howto-intro">${t('howto.intro')}</p>
-
-            <div class="springs-howto-section">
-                <h3 class="springs-howto-section-title">${t('howto.springs.title')}</h3>
-                <p>${t('howto.springs.formula')}</p>
-                <ul class="springs-howto-list">
-                    <li>${t('howto.springs.cup')}</li>
-                    <li>${t('howto.springs.qualif')}</li>
-                    <li>${t('howto.springs.f1')}</li>
-                    <li>${t('howto.springs.pred')}</li>
-                </ul>
-                <div class="springs-howto-note">${t('howto.springs.note')}</div>
-                <div class="springs-howto-tiers">${tiersGrid}</div>
-            </div>
-
-            <div class="springs-howto-section">
-                <h3 class="springs-howto-section-title">${t('howto.predictions.title')}</h3>
-                <ul class="springs-howto-list">
-                    <li>${t('howto.predictions.rule1')}</li>
-                    <li>${t('howto.predictions.rule2')}</li>
-                    <li>${t('howto.predictions.rule3')}</li>
-                </ul>
-                <div class="springs-howto-note">${t('howto.predictions.max')}</div>
-            </div>
-
-            <div class="springs-howto-section">
-                <h3 class="springs-howto-section-title">${t('howto.achievements.title')}</h3>
-                <p>${t('howto.achievements.intro')}</p>
-            </div>
-        </div>
+        <div class="springs-howto-body">${bodyHtml}</div>
     </details>`;
 }
 

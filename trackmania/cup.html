@@ -1165,6 +1165,21 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
 .pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
 
+/* ── RULES INFO GRID (système de points + comment ça marche côte à côte) ── */
+.rules-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+    align-items: start;
+}
+.rules-info-col { min-width: 0; }
+.rules-info-col > .card { margin-top: 0 !important; }
+.rules-info-col > .springs-howto { margin: 0 !important; }
+@media (max-width: 900px) {
+    .rules-info-grid { grid-template-columns: 1fr; }
+}
+
 /* ── BLOC "COMMENT ÇA MARCHE" UNIFIÉ (home + predictions) ── */
 .springs-howto {
     background: linear-gradient(135deg, rgba(0,217,54,0.04) 0%, rgba(167,139,250,0.04) 100%);
@@ -4443,6 +4458,11 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
                 <button class="btn btn-secondary" onclick="runCupIdMigration()" style="border-color:rgba(245,158,11,0.5);color:var(--color-warning)">▶ Lancer la migration</button>
                 <div id="migrationResults" style="margin-top:14px"></div>
               </div>
+              <div class="card" style="margin-bottom:16px">
+                <h2 style="margin-bottom:8px">📋 Règlement de la cup</h2>
+                <p style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:14px">Édite le règlement affiché dans l'onglet "Règles &amp; Format". Supporte le markdown (titres, listes, gras).</p>
+                <div id="rulesAdminEditor"></div>
+              </div>
               <div class="card">
                 <h2 data-i18n="admin.customization">🎨 Personnalisation du site</h2>
                 <form id="siteConfigForm" onsubmit="saveSiteConfig(event)">
@@ -4958,6 +4978,7 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
         if (tab === 'resultats') window.displayAdminResults    && window.displayAdminResults();
         if (tab === 'discord')   window.displayDiscordMigration && window.displayDiscordMigration();
         if (tab === 'journal')   window.displayAdminJournal    && window.displayAdminJournal();
+        if (tab === 'config')    window.renderRulesAdminEditor && window.renderRulesAdminEditor();
     }
     window.switchAdmTab = switchAdmTab;
 

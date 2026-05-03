@@ -3,7 +3,7 @@
 import { db, POINTS } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t, getLang } from '../../shared/i18n.js';
-import { showToast } from './utils.js';
+import { showToast, springsHowItWorksHtml } from './utils.js';
 import { updateDoc, doc } from 'firebase/firestore';
 
 const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly';
@@ -89,32 +89,46 @@ export function displayRules() {
         </div>`;
     }
 
-    // Section système de points (toujours affichée, même si pas de rules markdown)
-    html += pointsTableHtml();
+    // Grid 2 colonnes (desktop) / 1 colonne (mobile) :
+    //   gauche  → Système de points (F1)
+    //   droite  → Comment ça marche (Springs Rank + prédictions + achievements)
+    // Sur mobile, ils s'empilent automatiquement.
+    html += `<div class="rules-info-grid">
+        <div class="rules-info-col">${pointsTableHtml()}</div>
+        <div class="rules-info-col">${springsHowItWorksHtml(t, { expanded: true })}</div>
+    </div>`;
 
-    if (state.isAdmin) {
-        const fmtCodes = `<code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px"># Titre</code>
-                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">## Sous-titre</code>
-                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">- élément</code>
-                <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">**gras**</code>`;
-        const taStyle = `width:100%;box-sizing:border-box;resize:vertical;font-family:monospace;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;color:var(--color-text-primary)`;
-        html += `<div class="card" style="margin-top:16px">
-            <h3 style="margin:0 0 6px;font-size:1rem">${t('rules.edit')}</h3>
-            <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:16px">${t('rules.format.hint')} ${fmtCodes}</p>
-
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px">${t('rules.tab.fr')}</label>
-            <textarea id="rulesEditor" rows="14" style="${taStyle}">${rules || ''}</textarea>
-
-            <label style="display:block;font-size:0.85rem;font-weight:600;margin-top:16px;margin-bottom:4px">${t('rules.tab.en')}</label>
-            <p style="font-size:0.78rem;color:var(--color-text-secondary);margin:0 0 6px">${t('rules.en.hint')}</p>
-            <textarea id="rulesEditorEn" rows="14" style="${taStyle}">${rulesEn || ''}</textarea>
-
-            <button class="btn btn-primary" onclick="saveRules()" style="margin-top:12px">${t('rules.save')}</button>
-        </div>`;
-    }
-
+    // L'éditeur admin a été déplacé dans le panel Administration
     container.innerHTML = html;
 }
+
+// ── Éditeur des règles (utilisé depuis le panel Administration) ───────────────
+// Rendu autonome : injecte le formulaire dans #rulesAdminEditor.
+// Le panel admin appelle cette fonction quand l'admin ouvre la section.
+export function renderRulesAdminEditor() {
+    const container = document.getElementById('rulesAdminEditor');
+    if (!container || !state.isAdmin) return;
+    const rules = state.siteConfig?.rules || '';
+    const rulesEn = state.siteConfig?.rulesEn || '';
+    const fmtCodes = `<code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px"># Titre</code>
+            <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">## Sous-titre</code>
+            <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">- élément</code>
+            <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">**gras**</code>`;
+    const taStyle = `width:100%;box-sizing:border-box;resize:vertical;font-family:monospace;font-size:0.85rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px;color:var(--color-text-primary)`;
+    container.innerHTML = `
+        <h3 style="margin:0 0 6px;font-size:1rem">${t('rules.edit')}</h3>
+        <p style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:16px">${t('rules.format.hint')} ${fmtCodes}</p>
+
+        <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px">${t('rules.tab.fr')}</label>
+        <textarea id="rulesEditor" rows="14" style="${taStyle}">${rules}</textarea>
+
+        <label style="display:block;font-size:0.85rem;font-weight:600;margin-top:16px;margin-bottom:4px">${t('rules.tab.en')}</label>
+        <p style="font-size:0.78rem;color:var(--color-text-secondary);margin:0 0 6px">${t('rules.en.hint')}</p>
+        <textarea id="rulesEditorEn" rows="14" style="${taStyle}">${rulesEn}</textarea>
+
+        <button class="btn btn-primary" onclick="saveRules()" style="margin-top:12px">${t('rules.save')}</button>`;
+}
+window.renderRulesAdminEditor = renderRulesAdminEditor;
 
 window.saveRules = async () => {
     const frContent = document.getElementById('rulesEditor')?.value || '';
