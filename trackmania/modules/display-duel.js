@@ -1,7 +1,7 @@
 // modules/display-duel.js — Comparaison head-to-head entre deux joueurs
 
 import { state } from './state.js';
-import { pName, getPoints, avatarHtml } from './utils.js';
+import { pName, getPoints, avatarHtml, playerTierPillHtml } from './utils.js';
 import { t } from '../../shared/i18n.js';
 import { computePlayerStats, ACHIEVEMENTS } from './display-editions.js';
 
@@ -219,10 +219,11 @@ export function displayDuel() {
             ? `<div style="font-size:clamp(1.4rem,2.5vw,2.1rem);font-weight:900;letter-spacing:-0.03em;line-height:1.1;color:${color};text-shadow:0 0 24px ${glow},0 0 48px ${glow.replace('0.7','0.35')},0 0 80px ${glow.replace('0.7','0.15')};word-break:break-word">${name}</div>`
             : `<div style="font-size:1rem;font-weight:600;color:rgba(255,255,255,0.18);letter-spacing:0.02em">${t('duel.select.ph')}</div>`;
         const teamHtml = team ? `<div style="font-size:0.72rem;color:${color};opacity:0.55;letter-spacing:0.05em;margin-top:4px">${team}</div>` : '';
+        const tierPill = player ? `<div style="display:flex;justify-content:${isRight ? 'flex-start' : 'flex-end'};margin-top:6px">${playerTierPillHtml(player.id, state.data, { size: 'md' })}</div>` : '';
         const avatar = player ? `<div style="display:flex;justify-content:${isRight ? 'flex-start' : 'flex-end'};margin-bottom:6px">${avatarHtml(player, { size: 64, ringColor: `rgba(${rgb},0.5)` })}</div>` : '';
         return `<div style="padding:18px 20px 16px;text-align:${isRight ? 'left' : 'right'};background:linear-gradient(${isRight ? '245' : '115'}deg, rgba(${rgb},0.09) 0%, transparent 55%);display:flex;flex-direction:column;gap:12px">
             ${avatar}
-            <div>${nameHtml}${teamHtml}</div>
+            <div>${nameHtml}${teamHtml}${tierPill}</div>
             <select onchange="setDuelPlayer('${side}',this.value)" class="duel-select" style="background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.2);">
                 <option value="">${t('duel.select.ph')}</option>${opts}
             </select>

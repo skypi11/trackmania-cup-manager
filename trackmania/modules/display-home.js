@@ -2,7 +2,7 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, getCountdown, getPoints, avatarHtml } from './utils.js';
+import { pName, dateLang, getCountdown, getPoints, avatarHtml, computeSpringsScore, getSpringsTier, getNextSpringsTier, tierBadgeHtml } from './utils.js';
 import springsLogo from '../../assets/springs-logo.png';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 
@@ -127,6 +127,40 @@ export function displayHome() {
             .map(([pid]) => pid);
         const myRankAll = allRanked.indexOf(currentPlayer.id);
         const rankBadge = myRankAll >= 0 ? `<span class="home-personal-rank-badge" title="Classement général">#${myRankAll + 1}</span>` : '';
+
+        // ── Springs Rank perso : tier + barre de progression ──
+        const springsScore = computeSpringsScore(currentPlayer.id, {
+            results: state.data.results,
+            predictions: state.data.predictions,
+        });
+        const tier = getSpringsTier(springsScore);
+        const nextTier = getNextSpringsTier(springsScore);
+        let springsProgressHtml = '';
+        if (nextTier) {
+            const span = nextTier.min - tier.min;
+            const within = springsScore - tier.min;
+            const pct = Math.min(100, Math.max(0, Math.round(within / span * 100)));
+            const ptsToNext = nextTier.min - springsScore;
+            springsProgressHtml = `<div class="home-springs-progress" style="--tier-color:${tier.color};--tier-glow:${tier.glow}">
+                <div class="home-springs-progress-row">
+                    ${tierBadgeHtml(tier, { size: 'lg', score: springsScore, tooltip: `${tier.label} · ${springsScore} pts Springs` })}
+                    <div class="home-springs-progress-text">
+                        <div class="home-springs-progress-line">+${ptsToNext} pts pour <b style="color:${nextTier.color}">${nextTier.icon} ${nextTier.label}</b></div>
+                        <div class="home-springs-progress-bar"><div class="home-springs-progress-fill" style="width:${pct}%"></div></div>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            springsProgressHtml = `<div class="home-springs-progress" style="--tier-color:${tier.color};--tier-glow:${tier.glow}">
+                <div class="home-springs-progress-row">
+                    ${tierBadgeHtml(tier, { size: 'lg', score: springsScore, tooltip: `${tier.label} · ${springsScore} pts Springs` })}
+                    <div class="home-springs-progress-text">
+                        <div class="home-springs-progress-line">🎉 Tier maximum atteint 💎</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         personalHtml = `<div class="home-personal-card">
             <div class="home-personal-header">
                 ${avatarHtml(currentPlayer, { size: 56, ringColor: 'rgba(0,217,54,0.4)' })}
@@ -135,6 +169,7 @@ export function displayHome() {
                     <div class="home-personal-sub">${t('home.personal.sub') || 'Ton parcours'}</div>
                 </div>
             </div>
+            ${springsProgressHtml}
             <div class="home-personal-stats">
                 <div class="home-personal-stat">
                     <div class="home-personal-stat-val">${myPts}</div>
@@ -309,6 +344,10 @@ export function displayHome() {
 
         ${quickActionsHtml}
         ${championsHtml}`;
+
+    // Rafraîchir le tier badge dans le menu utilisateur (sidebar + topbar)
+    // — appelé ici car displayHome() est invoqué à chaque update de state.data
+    if (window.refreshUserMenuTier) window.refreshUserMenuTier();
 }
 
 export function displayNextEditionBanner() {

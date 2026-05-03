@@ -187,6 +187,22 @@ export function tierBadgeHtml(tier, options = {}) {
     </span>`;
 }
 
+// Helper de plus haut niveau : calcule le tier d'un joueur depuis state.data
+// et retourne la pill sm (icône seule) avec tooltip. Pratique pour insérer
+// la pill à côté de chaque pseudo partout sur le site sans logique répétée.
+// Le state global est passé en paramètre pour rester pure (pas d'import circulaire).
+export function playerTierPillHtml(playerId, stateData, options = {}) {
+    if (!playerId || !stateData) return '';
+    const score = computeSpringsScore(playerId, {
+        results: stateData.results || [],
+        predictions: stateData.predictions || [],
+    });
+    if (score === 0 && options.hideOnZero !== false) return '';
+    const tier = getSpringsTier(score);
+    const tooltip = `${tier.label} · ${score} pts Springs`;
+    return tierBadgeHtml(tier, { size: options.size || 'sm', tooltip });
+}
+
 // Avatar Discord (avec fallback initiale en background — toujours visible si img fail)
 export function avatarHtml(player, options = {}) {
     const { size = 40, ringColor = null, className = '' } = options;

@@ -3,7 +3,7 @@
 import { db, auth } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, showToast, buildCountryPicker, normalizeLoginTM } from './utils.js';
+import { pName, showToast, buildCountryPicker, normalizeLoginTM, computeSpringsScore, getSpringsTier, tierBadgeHtml } from './utils.js';
 import { addDoc, getDoc, getDocs, updateDoc, doc, collection, query, where } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { handleDiscordCallback, updateDiscordReminders, maybeShowDiscordPrompt } from './discord.js';
@@ -15,6 +15,118 @@ const cupId = new URLSearchParams(window.location.search).get('cup') || 'monthly
 
 const DISCORD_CLIENT_ID  = '1483592495215673407';
 const DISCORD_REDIRECT   = 'https://springs-esport.vercel.app/api/discord-callback';
+
+// ── User menu : pseudo + tier badge à côté ──────────────────────────────────
+// Rendu du bouton utilisateur (sidebar et topbar mobile) avec :
+//   👤 [pseudo] [tier-pill]
+// Le tier vient du Springs Score si le joueur est lié à un participant,
+// sinon juste 👤 [pseudo].
+function renderUserMenuButton(btn, pseudo, linkedPlayer, isMobile = false) {
+    if (!btn) return;
+    let tierHtml = '';
+    if (linkedPlayer) {
+        const score = computeSpringsScore(linkedPlayer.id, {
+            results: state.data.results || [],
+            predictions: state.data.predictions || [],
+        });
+        if (score > 0) {
+            const tier = getSpringsTier(score);
+            tierHtml = ` ${tierBadgeHtml(tier, { size: 'sm', tooltip: `${tier.label} · ${score} pts Springs` })}`;
+        }
+    }
+    // textContent ne peut pas contenir de HTML — on bascule sur innerHTML
+    btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px">👤 ${escapeHtml(pseudo)}${tierHtml}</span>`;
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+// Helper exposé : permet de re-render le bouton après que les données arrivent
+// (ex: après un refresh state.data via Firestore onSnapshot)
+window.refreshUserMenuTier = function() {
+    if (!state.currentUser) return;
+    const playerBtn = document.getElementById('playerBtn');
+    const topbarPlayerBtn = document.getElementById('topbarPlayerBtn');
+    if (state.isAdmin) {
+        const pseudoAdmin = state.currentUserProfile?.pseudo || state.currentUser.displayName || t('nav.account');
+        if (playerBtn) renderUserMenuButton(playerBtn, pseudoAdmin, null);
+        if (topbarPlayerBtn) renderUserMenuButton(topbarPlayerBtn, pseudoAdmin, null, true);
+    } else {
+        const linkedPlayer = state.data.participants.find(p => p.userId === state.currentUser.uid);
+        const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || state.currentUser.displayName || t('nav.account'));
+        if (playerBtn) renderUserMenuButton(playerBtn, pseudo, linkedPlayer);
+        if (topbarPlayerBtn) renderUserMenuButton(topbarPlayerBtn, pseudo, linkedPlayer, true);
+
+        // Détection de promotion de tier : compare le tier actuel avec le dernier tier connu
+        // (stocké en localStorage). Si nouveau > ancien → toast festif + update.
+        if (linkedPlayer && state.data.results.length > 0) {
+            checkTierPromotion(linkedPlayer);
+        }
+    }
+};
+
+// Compare le tier actuel avec celui stocké en localStorage. Si différent ET supérieur,
+// déclenche le toast de promotion (1 seule fois par changement). Skip la 1ère fois
+// pour éviter de notifier le tier de départ comme une promotion.
+function checkTierPromotion(player) {
+    const score = computeSpringsScore(player.id, {
+        results: state.data.results || [],
+        predictions: state.data.predictions || [],
+    });
+    const tier = getSpringsTier(score);
+    const storageKey = `springsTier_${player.id}`;
+    const stored = localStorage.getItem(storageKey);
+
+    // 1ère fois : on stocke sans notifier
+    if (!stored) {
+        localStorage.setItem(storageKey, tier.key);
+        return;
+    }
+
+    // Si le tier a changé ET qu'il est supérieur (pas une régression), on notifie
+    if (stored !== tier.key) {
+        const tierOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
+        const oldIdx = tierOrder.indexOf(stored);
+        const newIdx = tierOrder.indexOf(tier.key);
+        if (newIdx > oldIdx) {
+            showTierPromotionToast(tier);
+        }
+        localStorage.setItem(storageKey, tier.key);
+    }
+}
+
+function showTierPromotionToast(tier) {
+    // Évite les doublons si déjà affiché
+    if (document.querySelector('.tier-promotion-toast')) return;
+
+    const colors = ['#fbbf24', '#a78bfa', '#22d3ee', '#00D936', '#ef4444'];
+    const confettis = Array.from({ length: 24 }, (_, i) => {
+        const angle = (i / 24) * Math.PI * 2 + Math.random() * 0.5;
+        const dist = 140 + Math.random() * 100;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        const c = colors[i % colors.length];
+        const delay = Math.random() * 0.3;
+        return `<span style="--dx:${dx}px;--dy:${dy}px;--c:${c};animation-delay:${delay}s"></span>`;
+    }).join('');
+
+    const toast = document.createElement('div');
+    toast.className = 'tier-promotion-toast';
+    toast.style.setProperty('--tier-color', tier.color);
+    toast.innerHTML = `
+        <div class="tier-promotion-confetti">${confettis}</div>
+        <div class="tier-promotion-label">🎉 Promotion 🎉</div>
+        <div class="tier-promotion-icon">${tier.icon}</div>
+        <div class="tier-promotion-title">Tu es passé</div>
+        <div class="tier-promotion-tier">${tier.label}</div>
+        <div class="tier-promotion-meta">Continue comme ça !</div>
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-remove après l'animation (6s + petite marge)
+    setTimeout(() => toast.remove(), 6500);
+}
 
 // ── checkLoaded ───────────────────────────────────────────────────────────────
 
@@ -239,15 +351,15 @@ onAuthStateChanged(auth, async (user) => {
         document.body.classList.add('admin-mode');
         playerBtn.style.display = '';
         const pseudoAdmin = state.currentUserProfile?.pseudo || user.displayName || t('nav.account');
-        playerBtn.textContent = `👤 ${pseudoAdmin}`;
-        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; topbarPlayerBtn.textContent = `👤 ${pseudoAdmin}`; }
+        renderUserMenuButton(playerBtn, pseudoAdmin, null);
+        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; renderUserMenuButton(topbarPlayerBtn, pseudoAdmin, null, true); }
     } else {
         document.body.classList.remove('admin-mode');
         playerBtn.style.display = '';
         const linkedPlayer = state.data.participants.find(p => p.userId === user.uid);
         const pseudo = linkedPlayer ? pName(linkedPlayer) : (state.currentUserProfile?.pseudo || user.displayName || t('nav.account'));
-        playerBtn.textContent = `👤 ${pseudo}`;
-        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; topbarPlayerBtn.textContent = `👤 ${pseudo}`; }
+        renderUserMenuButton(playerBtn, pseudo, linkedPlayer);
+        if (topbarPlayerBtn) { topbarPlayerBtn.style.display = ''; renderUserMenuButton(topbarPlayerBtn, pseudo, linkedPlayer, true); }
         // Nouveau joueur Discord sans profil → ouvrir la création de profil automatiquement
         if (!linkedPlayer && !state.currentUserProfile && user.uid.startsWith('discord_')) {
             setTimeout(() => window.openCreateProfile(), 600);
@@ -338,7 +450,7 @@ document.getElementById('createProfileForm').addEventListener('submit', async (e
         sessionStorage.removeItem('tm_discord_username');
         sessionStorage.removeItem('tm_discord_avatar');
         window.closeCreateProfile();
-        document.getElementById('playerBtn').textContent = `👤 ${pseudo}`;
+        if (window.refreshUserMenuTier) window.refreshUserMenuTier();
         showToast(t('profile.created'));
     } catch(err) {
         console.error('Create profile error:', err);

@@ -2,7 +2,7 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, getPoints, avatarHtml } from './utils.js';
+import { pName, dateLang, getPoints, avatarHtml, playerTierPillHtml } from './utils.js';
 
 export function displayHallOfFame() {
     const container = document.getElementById('hallofFameContent');
@@ -43,7 +43,7 @@ export function displayHallOfFame() {
                     <div onclick="openPlayerProfile('${c.player.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:background 0.18s" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
                         <span style="font-size:1.4rem;width:30px;text-align:center;flex-shrink:0">${rankMedals[i]}</span>
                         ${avatarHtml(c.player, { size: 36 })}
-                        <span style="font-weight:800;flex:1">${pName(c.player)}</span>
+                        <span style="font-weight:800;flex:1;display:inline-flex;align-items:center;gap:8px">${pName(c.player)} ${playerTierPillHtml(c.player.id, state.data)}</span>
                         <span style="font-size:0.78rem;color:rgba(255,255,255,0.3)">${c.player.team && c.player.team !== 'Sans équipe' ? c.player.team : ''}</span>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                             <span class="hof-wins-badge">🏆 ${c.wins} ${t('hof.wins')}</span>
