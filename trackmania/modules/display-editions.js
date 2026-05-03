@@ -352,29 +352,45 @@ window.goToEdition = (id) => {
 
 // ── Système d'achievements ────────────────────────────────────────────────────
 
+// ACHIEVEMENTS : id, icon (emoji), check (condition), rarity (palier).
+// Rarity = palette unifiée Bronze→Diamond pour cohérence avec Springs Rank.
+// Bronze = juste participer / faciles
+// Silver = engagement régulier
+// Gold = vrai exploit
+// Platinum = très dur
+// Diamond = élite/rare
 export const ACHIEVEMENTS = [
     // ── Compétition ───────────────────────────────────────────────────────
-    { id: 'rookie',          icon: '🌱', check: s => s.participations >= 1 },
-    { id: 'regulier',        icon: '⭐', check: s => s.participations >= 5 },
-    { id: 'veteran',         icon: '💪', check: s => s.participations >= 10 },
-    // NOTE: participations = éditions distinctes avec au moins un résultat (inscription, qualification ou finale)
-    { id: 'assidu',          icon: '📅', check: s => s.allEditions },
-    { id: 'finaliste',       icon: '🎯', check: s => s.finals >= 1 },
-    { id: 'podium',          icon: '🥉', check: s => s.podiums >= 1 },
-    { id: 'habitue',         icon: '🎪', check: s => s.podiums >= 3 },
-    { id: 'inarretable',     icon: '⚡', check: s => s.podiums >= 5 },
-    { id: 'champion',        icon: '🏆', check: s => s.wins >= 1 },
-    { id: 'patron',          icon: '👑', check: s => s.wins >= 3 },
-    { id: 'en_feu',          icon: '🔥', check: s => s.maxConsecWins >= 2 },
-    { id: 'perfectionniste', icon: '💎', check: s => s.finals >= 3 && s.alwaysTop5 },
+    { id: 'rookie',          icon: '🌱', rarity: 'bronze',   check: s => s.participations >= 1 },
+    { id: 'regulier',        icon: '⭐', rarity: 'silver',   check: s => s.participations >= 5 },
+    { id: 'veteran',         icon: '💪', rarity: 'gold',     check: s => s.participations >= 10 },
+    { id: 'assidu',          icon: '📅', rarity: 'gold',     check: s => s.allEditions },
+    { id: 'finaliste',       icon: '🎯', rarity: 'silver',   check: s => s.finals >= 1 },
+    { id: 'podium',          icon: '🥉', rarity: 'silver',   check: s => s.podiums >= 1 },
+    { id: 'habitue',         icon: '🎪', rarity: 'gold',     check: s => s.podiums >= 3 },
+    { id: 'inarretable',     icon: '⚡', rarity: 'platinum', check: s => s.podiums >= 5 },
+    { id: 'champion',        icon: '🏆', rarity: 'platinum', check: s => s.wins >= 1 },
+    { id: 'patron',          icon: '👑', rarity: 'diamond',  check: s => s.wins >= 3 },
+    { id: 'en_feu',          icon: '🔥', rarity: 'diamond',  check: s => s.maxConsecWins >= 2 },
+    { id: 'perfectionniste', icon: '💎', rarity: 'diamond',  check: s => s.finals >= 3 && s.alwaysTop5 },
     // ── Prédictions ───────────────────────────────────────────────────────
-    { id: 'pred_debutant',   icon: '🔮', check: s => s.predCount >= 1 },
-    { id: 'pred_instinct',   icon: '🎱', check: s => s.predBestScore >= 1 },
-    { id: 'pred_voyant',     icon: '🌟', check: s => s.predTop3Hits >= 1 },
-    { id: 'pred_oracle',     icon: '🔭', check: s => s.predWins >= 1 },
-    { id: 'pred_fidele',     icon: '🧿', check: s => s.predCount >= 5 },
-    { id: 'pred_medium',     icon: '💫', check: s => s.predBestScore >= 10 },
+    { id: 'pred_debutant',   icon: '🔮', rarity: 'bronze',   check: s => s.predCount >= 1 },
+    { id: 'pred_instinct',   icon: '🎱', rarity: 'silver',   check: s => s.predBestScore >= 1 },
+    { id: 'pred_voyant',     icon: '🌟', rarity: 'gold',     check: s => s.predTop3Hits >= 1 },
+    { id: 'pred_oracle',     icon: '🔭', rarity: 'platinum', check: s => s.predWins >= 1 },
+    { id: 'pred_fidele',     icon: '🧿', rarity: 'silver',   check: s => s.predCount >= 5 },
+    { id: 'pred_medium',     icon: '💫', rarity: 'gold',     check: s => s.predBestScore >= 10 },
 ];
+
+// Ordre de rareté pour le tri (Diamond en premier)
+export const RARITY_ORDER = { diamond: 4, platinum: 3, gold: 2, silver: 1, bronze: 0 };
+export const RARITY_COLORS = {
+    bronze:   '#cd7c3a',
+    silver:   '#94a3b8',
+    gold:     '#fbbf24',
+    platinum: '#22d3ee',
+    diamond:  '#a78bfa',
+};
 
 export function computePlayerStats(playerId) {
     const inscriptions = state.data.results.filter(r => r.playerId === playerId && r.phase === 'inscription');
@@ -445,14 +461,79 @@ export function computePlayerStats(playerId) {
     };
 }
 
+// Badge unique : pill colorée selon la rareté + emoji + tooltip enrichi
+function achievementBadgeHtml(a) {
+    const color = RARITY_COLORS[a.rarity] || RARITY_COLORS.bronze;
+    const tooltip = `${t(`ach.${a.id}`)} · ${t(`ach.${a.id}.desc`)} · ${a.rarity.charAt(0).toUpperCase() + a.rarity.slice(1)}`;
+    return `<span class="ach-pill ach-${a.rarity}" style="--ach-color:${color}" title="${tooltip}">${a.icon}</span>`;
+}
+
 export function playerBadgesHtml(playerId) {
     const stats    = computePlayerStats(playerId);
     const unlocked = ACHIEVEMENTS.filter(a => a.check(stats));
     if (unlocked.length === 0) return '';
-    const icons = unlocked.map(a => `<span title="${t(`ach.${a.id}`)} : ${t(`ach.${a.id}.desc`)}">${a.icon}</span>`).join('');
-    return `<span class="player-badges">${icons}</span>`;
+
+    // Tri par rareté décroissante (Diamond en 1er)
+    const sorted = [...unlocked].sort((a, b) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
+
+    // Affiche les 3 plus prestigieux + bouton "+N" si plus
+    const visible = sorted.slice(0, 3);
+    const hidden = sorted.length - visible.length;
+    const visibleHtml = visible.map(achievementBadgeHtml).join('');
+    const moreHtml = hidden > 0
+        ? `<span class="ach-more" onclick="event.stopPropagation();openTrophyRoom('${playerId}')" title="Voir tous les achievements">+${hidden}</span>`
+        : '';
+    return `<span class="player-badges">${visibleHtml}${moreHtml}</span>`;
 }
 window.playerBadgesHtml = playerBadgesHtml;
+
+// ── Trophy Room : drawer modal avec TOUS les achievements (débloqués + verrouillés) ──
+window.openTrophyRoom = function(playerId) {
+    const player = state.data.participants.find(p => p.id === playerId);
+    if (!player) return;
+    const stats = computePlayerStats(playerId);
+    const unlockedSet = new Set(ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id));
+    const unlockedCount = unlockedSet.size;
+
+    // Tri : débloqués (par rareté décroissante) puis verrouillés (par rareté croissante)
+    const sortedAch = [...ACHIEVEMENTS].sort((a, b) => {
+        const aU = unlockedSet.has(a.id) ? 1 : 0;
+        const bU = unlockedSet.has(b.id) ? 1 : 0;
+        if (aU !== bU) return bU - aU;
+        return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+    });
+
+    const grid = sortedAch.map(a => {
+        const isUnlocked = unlockedSet.has(a.id);
+        const color = RARITY_COLORS[a.rarity] || RARITY_COLORS.bronze;
+        return `<div class="trophy-card ${isUnlocked ? 'unlocked' : 'locked'} ach-${a.rarity}" style="--ach-color:${color}">
+            <div class="trophy-card-icon">${a.icon}</div>
+            <div class="trophy-card-name">${t(`ach.${a.id}`)}</div>
+            <div class="trophy-card-desc">${t(`ach.${a.id}.desc`)}</div>
+            <div class="trophy-card-rarity">${a.rarity}</div>
+        </div>`;
+    }).join('');
+
+    const html = `
+        <div class="trophy-room-overlay" onclick="closeTrophyRoom()">
+            <div class="trophy-room-modal" onclick="event.stopPropagation()">
+                <button class="trophy-room-close" onclick="closeTrophyRoom()">×</button>
+                <div class="trophy-room-header">
+                    <div class="trophy-room-title">🏅 Trophy Room</div>
+                    <div class="trophy-room-player">${pName(player)}</div>
+                    <div class="trophy-room-count">${unlockedCount} / ${ACHIEVEMENTS.length} achievements débloqués · ${Math.round(unlockedCount / ACHIEVEMENTS.length * 100)}%</div>
+                </div>
+                <div class="trophy-room-grid">${grid}</div>
+            </div>
+        </div>`;
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div.firstElementChild);
+};
+
+window.closeTrophyRoom = function() {
+    document.querySelector('.trophy-room-overlay')?.remove();
+};
 
 // ── Liste des éditions ────────────────────────────────────────────────────────
 

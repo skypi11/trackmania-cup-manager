@@ -1165,6 +1165,85 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .pred-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
 .pred-score-pts { font-weight: 800; color: var(--color-accent); min-width: 44px; text-align: right; }
 
+/* ── BLOC "COMMENT ÇA MARCHE" UNIFIÉ (home + predictions) ── */
+.springs-howto {
+    background: linear-gradient(135deg, rgba(0,217,54,0.04) 0%, rgba(167,139,250,0.04) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    margin: 18px 0;
+    overflow: hidden;
+}
+.springs-howto-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; cursor: pointer; user-select: none;
+    list-style: none;
+    font-weight: 800; font-size: 1rem; color: #f0f0f0;
+    transition: background 0.15s ease;
+}
+.springs-howto-summary::-webkit-details-marker { display: none; }
+.springs-howto-summary:hover { background: rgba(255,255,255,0.025); }
+.springs-howto-arrow {
+    color: rgba(255,255,255,0.4); font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+.springs-howto[open] .springs-howto-arrow { transform: rotate(180deg); }
+.springs-howto-body { padding: 4px 24px 22px; color: rgba(255,255,255,0.78); line-height: 1.55; }
+.springs-howto-intro {
+    font-size: 0.92rem; margin: 0 0 18px;
+    padding: 12px 16px; border-radius: 10px;
+    background: rgba(0,217,54,0.05); border-left: 3px solid var(--color-accent);
+}
+.springs-howto-section {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.springs-howto-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+.springs-howto-section-title {
+    font-size: 1rem; font-weight: 800; margin: 0 0 10px;
+    color: #f0f0f0; letter-spacing: -0.01em;
+}
+.springs-howto-list {
+    margin: 8px 0 12px; padding-left: 0; list-style: none;
+}
+.springs-howto-list li {
+    padding: 7px 14px; margin-bottom: 5px;
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px; font-size: 0.86rem;
+    border-left: 2.5px solid var(--color-accent);
+}
+.springs-howto-list li strong { color: var(--color-accent); }
+.springs-howto-note {
+    font-size: 0.82rem; font-style: italic;
+    color: rgba(255,255,255,0.6);
+    padding: 8px 12px; margin-top: 10px;
+    border-left: 2px solid rgba(167,139,250,0.4);
+}
+.springs-howto-tiers {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    margin-top: 14px;
+}
+.howto-tier-card {
+    padding: 12px 6px; border-radius: 10px; text-align: center;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--tier-color) 18%, transparent) 0%, color-mix(in srgb, var(--tier-color) 4%, transparent) 100%);
+    border: 1px solid var(--tier-color);
+}
+.howto-tier-icon { font-size: 1.4rem; line-height: 1; margin-bottom: 4px; }
+.howto-tier-name {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--tier-color);
+    margin-bottom: 3px;
+}
+.howto-tier-range {
+    font-size: 0.7rem; color: rgba(255,255,255,0.55); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+@media (max-width: 540px) {
+    .springs-howto-tiers { grid-template-columns: repeat(3, 1fr); }
+    .springs-howto-summary { padding: 14px 16px; }
+    .springs-howto-body { padding: 4px 16px 18px; }
+}
+
 /* ── TOAST DE PROMOTION TIER (apparaît quand tu passes un palier) ── */
 .tier-promotion-toast {
     position: fixed; left: 50%; top: 50%;
@@ -3560,8 +3639,137 @@ tbody tr[data-rank="3"] td:first-child { border-left: 3px solid #92400e; padding
 .podium-block-3 { height: 48px; background: linear-gradient(135deg, #cd7f32, #92400e); color: rgba(255,255,255,0.5); }
 
 /* ── ACHIEVEMENT BADGES ─────────────────────────── */
-.player-badges { font-size: 0.82rem; margin-left: 5px; letter-spacing: 1px; vertical-align: middle; }
+.player-badges { display: inline-flex; align-items: center; gap: 4px; margin-left: 5px; vertical-align: middle; }
 .player-badges span { cursor: default; }
+
+/* ── ACHIEVEMENT PILLS (rareté Bronze→Diamond, palette unifiée Springs Rank) ── */
+.ach-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 0.78rem; line-height: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--ach-color, #94a3b8);
+    transition: transform 0.15s ease;
+    cursor: help;
+}
+.ach-pill:hover { transform: translateY(-2px) scale(1.1); }
+.ach-pill.ach-bronze   { box-shadow: 0 0 0 1px rgba(205,124,58,0.15); }
+.ach-pill.ach-silver   { box-shadow: 0 0 0 1px rgba(148,163,184,0.18); }
+.ach-pill.ach-gold     { box-shadow: 0 0 8px rgba(251,191,36,0.25); }
+.ach-pill.ach-platinum { box-shadow: 0 0 10px rgba(34,211,238,0.35); }
+.ach-pill.ach-diamond  {
+    box-shadow: 0 0 14px rgba(167,139,250,0.5);
+    animation: achDiamondShine 2.4s ease-in-out infinite;
+}
+@keyframes achDiamondShine {
+    0%, 100% { box-shadow: 0 0 14px rgba(167,139,250,0.5); }
+    50% { box-shadow: 0 0 22px rgba(167,139,250,0.85); }
+}
+.ach-more {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 22px; padding: 0 8px; border-radius: 11px;
+    font-size: 0.7rem; font-weight: 800;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.ach-more:hover { background: rgba(255,255,255,0.12); color: #fff; transform: translateY(-1px); }
+
+/* ── TROPHY ROOM (modal complète : tous les achievements débloqués + verrouillés) ── */
+.trophy-room-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; animation: trophyRoomFadeIn 0.2s ease;
+}
+@keyframes trophyRoomFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.trophy-room-modal {
+    background: linear-gradient(180deg, #1a1a1a 0%, #131313 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
+    width: 100%; max-width: 720px;
+    max-height: 88vh; overflow-y: auto;
+    padding: 24px 28px 28px;
+    position: relative;
+    animation: trophyRoomSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes trophyRoomSlideIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.trophy-room-close {
+    position: absolute; top: 12px; right: 14px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6); font-size: 1.4rem; line-height: 1;
+    cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+}
+.trophy-room-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+.trophy-room-header {
+    text-align: center; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.trophy-room-title {
+    font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+}
+.trophy-room-player { font-size: 1rem; font-weight: 700; color: #f0f0f0; margin-bottom: 4px; }
+.trophy-room-count { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+.trophy-room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+.trophy-card {
+    padding: 14px 10px 12px; border-radius: 12px; text-align: center;
+    border: 1px solid var(--ach-color, rgba(255,255,255,0.08));
+    background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(0,0,0,0) 100%);
+    transition: transform 0.18s ease;
+}
+.trophy-card:hover { transform: translateY(-3px); }
+.trophy-card.locked {
+    opacity: 0.32; border-color: rgba(255,255,255,0.07);
+    filter: grayscale(0.6);
+}
+.trophy-card.unlocked.ach-diamond  { box-shadow: 0 0 16px rgba(167,139,250,0.25); }
+.trophy-card.unlocked.ach-platinum { box-shadow: 0 0 12px rgba(34,211,238,0.18); }
+.trophy-card.unlocked.ach-gold     { box-shadow: 0 0 10px rgba(251,191,36,0.15); }
+.trophy-card-icon {
+    font-size: 2rem; line-height: 1; margin-bottom: 8px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+.trophy-card-name {
+    font-size: 0.85rem; font-weight: 800; color: var(--ach-color, #f0f0f0);
+    margin-bottom: 4px; line-height: 1.15;
+}
+.trophy-card.locked .trophy-card-name { color: rgba(255,255,255,0.5); }
+.trophy-card-desc {
+    font-size: 0.72rem; color: rgba(255,255,255,0.55);
+    line-height: 1.3; margin-bottom: 8px;
+}
+.trophy-card-rarity {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--ach-color, rgba(255,255,255,0.4));
+    padding: 2px 8px; border-radius: 99px;
+    border: 1px solid var(--ach-color, rgba(255,255,255,0.15));
+    display: inline-block;
+}
+.trophy-card.locked .trophy-card-rarity { color: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.1); }
+@media (max-width: 540px) {
+    .trophy-room-modal { padding: 20px 16px 22px; }
+    .trophy-room-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .trophy-card { padding: 12px 8px 10px; }
+    .trophy-card-icon { font-size: 1.6rem; }
+}
 .achievement-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin: 12px 0 4px; }
 .achievement-card { border-radius: 12px; padding: 14px 10px; text-align: center; border: 1px solid transparent; position: relative; }
 .achievement-card.unlocked { background: rgba(0,217,54,0.07); border-color: rgba(0,217,54,0.18); }

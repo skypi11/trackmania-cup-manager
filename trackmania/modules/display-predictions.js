@@ -3,7 +3,7 @@
 import { db } from '../../shared/firebase-config.js';
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, avatarHtml, getCountdown, computeSpringsScore, getSpringsTier, getNextSpringsTier, SPRINGS_TIERS } from './utils.js';
+import { pName, dateLang, avatarHtml, getCountdown, computeSpringsScore, getSpringsTier, getNextSpringsTier, SPRINGS_TIERS, springsHowItWorksHtml } from './utils.js';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 import { updateDoc, doc, addDoc, collection, getDoc, deleteDoc } from 'firebase/firestore';
 
@@ -1163,45 +1163,8 @@ export function displayPredictions() {
         }
     }
 
-    // ─── 8. COMMENT ÇA MARCHE (pliable, en bas) ───
-    // Construction du bloc "Les rangs" : 5 cards Bronze/Silver/Gold/Platinum/Diamond
-    // dans l'ordre croissant pour montrer la progression.
-    const tiersAsc = [...TIERS].reverse(); // bronze→diamond
-    const tiersGridHtml = tiersAsc.map((tier, i) => {
-        const next = tiersAsc[i + 1];
-        const range = next
-            ? t('predictions.tiers.range').replace('{min}', `${tier.min}-${next.min - 1}`)
-            : t('predictions.tiers.range.max').replace('{min}', tier.min);
-        return `<div class="pred-tier-card ${tier.key}">
-            <div class="pred-tier-card-icon">${tier.icon}</div>
-            <div class="pred-tier-card-name">${t('predictions.tiers.' + tier.key)}</div>
-            <div class="pred-tier-card-range">${range}</div>
-        </div>`;
-    }).join('');
-
-    html += `<details class="pred-howto">
-        <summary class="pred-howto-summary">
-            <span class="pred-howto-summary-icon">📖</span>
-            <span>${t('predictions.howto.title')}</span>
-            <span class="pred-howto-summary-arrow">▼</span>
-        </summary>
-        <div class="pred-howto-body">
-            <p>${t('predictions.howto.intro')}</p>
-            <div class="pred-howto-rules">
-                <div class="pred-howto-rule"><span class="pred-howto-rule-icon">+1</span><span>${t('predictions.howto.rule1')}</span></div>
-                <div class="pred-howto-rule exact"><span class="pred-howto-rule-icon">+3</span><span>${t('predictions.howto.rule2')}</span></div>
-                <div class="pred-howto-rule bonus"><span class="pred-howto-rule-icon">+1</span><span>${t('predictions.howto.rule3')}</span></div>
-            </div>
-            <div class="pred-howto-example">💡 ${t('predictions.howto.example')}</div>
-            <div class="pred-howto-max">🎯 ${t('predictions.howto.max')}</div>
-            <div class="pred-howto-auto">⚡ ${t('predictions.howto.auto')}</div>
-            <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
-                <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px">🏅 ${t('predictions.tiers.title')}</div>
-                <p style="margin:0 0 4px;font-size:0.85rem">${t('predictions.tiers.intro')}</p>
-                <div class="pred-tiers-grid">${tiersGridHtml}</div>
-            </div>
-        </div>
-    </details>`;
+    // ─── 8. COMMENT ÇA MARCHE (bloc unifié home + predictions, pliable en bas) ───
+    html += springsHowItWorksHtml(t);
 
     container.innerHTML = html;
 

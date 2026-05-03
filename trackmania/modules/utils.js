@@ -187,6 +187,64 @@ export function tierBadgeHtml(tier, options = {}) {
     </span>`;
 }
 
+// ── Bloc unifié "Comment ça marche" — Springs Rank + Prédictions + Achievements ─
+// Réutilisable sur la home et sur l'onglet predictions. Doit être passé `t` pour
+// éviter une dépendance d'import.
+export function springsHowItWorksHtml(t) {
+    // Grille des 5 tiers Bronze→Diamond avec couleurs et plages de points
+    const tiersGrid = [
+        { key: 'bronze',   icon: '🥉', label: 'Bronze',   color: '#cd7c3a', range: '0–14' },
+        { key: 'silver',   icon: '🥈', label: 'Silver',   color: '#94a3b8', range: '15–59' },
+        { key: 'gold',     icon: '🥇', label: 'Gold',     color: '#fbbf24', range: '60–109' },
+        { key: 'platinum', icon: '🏆', label: 'Platinum', color: '#22d3ee', range: '110–199' },
+        { key: 'diamond',  icon: '💎', label: 'Diamond',  color: '#a78bfa', range: '200+' },
+    ].map(tier => `
+        <div class="howto-tier-card" style="--tier-color:${tier.color}">
+            <div class="howto-tier-icon">${tier.icon}</div>
+            <div class="howto-tier-name">${tier.label}</div>
+            <div class="howto-tier-range">${tier.range} pts</div>
+        </div>
+    `).join('');
+
+    return `<details class="springs-howto">
+        <summary class="springs-howto-summary">
+            <span>${t('howto.title')}</span>
+            <span class="springs-howto-arrow">▼</span>
+        </summary>
+        <div class="springs-howto-body">
+            <p class="springs-howto-intro">${t('howto.intro')}</p>
+
+            <div class="springs-howto-section">
+                <h3 class="springs-howto-section-title">${t('howto.springs.title')}</h3>
+                <p>${t('howto.springs.formula')}</p>
+                <ul class="springs-howto-list">
+                    <li>${t('howto.springs.cup')}</li>
+                    <li>${t('howto.springs.qualif')}</li>
+                    <li>${t('howto.springs.f1')}</li>
+                    <li>${t('howto.springs.pred')}</li>
+                </ul>
+                <div class="springs-howto-note">${t('howto.springs.note')}</div>
+                <div class="springs-howto-tiers">${tiersGrid}</div>
+            </div>
+
+            <div class="springs-howto-section">
+                <h3 class="springs-howto-section-title">${t('howto.predictions.title')}</h3>
+                <ul class="springs-howto-list">
+                    <li>${t('howto.predictions.rule1')}</li>
+                    <li>${t('howto.predictions.rule2')}</li>
+                    <li>${t('howto.predictions.rule3')}</li>
+                </ul>
+                <div class="springs-howto-note">${t('howto.predictions.max')}</div>
+            </div>
+
+            <div class="springs-howto-section">
+                <h3 class="springs-howto-section-title">${t('howto.achievements.title')}</h3>
+                <p>${t('howto.achievements.intro')}</p>
+            </div>
+        </div>
+    </details>`;
+}
+
 // Helper de plus haut niveau : calcule le tier d'un joueur depuis state.data
 // et retourne la pill sm (icône seule) avec tooltip. Pratique pour insérer
 // la pill à côté de chaque pseudo partout sur le site sans logique répétée.

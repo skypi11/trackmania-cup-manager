@@ -2,7 +2,7 @@
 
 import { state } from './state.js';
 import { t } from '../../shared/i18n.js';
-import { pName, dateLang, getCountdown, getPoints, avatarHtml, computeSpringsScore, getSpringsTier, getNextSpringsTier, tierBadgeHtml } from './utils.js';
+import { pName, dateLang, getCountdown, getPoints, avatarHtml, computeSpringsScore, getSpringsTier, getNextSpringsTier, tierBadgeHtml, springsHowItWorksHtml } from './utils.js';
 import springsLogo from '../../assets/springs-logo.png';
 import tm2020Bg from '../../assets/trackmania2020.webp';
 
@@ -343,6 +343,7 @@ export function displayHome() {
         </div>
 
         ${quickActionsHtml}
+        ${springsHowItWorksHtml(t)}
         ${championsHtml}`;
 
     // Rafraîchir le tier badge dans le menu utilisateur (sidebar + topbar)
