@@ -478,7 +478,7 @@ function renderSwiss() {
   }
 
   wrap.innerHTML = `
-    <div class="lp-stitle">🇨🇭 Phase Suisse <span class="lp-stitle-sub">Jour 1 — 5 rounds BO5</span></div>
+    <div class="lp-stitle">♟ Phase Suisse <span class="lp-stitle-sub">Jour 1 — 5 rounds BO5</span></div>
     <div class="lp-sw-grid">
       <div class="lp-sw-stand">
         <div class="lp-sw-stand-hdr">

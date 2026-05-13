@@ -137,6 +137,10 @@
   .lpr-bet-info{font-size:.7rem;color:var(--text2);margin-top:6px;text-align:center}
   .lpr-bet-info b{color:#0c8;font-size:.85rem}
 
+  /* Mini résumé du pari placé (sous les 2 équipes, dans la card) */
+  .lpr-bet-summary{margin-top:10px;padding:9px 12px;background:linear-gradient(135deg,rgba(255,184,0,.1),rgba(255,107,53,.04));border:1px solid rgba(255,184,0,.3);border-radius:8px;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:all .15s}
+  .lpr-bet-summary:hover{background:linear-gradient(135deg,rgba(255,184,0,.18),rgba(255,107,53,.08));border-color:#FFB800}
+
   /* Result badge (won/lost) sur match résolu */
   .lpr-result{margin-top:10px;padding:8px 12px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .lpr-result.won{background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.3)}
@@ -433,13 +437,75 @@
   function renderHeaderUser() {
     const el = document.getElementById('lpr-hdr-user');
     if (!el) return;
-    if (!state.curUser) { el.innerHTML = ''; return; }
+    const helpBtn = `<button onclick="openHelpModal()" title="Mode d'emploi" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text);width:34px;height:34px;border-radius:50%;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:all .15s" onmouseover="this.style.background='rgba(255,184,0,.15)';this.style.borderColor='#FFB800';this.style.color='#FFB800'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.12)';this.style.color='var(--text)'">?</button>`;
+    if (!state.curUser) { el.innerHTML = helpBtn; return; }
     const photo = state.curUser.photoURL;
     const name = state.curUser.displayName || '?';
-    el.innerHTML = photo
+    const avatar = photo
       ? `<img class="lpr-hdr-av" src="${escHtml(photo)}" alt="" onerror="this.outerHTML='<div class=lpr-hdr-av-ph>${escHtml((name[0]||'?').toUpperCase())}</div>'">`
       : `<div class="lpr-hdr-av-ph">${escHtml((name[0]||'?').toUpperCase())}</div>`;
+    el.innerHTML = `${helpBtn}${avatar}`;
   }
+
+  // ── Modal mode d'emploi ──
+  window.openHelpModal = function() {
+    document.getElementById('lpr-modal-title').textContent = '❓ Mode d\'emploi';
+    document.getElementById('lpr-modal-body').innerHTML = `
+      <div style="font-size:.9rem;line-height:1.55;color:var(--text)">
+
+        <div style="background:linear-gradient(135deg,rgba(255,184,0,.1),rgba(255,107,53,.04));border:1px solid rgba(255,184,0,.3);border-radius:10px;padding:14px;margin-bottom:18px">
+          <div style="font-size:1rem;font-weight:800;color:#FFB800;margin-bottom:6px">🎯 Le principe</div>
+          <p style="margin:0;font-size:.85rem;color:var(--text2)">Tu pronostiques sur la LAN — qui sera champion, qui finira sur le podium, qui passera en bracket — et sur chaque match. Tu accumules des points selon tes bonnes prédictions. Tu peux <b style="color:#FFB800">miser des jetons</b> pour booster tes gains. Le meilleur pronostiqueur en haut du classement.</p>
+        </div>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">🔮 Pré-LAN</h3>
+        <p style="margin:0 0 10px;font-size:.85rem;color:var(--text2)">Avant le coup d'envoi, pronostique :</p>
+        <ul style="margin:0 0 14px;padding-left:18px;font-size:.85rem;color:var(--text2);display:flex;flex-direction:column;gap:6px">
+          <li><b style="color:var(--text)">🏅 Podium ordonné</b> — 3 équipes (1er = champion). <b style="color:#FFB800">${POINTS.PODIUM_PLACE} pts</b> par place exacte. Bonne équipe sur le podium mais mauvaise place : <b style="color:#FFB800">${POINTS.PODIUM_WRONG_PLACE} pts</b>. Max <b>450 pts</b>.</li>
+          <li><b style="color:var(--text)">🏆 Top 8</b> — les 8 équipes qualifiées en bracket après la Suisse. <b style="color:#FFB800">${POINTS.TOP8_PER_TEAM} pts</b> par équipe correcte. Max <b>240 pts</b>.</li>
+          <li><b style="color:var(--text)">💀 Première sortie</b> — l'équipe 16e (dernière) du classement Suisse. <b style="color:#FFB800">${POINTS.FIRST_OUT} pts</b>.</li>
+        </ul>
+        <p style="margin:0 0 14px;font-size:.78rem;color:var(--text3);font-style:italic">Verrouillage : juste avant la génération du Round 1 Suisse (samedi matin).</p>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">♟ Suisse · 🏆 Bracket — pronostic match par match</h3>
+        <p style="margin:0 0 10px;font-size:.85rem;color:var(--text2)">Pour chaque match, choisis le gagnant :</p>
+        <ul style="margin:0 0 14px;padding-left:18px;font-size:.85rem;color:var(--text2);display:flex;flex-direction:column;gap:6px">
+          <li>Bon gagnant = <b style="color:#FFB800">${POINTS.MATCH} pts</b> garantis (sans miser)</li>
+          <li>Score série exact (ex: 3-1, 4-2) = <b style="color:#0c8">+${POINTS.MATCH_EXACT_BONUS} pts bonus</b></li>
+          <li>Mauvais gagnant = 0 pts</li>
+        </ul>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">🪙 Jetons (pari à risque)</h3>
+        <p style="margin:0 0 10px;font-size:.85rem;color:var(--text2)">Tu démarres avec <b style="color:#FFB800">${STARTING_JETONS} jetons</b>. Tu peux les miser sur les matchs (Suisse + Bracket) pour booster :</p>
+        <ul style="margin:0 0 14px;padding-left:18px;font-size:.85rem;color:var(--text2);display:flex;flex-direction:column;gap:6px">
+          <li>Mise correcte → tu gagnes <b style="color:#0c8">10 pts + (mise × cote)</b></li>
+          <li>Mise ratée → tu perds tes jetons et ne marques pas les 10 pts garantis</li>
+          <li>Mise minimum : <b>${MIN_BET} jetons</b> · Mise max : ton solde</li>
+          <li>Pas d'élimination : tu peux toujours pronostiquer sans miser pour garder tes 10 pts</li>
+        </ul>
+        <p style="margin:0 0 14px;font-size:.78rem;color:var(--text3);font-style:italic">Exemples : <b style="color:#FFB800">50 jetons sur cote 2.0</b> → si correct, tu gagnes <b style="color:#0c8">10 + 100 = 110 pts</b>. <b style="color:#FFB800">50 jetons sur outsider à cote 5.0</b> + score exact → <b style="color:#0c8">10 + 250 + 20 = 280 pts</b>.</p>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">📊 Cotes automatiques</h3>
+        <p style="margin:0 0 14px;font-size:.85rem;color:var(--text2)">Calculées en live à partir du classement de saison + classement Suisse en cours. Plus une équipe est favorite, plus sa cote est basse (1.10 à 15). Plus elle est outsider, plus la cote est haute. Cotes pré-LAN long terme (top 8, première sortie) : 2 à 50.</p>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">🔒 Verrouillage</h3>
+        <ul style="margin:0 0 14px;padding-left:18px;font-size:.85rem;color:var(--text2);display:flex;flex-direction:column;gap:6px">
+          <li><b style="color:var(--text)">Pré-LAN</b> : verrouillé juste avant le R1 Suisse</li>
+          <li><b style="color:var(--text)">Round Suisse</b> : verrouillé au coup d'envoi du round (manuel admin ou auto au 1er score)</li>
+          <li><b style="color:var(--text)">Match bracket</b> : verrouillé au coup d'envoi du match individuellement</li>
+        </ul>
+
+        <h3 style="font-size:.95rem;font-weight:800;color:#FFB800;margin:18px 0 10px;display:flex;align-items:center;gap:8px">🏆 Classement</h3>
+        <p style="margin:0 0 14px;font-size:.85rem;color:var(--text2)">Total des points (pré-LAN + Suisse + Bracket). En cas d'égalité, départagé par les jetons restants.</p>
+
+        <p style="margin:18px 0 0;font-size:.78rem;color:var(--text3);text-align:center;font-style:italic">Bonne LAN à tous ! 🎮</p>
+      </div>
+    `;
+    document.getElementById('lpr-modal-foot').innerHTML = `
+      <button style="flex:1;background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;padding:12px 16px;border-radius:8px;font-weight:800;border:none;cursor:pointer;font-family:inherit" onclick="closeLprModal()">J'ai compris !</button>
+    `;
+    openLprModal();
+  };
 
   function renderLogin() {
     return `
@@ -486,7 +552,7 @@
   function renderTabs() {
     const tabs = [
       { id: 'preLan', ico: '🔮', lbl: 'Pré-LAN' },
-      { id: 'swiss', ico: '🇨🇭', lbl: 'Suisse' },
+      { id: 'swiss', ico: '♟', lbl: 'Suisse' },
       { id: 'bracket', ico: '🏆', lbl: 'Bracket' },
       { id: 'lb', ico: '📊', lbl: 'Classement' },
     ];
@@ -751,10 +817,10 @@
     const swissMatches = getSwissMatches(Object.values(state.lanMatches || {}));
     if (!swissMatches.length) {
       return `
-        <div class="lpr-stitle">🇨🇭 Phase Suisse</div>
+        <div class="lpr-stitle">♟ Phase Suisse</div>
         <div class="lpr-empty"><div class="lpr-empty-ico">⏳</div>La phase Suisse n'a pas encore commencé.<br>Le R1 sera généré par l'admin avant le coup d'envoi samedi.</div>`;
     }
-    let html = `<div class="lpr-stitle">🇨🇭 Phase Suisse</div>
+    let html = `<div class="lpr-stitle">♟ Phase Suisse</div>
       <p class="lpr-stitle-sub">Pronostique le gagnant de chaque match. Mise tes jetons pour booster tes points.</p>`;
     // Grouper par round (du plus récent au plus ancien)
     const byRound = new Map();
@@ -825,23 +891,14 @@
 
     const myBetSide = bet?.side;
     const isResolved = bet && bet.status !== 'pending';
+    const canBet = !locked && !ss.played && !isResolved;
 
     // État du match
     let statusBadge = '';
     if (ss.played) statusBadge = `<span class="lpr-match-status lpr-st-played">Joué ${ss.home}-${ss.away}</span>`;
     else if (locked) statusBadge = `<span class="lpr-match-status lpr-st-locked">🔒 Fermé</span>`;
+    else if (myBetSide) statusBadge = `<span class="lpr-match-status" style="background:rgba(255,184,0,.15);color:#FFB800">✓ Parié</span>`;
     else statusBadge = `<span class="lpr-match-status lpr-st-pending">Ouvert</span>`;
-
-    const sideClass = (side) => {
-      const cls = ['lpr-side'];
-      if (myBetSide === side) cls.push('selected');
-      if (ss.played) {
-        if (ss.winner === side && myBetSide === side) cls.push('locked-correct');
-        else if (ss.winner !== side && myBetSide === side) cls.push('locked-wrong');
-      }
-      if (locked || ss.played) cls.push('disabled');
-      return cls.join(' ');
-    };
 
     const renderSide = (team, side) => {
       const logo = team.logoUrl
@@ -850,7 +907,14 @@
       const cote = side === 'home' ? odds.home : odds.away;
       const isWinner = ss.played && ss.winner === side;
       const result = ss.played ? (isWinner ? '✓ Vainqueur' : 'Défaite') : '';
-      return `<button class="${sideClass(side)}" onclick="selectMatchSide('${kind}','${match.id}','${side}')" ${locked||ss.played?'disabled':''}>
+      const cls = ['lpr-side'];
+      if (myBetSide === side) cls.push('selected');
+      if (ss.played) {
+        if (ss.winner === side && myBetSide === side) cls.push('locked-correct');
+        else if (ss.winner !== side && myBetSide === side) cls.push('locked-wrong');
+      }
+      const onclick = canBet ? `onclick="openBetModal('${kind}','${match.id}','${side}')"` : '';
+      return `<button class="${cls.join(' ')}" ${onclick} ${!canBet?'disabled':''}>
         ${logo}
         <div class="lpr-side-name">${escHtml(team.name)}</div>
         <div class="lpr-side-cote">×${cote}</div>
@@ -858,55 +922,21 @@
       </button>`;
     };
 
-    // Mise (slider) + score exact — seulement si side sélectionné, match pas verrouillé/joué
-    let betZone = '';
-    if (myBetSide && !locked && !ss.played && !isResolved) {
-      const cote = myBetSide === 'home' ? odds.home : odds.away;
-      const myJetons = (myPred?.jetons ?? STARTING_JETONS) + (bet?.mise || 0);
-      const curMise = bet?.mise || 0;
-      const curScore = bet?.score || null;
-      const fmt = (match.format || 'bo5');
-      // Scores possibles selon le côté gagnant et le format
-      const target = fmt === 'bo7' ? 4 : 3;
-      const possibleScores = [];
-      for (let loserGames = 0; loserGames < target; loserGames++) {
-        possibleScores.push(myBetSide === 'home' ? `${target}-${loserGames}` : `${loserGames}-${target}`);
-      }
-      const potGain = curMise > 0 ? POINTS.MATCH + Math.floor(curMise * cote) : POINTS.MATCH;
-      const potGainExact = potGain + POINTS.MATCH_EXACT_BONUS;
-      betZone = `<div class="lpr-bet">
-        <div class="lpr-bet-row">
-          <span style="font-size:.78rem;font-weight:700">🪙 Mise</span>
-          <input type="range" class="lpr-bet-slider" id="bet-${match.id}" min="0" max="${myJetons}" value="${curMise}" step="1" oninput="updateBetSlider('${kind}','${match.id}',this.value,${cote})">
-          <span class="lpr-bet-val" id="bet-val-${match.id}">${curMise > 0 ? curMise+' jetons' : 'Aucune'}</span>
-        </div>
-        <div class="lpr-bet-info" id="bet-info-${match.id}">
-          ${curMise > 0 ? `Si correct : <b>${potGain} pts</b> (10 + ${curMise}×${cote})` : `Sans mise : <b>10 pts</b> si correct`}
-        </div>
-        <div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap">
-          ${[0, 25, 50, 100, myJetons].filter((v,i,arr) => v <= myJetons && arr.indexOf(v) === i).map(v => `
-            <button onclick="setBetQuick('${kind}','${match.id}',${v},${cote})" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--text2);padding:5px 11px;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit">${v===0?'0':v===myJetons?'Max':v}</button>
-          `).join('')}
-        </div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
-          <div style="font-size:.74rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;justify-content:space-between">
-            <span>🎯 Score exact <span style="color:var(--text3);font-weight:600">(optionnel)</span></span>
-            <span style="font-size:.65rem;color:#0c8;font-weight:700">+${POINTS.MATCH_EXACT_BONUS} pts si exact</span>
-          </div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center">
-            ${possibleScores.map(s => `<button class="lpr-score-chip ${curScore===s?'sel':''}" data-sc="${s}" onclick="window._lprToggleScore('${match.id}','${s}')" style="background:${curScore===s?'rgba(255,184,0,.15)':'rgba(255,255,255,.05)'};border:1px solid ${curScore===s?'#FFB800':'rgba(255,255,255,.08)'};color:${curScore===s?'#FFB800':'var(--text2)'};padding:6px 12px;border-radius:5px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.04em;font-variant-numeric:tabular-nums">${s}</button>`).join('')}
-          </div>
-          <div id="bet-exact-info-${match.id}" style="font-size:.66rem;color:var(--text2);margin-top:6px;text-align:center">
-            ${curScore ? `Si <b style="color:#FFB800">${curScore}</b> exact : <b style="color:#0c8">${potGainExact} pts</b>` : 'Aucun score sélectionné'}
-          </div>
-        </div>
-        <button class="lpr-discord-btn" id="confirm-btn-${match.id}" data-team="${escHtml(myBetSide==='home'?home.name:away.name)}" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;margin-top:10px;padding:10px;font-size:.85rem" onclick="confirmBet('${kind}','${match.id}',${cote})">
-          ${formatConfirmLabel(curMise, curScore, escHtml(myBetSide==='home'?home.name:away.name))}
-        </button>
+    // Résumé du pari placé (si bet en attente, pas encore résolu)
+    let betSummary = '';
+    if (myBetSide && canBet) {
+      const team = myBetSide === 'home' ? home : away;
+      const parts = [];
+      if (bet.mise > 0) parts.push(`<b style="color:#FFB800">${bet.mise} jetons</b>`);
+      if (bet.score) parts.push(`<b style="color:#FFB800">score ${bet.score}</b>`);
+      const detail = parts.length ? ' · ' + parts.join(' + ') : '';
+      betSummary = `<div class="lpr-bet-summary" onclick="openBetModal('${kind}','${match.id}','${myBetSide}')">
+        <span>✓ Parié sur <b>${escHtml(team.name)}</b>${detail}</span>
+        <span style="font-size:.72rem;color:#FFB800;font-weight:800">✏️ Modifier</span>
       </div>`;
     }
 
-    // Result badge
+    // Result badge (match résolu)
     let resultBadge = '';
     if (isResolved && bet) {
       if (bet.status === 'won') {
@@ -935,14 +965,14 @@
           ${renderSide(home, 'home')}
           ${renderSide(away, 'away')}
         </div>
-        ${betZone}
+        ${betSummary}
         ${resultBadge}
       </div>`;
   }
 
-  // ── Sélection d'un side (place le pronostic à 0 si pas encore fait) ──
-  // Si on change de side, le score parié est invalidé (il appartenait à l'autre équipe).
-  window.selectMatchSide = async function(kind, matchId, side) {
+  // ── Modal de pari : ouverte au clic sur une équipe ──
+  // Contient tout : choix d'équipe, slider de mise, chips de score exact, bouton confirmer
+  window.openBetModal = function(kind, matchId, initialSide) {
     const m = state.lanMatches[matchId];
     if (!m) return;
     const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
@@ -950,14 +980,172 @@
     const r = kind === 'swiss' ? getSwissRound(m.phase) : null;
     if (kind === 'swiss' && isSwissRoundLocked(r)) { toast(`Round ${r} verrouillé`, 'err'); return; }
     if (kind === 'bracket' && isBracketMatchLocked(matchId)) { toast('Match verrouillé', 'err'); return; }
+
+    const home = state.teamsMap[m.homeTeamId];
+    const away = state.teamsMap[m.awayTeamId];
+    if (!home || !away) return;
+
+    const odds = getMatchOdds(m.homeTeamId, m.awayTeamId);
     const existing = myPred?.[kind]?.[matchId];
-    if (existing && existing.side === side) return; // déjà sélectionné
-    try {
-      // On ne passe pas le score : il sera reconfiguré via les chips après le rerender
-      await placeMatchBet(state.curUser.uid, kind, matchId, side, existing?.mise || 0, null);
-      myPred = state.lanPredictions[state.curUser.uid] || myPred;
-      renderApp();
-    } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+    const initSide = initialSide || existing?.side || null;
+    const initMise = existing?.mise || 0;
+    const initScore = (existing?.side === initSide) ? (existing?.score || null) : null;
+
+    // État local de la modal (avant confirmation)
+    const modalState = {
+      kind, matchId,
+      side: initSide,
+      mise: initMise,
+      score: initScore,
+    };
+    window._lprBetModal = modalState;
+
+    document.getElementById('lpr-modal-title').textContent = `${home.name} vs ${away.name}`;
+
+    const renderModalBody = () => {
+      const cote = modalState.side === 'home' ? odds.home : modalState.side === 'away' ? odds.away : 0;
+      const myJetons = (myPred?.jetons ?? STARTING_JETONS) + (existing?.mise || 0);
+      const target = (m.format || 'bo5') === 'bo7' ? 4 : 3;
+      const possibleScores = modalState.side ? Array.from({length: target}, (_, i) => modalState.side === 'home' ? `${target}-${i}` : `${i}-${target}`) : [];
+
+      const renderTeamBtn = (team, side) => {
+        const logo = team.logoUrl
+          ? `<img class="lpr-side-logo" src="${escHtml(team.logoUrl)}" alt="">`
+          : `<div class="lpr-side-logo"></div>`;
+        const c = side === 'home' ? odds.home : odds.away;
+        const sel = modalState.side === side;
+        return `<button class="lpr-side ${sel?'selected':''}" onclick="window._lprPickSide('${side}')" style="min-height:120px">
+          ${logo}
+          <div class="lpr-side-name">${escHtml(team.name)}</div>
+          <div class="lpr-side-cote">×${c}</div>
+        </button>`;
+      };
+
+      const potGain = modalState.mise > 0 ? POINTS.MATCH + Math.floor(modalState.mise * cote) : POINTS.MATCH;
+      const potGainExact = potGain + POINTS.MATCH_EXACT_BONUS;
+
+      const miseSection = modalState.side ? `
+        <div style="margin-top:18px;padding:14px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:.86rem;font-weight:800">🪙 Mise (optionnel)</span>
+            <span style="font-size:.74rem;color:var(--text2)">Solde: <b style="color:#FFB800">${myJetons}</b></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" class="lpr-bet-slider" id="lpr-modal-slider" min="0" max="${myJetons}" value="${modalState.mise}" step="1" oninput="window._lprUpdateBet(this.value)" style="flex:1">
+            <span style="font-size:.92rem;font-weight:900;color:#FFB800;min-width:90px;text-align:right;font-variant-numeric:tabular-nums" id="lpr-modal-mise-val">${modalState.mise > 0 ? modalState.mise : '0'}</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;justify-content:center;flex-wrap:wrap">
+            ${[0, 25, 50, 100, myJetons].filter((v,i,arr) => v <= myJetons && arr.indexOf(v) === i).map(v => `
+              <button onclick="window._lprQuickBet(${v})" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--text2);padding:6px 14px;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit">${v===0?'0':v===myJetons?'Max':v}</button>
+            `).join('')}
+          </div>
+          <div style="font-size:.74rem;color:var(--text2);margin-top:8px;text-align:center" id="lpr-modal-bet-info">
+            ${modalState.mise > 0 ? `Si correct : <b style="color:#0c8">${potGain} pts</b> (10 + ${modalState.mise}×${cote})` : `Sans mise : <b style="color:#0c8">10 pts</b> si correct`}
+          </div>
+        </div>
+
+        <div style="margin-top:14px;padding:14px;background:rgba(0,200,100,.04);border:1px solid rgba(0,200,100,.18);border-radius:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:.86rem;font-weight:800">🎯 Score exact <span style="color:var(--text3);font-weight:600;font-size:.78rem">(optionnel)</span></span>
+            <span style="font-size:.7rem;color:#0c8;font-weight:800">+${POINTS.MATCH_EXACT_BONUS} pts si exact</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+            ${possibleScores.map(s => {
+              const sel = modalState.score === s;
+              return `<button data-sc="${s}" onclick="window._lprPickScore('${s}')" style="background:${sel?'rgba(255,184,0,.18)':'rgba(255,255,255,.05)'};border:1px solid ${sel?'#FFB800':'rgba(255,255,255,.08)'};color:${sel?'#FFB800':'var(--text2)'};padding:8px 16px;border-radius:6px;font-size:.85rem;font-weight:800;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums">${s}</button>`;
+            }).join('')}
+          </div>
+          <div style="font-size:.7rem;color:var(--text2);margin-top:8px;text-align:center" id="lpr-modal-exact-info">
+            ${modalState.score ? `Si <b style="color:#FFB800">${modalState.score}</b> exact : <b style="color:#0c8">${potGainExact} pts</b>` : 'Aucun score sélectionné'}
+          </div>
+        </div>
+      ` : `<div style="margin-top:14px;padding:18px;text-align:center;color:var(--text2);font-size:.85rem;background:rgba(255,255,255,.03);border-radius:10px">👆 Choisis l'équipe gagnante ci-dessus</div>`;
+
+      document.getElementById('lpr-modal-body').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${renderTeamBtn(home, 'home')}
+          ${renderTeamBtn(away, 'away')}
+        </div>
+        ${miseSection}
+      `;
+
+      const teamName = modalState.side ? (modalState.side === 'home' ? home.name : away.name) : '';
+      const confirmLabel = modalState.side
+        ? formatConfirmLabel(modalState.mise, modalState.score, escHtml(teamName))
+        : '👆 Choisis une équipe d\'abord';
+      document.getElementById('lpr-modal-foot').innerHTML = `
+        ${existing ? `<button style="background:rgba(239,68,68,.15);color:#ef4444;padding:11px 16px;border-radius:8px;font-weight:700;border:none;cursor:pointer;font-family:inherit" onclick="window._lprCancelBet()">🗑️ Retirer</button>` : ''}
+        <button style="background:rgba(255,255,255,.05);padding:11px 16px;border-radius:8px;font-weight:700;border:1px solid rgba(255,255,255,.08);color:var(--text2);cursor:pointer;font-family:inherit" onclick="closeLprModal()">Annuler</button>
+        <button id="lpr-modal-confirm" ${!modalState.side?'disabled':''} style="flex:1;background:${modalState.side?'linear-gradient(135deg,#FFB800,#FF6B35)':'rgba(255,255,255,.06)'};color:${modalState.side?'#000':'var(--text3)'};padding:11px 16px;border-radius:8px;font-weight:800;border:none;cursor:${modalState.side?'pointer':'not-allowed'};font-family:inherit;font-size:.9rem" onclick="window._lprConfirmBet()">${confirmLabel}</button>
+      `;
+    };
+
+    window._lprPickSide = (side) => {
+      if (modalState.side !== side) {
+        modalState.side = side;
+        modalState.score = null; // score invalidé si on change d'équipe
+      }
+      renderModalBody();
+    };
+    window._lprUpdateBet = (val) => {
+      modalState.mise = parseInt(val) || 0;
+      const cote = modalState.side === 'home' ? odds.home : odds.away;
+      const potGain = modalState.mise > 0 ? POINTS.MATCH + Math.floor(modalState.mise * cote) : POINTS.MATCH;
+      const elVal = document.getElementById('lpr-modal-mise-val');
+      const elInfo = document.getElementById('lpr-modal-bet-info');
+      const elExact = document.getElementById('lpr-modal-exact-info');
+      if (elVal) elVal.textContent = modalState.mise > 0 ? modalState.mise : '0';
+      if (elInfo) elInfo.innerHTML = modalState.mise > 0 ? `Si correct : <b style="color:#0c8">${potGain} pts</b> (10 + ${modalState.mise}×${cote})` : `Sans mise : <b style="color:#0c8">10 pts</b> si correct`;
+      if (elExact && modalState.score) elExact.innerHTML = `Si <b style="color:#FFB800">${modalState.score}</b> exact : <b style="color:#0c8">${potGain + POINTS.MATCH_EXACT_BONUS} pts</b>`;
+      // Update confirm btn label
+      const teamName = modalState.side === 'home' ? home.name : away.name;
+      const confirmBtn = document.getElementById('lpr-modal-confirm');
+      if (confirmBtn) confirmBtn.innerHTML = formatConfirmLabel(modalState.mise, modalState.score, escHtml(teamName));
+    };
+    window._lprQuickBet = (v) => {
+      const slider = document.getElementById('lpr-modal-slider');
+      if (slider) { slider.value = v; window._lprUpdateBet(v); }
+    };
+    window._lprPickScore = (score) => {
+      modalState.score = (modalState.score === score) ? null : score;
+      renderModalBody();
+    };
+    window._lprConfirmBet = async () => {
+      if (!modalState.side) { toast('Choisis une équipe', 'err'); return; }
+      if (modalState.mise > 0 && modalState.mise < MIN_BET) { toast(`Mise minimum : ${MIN_BET} jetons`, 'err'); return; }
+      try {
+        await placeMatchBet(state.curUser.uid, modalState.kind, modalState.matchId, modalState.side, modalState.mise, modalState.score);
+        myPred = state.lanPredictions[state.curUser.uid] || myPred;
+        const teamName = modalState.side === 'home' ? home.name : away.name;
+        toast(`🔒 Pari sur ${teamName} enregistré`, 'ok');
+        closeLprModal();
+        renderApp();
+      } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+    };
+    window._lprCancelBet = async () => {
+      if (!confirm('Retirer ce pronostic ? Tes jetons misés seront restitués.')) return;
+      try {
+        // On remet à 0 jeton et on retire le bet via une mise à 0 + side null n'est pas possible
+        // → simulation : place un bet à 0 jeton (annule effectivement le pari mais le side reste)
+        // Mieux : on update directement le doc pour supprimer la clé
+        const { doc, updateDoc, deleteField, serverTimestamp } = await import('firebase/firestore');
+        const ref = doc(db, 'rl_lan_predictions', state.curUser.uid);
+        const restoredJetons = (myPred?.jetons || 0) + (existing?.mise || 0);
+        await updateDoc(ref, {
+          [`${modalState.kind}.${modalState.matchId}`]: deleteField(),
+          jetons: restoredJetons,
+          updatedAt: serverTimestamp(),
+        });
+        if (myPred?.[modalState.kind]) delete myPred[modalState.kind][modalState.matchId];
+        if (myPred) myPred.jetons = restoredJetons;
+        toast('🗑️ Pronostic retiré', 'ok');
+        closeLprModal();
+        renderApp();
+      } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+    };
+
+    renderModalBody();
+    openLprModal();
   };
 
   // ── Toggle score exact dans la zone de pari (état local jusqu'à confirmation) ──
@@ -1087,7 +1275,7 @@
             ${av}
             <div>
               <div class="lpr-lb-name">${escHtml(e.displayName)}${isMe?' <span style="color:var(--text3);font-weight:600;font-size:.7rem">(toi)</span>':''}</div>
-              <div class="lpr-lb-detail">🪙 ${e.jetons} jetons · 🔮 ${e.preLan} · 🇨🇭 ${e.swiss} · 🏆 ${e.bracket}</div>
+              <div class="lpr-lb-detail">🪙 ${e.jetons} jetons · 🔮 ${e.preLan} · ♟ ${e.swiss} · 🏆 ${e.bracket}</div>
             </div>
             <div class="lpr-lb-score">${e.score}</div>
           </div>`;

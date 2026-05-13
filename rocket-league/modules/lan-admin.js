@@ -30,7 +30,7 @@ export async function admLan() {
   wrap.innerHTML = `
     <div class="lan-subnav">
       <button class="lan-sub ${state.lanAdmSec==='preparation'?'active':''}" onclick="window.lanGoSec('preparation')">📋 Préparation</button>
-      <button class="lan-sub ${state.lanAdmSec==='swiss'?'active':''}" onclick="window.lanGoSec('swiss')">🇨🇭 Suisse (Jour 1)</button>
+      <button class="lan-sub ${state.lanAdmSec==='swiss'?'active':''}" onclick="window.lanGoSec('swiss')">♟ Suisse (Jour 1)</button>
       <button class="lan-sub ${state.lanAdmSec==='bracket'?'active':''}" onclick="window.lanGoSec('bracket')">🏆 Bracket (Jour 2)</button>
     </div>
     <div id="lan-sec-content"><div class="loading"></div></div>
@@ -80,7 +80,7 @@ async function admLanPreparation() {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${['preparation','swiss','between','bracket','finished'].map(s => {
           const isCur = (state.lanConfig?.status || 'preparation') === s;
-          const label = {preparation:'📋 Préparation',swiss:'🇨🇭 Suisse',between:'⏸ Entre-deux',bracket:'🏆 Bracket',finished:'🏁 Terminé'}[s];
+          const label = {preparation:'📋 Préparation',swiss:'♟ Suisse',between:'⏸ Entre-deux',bracket:'🏆 Bracket',finished:'🏁 Terminé'}[s];
           return `<button class="${isCur?'btn-p':'btn-s'}" onclick="setLanStatusAdm('${s}')" style="font-size:.78rem">${label}</button>`;
         }).join('')}
       </div>

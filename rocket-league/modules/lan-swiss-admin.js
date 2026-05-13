@@ -40,7 +40,7 @@ export async function admLanSwiss() {
   const standings = calculateSwissStandings(swissMatches, qIds);
 
   wrap.innerHTML = `
-    <div class="stitle">🇨🇭 Phase Suisse — Jour 1 (samedi)</div>
+    <div class="stitle">♟ Phase Suisse — Jour 1 (samedi)</div>
 
     <div class="adm-card" style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
