@@ -264,18 +264,27 @@
           phaseInfo.textContent = `Phase Suisse · Round ${currentRound} / ${SWISS_ROUNDS}`;
 
           // Format LAN : max 4 matchs simultanés (système groupe 1 / groupe 2).
-          // - Stage match : 1
-          // - Autres "en cours" (matchs live = jeu démarré, pas encore fini) : max 3
-          // - "À venir" : matchs pending du round actuel + round suivant
+          // - Stage match : 1 (celui marqué onStage)
+          // - Autres "en cours" : 3 max (swissOrder le plus bas = vague 1)
+          // - "À venir" : reste du round actuel (vague 2) + matchs round suivant
           const currentRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound);
           const stageMatch = currentRoundMatches.find(m => m.onStage);
-          const others = currentRoundMatches.filter(m => m !== stageMatch);
-          // Live = match avec au moins une manche jouée mais pas terminé
-          const liveOthers = others.filter(m => !isMatchPlayed(m) && (m.games?.length > 0)).slice(0, 3);
-          // Pending = match du round actuel sans manche jouée + matchs round suivant (vague 2)
-          const pendingCurrent = others.filter(m => !isMatchPlayed(m) && !(m.games?.length > 0));
+          // Tri : matchs avec une manche déjà jouée passent en priorité (live confirmé),
+          // puis tri par swissOrder croissant (vague 1 d'abord, puis vague 2)
+          const others = currentRoundMatches
+            .filter(m => m !== stageMatch && !isMatchPlayed(m))
+            .sort((a, b) => {
+              const aLive = (a.games?.length || 0) > 0 ? 1 : 0;
+              const bLive = (b.games?.length || 0) > 0 ? 1 : 0;
+              if (aLive !== bLive) return bLive - aLive;
+              return (a.swissOrder ?? 0) - (b.swissOrder ?? 0);
+            });
+          // Les 3 premiers = en cours (avec le stage = 4 simultanés)
+          const liveOthers = others.slice(0, 3);
+          // Le reste du round + matchs du round suivant = à venir
+          const remainingCurrent = others.slice(3);
           const nextRoundMatches = swissMatches.filter(m => getSwissRound(m.phase) === currentRound + 1);
-          const upcoming = [...pendingCurrent, ...nextRoundMatches].slice(0, 4);
+          const upcoming = [...remainingCurrent, ...nextRoundMatches].slice(0, 4);
 
           renderLayout(stageMatch, liveOthers, upcoming, 'En cours', 'À venir', m => `Round ${getSwissRound(m.phase)}`);
           return;
