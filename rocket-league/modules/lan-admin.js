@@ -11,7 +11,7 @@ import { admLanSwiss } from './lan-swiss-admin.js';
 import { admLanBracket } from './lan-bracket-admin.js';
 import {
   setupLanPredictionsListener, lockPreLan, unlockPreLan,
-  recalculateAll, isPreLanLocked, getLeaderboard, STARTING_JETONS,
+  recalculateAll, recalcAllPendingOdds, isPreLanLocked, getLeaderboard, STARTING_JETONS,
 } from './lan-predictions.js';
 import { calcSeriesScore, getSwissRound } from './lan-swiss.js';
 import { SLOT_LABEL } from './lan-bracket.js';
@@ -251,10 +251,13 @@ async function admLanPreparation() {
           : `<span style="font-size:.78rem;color:#0c8;font-weight:700">● Pré-LAN ouvert aux pronostics</span>
              <button class="btn-d" onclick="lockPreLanAdm()">🔒 Verrouiller pronostics pré-LAN</button>`}
         <button class="btn-s" style="margin-left:auto" onclick="recalcAllScoresAdm()">🧮 Recalculer tous les scores</button>
+        <button class="btn-s" onclick="recalcOddsAdm()" title="Réappliquer les cotes actuelles aux paris en attente">🔄 Recoter les paris en attente</button>
       </div>
       <p style="font-size:.7rem;color:var(--text3);margin:10px 0 0">
         💡 La résolution des paris match (Suisse + Bracket) se fait automatiquement à chaque saisie de score.
         Le bouton "Recalculer" force un re-passage complet (utile en cas de litige).
+        Le bouton "Recoter" réapplique les cotes <strong>actuelles</strong> à tous les paris pending
+        (utile si tu as modifié l'algo de cotes après les premiers paris).
       </p>
     </div>
 
@@ -624,6 +627,15 @@ window.recalcAllScoresAdm = async function () {
     const n = await recalculateAll();
     toast(`🧮 ${n} doc(s) mis à jour`, 'ok');
   } catch (e) { console.error(e); toast('Erreur recalcul', 'err'); }
+};
+
+window.recalcOddsAdm = async function () {
+  if (!confirm('Réappliquer les cotes actuelles à TOUS les paris en attente ?\n\nUtile si tu as modifié l\'algo de cotes après que des paris aient été placés.\nLes anciennes cotes (figées au moment du pari) seront remplacées par les nouvelles.\n\nCette action est irréversible.')) return;
+  try {
+    const { docs, bets } = await recalcAllPendingOdds();
+    toast(`🔄 ${bets} paris recotés sur ${docs} pronostiqueur${docs>1?'s':''}`, 'ok');
+    await admLan();
+  } catch (e) { console.error(e); toast('Erreur recote', 'err'); }
 };
 
 // Déplace une équipe vers l'autre poule (override LAN — n'affecte pas la poule de saison)

@@ -474,6 +474,79 @@ export async function resolvePreLanScores(opts = {}) {
   return writeCount;
 }
 
+// ── Recoter tous les paris en attente (admin "🔄 Recoter") ────────────
+// Utile quand les cotes ont été modifiées (changement d'algo) et qu'on
+// veut appliquer rétroactivement les nouvelles cotes aux paris pending
+// pour ne pas créer d'incohérence (un parieur qui a placé tôt aurait
+// bénéficié d'une cote périmée).
+export async function recalcAllPendingOdds() {
+  // Imports dynamiques pour éviter le cycle
+  const { getMatchOdds, getPodiumPlaceOdds, getFirstOutOdds } = await import('./lan-odds.js');
+  const allPreds = Object.values(state.lanPredictions);
+  const batch = writeBatch(db);
+  let writeCount = 0;
+  let betsUpdated = 0;
+
+  for (const pred of allPreds) {
+    let dirty = false;
+    const updates = {};
+
+    // Recote paris Suisse + Bracket
+    for (const kind of ['swiss', 'bracket']) {
+      const kindBets = pred[kind] || {};
+      const newKindBets = { ...kindBets };
+      for (const [matchId, bet] of Object.entries(kindBets)) {
+        if (bet.status !== 'pending') continue;
+        const m = state.lanMatches?.[matchId];
+        if (!m) continue;
+        const odds = getMatchOdds(m.homeTeamId, m.awayTeamId);
+        const newCote = bet.side === 'home' ? odds.home : odds.away;
+        if (newCote !== bet.cote) {
+          newKindBets[matchId] = { ...bet, cote: newCote };
+          dirty = true;
+          betsUpdated++;
+        }
+      }
+      if (dirty && JSON.stringify(newKindBets) !== JSON.stringify(kindBets)) {
+        updates[kind] = newKindBets;
+      }
+    }
+
+    // Recote paris pré-LAN single-équipe
+    const oldBets = pred.preLanBets || {};
+    const newPreLanBets = { ...oldBets };
+    for (const [kind, bet] of Object.entries(oldBets)) {
+      if (!bet || !bet.teamId) continue;
+      let newCote;
+      if (kind === 'firstOut') {
+        newCote = getFirstOutOdds(bet.teamId);
+      } else if (kind.startsWith('podium')) {
+        const place = parseInt(kind.slice(-1));
+        newCote = getPodiumPlaceOdds(bet.teamId, place);
+      }
+      if (newCote != null && newCote !== bet.cote) {
+        newPreLanBets[kind] = { ...bet, cote: newCote };
+        dirty = true;
+        betsUpdated++;
+      }
+    }
+    if (Object.keys(newPreLanBets).length && dirty) {
+      updates.preLanBets = newPreLanBets;
+    }
+
+    if (Object.keys(updates).length) {
+      const ref = doc(db, 'rl_lan_predictions', pred.id);
+      batch.update(ref, { ...updates, updatedAt: serverTimestamp() });
+      writeCount++;
+      // Mise à jour locale
+      Object.assign(pred, updates);
+    }
+  }
+
+  if (writeCount > 0) await batch.commit();
+  return { docs: writeCount, bets: betsUpdated };
+}
+
 // ── Recalcul global (admin "🧮 Tout recalculer") ──────────────────────
 // Re-résout tous les paris match + recalcule les pré-LAN si données dispo.
 export async function recalculateAll() {
