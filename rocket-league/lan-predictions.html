@@ -261,6 +261,7 @@
   let myPred = null;
   let qualifiedTeams = []; // les 16 équipes qualifiées (avec stats)
   let isReady = false;
+  let authInited = false; // true dès le 1er callback de onAuthStateChanged (session restaurée ou non)
 
   // ── Discord OAuth callback ──
   (async function handleDiscordCallback() {
@@ -288,6 +289,7 @@
     } else {
       myPred = null;
     }
+    authInited = true;
     renderApp();
   });
 
@@ -369,6 +371,10 @@
     renderHeaderUser();
     const root = document.getElementById('lpr-app');
     if (!root) return;
+    // Tant que Firebase n'a pas eu le temps de restaurer la session,
+    // on affiche un loader (évite le flash du login banner alors que
+    // l'utilisateur est en fait déjà connecté).
+    if (!authInited) { root.innerHTML = `<div class="lpr-loader">⏳ Vérification de la session…</div>`; return; }
     if (!state.curUser) { root.innerHTML = renderLogin(); return; }
     if (!isReady) { root.innerHTML = `<div class="lpr-loader">⏳ Chargement des données…</div>`; return; }
 
