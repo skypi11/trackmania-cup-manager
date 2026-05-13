@@ -28,14 +28,15 @@
   .lpr-hdr-av-ph{width:32px;height:32px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem}
 
   /* ── Bandeau utilisateur (jetons + score) ── */
-  .lpr-user-bar{background:linear-gradient(135deg,rgba(255,184,0,.08),rgba(255,107,53,.04));border-bottom:1px solid rgba(255,184,0,.18);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .lpr-stat{flex:1;min-width:120px}
-  .lpr-stat-lbl{font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
-  .lpr-stat-val{font-size:1.3rem;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:2px}
+  .lpr-user-bar{background:linear-gradient(135deg,rgba(255,184,0,.1),rgba(255,107,53,.04) 60%,rgba(123,47,190,.06));border-bottom:1px solid rgba(255,184,0,.2);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:relative;overflow:hidden}
+  .lpr-user-bar::before{content:'';position:absolute;top:-50%;right:-10%;width:300px;height:200%;background:radial-gradient(ellipse,rgba(255,184,0,.08),transparent 65%);pointer-events:none}
+  .lpr-stat{flex:1;min-width:110px;position:relative;z-index:1}
+  .lpr-stat-lbl{font-size:.62rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:5px}
+  .lpr-stat-val{font-size:1.4rem;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:3px;font-variant-numeric:tabular-nums}
   .lpr-stat-val.coin{color:#FFB800}
   .lpr-stat-val.score{background:linear-gradient(135deg,#FFB800,#FF6B35);-webkit-background-clip:text;background-clip:text;color:transparent}
   .lpr-stat-val.rank{color:#0c8}
-  .lpr-stat-sub{font-size:.65rem;color:var(--text2);margin-top:2px}
+  .lpr-stat-sub{font-size:.66rem;color:var(--text2);margin-top:2px;font-weight:600}
 
   /* ── Login Discord ── */
   .lpr-login-card{margin:30px 16px;padding:30px 22px;text-align:center;background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid var(--border);border-radius:14px}
@@ -68,8 +69,9 @@
   .lpr-points-pill{display:inline-block;font-size:.62rem;font-weight:800;color:#FFB800;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.25);padding:2px 8px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase}
 
   /* ── Card ── */
-  .lpr-card{background:#161616;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
-  .lpr-card-hdr{font-size:.85rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .lpr-card{background:linear-gradient(180deg,#181818,#141414);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;transition:border-color .2s,box-shadow .2s}
+  .lpr-card:hover{border-color:rgba(255,184,0,.18);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+  .lpr-card-hdr{font-size:.85rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .lpr-card-hdr .lpr-points-pill{font-size:.58rem}
 
   /* ── Team picker (cards tappables) ── */
@@ -87,16 +89,17 @@
   .lpr-team-check{font-size:1rem;color:#FFB800;flex-shrink:0;font-weight:900}
 
   /* ── Podium pickers (3 dropdowns) ── */
-  .lpr-podium-row{display:flex;align-items:center;gap:10px;padding:12px;background:#1f1f1f;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06)}
-  .lpr-podium-medal{font-size:1.6rem;flex-shrink:0;width:34px;text-align:center}
+  .lpr-podium-row{display:flex;align-items:center;gap:12px;padding:14px;background:linear-gradient(180deg,#1f1f1f,#1a1a1a);border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);transition:all .15s}
+  .lpr-podium-row:hover{border-color:rgba(255,184,0,.3);background:linear-gradient(180deg,#252525,#1f1f1f)}
+  .lpr-podium-medal{font-size:1.8rem;flex-shrink:0;width:38px;text-align:center;line-height:1}
   .lpr-podium-info{flex:1;min-width:0}
-  .lpr-podium-lbl{font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
-  .lpr-podium-pts{font-size:.62rem;color:#FFB800;font-weight:700;margin-top:1px}
-  .lpr-podium-pick{font-size:.85rem;font-weight:700;color:var(--text);margin-top:4px;display:flex;align-items:center;gap:6px}
+  .lpr-podium-lbl{font-size:.74rem;font-weight:800;color:var(--text);letter-spacing:.02em}
+  .lpr-podium-pts{font-size:.64rem;color:#FFB800;font-weight:700;margin-top:2px}
+  .lpr-podium-pick{font-size:.88rem;font-weight:700;color:var(--text);margin-top:6px;display:flex;align-items:center;gap:8px}
   .lpr-podium-pick.empty{color:var(--text3);font-weight:600;font-style:italic}
-  .lpr-podium-pick img{width:22px;height:22px;border-radius:4px;object-fit:contain;background:#0f0f0f}
-  .lpr-podium-cote{font-size:.62rem;color:#FFB800;margin-left:auto}
-  .lpr-pick-arrow{font-size:1.1rem;color:var(--text3);flex-shrink:0}
+  .lpr-podium-pick img{width:24px;height:24px;border-radius:5px;object-fit:contain;background:#0f0f0f;border:1px solid rgba(255,255,255,.05)}
+  .lpr-podium-cote{font-size:.66rem;color:#FFB800;margin-left:auto;font-weight:800}
+  .lpr-pick-arrow{font-size:1.3rem;color:var(--text3);flex-shrink:0}
 
   /* ── Top 8 picker (compteur sticky) ── */
   .lpr-top8-counter{position:sticky;top:54px;background:rgba(10,10,10,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 14px;margin:-18px -14px 14px;border-bottom:1px solid rgba(255,255,255,.08);z-index:10;display:flex;align-items:center;justify-content:space-between;font-size:.8rem;font-weight:700}
@@ -104,7 +107,8 @@
   .lpr-top8-counter.full b{color:#0c8}
 
   /* ── Match card (Suisse / Bracket) ── */
-  .lpr-match{background:#161616;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+  .lpr-match{background:linear-gradient(180deg,#181818,#141414);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;transition:border-color .2s,box-shadow .2s,transform .15s}
+  .lpr-match:hover{border-color:rgba(255,184,0,.25);box-shadow:0 6px 24px rgba(0,0,0,.5)}
   .lpr-match-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
   .lpr-match-status{padding:2px 7px;border-radius:3px}
   .lpr-st-played{background:rgba(0,200,100,.15);color:#0c8}
@@ -156,10 +160,12 @@
   .lpr-save-btn:active{transform:scale(.98)}
 
   /* ── Leaderboard ── */
-  .lpr-lb{background:#161616;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-  .lpr-lb-row{display:grid;grid-template-columns:36px 36px 1fr auto;gap:10px;padding:10px 12px;align-items:center;border-bottom:1px solid rgba(255,255,255,.04)}
+  .lpr-lb{background:linear-gradient(180deg,#181818,#141414);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .lpr-lb-row{display:grid;grid-template-columns:36px 36px 1fr auto;gap:10px;padding:12px 14px;align-items:center;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+  .lpr-lb-row:hover{background:rgba(255,255,255,.02)}
   .lpr-lb-row:last-child{border-bottom:0}
   .lpr-lb-row.me{background:rgba(255,184,0,.08);border-left:3px solid #FFB800}
+  .lpr-lb-row.me:hover{background:rgba(255,184,0,.12)}
   .lpr-lb-rank{font-weight:900;font-size:.95rem;text-align:center;color:var(--text2)}
   .lpr-lb-rank.r1{color:#FFD700}
   .lpr-lb-rank.r2{color:#C0C0C0}
@@ -189,22 +195,61 @@
   /* ── Loader ── */
   .lpr-loader{display:flex;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3);font-size:.85rem}
 
-  /* ── Desktop overrides ── */
+  /* ── Tablette (760+) ── */
   @media(min-width:760px){
     body{padding-bottom:0}
-    .lpr-tabs{position:sticky;top:54px;bottom:auto;border-top:0;border-bottom:1px solid rgba(255,255,255,.08);padding:8px;display:flex;justify-content:center;gap:6px;grid-template-columns:none}
-    .lpr-tab{flex-direction:row;padding:9px 16px;font-size:.78rem}
-    .lpr-tab-ico{font-size:1rem}
+    .lpr-hdr{padding:14px 28px}
+    .lpr-hdr-logo{width:36px;height:36px}
+    .lpr-hdr-title{font-size:1rem}
+    .lpr-hdr-title small{font-size:.68rem;margin-top:2px}
+    .lpr-tabs{position:sticky;top:64px;bottom:auto;border-top:0;border-bottom:1px solid rgba(255,255,255,.08);padding:10px;display:flex;justify-content:center;gap:6px;grid-template-columns:none}
+    .lpr-tab{flex-direction:row;padding:10px 22px;font-size:.82rem;border-radius:8px}
+    .lpr-tab-ico{font-size:1.05rem}
     .lpr-tab-bdg{position:static;margin-left:6px}
     .lpr-save-bar{bottom:0}
-    .lpr-main{padding:24px 18px 40px}
-    .lpr-teams{grid-template-columns:repeat(3,1fr)}
+    .lpr-main{max-width:1080px;padding:28px 32px 60px}
+    .lpr-stitle{font-size:1.4rem;margin-bottom:8px}
+    .lpr-stitle-sub{font-size:.86rem;margin-bottom:24px}
+    .lpr-user-bar{padding:22px 40px;gap:48px;justify-content:center}
+    .lpr-user-bar > .lpr-stat{flex:0 0 auto;min-width:160px;text-align:center}
+    .lpr-user-bar > .lpr-stat .lpr-stat-lbl{justify-content:center}
+    .lpr-stat-val{font-size:1.6rem}
+    .lpr-stat-lbl{font-size:.7rem}
+    .lpr-stat-sub{font-size:.72rem}
+    .lpr-card{padding:22px 24px;margin-bottom:18px;border-radius:14px}
+    .lpr-card-hdr{font-size:1rem;margin-bottom:16px}
+    .lpr-teams{grid-template-columns:repeat(3,1fr);gap:10px}
     .lpr-modal{align-items:center}
-    .lpr-modal-inner{border-radius:14px;max-width:560px}
+    .lpr-modal-inner{border-radius:14px;max-width:600px}
+    /* Match cards en grille 2 colonnes sur tablette */
+    .lpr-matches-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .lpr-match{margin-bottom:0}
   }
 
+  /* ── Desktop large (1100+) ── */
   @media(min-width:1100px){
+    .lpr-main{max-width:1320px;padding:32px 40px 80px}
     .lpr-teams{grid-template-columns:repeat(4,1fr)}
+    /* Pré-LAN : 2 colonnes (podium prend la 1ère, top8 + first out la 2e) */
+    .lpr-prelan-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+    .lpr-prelan-grid > .lpr-card{margin-bottom:0}
+    .lpr-prelan-grid > .lpr-card.podium{grid-row:span 2}
+    /* Match cards en grille 3 colonnes sur desktop large */
+    .lpr-matches-grid{grid-template-columns:repeat(3,1fr);gap:16px}
+    .lpr-match{padding:14px 16px}
+    .lpr-side{min-height:104px;padding:12px}
+    .lpr-side-logo{width:48px;height:48px}
+    .lpr-side-name{font-size:.85rem}
+    .lpr-side-cote{font-size:.78rem}
+    .lpr-stat-val{font-size:1.8rem}
+    /* Header sticky plus haut, l'offset des tabs s'adapte */
+    .lpr-tabs{top:68px}
+  }
+
+  /* ── Desktop XL (1500+) — pleine largeur, 4 colonnes matchs ── */
+  @media(min-width:1500px){
+    .lpr-main{max-width:1480px}
+    .lpr-matches-grid{grid-template-columns:repeat(4,1fr)}
   }
 </style>
 </head>
@@ -486,24 +531,26 @@
       <div class="lpr-stitle">🔮 Pronostics pré-LAN ${stateBadge}</div>
       <p class="lpr-stitle-sub">${locked ? 'Tes pronostics sont définitifs.' : 'Tes pronostics sont enregistrés en direct, modifiables jusqu\'au verrouillage admin.'}</p>
 
-      <div class="lpr-card">
-        <div class="lpr-card-hdr">🏅 Podium ordonné <span class="lpr-points-pill">${POINTS.PODIUM_PLACE} pts/place · 450 max</span></div>
-        <p style="font-size:.72rem;color:var(--text2);margin:0 0 10px">Le 1er du podium est aussi le champion 👑. Bonne équipe sur le podium mais mauvaise place : ${POINTS.PODIUM_WRONG_PLACE} pts.</p>
-        ${[1,2,3].map(place => renderPodiumRow(place, pl.podium?.[place], locked)).join('')}
-      </div>
+      <div class="lpr-prelan-grid">
+        <div class="lpr-card podium">
+          <div class="lpr-card-hdr">🏅 Podium ordonné <span class="lpr-points-pill">${POINTS.PODIUM_PLACE} pts/place · 450 max</span></div>
+          <p style="font-size:.72rem;color:var(--text2);margin:0 0 12px">Le 1er du podium est aussi le champion 👑. Bonne équipe sur le podium mais mauvaise place : ${POINTS.PODIUM_WRONG_PLACE} pts.</p>
+          ${[1,2,3].map(place => renderPodiumRow(place, pl.podium?.[place], locked)).join('')}
+        </div>
 
-      <div class="lpr-card">
-        <div class="lpr-card-hdr">🏆 Top 8 Suisse <span class="lpr-points-pill">${POINTS.TOP8_PER_TEAM} pts/équipe · 240 max</span></div>
-        <button class="lpr-discord-btn" style="background:#252525;color:var(--text)" onclick="openTop8Picker()" ${locked?'disabled':''}>
-          ${pl.top8?.length ? `✏️ Modifier (${pl.top8.length}/8 sélectionnés)` : '🏆 Choisir les 8 équipes'}
-        </button>
-        ${pl.top8?.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${pl.top8.map(id => renderTop8Chip(id)).join('')}</div>` : ''}
-      </div>
+        <div class="lpr-card">
+          <div class="lpr-card-hdr">🏆 Top 8 Suisse <span class="lpr-points-pill">${POINTS.TOP8_PER_TEAM} pts/équipe · 240 max</span></div>
+          <button class="lpr-discord-btn" style="background:#252525;color:var(--text)" onclick="openTop8Picker()" ${locked?'disabled':''}>
+            ${pl.top8?.length ? `✏️ Modifier (${pl.top8.length}/8 sélectionnés)` : '🏆 Choisir les 8 équipes'}
+          </button>
+          ${pl.top8?.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${pl.top8.map(id => renderTop8Chip(id)).join('')}</div>` : ''}
+        </div>
 
-      <div class="lpr-card">
-        <div class="lpr-card-hdr">💀 Première sortie <span class="lpr-points-pill">${POINTS.FIRST_OUT} pts</span></div>
-        <p style="font-size:.72rem;color:var(--text2);margin:0 0 10px">L'équipe qui finit 16ᵉ (dernière) du classement Suisse.</p>
-        ${pl.firstOut ? renderPickedTeam(pl.firstOut, getFirstOutOdds(pl.firstOut), 'firstOut', locked) : renderPickButton('firstOut', '💀 Choisir la première sortie', locked)}
+        <div class="lpr-card">
+          <div class="lpr-card-hdr">💀 Première sortie <span class="lpr-points-pill">${POINTS.FIRST_OUT} pts</span></div>
+          <p style="font-size:.72rem;color:var(--text2);margin:0 0 10px">L'équipe qui finit 16ᵉ (dernière) du classement Suisse.</p>
+          ${pl.firstOut ? renderPickedTeam(pl.firstOut, getFirstOutOdds(pl.firstOut), 'firstOut', locked) : renderPickButton('firstOut', '💀 Choisir la première sortie', locked)}
+        </div>
       </div>
     `;
   }
@@ -727,7 +774,7 @@
         <div class="lpr-round-title">Round ${r} ${stateBadge}</div>
         <small>${matches.length} match${matches.length>1?'s':''}</small>
       </div>`;
-      html += matches.map(m => renderMatchCard(m, 'swiss', locked)).join('');
+      html += `<div class="lpr-matches-grid">${matches.map(m => renderMatchCard(m, 'swiss', locked)).join('')}</div>`;
     }
     return html;
   }
@@ -757,10 +804,11 @@
         <div class="lpr-round-title">${lbl}</div>
         <small>${byPhase[slot].length} match${byPhase[slot].length>1?'s':''}</small>
       </div>`;
-      for (const m of byPhase[slot]) {
+      const matchesHtml = byPhase[slot].map(m => {
         const locked = isBracketMatchLocked(m.id);
-        html += renderMatchCard(m, 'bracket', locked);
-      }
+        return renderMatchCard(m, 'bracket', locked);
+      }).join('');
+      html += `<div class="lpr-matches-grid">${matchesHtml}</div>`;
     }
     return html;
   }
