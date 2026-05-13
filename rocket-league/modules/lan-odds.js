@@ -108,27 +108,29 @@ function _qualifiedTeamIds() {
   return [...qP1, ...qP2];
 }
 
+// Clamp 2.0 → 12.0 pour limiter les payouts démesurés avec mise jusqu'à 200
+// (200 × 12 = 2400 pts max bonus au lieu de 10000 avec ancien clamp 50).
 export function getChampionOdds(teamId) {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 50.0;
-  const k = 2.5; // exposant : plus k haut, plus les cotes sont spread
+  if (!ids.includes(teamId)) return 12.0;
+  const k = 2.5;
   const strengths = ids.map(id => Math.pow(getTeamStrength(id), k));
   const total = strengths.reduce((a, b) => a + b, 0) || 1;
   const myStr = Math.pow(getTeamStrength(teamId), k);
   const p = myStr / total;
-  return roundCote(clamp(1 / p, 2.0, 50.0));
+  return roundCote(clamp(1 / p, 2.0, 12.0));
 }
 
 // ── Cote pré-LAN : place sur le podium (1er, 2e, 3e — ordonné) ─────────
 // Approximation : P(place X) = P(champion) × pondération selon X
-// 1er = P(champion). 2e = P(champion) × 1.4 (un peu moins probable que d'être champion).
-// 3e = P(champion) × 2.0 (encore moins).
+// 1er = P(champion). 2e = P(champion) × 1.4. 3e = P(champion) × 2.0.
+// Clamp 2.0 → 12.0 (cohérent avec champion).
 export function getPodiumPlaceOdds(teamId, place) {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 50.0;
+  if (!ids.includes(teamId)) return 12.0;
   const champOdds = getChampionOdds(teamId);
   const mult = place === 1 ? 1.0 : place === 2 ? 1.4 : 2.0;
-  return roundCote(clamp(champOdds * mult, 2.0, 50.0));
+  return roundCote(clamp(champOdds * mult, 2.0, 12.0));
 }
 
 // ── Cote pré-LAN : Top 8 (équipe finit dans le top 8 de la Suisse) ─────
