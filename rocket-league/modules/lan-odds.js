@@ -108,30 +108,38 @@ function _qualifiedTeamIds() {
   return [...qP1, ...qP2];
 }
 
-// Cotes podium très tassées (k=3.0 amplifie les écarts, clamp 1.5 → 8.0)
-// pour éviter des payouts trop importants même sur des outsiders. Avec mise
-// max 200 jetons : 200 × 8 = 1600 pts max bonus.
-export function getChampionOdds(teamId) {
+// Mapping linéaire des cotes podium selon le RANG global (trié par force).
+// Plus simple et plus juste que le calcul de proba qui finissait clampé pour
+// la plupart des équipes (probas naturelles trop faibles à 1/16).
+//
+// Ex pour 16 équipes :
+//   - rang 0 (le meilleur) : cote min selon la place
+//   - rang N-1 (le pire)   : cote 8
+//
+// Bornes par place :
+//   - 1er (champion) : 2.0 → 8.0
+//   - 2e             : 2.5 → 8.0
+//   - 3e             : 3.0 → 8.0
+function _rankByStrength() {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 8.0;
-  const k = 3.0;
-  const strengths = ids.map(id => Math.pow(getTeamStrength(id), k));
-  const total = strengths.reduce((a, b) => a + b, 0) || 1;
-  const myStr = Math.pow(getTeamStrength(teamId), k);
-  const p = myStr / total;
-  return roundCote(clamp(1 / p, 1.5, 8.0));
+  const sorted = ids.slice().sort((a, b) => getTeamStrength(b) - getTeamStrength(a));
+  return new Map(sorted.map((id, i) => [id, i]));
 }
 
-// ── Cote pré-LAN : place sur le podium (1er, 2e, 3e — ordonné) ─────────
-// Approximation : P(place X) = P(champion) × pondération selon X
-// 1er = P(champion). 2e = P(champion) × 1.4. 3e = P(champion) × 2.0.
-// Clamp 1.5 → 8.0 (cohérent avec champion).
+export function getChampionOdds(teamId) {
+  return getPodiumPlaceOdds(teamId, 1);
+}
+
 export function getPodiumPlaceOdds(teamId, place) {
   const ids = _qualifiedTeamIds();
   if (!ids.includes(teamId)) return 8.0;
-  const champOdds = getChampionOdds(teamId);
-  const mult = place === 1 ? 1.0 : place === 2 ? 1.4 : 2.0;
-  return roundCote(clamp(champOdds * mult, 1.5, 8.0));
+  const ranks = _rankByStrength();
+  const rank = ranks.get(teamId) ?? (ids.length - 1);
+  const n = Math.max(2, ids.length);
+  const minCote = place === 1 ? 2.0 : place === 2 ? 2.5 : 3.0;
+  const maxCote = 8.0;
+  const cote = minCote + (rank / (n - 1)) * (maxCote - minCote);
+  return roundCote(clamp(cote, minCote, maxCote));
 }
 
 // ── Cote pré-LAN : Top 8 (équipe finit dans le top 8 de la Suisse) ─────
