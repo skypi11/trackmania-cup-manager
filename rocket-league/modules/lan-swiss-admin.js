@@ -14,6 +14,7 @@ import {
 import { SLOT_LABEL } from './lan-bracket.js';
 import { applyBracketProgression } from './lan-bracket-admin.js';
 import { showPairingsConfirmation } from './lan-modals.js';
+import { lockSwissRound, unlockSwissRound, isSwissRoundLocked, resolveAllPendingBets } from './lan-predictions.js';
 
 export async function admLanSwiss() {
   const wrap = document.getElementById('lan-sec-content');
@@ -99,11 +100,18 @@ function renderRoundSection(swissMatches, round) {
     .slice()
     .sort((a, b) => (a.swissOrder ?? 0) - (b.swissOrder ?? 0));
   const complete = isRoundComplete(swissMatches, round);
+  const predLocked = isSwissRoundLocked(round);
+  const lockBtn = predLocked
+    ? `<button class="btn-s" onclick="unlockSwissRoundAdm(${round})" title="Déverrouiller les pronostics du R${round}" style="font-size:.7rem;padding:3px 9px">🔓 Pronos R${round}</button>`
+    : `<button class="btn-d" onclick="lockSwissRoundAdm(${round})" title="Verrouiller les pronostics du R${round}" style="font-size:.7rem;padding:3px 9px">🔒 Pronos R${round}</button>`;
   return `
     <div class="adm-card" style="margin-bottom:12px">
       <div class="adm-card-hdr" style="justify-content:space-between">
         <span>Round ${round} ${complete ? '<span style="font-size:.7rem;color:#0c8;margin-left:8px;font-weight:700">✓ COMPLET</span>' : ''}</span>
-        <span style="font-size:.7rem;color:var(--text3);font-weight:400">${matches.length} match${matches.length>1?'s':''}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          ${lockBtn}
+          <span style="font-size:.7rem;color:var(--text3);font-weight:400">${matches.length} match${matches.length>1?'s':''}</span>
+        </span>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${matches.map(m => renderMatchCard(m)).join('')}
@@ -325,6 +333,23 @@ window.resetSwissPhase = async function () {
   try {
     await Promise.all(swissMatches.map(m => deleteLanMatch(m.id)));
     toast('Phase Suisse réinitialisée', 'ok');
+    await admLanSwiss();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.lockSwissRoundAdm = async function (round) {
+  try {
+    await lockSwissRound(round);
+    toast(`🔒 Pronostics R${round} verrouillés`, 'ok');
+    await admLanSwiss();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.unlockSwissRoundAdm = async function (round) {
+  if (!confirm(`Déverrouiller les pronostics du Round ${round} ? Les joueurs pourront à nouveau parier sur les matchs non joués.`)) return;
+  try {
+    await unlockSwissRound(round);
+    toast(`🔓 Pronostics R${round} rouverts`, 'ok');
     await admLanSwiss();
   } catch (e) { console.error(e); toast('Erreur', 'err'); }
 };
@@ -623,6 +648,10 @@ window.saveSwissMatch = async function (matchId) {
     // Si c'est un match du bracket, propage le résultat aux matchs en aval
     if (match.bracketSlot) {
       await applyBracketProgression(matchId);
+    }
+    // Résolution des paris sur ce match (auto, à chaque saisie de score)
+    if (ss.played) {
+      try { await resolveAllPendingBets(); } catch(e) { console.warn('resolve bets:', e); }
     }
     closeModal('mo-match');
     toast(ss.played ? `✓ Match terminé (${ss.home}-${ss.away})` : 'Score enregistré', 'ok');

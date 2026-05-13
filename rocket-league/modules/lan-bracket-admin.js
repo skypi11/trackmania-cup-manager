@@ -16,6 +16,7 @@ import {
   isBracketGenerated, isBracketComplete,
 } from './lan-bracket.js';
 import { showPairingsConfirmation } from './lan-modals.js';
+import { lockBracketMatch, unlockBracketMatch, isBracketMatchLocked } from './lan-predictions.js';
 
 export async function admLanBracket() {
   const wrap = document.getElementById('lan-sec-content');
@@ -218,8 +219,16 @@ function renderBracketCard(match, isFinal = false) {
         <div class="bm-foot-r">
           ${isPending
             ? `<span class="bm-pending-msg">En attente</span>`
-            : `<button class="bm-act stage" onclick="event.stopPropagation();toggleBracketStage('${match.id}',${!match.onStage})">${match.onStage ? '✕ Scène' : '🎭 Scène'}</button>
-               <button class="bm-act ${ss.played?'edit':''}" onclick="event.stopPropagation();openSwissMatch('${match.id}')">${ss.played?'✏️':'⚡ Score'}</button>`}
+            : (() => {
+                const predLocked = isBracketMatchLocked(match.id);
+                const lockBtn = predLocked
+                  ? `<button class="bm-act" title="Pronostics verrouillés — cliquer pour rouvrir" onclick="event.stopPropagation();unlockBracketPredAdm('${match.id}')">🔓 Pronos</button>`
+                  : `<button class="bm-act" title="Verrouiller les pronostics de ce match" onclick="event.stopPropagation();lockBracketPredAdm('${match.id}')">🔒 Pronos</button>`;
+                return `${lockBtn}
+                  <button class="bm-act stage" onclick="event.stopPropagation();toggleBracketStage('${match.id}',${!match.onStage})">${match.onStage ? '✕ Scène' : '🎭 Scène'}</button>
+                  <button class="bm-act ${ss.played?'edit':''}" onclick="event.stopPropagation();openSwissMatch('${match.id}')">${ss.played?'✏️':'⚡ Score'}</button>`;
+              })()
+          }
         </div>
       </div>
     </div>
@@ -376,6 +385,23 @@ window.toggleBracketStage = async function (matchId, onStage) {
   try {
     await updateLanMatch(matchId, { onStage });
     toast(onStage ? '🎭 Match sur scène' : 'Match retiré de la scène', 'ok');
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.lockBracketPredAdm = async function (matchId) {
+  try {
+    await lockBracketMatch(matchId);
+    toast('🔒 Pronostics verrouillés pour ce match', 'ok');
+    await admLanBracket();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.unlockBracketPredAdm = async function (matchId) {
+  if (!confirm('Déverrouiller les pronostics de ce match ? Les joueurs pourront à nouveau parier.')) return;
+  try {
+    await unlockBracketMatch(matchId);
+    toast('🔓 Pronostics rouverts pour ce match', 'ok');
+    await admLanBracket();
   } catch (e) { console.error(e); toast('Erreur', 'err'); }
 };
 

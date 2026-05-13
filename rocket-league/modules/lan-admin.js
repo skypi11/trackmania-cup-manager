@@ -9,6 +9,10 @@ import {
 } from './lan.js';
 import { admLanSwiss } from './lan-swiss-admin.js';
 import { admLanBracket } from './lan-bracket-admin.js';
+import {
+  setupLanPredictionsListener, lockPreLan, unlockPreLan,
+  recalculateAll, isPreLanLocked,
+} from './lan-predictions.js';
 
 state.lanAdmSec = state.lanAdmSec || 'preparation';
 
@@ -20,6 +24,7 @@ export async function admLan() {
   // Listeners live (idempotents) — on les active dès qu'on entre dans l'admin LAN
   setupLanListener();
   setupLanMatchesListener();
+  setupLanPredictionsListener();
 
   // Sous-menu commun à toutes les sections LAN
   wrap.innerHTML = `
@@ -163,6 +168,27 @@ async function admLanPreparation() {
       </div>
     </div>
 
+    <!-- ── Pronostics LAN ────────────────────────────────────────────── -->
+    <div class="adm-card" style="margin-bottom:14px">
+      <div class="adm-card-hdr">🔮 Pronostics LAN</div>
+      <p style="font-size:.82rem;color:var(--text2);margin:0 0 12px">
+        Verrouille les pronostics pré-LAN (champion, podium, top 8, première sortie) avant le coup d'envoi
+        du R1 Suisse. Une fois verrouillés, les joueurs ne peuvent plus modifier leurs choix.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        ${isPreLanLocked()
+          ? `<span style="font-size:.78rem;color:#ef4444;font-weight:700">🔒 Pré-LAN verrouillé</span>
+             <button class="btn-s" onclick="unlockPreLanAdm()">↺ Déverrouiller</button>`
+          : `<span style="font-size:.78rem;color:#0c8;font-weight:700">● Pré-LAN ouvert aux pronostics</span>
+             <button class="btn-d" onclick="lockPreLanAdm()">🔒 Verrouiller pronostics pré-LAN</button>`}
+        <button class="btn-s" style="margin-left:auto" onclick="recalcAllScoresAdm()">🧮 Recalculer tous les scores</button>
+      </div>
+      <p style="font-size:.7rem;color:var(--text3);margin:10px 0 0">
+        💡 La résolution des paris match (Suisse + Bracket) se fait automatiquement à chaque saisie de score.
+        Le bouton "Recalculer" force un re-passage complet (utile en cas de litige).
+      </p>
+    </div>
+
     <!-- ── ID technique (debug) ─────────────────────────────────────── -->
     <div style="font-size:.7rem;color:var(--text3);text-align:right">
       Doc Firestore : <code>rl_lan/${LAN_DOC_ID}</code>
@@ -275,6 +301,32 @@ window.resetLanManual = async function () {
     console.error(e);
     toast('Erreur', 'err');
   }
+};
+
+// ── Pronostics LAN ────────────────────────────────────────────────────
+window.lockPreLanAdm = async function () {
+  if (!confirm('Verrouiller les pronostics pré-LAN ?\n\nLes joueurs ne pourront plus modifier leur champion, leur podium, leur top 8 et leur première sortie.\n\nFais-le juste avant de générer le R1 Suisse.')) return;
+  try {
+    await lockPreLan();
+    toast('🔒 Pronostics pré-LAN verrouillés', 'ok');
+    await admLan();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.unlockPreLanAdm = async function () {
+  if (!confirm('Déverrouiller les pronostics pré-LAN ? Les joueurs pourront à nouveau les modifier.')) return;
+  try {
+    await unlockPreLan();
+    toast('● Pronostics pré-LAN rouverts', 'ok');
+    await admLan();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
+};
+
+window.recalcAllScoresAdm = async function () {
+  try {
+    const n = await recalculateAll();
+    toast(`🧮 ${n} doc(s) mis à jour`, 'ok');
+  } catch (e) { console.error(e); toast('Erreur recalcul', 'err'); }
 };
 
 // Déplace une équipe vers l'autre poule (override LAN — n'affecte pas la poule de saison)

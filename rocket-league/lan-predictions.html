@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>Pronostics LAN — Springs E-Sport</title>
+<meta name="description" content="Pronostiquez la SLS#2 LAN : champion, podium, top 8 et chaque match. Misez vos jetons et grimpez au classement !">
+<link rel="icon" href="/assets/springs-logo.png">
+<script defer src="/_vercel/insights/script.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ── Reset mobile-first ── */
+  *{box-sizing:border-box}
+  body{background:#0a0a0a;color:var(--text);font-family:'Inter',sans-serif;margin:0;padding:0;padding-bottom:78px;min-height:100vh;-webkit-tap-highlight-color:transparent}
+
+  /* ── Header sticky ── */
+  .lpr-hdr{position:sticky;top:0;z-index:50;background:rgba(10,10,10,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);padding:10px 14px;display:flex;align-items:center;gap:10px}
+  .lpr-hdr-back{background:none;border:none;color:var(--text2);font-size:1.4rem;padding:6px 8px;cursor:pointer;text-decoration:none;line-height:1}
+  .lpr-hdr-back:hover{color:#FFB800}
+  .lpr-hdr-logo{width:30px;height:30px;border-radius:5px;flex-shrink:0}
+  .lpr-hdr-title{font-weight:800;font-size:.9rem;flex:1;line-height:1.1}
+  .lpr-hdr-title small{display:block;font-size:.62rem;color:var(--text3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:1px}
+  .lpr-hdr-user{display:flex;align-items:center;gap:8px}
+  .lpr-hdr-av{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,184,0,.4);object-fit:cover}
+  .lpr-hdr-av-ph{width:32px;height:32px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem}
+
+  /* ── Bandeau utilisateur (jetons + score) ── */
+  .lpr-user-bar{background:linear-gradient(135deg,rgba(255,184,0,.08),rgba(255,107,53,.04));border-bottom:1px solid rgba(255,184,0,.18);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .lpr-stat{flex:1;min-width:120px}
+  .lpr-stat-lbl{font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+  .lpr-stat-val{font-size:1.3rem;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:2px}
+  .lpr-stat-val.coin{color:#FFB800}
+  .lpr-stat-val.score{background:linear-gradient(135deg,#FFB800,#FF6B35);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lpr-stat-val.rank{color:#0c8}
+  .lpr-stat-sub{font-size:.65rem;color:var(--text2);margin-top:2px}
+
+  /* ── Login Discord ── */
+  .lpr-login-card{margin:30px 16px;padding:30px 22px;text-align:center;background:linear-gradient(135deg,#1a1a1a,#0f0f0f);border:1px solid var(--border);border-radius:14px}
+  .lpr-login-card h2{font-size:1.3rem;font-weight:800;margin:0 0 8px;letter-spacing:-.01em}
+  .lpr-login-card p{font-size:.88rem;color:var(--text2);margin:0 0 22px;line-height:1.5}
+  .lpr-login-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;text-align:left;padding:16px 20px;background:rgba(255,255,255,.03);border-radius:8px}
+  .lpr-login-perk{font-size:.84rem;color:var(--text);display:flex;align-items:center;gap:10px}
+  .lpr-login-perk b{color:#FFB800}
+  .lpr-discord-btn{background:#5865F2;color:#fff;border:none;padding:14px 24px;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px;font-family:inherit;width:100%;justify-content:center;transition:background .15s}
+  .lpr-discord-btn:hover{background:#4752c4}
+
+  /* ── Tab nav (bottom mobile, top desktop) ── */
+  .lpr-tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.08);padding:6px 4px;padding-bottom:calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:2px;z-index:50}
+  .lpr-tab{background:none;border:none;color:var(--text3);font-family:inherit;padding:9px 4px;font-size:.66rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:6px;transition:all .15s;letter-spacing:.02em;text-transform:uppercase}
+  .lpr-tab:hover{color:var(--text2);background:rgba(255,255,255,.03)}
+  .lpr-tab.active{color:#FFB800;background:rgba(255,184,0,.08)}
+  .lpr-tab-ico{font-size:1.3rem;line-height:1}
+  .lpr-tab-bdg{position:absolute;top:6px;right:30%;background:#ef4444;color:#fff;font-size:.55rem;font-weight:800;padding:1px 5px;border-radius:8px;min-width:14px;text-align:center}
+  .lpr-tab{position:relative}
+
+  /* ── Main content ── */
+  .lpr-main{padding:18px 14px 20px;max-width:680px;margin:0 auto}
+
+  /* ── Section title ── */
+  .lpr-stitle{font-size:1.1rem;font-weight:900;letter-spacing:-.01em;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  .lpr-stitle .badge{font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase}
+  .lpr-badge-locked{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+  .lpr-badge-open{background:rgba(0,200,100,.12);color:#0c8;border:1px solid rgba(0,200,100,.3)}
+  .lpr-stitle-sub{font-size:.78rem;color:var(--text2);margin:0 0 16px}
+  .lpr-points-pill{display:inline-block;font-size:.62rem;font-weight:800;color:#FFB800;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.25);padding:2px 8px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase}
+
+  /* ── Card ── */
+  .lpr-card{background:#161616;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+  .lpr-card-hdr{font-size:.85rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .lpr-card-hdr .lpr-points-pill{font-size:.58rem}
+
+  /* ── Team picker (cards tappables) ── */
+  .lpr-teams{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+  .lpr-team{background:#1f1f1f;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .12s;text-align:left;color:var(--text);font-family:inherit}
+  .lpr-team:active{transform:scale(.98)}
+  .lpr-team:hover{border-color:rgba(255,184,0,.4);background:#252525}
+  .lpr-team.selected{background:rgba(255,184,0,.12);border-color:#FFB800;box-shadow:0 0 0 1px #FFB800 inset}
+  .lpr-team.disabled{opacity:.35;cursor:not-allowed}
+  .lpr-team-logo{width:30px;height:30px;border-radius:5px;object-fit:contain;background:#0f0f0f;flex-shrink:0;border:1px solid rgba(255,255,255,.05)}
+  .lpr-team-info{flex:1;min-width:0}
+  .lpr-team-name{font-size:.78rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+  .lpr-team-cote{font-size:.62rem;color:#FFB800;font-weight:800;margin-top:1px}
+  .lpr-team-rank{font-size:.62rem;color:var(--text3);margin-top:1px;letter-spacing:.02em}
+  .lpr-team-check{font-size:1rem;color:#FFB800;flex-shrink:0;font-weight:900}
+
+  /* ── Podium pickers (3 dropdowns) ── */
+  .lpr-podium-row{display:flex;align-items:center;gap:10px;padding:12px;background:#1f1f1f;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06)}
+  .lpr-podium-medal{font-size:1.6rem;flex-shrink:0;width:34px;text-align:center}
+  .lpr-podium-info{flex:1;min-width:0}
+  .lpr-podium-lbl{font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+  .lpr-podium-pts{font-size:.62rem;color:#FFB800;font-weight:700;margin-top:1px}
+  .lpr-podium-pick{font-size:.85rem;font-weight:700;color:var(--text);margin-top:4px;display:flex;align-items:center;gap:6px}
+  .lpr-podium-pick.empty{color:var(--text3);font-weight:600;font-style:italic}
+  .lpr-podium-pick img{width:22px;height:22px;border-radius:4px;object-fit:contain;background:#0f0f0f}
+  .lpr-podium-cote{font-size:.62rem;color:#FFB800;margin-left:auto}
+  .lpr-pick-arrow{font-size:1.1rem;color:var(--text3);flex-shrink:0}
+
+  /* ── Top 8 picker (compteur sticky) ── */
+  .lpr-top8-counter{position:sticky;top:54px;background:rgba(10,10,10,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 14px;margin:-18px -14px 14px;border-bottom:1px solid rgba(255,255,255,.08);z-index:10;display:flex;align-items:center;justify-content:space-between;font-size:.8rem;font-weight:700}
+  .lpr-top8-counter b{color:#FFB800;font-size:1rem}
+  .lpr-top8-counter.full b{color:#0c8}
+
+  /* ── Match card (Suisse / Bracket) ── */
+  .lpr-match{background:#161616;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+  .lpr-match-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+  .lpr-match-status{padding:2px 7px;border-radius:3px}
+  .lpr-st-played{background:rgba(0,200,100,.15);color:#0c8}
+  .lpr-st-pending{background:rgba(255,255,255,.05);color:var(--text2)}
+  .lpr-st-locked{background:rgba(239,68,68,.15);color:#ef4444}
+  .lpr-match-sides{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .lpr-side{background:#1f1f1f;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .12s;color:var(--text);font-family:inherit;text-align:center;min-height:90px;justify-content:center}
+  .lpr-side:active{transform:scale(.97)}
+  .lpr-side:hover{border-color:rgba(255,184,0,.4)}
+  .lpr-side.selected{background:rgba(255,184,0,.12);border-color:#FFB800;box-shadow:0 0 0 1px #FFB800 inset}
+  .lpr-side.locked-correct{background:rgba(0,200,100,.12);border-color:#0c8}
+  .lpr-side.locked-wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
+  .lpr-side.disabled{cursor:not-allowed;opacity:.6}
+  .lpr-side-logo{width:38px;height:38px;border-radius:6px;object-fit:contain;background:#0f0f0f;border:1px solid rgba(255,255,255,.05)}
+  .lpr-side-name{font-size:.78rem;font-weight:700;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lpr-side-cote{font-size:.7rem;color:#FFB800;font-weight:800}
+  .lpr-side-result{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+
+  /* Mise (slider + display) — visible quand un side est sélectionné et match pas verrouillé */
+  .lpr-bet{margin-top:10px;padding:10px 12px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:8px}
+  .lpr-bet-row{display:flex;align-items:center;gap:10px}
+  .lpr-bet-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;background:rgba(255,255,255,.08);border-radius:3px;outline:none}
+  .lpr-bet-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;background:#FFB800;border-radius:50%;cursor:pointer;border:2px solid #000}
+  .lpr-bet-slider::-moz-range-thumb{width:22px;height:22px;background:#FFB800;border-radius:50%;cursor:pointer;border:2px solid #000}
+  .lpr-bet-val{font-size:.85rem;font-weight:800;color:#FFB800;min-width:90px;text-align:right}
+  .lpr-bet-info{font-size:.7rem;color:var(--text2);margin-top:6px;text-align:center}
+  .lpr-bet-info b{color:#0c8;font-size:.85rem}
+
+  /* Result badge (won/lost) sur match résolu */
+  .lpr-result{margin-top:10px;padding:8px 12px;border-radius:6px;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .lpr-result.won{background:rgba(0,200,100,.1);color:#0c8;border:1px solid rgba(0,200,100,.3)}
+  .lpr-result.lost{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+
+  /* ── Round / phase headers ── */
+  .lpr-round-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .lpr-round-hdr:first-child{margin-top:0}
+  .lpr-round-title{font-size:.95rem;font-weight:800;display:flex;align-items:center;gap:8px}
+  .lpr-round-title small{font-size:.65rem;color:var(--text3);font-weight:600}
+
+  /* ── Empty state ── */
+  .lpr-empty{text-align:center;padding:40px 20px;color:var(--text2);font-size:.88rem;background:#161616;border:1px dashed rgba(255,255,255,.08);border-radius:10px}
+  .lpr-empty-ico{font-size:2.5rem;margin-bottom:10px;opacity:.5}
+
+  /* ── Save floating button ── */
+  .lpr-save-bar{position:sticky;bottom:78px;left:0;right:0;background:linear-gradient(180deg,transparent,rgba(10,10,10,.95) 30%);padding:14px 14px 18px;margin:14px -14px -20px;display:none;z-index:20}
+  .lpr-save-bar.show{display:block}
+  .lpr-save-btn{width:100%;background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;border:none;padding:14px;border-radius:10px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.02em;box-shadow:0 6px 20px rgba(255,184,0,.3)}
+  .lpr-save-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .lpr-save-btn:active{transform:scale(.98)}
+
+  /* ── Leaderboard ── */
+  .lpr-lb{background:#161616;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .lpr-lb-row{display:grid;grid-template-columns:36px 36px 1fr auto;gap:10px;padding:10px 12px;align-items:center;border-bottom:1px solid rgba(255,255,255,.04)}
+  .lpr-lb-row:last-child{border-bottom:0}
+  .lpr-lb-row.me{background:rgba(255,184,0,.08);border-left:3px solid #FFB800}
+  .lpr-lb-rank{font-weight:900;font-size:.95rem;text-align:center;color:var(--text2)}
+  .lpr-lb-rank.r1{color:#FFD700}
+  .lpr-lb-rank.r2{color:#C0C0C0}
+  .lpr-lb-rank.r3{color:#CD7F32}
+  .lpr-lb-av{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.08)}
+  .lpr-lb-av-ph{width:32px;height:32px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem}
+  .lpr-lb-name{font-size:.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lpr-lb-detail{font-size:.65rem;color:var(--text3);margin-top:1px}
+  .lpr-lb-score{font-weight:900;font-size:1rem;color:#FFB800;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* ── Toast ── */
+  #lpr-toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#252525;color:#fff;padding:12px 18px;border-radius:8px;font-size:.85rem;font-weight:600;border:1px solid rgba(255,255,255,.1);z-index:100;opacity:0;transition:all .25s;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:90vw;text-align:center}
+  #lpr-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #lpr-toast.ok{border-color:rgba(0,200,100,.4)}
+  #lpr-toast.err{border-color:rgba(239,68,68,.4)}
+
+  /* ── Modal full-screen pour podium picker ── */
+  .lpr-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:200;display:none;align-items:flex-end;justify-content:center}
+  .lpr-modal.show{display:flex}
+  .lpr-modal-inner{background:#161616;width:100%;max-width:520px;border-radius:14px 14px 0 0;max-height:85vh;display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -10px 40px rgba(0,0,0,.6)}
+  .lpr-modal-hdr{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .lpr-modal-title{font-weight:800;font-size:1rem}
+  .lpr-modal-close{background:none;border:none;color:var(--text2);font-size:1.5rem;cursor:pointer;padding:4px 10px}
+  .lpr-modal-body{padding:16px 18px;overflow-y:auto}
+  .lpr-modal-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:10px}
+
+  /* ── Loader ── */
+  .lpr-loader{display:flex;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3);font-size:.85rem}
+
+  /* ── Desktop overrides ── */
+  @media(min-width:760px){
+    body{padding-bottom:0}
+    .lpr-tabs{position:sticky;top:54px;bottom:auto;border-top:0;border-bottom:1px solid rgba(255,255,255,.08);padding:8px;display:flex;justify-content:center;gap:6px;grid-template-columns:none}
+    .lpr-tab{flex-direction:row;padding:9px 16px;font-size:.78rem}
+    .lpr-tab-ico{font-size:1rem}
+    .lpr-tab-bdg{position:static;margin-left:6px}
+    .lpr-save-bar{bottom:0}
+    .lpr-main{padding:24px 18px 40px}
+    .lpr-teams{grid-template-columns:repeat(3,1fr)}
+    .lpr-modal{align-items:center}
+    .lpr-modal-inner{border-radius:14px;max-width:560px}
+  }
+
+  @media(min-width:1100px){
+    .lpr-teams{grid-template-columns:repeat(4,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<header class="lpr-hdr">
+  <a href="lan.html" class="lpr-hdr-back">←</a>
+  <img src="../assets/springs-logo.png" alt="Springs" class="lpr-hdr-logo">
+  <div class="lpr-hdr-title">
+    Pronostics LAN
+    <small>SLS#2 · 16-17 mai 2026</small>
+  </div>
+  <div class="lpr-hdr-user" id="lpr-hdr-user"></div>
+</header>
+
+<div id="lpr-app">
+  <div class="lpr-loader">⏳ Chargement…</div>
+</div>
+
+<div id="lpr-modal" class="lpr-modal" onclick="if(event.target===this)closeLprModal()">
+  <div class="lpr-modal-inner">
+    <div class="lpr-modal-hdr">
+      <div class="lpr-modal-title" id="lpr-modal-title">—</div>
+      <button class="lpr-modal-close" onclick="closeLprModal()">×</button>
+    </div>
+    <div class="lpr-modal-body" id="lpr-modal-body"></div>
+    <div class="lpr-modal-foot" id="lpr-modal-foot"></div>
+  </div>
+</div>
+
+<div id="lpr-toast"></div>
+
+<script type="module">
+  import { app, db, auth } from '../shared/firebase-config.js';
+  import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+  import { collection, doc, onSnapshot, getDoc, getDocs } from 'firebase/firestore';
+  import { onAuthStateChanged, signInWithCustomToken, updateProfile } from 'firebase/auth';
+  import { state } from './modules/state.js';
+  import { LAN_DOC_ID } from './modules/lan.js';
+  import { getSwissMatches, getSwissRound, calcSeriesScore, calculateSwissStandings, SWISS_ROUNDS } from './modules/lan-swiss.js';
+  import { SLOT_LABEL } from './modules/lan-bracket.js';
+  import { getMatchOdds, getChampionOdds, getPodiumPlaceOdds, getTop8Odds, getFirstOutOdds } from './modules/lan-odds.js';
+  import {
+    setupLanPredictionsListener, ensureLanPredDoc, savePreLanPrediction,
+    placeMatchBet, isPreLanLocked, isSwissRoundLocked, isBracketMatchLocked,
+    getLeaderboard, STARTING_JETONS, MIN_BET, POINTS,
+  } from './modules/lan-predictions.js';
+  import { DISCORD_AUTH_URL } from './modules/constants.js';
+
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider('6Lfc8Y0sAAAAAGozYyv9rRjgG6XUPffi-PsjYIGR'), isTokenAutoRefreshEnabled: true });
+
+  // ── État local de l'UI ──
+  let curTab = 'preLan';
+  let myPred = null;
+  let qualifiedTeams = []; // les 16 équipes qualifiées (avec stats)
+  let isReady = false;
+
+  // ── Discord OAuth callback ──
+  (async function handleDiscordCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const ft = params.get('ft');
+    const du = params.get('du');
+    const da = params.get('da');
+    const authError = params.get('auth_error');
+    if (ft || authError) history.replaceState({}, '', window.location.pathname + window.location.hash);
+    if (authError) { setTimeout(() => toast('Erreur de connexion Discord', 'err'), 500); return; }
+    if (ft) {
+      try {
+        const cred = await signInWithCustomToken(auth, ft);
+        await updateProfile(cred.user, { displayName: du, photoURL: da });
+        setTimeout(() => toast(`Bienvenue ${du} !`, 'ok'), 300);
+      } catch(e) { console.error('Discord sign-in:', e); toast('Erreur de connexion', 'err'); }
+    }
+  })();
+
+  // ── Auth state ──
+  onAuthStateChanged(auth, async user => {
+    state.curUser = user;
+    if (user) {
+      try { myPred = await ensureLanPredDoc(user); } catch(e) { console.warn('ensure pred:', e); }
+    } else {
+      myPred = null;
+    }
+    renderApp();
+  });
+
+  // ── Listeners live ──
+  function initListeners() {
+    // Config LAN
+    onSnapshot(doc(db, 'rl_lan', LAN_DOC_ID), snap => {
+      state.lanConfig = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+      tryRender();
+    });
+    // Matches LAN
+    onSnapshot(collection(db, 'rl_lan_matches'), snap => {
+      state.lanMatches = {};
+      snap.forEach(d => { state.lanMatches[d.id] = { id: d.id, ...d.data() }; });
+      tryRender();
+    });
+    // Teams + matches ligue (pour cotes + standings)
+    onSnapshot(collection(db, 'rl_teams'), snap => {
+      state.teamsMap = {};
+      snap.forEach(d => { state.teamsMap[d.id] = { id: d.id, ...d.data() }; });
+      tryRender();
+    });
+    onSnapshot(collection(db, 'rl_matches'), snap => {
+      state.matchesMap = {};
+      snap.forEach(d => { state.matchesMap[d.id] = { id: d.id, ...d.data() }; });
+      tryRender();
+    });
+    // Pronostics (leaderboard)
+    setupLanPredictionsListener();
+    window.addEventListener('rl-lan-predictions-updated', () => {
+      if (state.curUser) myPred = state.lanPredictions[state.curUser.uid] || myPred;
+      tryRender();
+    });
+  }
+
+  // ── Tente de rendre quand toutes les données sont prêtes ──
+  let _renderScheduled = false;
+  function tryRender() {
+    if (_renderScheduled) return;
+    _renderScheduled = true;
+    requestAnimationFrame(() => {
+      _renderScheduled = false;
+      if (!Object.keys(state.teamsMap).length || !state.lanConfig) return;
+      isReady = true;
+      computeQualifiedTeams();
+      renderApp();
+    });
+  }
+
+  // ── Calcul des 16 équipes qualifiées ──
+  function computeQualifiedTeams() {
+    const swissMatches = getSwissMatches(Object.values(state.lanMatches || {}));
+    let ids = [];
+    if (swissMatches.length) {
+      const s = new Set();
+      swissMatches.forEach(m => { s.add(m.homeTeamId); s.add(m.awayTeamId); });
+      ids = [...s];
+    } else if (state.lanConfig?.manualQualified?.length) {
+      ids = state.lanConfig.manualQualified;
+    }
+    qualifiedTeams = ids.map(id => state.teamsMap[id]).filter(Boolean);
+  }
+
+  // ── Toast ──
+  let _toastTo;
+  function toast(msg, type = '') {
+    const el = document.getElementById('lpr-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = type;
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(_toastTo);
+    _toastTo = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+  window._lprToast = toast;
+
+  // ── Render principal ──
+  function renderApp() {
+    renderHeaderUser();
+    const root = document.getElementById('lpr-app');
+    if (!root) return;
+    if (!state.curUser) { root.innerHTML = renderLogin(); return; }
+    if (!isReady) { root.innerHTML = `<div class="lpr-loader">⏳ Chargement des données…</div>`; return; }
+
+    root.innerHTML = `
+      ${renderUserBar()}
+      ${renderTabs()}
+      <main class="lpr-main" id="lpr-main">${renderTabContent()}</main>
+    `;
+  }
+
+  function renderHeaderUser() {
+    const el = document.getElementById('lpr-hdr-user');
+    if (!el) return;
+    if (!state.curUser) { el.innerHTML = ''; return; }
+    const photo = state.curUser.photoURL;
+    const name = state.curUser.displayName || '?';
+    el.innerHTML = photo
+      ? `<img class="lpr-hdr-av" src="${escHtml(photo)}" alt="" onerror="this.outerHTML='<div class=lpr-hdr-av-ph>${escHtml((name[0]||'?').toUpperCase())}</div>'">`
+      : `<div class="lpr-hdr-av-ph">${escHtml((name[0]||'?').toUpperCase())}</div>`;
+  }
+
+  function renderLogin() {
+    return `
+      <div class="lpr-login-card">
+        <h2>🎯 Pronostics LAN SLS#2</h2>
+        <p>Connecte-toi avec Discord pour pronostiquer le champion, le podium, le top 8 et chaque match de la LAN.</p>
+        <div class="lpr-login-perks">
+          <div class="lpr-login-perk">🏆 Pronostique le champion <b>(250 pts)</b></div>
+          <div class="lpr-login-perk">🪙 Mise tes <b>${STARTING_JETONS} jetons</b> sur les matchs</div>
+          <div class="lpr-login-perk">📊 Grimpe au classement de pronostics</div>
+        </div>
+        <button class="lpr-discord-btn" onclick="window.location.href='${DISCORD_AUTH_URL}&state=rl_predictions'">
+          <svg width="20" height="15" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Se connecter avec Discord
+        </button>
+      </div>`;
+  }
+
+  function renderUserBar() {
+    const lb = getLeaderboard();
+    const myRank = lb.findIndex(e => e.id === state.curUser.uid) + 1 || lb.length + 1;
+    const score = myPred?.score?.total || 0;
+    const jetons = myPred?.jetons ?? STARTING_JETONS;
+    return `
+      <div class="lpr-user-bar">
+        <div class="lpr-stat">
+          <div class="lpr-stat-lbl">🪙 Jetons</div>
+          <div class="lpr-stat-val coin">${jetons}</div>
+          <div class="lpr-stat-sub">/ ${STARTING_JETONS} départ</div>
+        </div>
+        <div class="lpr-stat">
+          <div class="lpr-stat-lbl">⭐ Score</div>
+          <div class="lpr-stat-val score">${score}</div>
+          <div class="lpr-stat-sub">pts cumulés</div>
+        </div>
+        <div class="lpr-stat">
+          <div class="lpr-stat-lbl">📊 Rang</div>
+          <div class="lpr-stat-val rank">#${myRank}</div>
+          <div class="lpr-stat-sub">/ ${lb.length || 1}</div>
+        </div>
+      </div>`;
+  }
+
+  function renderTabs() {
+    const tabs = [
+      { id: 'preLan', ico: '🔮', lbl: 'Pré-LAN' },
+      { id: 'swiss', ico: '🇨🇭', lbl: 'Suisse' },
+      { id: 'bracket', ico: '🏆', lbl: 'Bracket' },
+      { id: 'lb', ico: '📊', lbl: 'Classement' },
+    ];
+    return `
+      <div class="lpr-tabs">
+        ${tabs.map(t => `<button class="lpr-tab ${curTab===t.id?'active':''}" onclick="window.lprGoTab('${t.id}')">
+          <span class="lpr-tab-ico">${t.ico}</span>
+          <span>${t.lbl}</span>
+        </button>`).join('')}
+      </div>`;
+  }
+
+  window.lprGoTab = function(tab) {
+    curTab = tab;
+    renderApp();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  function renderTabContent() {
+    if (curTab === 'preLan') return renderPreLanTab();
+    if (curTab === 'swiss') return renderSwissTab();
+    if (curTab === 'bracket') return renderBracketTab();
+    if (curTab === 'lb') return renderLeaderboardTab();
+    return '';
+  }
+
+  // ─── Onglet Pré-LAN ───
+  function renderPreLanTab() {
+    const locked = isPreLanLocked();
+    const pl = myPred?.preLan || { champion: null, podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null };
+    if (qualifiedTeams.length < 16) {
+      return `
+        <div class="lpr-stitle">🔮 Pronostics pré-LAN</div>
+        <div class="lpr-empty"><div class="lpr-empty-ico">⏳</div>Les 16 équipes qualifiées ne sont pas encore figées. Reviens quand l'admin aura validé la liste.</div>`;
+    }
+
+    const stateBadge = locked
+      ? `<span class="badge lpr-badge-locked">🔒 Verrouillé</span>`
+      : `<span class="badge lpr-badge-open">● Ouvert</span>`;
+
+    return `
+      <div class="lpr-stitle">🔮 Pronostics pré-LAN ${stateBadge}</div>
+      <p class="lpr-stitle-sub">${locked ? 'Tes pronostics sont définitifs.' : 'Tes pronostics sont enregistrés en direct, modifiable jusqu\'au verrouillage admin.'}</p>
+
+      <div class="lpr-card">
+        <div class="lpr-card-hdr">👑 Champion <span class="lpr-points-pill">${POINTS.CHAMPION} pts</span></div>
+        ${pl.champion ? renderPickedTeam(pl.champion, getChampionOdds(pl.champion), 'champion', locked) : renderPickButton('champion', '👑 Choisir le champion', locked)}
+      </div>
+
+      <div class="lpr-card">
+        <div class="lpr-card-hdr">🏅 Podium ordonné</div>
+        ${[1,2,3].map(place => renderPodiumRow(place, pl.podium?.[place], locked)).join('')}
+      </div>
+
+      <div class="lpr-card">
+        <div class="lpr-card-hdr">🏆 Top 8 Suisse <span class="lpr-points-pill">${POINTS.TOP8_PER_TEAM} pts/équipe</span></div>
+        <button class="lpr-discord-btn" style="background:#252525;color:var(--text)" onclick="openTop8Picker()" ${locked?'disabled':''}>
+          ${pl.top8?.length ? `✏️ Modifier (${pl.top8.length}/8 sélectionnés)` : '🏆 Choisir les 8 équipes'}
+        </button>
+        ${pl.top8?.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${pl.top8.map(id => renderTop8Chip(id)).join('')}</div>` : ''}
+      </div>
+
+      <div class="lpr-card">
+        <div class="lpr-card-hdr">💀 Première sortie <span class="lpr-points-pill">${POINTS.FIRST_OUT} pts</span></div>
+        <p style="font-size:.72rem;color:var(--text2);margin:0 0 10px">L'équipe qui finit 16ᵉ (dernière) du classement Suisse.</p>
+        ${pl.firstOut ? renderPickedTeam(pl.firstOut, getFirstOutOdds(pl.firstOut), 'firstOut', locked) : renderPickButton('firstOut', '💀 Choisir la première sortie', locked)}
+      </div>
+    `;
+  }
+
+  function renderPickButton(kind, label, locked) {
+    return `<button class="lpr-discord-btn" style="background:#252525;color:var(--text)" onclick="openTeamPicker('${kind}')" ${locked?'disabled':''}>${label}</button>`;
+  }
+
+  function renderPickedTeam(teamId, cote, kind, locked) {
+    const t = state.teamsMap[teamId];
+    if (!t) return '';
+    const logo = t.logoUrl
+      ? `<img src="${escHtml(t.logoUrl)}" style="width:38px;height:38px;border-radius:6px;object-fit:contain;background:#0f0f0f;border:1px solid rgba(255,255,255,.05)">`
+      : `<div style="width:38px;height:38px;border-radius:6px;background:#0f0f0f;display:flex;align-items:center;justify-content:center;font-weight:700">${escHtml(t.name?.[0]||'?')}</div>`;
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.25);border-radius:8px">
+        ${logo}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:.92rem">${escHtml(t.name)}</div>
+          <div style="font-size:.7rem;color:#FFB800;font-weight:700;margin-top:2px">Cote ×${cote}</div>
+        </div>
+        ${!locked ? `<button class="lpr-modal-close" style="font-size:.85rem;background:rgba(255,255,255,.05);padding:6px 12px;border-radius:6px;font-weight:700" onclick="openTeamPicker('${kind}')">✏️ Changer</button>` : ''}
+      </div>`;
+  }
+
+  function renderPodiumRow(place, teamId, locked) {
+    const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉';
+    const lbl = place === 1 ? '1er' : place === 2 ? '2e' : '3e';
+    const pts = place === 1 ? POINTS.PODIUM_1ST : place === 2 ? POINTS.PODIUM_2ND : POINTS.PODIUM_3RD;
+    const t = teamId ? state.teamsMap[teamId] : null;
+    const cote = teamId ? getPodiumPlaceOdds(teamId, place) : null;
+    return `
+      <div class="lpr-podium-row" onclick="${locked?'':`openPodiumPicker(${place})`}" style="${locked?'cursor:not-allowed;opacity:.7':'cursor:pointer'}">
+        <div class="lpr-podium-medal">${medal}</div>
+        <div class="lpr-podium-info">
+          <div class="lpr-podium-lbl">${lbl} place</div>
+          <div class="lpr-podium-pts">${pts} pts si exact · ${POINTS.PODIUM_WRONG_PLACE} si bonne équipe mauvaise place</div>
+          ${t ? `<div class="lpr-podium-pick">
+            ${t.logoUrl?`<img src="${escHtml(t.logoUrl)}" alt="">`:`<span style="width:22px;height:22px;background:#0f0f0f;border-radius:4px;display:inline-block"></span>`}
+            <span>${escHtml(t.name)}</span>
+            <span class="lpr-podium-cote">×${cote}</span>
+          </div>` : `<div class="lpr-podium-pick empty">Choisir une équipe…</div>`}
+        </div>
+        ${!locked ? `<div class="lpr-pick-arrow">›</div>` : ''}
+      </div>`;
+  }
+
+  function renderTop8Chip(teamId) {
+    const t = state.teamsMap[teamId];
+    if (!t) return '';
+    return `<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.3);border-radius:14px;font-size:.7rem;font-weight:700">
+      ${t.logoUrl?`<img src="${escHtml(t.logoUrl)}" style="width:14px;height:14px;border-radius:3px;object-fit:contain">`:''}
+      ${escHtml(t.name)}
+    </div>`;
+  }
+
+  // ── Team picker modal (champion / firstOut) ──
+  let _pickerKind = null;
+  window.openTeamPicker = function(kind) {
+    if (isPreLanLocked()) { toast('Pronostics verrouillés', 'err'); return; }
+    _pickerKind = kind;
+    const oddsFn = kind === 'champion' ? getChampionOdds : getFirstOutOdds;
+    const title = kind === 'champion' ? '👑 Choisir le champion' : '💀 Choisir la première sortie';
+    const sorted = qualifiedTeams.slice().sort((a, b) => oddsFn(a.id) - oddsFn(b.id));
+    const current = myPred?.preLan?.[kind];
+    document.getElementById('lpr-modal-title').textContent = title;
+    document.getElementById('lpr-modal-body').innerHTML = `
+      <div class="lpr-teams" style="grid-template-columns:repeat(2,1fr)">
+        ${sorted.map(t => {
+          const cote = oddsFn(t.id);
+          const sel = current === t.id ? 'selected' : '';
+          const logo = t.logoUrl ? `<img class="lpr-team-logo" src="${escHtml(t.logoUrl)}" alt="">` : `<div class="lpr-team-logo"></div>`;
+          return `<button class="lpr-team ${sel}" onclick="selectPickerTeam('${t.id}')">${logo}
+            <div class="lpr-team-info">
+              <div class="lpr-team-name">${escHtml(t.name)}</div>
+              <div class="lpr-team-cote">×${cote}</div>
+            </div>
+            ${sel?'<span class="lpr-team-check">✓</span>':''}
+          </button>`;
+        }).join('')}
+      </div>`;
+    document.getElementById('lpr-modal-foot').innerHTML = `
+      <button class="lpr-modal-close" style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:6px;font-weight:700;flex:1" onclick="closeLprModal()">Annuler</button>
+    `;
+    openLprModal();
+  };
+
+  window.selectPickerTeam = async function(teamId) {
+    if (!_pickerKind) return;
+    const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+    pl[_pickerKind] = teamId;
+    try {
+      await savePreLanPrediction(state.curUser.uid, pl);
+      myPred.preLan = pl;
+      toast('✓ Enregistré', 'ok');
+      closeLprModal();
+      renderApp();
+    } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+  };
+
+  window.openPodiumPicker = function(place) {
+    if (isPreLanLocked()) { toast('Pronostics verrouillés', 'err'); return; }
+    const sorted = qualifiedTeams.slice().sort((a, b) => getPodiumPlaceOdds(a.id, place) - getPodiumPlaceOdds(b.id, place));
+    const current = myPred?.preLan?.podium?.[place];
+    const lbl = place === 1 ? '1er' : place === 2 ? '2e' : '3e';
+    document.getElementById('lpr-modal-title').textContent = `${place===1?'🥇':place===2?'🥈':'🥉'} ${lbl} place du podium`;
+    document.getElementById('lpr-modal-body').innerHTML = `
+      <div class="lpr-teams" style="grid-template-columns:repeat(2,1fr)">
+        ${sorted.map(t => {
+          const cote = getPodiumPlaceOdds(t.id, place);
+          const sel = current === t.id ? 'selected' : '';
+          const logo = t.logoUrl ? `<img class="lpr-team-logo" src="${escHtml(t.logoUrl)}" alt="">` : `<div class="lpr-team-logo"></div>`;
+          return `<button class="lpr-team ${sel}" onclick="selectPodiumTeam(${place},'${t.id}')">${logo}
+            <div class="lpr-team-info">
+              <div class="lpr-team-name">${escHtml(t.name)}</div>
+              <div class="lpr-team-cote">×${cote}</div>
+            </div>
+            ${sel?'<span class="lpr-team-check">✓</span>':''}
+          </button>`;
+        }).join('')}
+      </div>`;
+    document.getElementById('lpr-modal-foot').innerHTML = `
+      ${current ? `<button class="lpr-modal-close" style="background:rgba(239,68,68,.15);color:#ef4444;padding:10px 14px;border-radius:6px;font-weight:700" onclick="selectPodiumTeam(${place},null)">🗑️ Vider</button>` : ''}
+      <button class="lpr-modal-close" style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:6px;font-weight:700;flex:1" onclick="closeLprModal()">Annuler</button>
+    `;
+    openLprModal();
+  };
+
+  window.selectPodiumTeam = async function(place, teamId) {
+    const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+    if (!pl.podium) pl.podium = { 1: null, 2: null, 3: null };
+    pl.podium = { ...pl.podium, [place]: teamId };
+    try {
+      await savePreLanPrediction(state.curUser.uid, pl);
+      myPred.preLan = pl;
+      toast('✓ Podium enregistré', 'ok');
+      closeLprModal();
+      renderApp();
+    } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+  };
+
+  window.openTop8Picker = function() {
+    if (isPreLanLocked()) { toast('Pronostics verrouillés', 'err'); return; }
+    let selected = new Set(myPred?.preLan?.top8 || []);
+    const sorted = qualifiedTeams.slice().sort((a, b) => getTop8Odds(a.id) - getTop8Odds(b.id));
+    document.getElementById('lpr-modal-title').textContent = '🏆 Top 8 Suisse';
+    const renderBody = () => {
+      const counterCls = selected.size === 8 ? 'full' : '';
+      document.getElementById('lpr-modal-body').innerHTML = `
+        <div class="lpr-top8-counter ${counterCls}" style="position:sticky;top:0;background:#161616;margin:-16px -18px 14px;padding:12px 18px;z-index:5">
+          <span>Sélectionnés</span>
+          <span><b>${selected.size}</b> / 8</span>
+        </div>
+        <div class="lpr-teams" style="grid-template-columns:repeat(2,1fr)">
+          ${sorted.map(t => {
+            const cote = getTop8Odds(t.id);
+            const sel = selected.has(t.id) ? 'selected' : '';
+            const disabled = !sel && selected.size >= 8 ? 'disabled' : '';
+            const logo = t.logoUrl ? `<img class="lpr-team-logo" src="${escHtml(t.logoUrl)}" alt="">` : `<div class="lpr-team-logo"></div>`;
+            return `<button class="lpr-team ${sel} ${disabled}" onclick="window._toggleTop8('${t.id}')">${logo}
+              <div class="lpr-team-info">
+                <div class="lpr-team-name">${escHtml(t.name)}</div>
+                <div class="lpr-team-cote">×${cote}</div>
+              </div>
+              ${sel?'<span class="lpr-team-check">✓</span>':''}
+            </button>`;
+          }).join('')}
+        </div>`;
+    };
+    window._toggleTop8 = (id) => {
+      if (selected.has(id)) selected.delete(id);
+      else if (selected.size < 8) selected.add(id);
+      renderBody();
+    };
+    document.getElementById('lpr-modal-foot').innerHTML = `
+      <button class="lpr-modal-close" style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:6px;font-weight:700;flex:1" onclick="closeLprModal()">Annuler</button>
+      <button class="lpr-discord-btn" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;padding:10px 14px;border-radius:6px;font-weight:800;flex:1.5" onclick="window._saveTop8()">💾 Enregistrer (${selected.size}/8)</button>
+    `;
+    window._saveTop8 = async () => {
+      const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+      pl.top8 = [...selected];
+      try {
+        await savePreLanPrediction(state.curUser.uid, pl);
+        myPred.preLan = pl;
+        toast(`✓ Top 8 enregistré (${pl.top8.length}/8)`, 'ok');
+        closeLprModal();
+        renderApp();
+      } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+    };
+    renderBody();
+    openLprModal();
+  };
+
+  function openLprModal() { document.getElementById('lpr-modal').classList.add('show'); document.body.style.overflow = 'hidden'; }
+  window.closeLprModal = function() { document.getElementById('lpr-modal').classList.remove('show'); document.body.style.overflow = ''; };
+
+  // ─── Onglet Suisse ───
+  function renderSwissTab() {
+    const swissMatches = getSwissMatches(Object.values(state.lanMatches || {}));
+    if (!swissMatches.length) {
+      return `
+        <div class="lpr-stitle">🇨🇭 Phase Suisse</div>
+        <div class="lpr-empty"><div class="lpr-empty-ico">⏳</div>La phase Suisse n'a pas encore commencé.<br>Le R1 sera généré par l'admin avant le coup d'envoi samedi.</div>`;
+    }
+    let html = `<div class="lpr-stitle">🇨🇭 Phase Suisse</div>
+      <p class="lpr-stitle-sub">Pronostique le gagnant de chaque match. Mise tes jetons pour booster tes points.</p>`;
+    // Grouper par round (du plus récent au plus ancien)
+    const byRound = new Map();
+    swissMatches.forEach(m => {
+      const r = getSwissRound(m.phase);
+      if (!byRound.has(r)) byRound.set(r, []);
+      byRound.get(r).push(m);
+    });
+    const rounds = [...byRound.keys()].sort((a, b) => b - a);
+    for (const r of rounds) {
+      const matches = byRound.get(r).sort((a, b) => (a.swissOrder ?? 0) - (b.swissOrder ?? 0));
+      const locked = isSwissRoundLocked(r);
+      const stateBadge = locked
+        ? `<span class="badge lpr-badge-locked">🔒 Verrouillé</span>`
+        : `<span class="badge lpr-badge-open">● Ouvert</span>`;
+      html += `<div class="lpr-round-hdr">
+        <div class="lpr-round-title">Round ${r} ${stateBadge}</div>
+        <small>${matches.length} match${matches.length>1?'s':''}</small>
+      </div>`;
+      html += matches.map(m => renderMatchCard(m, 'swiss', locked)).join('');
+    }
+    return html;
+  }
+
+  // ─── Onglet Bracket ───
+  function renderBracketTab() {
+    const allMatches = Object.values(state.lanMatches || {}).filter(m => (m.phase || '').match(/^(wb|lb|gf)/) || m.bracketSlot);
+    if (!allMatches.length) {
+      return `
+        <div class="lpr-stitle">🏆 Bracket Double Élim</div>
+        <div class="lpr-empty"><div class="lpr-empty-ico">⏳</div>Le bracket démarre dimanche après la phase Suisse.<br>Tu pourras pronostiquer chaque match dès qu'il sera créé.</div>`;
+    }
+    let html = `<div class="lpr-stitle">🏆 Bracket Double Élim</div>
+      <p class="lpr-stitle-sub">Pronostique chaque match. Verrouillage au coup d'envoi.</p>`;
+    // Grouper par phase logique
+    const phaseOrder = ['gf', 'wb_f', 'wb_sf', 'wb_qf', 'lb_f', 'lb_sf', 'lb_r2', 'lb_r1'];
+    const byPhase = {};
+    allMatches.forEach(m => {
+      const slot = m.bracketSlot || m.phase;
+      if (!byPhase[slot]) byPhase[slot] = [];
+      byPhase[slot].push(m);
+    });
+    for (const slot of phaseOrder) {
+      if (!byPhase[slot]) continue;
+      const lbl = SLOT_LABEL[slot] || slot;
+      html += `<div class="lpr-round-hdr">
+        <div class="lpr-round-title">${lbl}</div>
+        <small>${byPhase[slot].length} match${byPhase[slot].length>1?'s':''}</small>
+      </div>`;
+      for (const m of byPhase[slot]) {
+        const locked = isBracketMatchLocked(m.id);
+        html += renderMatchCard(m, 'bracket', locked);
+      }
+    }
+    return html;
+  }
+
+  function renderMatchCard(match, kind, locked) {
+    const home = state.teamsMap[match.homeTeamId];
+    const away = state.teamsMap[match.awayTeamId];
+    if (!home || !away) {
+      return `<div class="lpr-match"><div class="lpr-empty" style="padding:18px">⏳ En attente d'équipes…</div></div>`;
+    }
+    const ss = calcSeriesScore(match.games || [], match.format || 'bo5');
+    const bet = myPred?.[kind]?.[match.id];
+    const odds = getMatchOdds(match.homeTeamId, match.awayTeamId);
+
+    const myBetSide = bet?.side;
+    const isResolved = bet && bet.status !== 'pending';
+
+    // État du match
+    let statusBadge = '';
+    if (ss.played) statusBadge = `<span class="lpr-match-status lpr-st-played">Joué ${ss.home}-${ss.away}</span>`;
+    else if (locked) statusBadge = `<span class="lpr-match-status lpr-st-locked">🔒 Fermé</span>`;
+    else statusBadge = `<span class="lpr-match-status lpr-st-pending">Ouvert</span>`;
+
+    const sideClass = (side) => {
+      const cls = ['lpr-side'];
+      if (myBetSide === side) cls.push('selected');
+      if (ss.played) {
+        if (ss.winner === side && myBetSide === side) cls.push('locked-correct');
+        else if (ss.winner !== side && myBetSide === side) cls.push('locked-wrong');
+      }
+      if (locked || ss.played) cls.push('disabled');
+      return cls.join(' ');
+    };
+
+    const renderSide = (team, side) => {
+      const logo = team.logoUrl
+        ? `<img class="lpr-side-logo" src="${escHtml(team.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+        : `<div class="lpr-side-logo"></div>`;
+      const cote = side === 'home' ? odds.home : odds.away;
+      const isWinner = ss.played && ss.winner === side;
+      const result = ss.played ? (isWinner ? '✓ Vainqueur' : 'Défaite') : '';
+      return `<button class="${sideClass(side)}" onclick="selectMatchSide('${kind}','${match.id}','${side}')" ${locked||ss.played?'disabled':''}>
+        ${logo}
+        <div class="lpr-side-name">${escHtml(team.name)}</div>
+        <div class="lpr-side-cote">×${cote}</div>
+        ${result?`<div class="lpr-side-result" style="color:${isWinner?'#0c8':'#ef4444'}">${result}</div>`:''}
+      </button>`;
+    };
+
+    // Mise (slider) — seulement si side sélectionné, match pas verrouillé/joué
+    let betZone = '';
+    if (myBetSide && !locked && !ss.played && !isResolved) {
+      const cote = myBetSide === 'home' ? odds.home : odds.away;
+      const myJetons = (myPred?.jetons ?? STARTING_JETONS) + (bet?.mise || 0);
+      const curMise = bet?.mise || 0;
+      const potGain = curMise > 0 ? POINTS.MATCH + Math.floor(curMise * cote) : POINTS.MATCH;
+      betZone = `<div class="lpr-bet">
+        <div class="lpr-bet-row">
+          <span style="font-size:.78rem;font-weight:700">🪙 Mise</span>
+          <input type="range" class="lpr-bet-slider" id="bet-${match.id}" min="0" max="${myJetons}" value="${curMise}" step="1" oninput="updateBetSlider('${kind}','${match.id}',this.value,${cote})">
+          <span class="lpr-bet-val" id="bet-val-${match.id}">${curMise > 0 ? curMise+' jetons' : 'Aucune'}</span>
+        </div>
+        <div class="lpr-bet-info" id="bet-info-${match.id}">
+          ${curMise > 0 ? `Si correct : <b>${potGain} pts</b> (10 + ${curMise}×${cote})` : `Sans mise : <b>10 pts</b> si correct`}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap">
+          ${[0, 25, 50, 100, myJetons].filter((v,i,arr) => v <= myJetons && arr.indexOf(v) === i).map(v => `
+            <button onclick="setBetQuick('${kind}','${match.id}',${v},${cote})" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--text2);padding:5px 11px;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit">${v===0?'0':v===myJetons?'Max':v}</button>
+          `).join('')}
+        </div>
+        <button class="lpr-discord-btn" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;margin-top:10px;padding:10px;font-size:.85rem" onclick="confirmBet('${kind}','${match.id}',${cote})">
+          ${curMise > 0 ? `🔒 Confirmer ${curMise} jetons sur ${escHtml(myBetSide==='home'?home.name:away.name)}` : `🔒 Confirmer mon pronostic (sans mise)`}
+        </button>
+      </div>`;
+    }
+
+    // Result badge
+    let resultBadge = '';
+    if (isResolved && bet) {
+      if (bet.status === 'won') {
+        resultBadge = `<div class="lpr-result won">
+          <span>✓ Gagné !</span>
+          <span><b>+${bet.pts || 0} pts</b>${bet.mise>0?` (mise ${bet.mise}×${bet.cote})`:''}</span>
+        </div>`;
+      } else {
+        resultBadge = `<div class="lpr-result lost">
+          <span>✗ Raté</span>
+          <span>${bet.mise>0?`-${bet.mise} jetons`:'0 pts'}</span>
+        </div>`;
+      }
+    }
+
+    return `
+      <div class="lpr-match">
+        <div class="lpr-match-meta">
+          <span>${match.format?.toUpperCase() || 'BO5'}${match.onStage?' · 🎭 SCÈNE':''}</span>
+          ${statusBadge}
+        </div>
+        <div class="lpr-match-sides">
+          ${renderSide(home, 'home')}
+          ${renderSide(away, 'away')}
+        </div>
+        ${betZone}
+        ${resultBadge}
+      </div>`;
+  }
+
+  // ── Sélection d'un side (place le pronostic à 0 si pas encore fait) ──
+  window.selectMatchSide = async function(kind, matchId, side) {
+    const m = state.lanMatches[matchId];
+    if (!m) return;
+    const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+    if (ss.played) { toast('Match déjà joué', 'err'); return; }
+    const r = kind === 'swiss' ? getSwissRound(m.phase) : null;
+    if (kind === 'swiss' && isSwissRoundLocked(r)) { toast(`Round ${r} verrouillé`, 'err'); return; }
+    if (kind === 'bracket' && isBracketMatchLocked(matchId)) { toast('Match verrouillé', 'err'); return; }
+    const existing = myPred?.[kind]?.[matchId];
+    if (existing && existing.side === side) return; // déjà sélectionné
+    try {
+      await placeMatchBet(state.curUser.uid, kind, matchId, side, existing?.mise || 0);
+      myPred = state.lanPredictions[state.curUser.uid] || myPred;
+      renderApp();
+    } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+  };
+
+  window.updateBetSlider = function(kind, matchId, val, cote) {
+    const v = parseInt(val) || 0;
+    const elVal = document.getElementById(`bet-val-${matchId}`);
+    const elInfo = document.getElementById(`bet-info-${matchId}`);
+    if (elVal) elVal.textContent = v > 0 ? v+' jetons' : 'Aucune';
+    if (elInfo) {
+      elInfo.innerHTML = v > 0
+        ? `Si correct : <b>${POINTS.MATCH + Math.floor(v * cote)} pts</b> (10 + ${v}×${cote})`
+        : `Sans mise : <b>10 pts</b> si correct`;
+    }
+  };
+
+  window.setBetQuick = function(kind, matchId, value, cote) {
+    const slider = document.getElementById(`bet-${matchId}`);
+    if (slider) {
+      slider.value = value;
+      window.updateBetSlider(kind, matchId, value, cote);
+    }
+  };
+
+  window.confirmBet = async function(kind, matchId, cote) {
+    const slider = document.getElementById(`bet-${matchId}`);
+    const mise = parseInt(slider?.value || '0', 10) || 0;
+    const existing = myPred?.[kind]?.[matchId];
+    if (!existing?.side) { toast('Choisis une équipe d\'abord', 'err'); return; }
+    if (mise > 0 && mise < MIN_BET) { toast(`Mise minimum : ${MIN_BET} jetons`, 'err'); return; }
+    try {
+      await placeMatchBet(state.curUser.uid, kind, matchId, existing.side, mise);
+      myPred = state.lanPredictions[state.curUser.uid] || myPred;
+      toast(mise > 0 ? `🔒 ${mise} jetons misés` : `🔒 Pronostic enregistré`, 'ok');
+      renderApp();
+    } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+  };
+
+  // ─── Onglet Classement ───
+  function renderLeaderboardTab() {
+    const lb = getLeaderboard();
+    if (!lb.length) {
+      return `<div class="lpr-stitle">📊 Classement</div>
+        <div class="lpr-empty"><div class="lpr-empty-ico">📊</div>Personne n'a encore pronostiqué.<br>Sois le premier à parier !</div>`;
+    }
+    return `<div class="lpr-stitle">📊 Classement (${lb.length} joueur${lb.length>1?'s':''})</div>
+      <p class="lpr-stitle-sub">Score total = pré-LAN + Suisse + Bracket. Égalité départagée par jetons restants.</p>
+      <div class="lpr-lb">
+        ${lb.map((e, i) => {
+          const rk = i + 1;
+          const rkCls = rk===1?'r1':rk===2?'r2':rk===3?'r3':'';
+          const isMe = state.curUser && e.id === state.curUser.uid;
+          const av = e.avatar
+            ? `<img class="lpr-lb-av" src="${escHtml(e.avatar)}" onerror="this.outerHTML='<div class=lpr-lb-av-ph>${escHtml((e.displayName[0]||'?').toUpperCase())}</div>'">`
+            : `<div class="lpr-lb-av-ph">${escHtml((e.displayName[0]||'?').toUpperCase())}</div>`;
+          return `<div class="lpr-lb-row ${isMe?'me':''}">
+            <div class="lpr-lb-rank ${rkCls}">${rk===1?'🥇':rk===2?'🥈':rk===3?'🥉':'#'+rk}</div>
+            ${av}
+            <div>
+              <div class="lpr-lb-name">${escHtml(e.displayName)}${isMe?' <span style="color:var(--text3);font-weight:600;font-size:.7rem">(toi)</span>':''}</div>
+              <div class="lpr-lb-detail">🪙 ${e.jetons} jetons · 🔮 ${e.preLan} · 🇨🇭 ${e.swiss} · 🏆 ${e.bracket}</div>
+            </div>
+            <div class="lpr-lb-score">${e.score}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  initListeners();
+  renderApp();
+</script>
+
+</body>
+</html>

@@ -13,10 +13,12 @@ export default async function handler(req, res) {
 
   // Determine redirect destination based on state parameter
   // state = 'tm_monthly' | 'tm_mania' → Trackmania
+  // state = 'rl_predictions' → page pronostics LAN
   // state = 'rl' or absent → Rocket League
   function getRedirectBase(st) {
     if (st === 'tm_monthly') return { base: '/trackmania/cup.html', query: 'cup=monthly' };
     if (st === 'tm_mania')   return { base: '/trackmania/cup.html', query: 'cup=mania' };
+    if (st === 'rl_predictions') return { base: '/rocket-league/lan-predictions.html', query: '' };
     return { base: '/rocket-league/', query: '' };
   }
 
