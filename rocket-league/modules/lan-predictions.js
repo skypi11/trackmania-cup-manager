@@ -12,9 +12,10 @@
 // Scoring :
 //   Pré-LAN : podium 1er=2e=3e=150 / mauvaise place podium 50
 //             top 8 = 30/équipe / first out = 50
-//   Match (Suisse/Bracket) sans mise : 10 pts si correct
+//   Match (Suisse/Bracket) sans mise : 10 pts si bon gagnant
 //   Match avec mise correct : 10 + floor(mise × cote) pts ; jetons consommés
 //   Match avec mise raté : 0 pt + jetons perdus
+//   Bonus score exact : +20 pts si gagnant correct ET score série exact (3-1, 4-2, etc.)
 
 import { db } from '../../shared/firebase-config.js';
 import {
@@ -35,6 +36,7 @@ export const POINTS = {
   TOP8_PER_TEAM: 30,
   FIRST_OUT: 50,
   MATCH: 10,
+  MATCH_EXACT_BONUS: 20,    // bonus si le score série exact est aussi prédit (ex: 3-1 en BO5)
 };
 
 // ── État local ────────────────────────────────────────────────────────
@@ -157,8 +159,9 @@ export async function savePreLanPrediction(uid, preLan) {
 
 // ── Match (Suisse/Bracket) : placer un pronostic avec mise optionnelle ─
 // kind = 'swiss' | 'bracket'
-// bet = { side: 'home'|'away', mise: 0..jetons, cote: number }
-export async function placeMatchBet(uid, kind, matchId, side, mise = 0) {
+// score : optionnel — string "h-a" (ex: "3-1", "4-2") pour parier le score série exact
+// bet = { side: 'home'|'away', mise: 0..jetons, cote: number, score?: 'h-a' }
+export async function placeMatchBet(uid, kind, matchId, side, mise = 0, score = null) {
   // Vérifs
   const match = state.lanMatches?.[matchId];
   if (!match) throw new Error('Match introuvable');
@@ -182,6 +185,22 @@ export async function placeMatchBet(uid, kind, matchId, side, mise = 0) {
   }
   if (mise > availableJetons) throw new Error('Solde insuffisant');
 
+  // Validation score série : doit correspondre au format (BO5 → max 3 wins, BO7 → max 4)
+  // Et le côté gagnant du score doit correspondre au side parié.
+  let validatedScore = null;
+  if (score && typeof score === 'string') {
+    const match2 = score.match(/^(\d+)-(\d+)$/);
+    if (match2) {
+      const h = +match2[1], a = +match2[2];
+      const target = (match.format === 'bo7') ? 4 : 3;
+      const winnerSide = h > a ? 'home' : (a > h ? 'away' : null);
+      const ok = winnerSide && winnerSide === side
+              && Math.max(h, a) === target
+              && Math.min(h, a) < target;
+      if (ok) validatedScore = `${h}-${a}`;
+    }
+  }
+
   // Cote au moment du pari (figée pour ce pari)
   const odds = getMatchOdds(match.homeTeamId, match.awayTeamId);
   const cote = side === 'home' ? odds.home : odds.away;
@@ -190,6 +209,7 @@ export async function placeMatchBet(uid, kind, matchId, side, mise = 0) {
     side, mise, cote,
     placedAt: new Date().toISOString(),
     status: 'pending',
+    ...(validatedScore ? { score: validatedScore } : {}),
   };
 
   const newJetons = availableJetons - mise;
@@ -221,7 +241,7 @@ export async function resolveAllPendingBets() {
     const updatedBracket = { ...(pred.bracket || {}) };
 
     // Helper pour traiter un kind
-    const resolveKind = (kindBets, kind) => {
+    const resolveKind = (kindBets) => {
       let scoreDelta = 0;
       for (const [matchId, bet] of Object.entries(kindBets)) {
         if (bet.status !== 'pending') continue;
@@ -233,10 +253,26 @@ export async function resolveAllPendingBets() {
         const winnerSide = ss.winner; // 'home' | 'away'
         const correct = bet.side === winnerSide;
         let pts = 0;
+        let exactBonus = false;
         if (correct) {
           pts = POINTS.MATCH + (bet.mise > 0 ? Math.floor(bet.mise * bet.cote) : 0);
+          // Bonus score exact : si l'utilisateur a aussi parié le score série
+          // et qu'il correspond à ss.home-ss.away
+          if (bet.score) {
+            const [hs, as] = bet.score.split('-').map(Number);
+            if (hs === ss.home && as === ss.away) {
+              pts += POINTS.MATCH_EXACT_BONUS;
+              exactBonus = true;
+            }
+          }
         }
-        const newBet = { ...bet, status: correct ? 'won' : 'lost', pts, resolvedAt: new Date().toISOString() };
+        const newBet = {
+          ...bet,
+          status: correct ? 'won' : 'lost',
+          pts,
+          exactBonus,
+          resolvedAt: new Date().toISOString(),
+        };
         kindBets[matchId] = newBet;
         scoreDelta += pts;
         dirty = true;
@@ -244,8 +280,8 @@ export async function resolveAllPendingBets() {
       return scoreDelta;
     };
 
-    const dSwiss = resolveKind(updatedSwiss, 'swiss');
-    const dBracket = resolveKind(updatedBracket, 'bracket');
+    const dSwiss = resolveKind(updatedSwiss);
+    const dBracket = resolveKind(updatedBracket);
 
     if (dirty) {
       scoreSwiss += dSwiss;

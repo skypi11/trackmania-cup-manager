@@ -810,13 +810,22 @@
       </button>`;
     };
 
-    // Mise (slider) — seulement si side sélectionné, match pas verrouillé/joué
+    // Mise (slider) + score exact — seulement si side sélectionné, match pas verrouillé/joué
     let betZone = '';
     if (myBetSide && !locked && !ss.played && !isResolved) {
       const cote = myBetSide === 'home' ? odds.home : odds.away;
       const myJetons = (myPred?.jetons ?? STARTING_JETONS) + (bet?.mise || 0);
       const curMise = bet?.mise || 0;
+      const curScore = bet?.score || null;
+      const fmt = (match.format || 'bo5');
+      // Scores possibles selon le côté gagnant et le format
+      const target = fmt === 'bo7' ? 4 : 3;
+      const possibleScores = [];
+      for (let loserGames = 0; loserGames < target; loserGames++) {
+        possibleScores.push(myBetSide === 'home' ? `${target}-${loserGames}` : `${loserGames}-${target}`);
+      }
       const potGain = curMise > 0 ? POINTS.MATCH + Math.floor(curMise * cote) : POINTS.MATCH;
+      const potGainExact = potGain + POINTS.MATCH_EXACT_BONUS;
       betZone = `<div class="lpr-bet">
         <div class="lpr-bet-row">
           <span style="font-size:.78rem;font-weight:700">🪙 Mise</span>
@@ -831,6 +840,18 @@
             <button onclick="setBetQuick('${kind}','${match.id}',${v},${cote})" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--text2);padding:5px 11px;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit">${v===0?'0':v===myJetons?'Max':v}</button>
           `).join('')}
         </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:.74rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;justify-content:space-between">
+            <span>🎯 Score exact <span style="color:var(--text3);font-weight:600">(optionnel)</span></span>
+            <span style="font-size:.65rem;color:#0c8;font-weight:700">+${POINTS.MATCH_EXACT_BONUS} pts si exact</span>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center">
+            ${possibleScores.map(s => `<button class="lpr-score-chip ${curScore===s?'sel':''}" data-sc="${s}" onclick="window._lprToggleScore('${match.id}','${s}')" style="background:${curScore===s?'rgba(255,184,0,.15)':'rgba(255,255,255,.05)'};border:1px solid ${curScore===s?'#FFB800':'rgba(255,255,255,.08)'};color:${curScore===s?'#FFB800':'var(--text2)'};padding:6px 12px;border-radius:5px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.04em;font-variant-numeric:tabular-nums">${s}</button>`).join('')}
+          </div>
+          <div id="bet-exact-info-${match.id}" style="font-size:.66rem;color:var(--text2);margin-top:6px;text-align:center">
+            ${curScore ? `Si <b style="color:#FFB800">${curScore}</b> exact : <b style="color:#0c8">${potGainExact} pts</b>` : 'Aucun score sélectionné'}
+          </div>
+        </div>
         <button class="lpr-discord-btn" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;margin-top:10px;padding:10px;font-size:.85rem" onclick="confirmBet('${kind}','${match.id}',${cote})">
           ${curMise > 0 ? `🔒 Confirmer ${curMise} jetons sur ${escHtml(myBetSide==='home'?home.name:away.name)}` : `🔒 Confirmer mon pronostic (sans mise)`}
         </button>
@@ -841,13 +862,16 @@
     let resultBadge = '';
     if (isResolved && bet) {
       if (bet.status === 'won') {
+        const exactTxt = bet.exactBonus ? ` <span style="color:#0c8;font-weight:800">★ score exact +${POINTS.MATCH_EXACT_BONUS}</span>` : '';
+        const miseTxt = bet.mise > 0 ? ` (mise ${bet.mise}×${bet.cote})` : '';
         resultBadge = `<div class="lpr-result won">
-          <span>✓ Gagné !</span>
-          <span><b>+${bet.pts || 0} pts</b>${bet.mise>0?` (mise ${bet.mise}×${bet.cote})`:''}</span>
+          <span>✓ Gagné !${exactTxt}</span>
+          <span><b>+${bet.pts || 0} pts</b>${miseTxt}</span>
         </div>`;
       } else {
+        const scoreTxt = bet.score ? ` (avais parié ${bet.score})` : '';
         resultBadge = `<div class="lpr-result lost">
-          <span>✗ Raté</span>
+          <span>✗ Raté${scoreTxt}</span>
           <span>${bet.mise>0?`-${bet.mise} jetons`:'0 pts'}</span>
         </div>`;
       }
@@ -869,6 +893,7 @@
   }
 
   // ── Sélection d'un side (place le pronostic à 0 si pas encore fait) ──
+  // Si on change de side, le score parié est invalidé (il appartenait à l'autre équipe).
   window.selectMatchSide = async function(kind, matchId, side) {
     const m = state.lanMatches[matchId];
     if (!m) return;
@@ -880,10 +905,58 @@
     const existing = myPred?.[kind]?.[matchId];
     if (existing && existing.side === side) return; // déjà sélectionné
     try {
-      await placeMatchBet(state.curUser.uid, kind, matchId, side, existing?.mise || 0);
+      // On ne passe pas le score : il sera reconfiguré via les chips après le rerender
+      await placeMatchBet(state.curUser.uid, kind, matchId, side, existing?.mise || 0, null);
       myPred = state.lanPredictions[state.curUser.uid] || myPred;
       renderApp();
     } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
+  };
+
+  // ── Toggle score exact dans la zone de pari (état local jusqu'à confirmation) ──
+  window._lprToggleScore = function(matchId, score) {
+    const card = document.querySelectorAll(`.lpr-score-chip[data-sc]`);
+    // Trouve les chips de cette card uniquement
+    const chips = Array.from(document.querySelectorAll(`button.lpr-score-chip[onclick*="'${matchId}'"]`));
+    let newScore = score;
+    chips.forEach(c => {
+      const isThis = c.dataset.sc === score;
+      const wasSel = c.classList.contains('sel');
+      if (isThis && wasSel) {
+        // Toggle off
+        c.classList.remove('sel');
+        c.style.background = 'rgba(255,255,255,.05)';
+        c.style.borderColor = 'rgba(255,255,255,.08)';
+        c.style.color = 'var(--text2)';
+        newScore = null;
+      } else if (isThis) {
+        c.classList.add('sel');
+        c.style.background = 'rgba(255,184,0,.15)';
+        c.style.borderColor = '#FFB800';
+        c.style.color = '#FFB800';
+      } else {
+        c.classList.remove('sel');
+        c.style.background = 'rgba(255,255,255,.05)';
+        c.style.borderColor = 'rgba(255,255,255,.08)';
+        c.style.color = 'var(--text2)';
+      }
+    });
+    // Update info
+    const info = document.getElementById(`bet-exact-info-${matchId}`);
+    if (info) {
+      if (newScore) {
+        // Recalcule le potentiel
+        const slider = document.getElementById(`bet-${matchId}`);
+        const mise = parseInt(slider?.value || '0', 10) || 0;
+        const m = state.lanMatches[matchId];
+        const bet = myPred?.swiss?.[matchId] || myPred?.bracket?.[matchId];
+        const odds = m ? getMatchOdds(m.homeTeamId, m.awayTeamId) : { home: 1, away: 1 };
+        const cote = bet?.side === 'home' ? odds.home : odds.away;
+        const potGain = mise > 0 ? POINTS.MATCH + Math.floor(mise * cote) : POINTS.MATCH;
+        info.innerHTML = `Si <b style="color:#FFB800">${newScore}</b> exact : <b style="color:#0c8">${potGain + POINTS.MATCH_EXACT_BONUS} pts</b>`;
+      } else {
+        info.innerHTML = 'Aucun score sélectionné';
+      }
+    }
   };
 
   window.updateBetSlider = function(kind, matchId, val, cote) {
@@ -912,10 +985,13 @@
     const existing = myPred?.[kind]?.[matchId];
     if (!existing?.side) { toast('Choisis une équipe d\'abord', 'err'); return; }
     if (mise > 0 && mise < MIN_BET) { toast(`Mise minimum : ${MIN_BET} jetons`, 'err'); return; }
+    // Lit le score exact sélectionné (chip .sel) parmi les chips de cette card
+    const selectedChip = Array.from(document.querySelectorAll(`button.lpr-score-chip.sel[onclick*="'${matchId}'"]`))[0];
+    const score = selectedChip ? selectedChip.dataset.sc : null;
     try {
-      await placeMatchBet(state.curUser.uid, kind, matchId, existing.side, mise);
+      await placeMatchBet(state.curUser.uid, kind, matchId, existing.side, mise, score);
       myPred = state.lanPredictions[state.curUser.uid] || myPred;
-      toast(mise > 0 ? `🔒 ${mise} jetons misés` : `🔒 Pronostic enregistré`, 'ok');
+      toast(score ? `🔒 ${mise>0?mise+' jetons + ':''}score ${score} parié` : (mise > 0 ? `🔒 ${mise} jetons misés` : `🔒 Pronostic enregistré`), 'ok');
       renderApp();
     } catch(e) { console.error(e); toast(e.message || 'Erreur', 'err'); }
   };
