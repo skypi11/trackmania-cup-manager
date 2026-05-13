@@ -69,6 +69,23 @@ async function admLanPreparation() {
   wrap.innerHTML = `
     <div class="stitle">🏆 Préparation LAN — ${esc(getLanName())}</div>
 
+    <!-- ── Statut de la LAN (override manuel + auto au générer R1/Bracket) ─── -->
+    <div class="adm-card" style="margin-bottom:14px">
+      <div class="adm-card-hdr">🚦 Statut de la LAN <span style="margin-left:10px;font-size:.7rem;color:#FFB800;font-weight:700">${(state.lanConfig?.status || 'preparation').toUpperCase()}</span></div>
+      <p style="font-size:.82rem;color:var(--text2);margin:0 0 12px">
+        Détermine ce que les écrans géants et la page publique affichent.
+        Auto-bascule à <code>swiss</code> au "Générer R1" et à <code>bracket</code> au "Générer bracket".
+        Override manuel ci-dessous si besoin.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['preparation','swiss','between','bracket','finished'].map(s => {
+          const isCur = (state.lanConfig?.status || 'preparation') === s;
+          const label = {preparation:'📋 Préparation',swiss:'🇨🇭 Suisse',between:'⏸ Entre-deux',bracket:'🏆 Bracket',finished:'🏁 Terminé'}[s];
+          return `<button class="${isCur?'btn-p':'btn-s'}" onclick="setLanStatusAdm('${s}')" style="font-size:.78rem">${label}</button>`;
+        }).join('')}
+      </div>
+    </div>
+
     <!-- ── Bloc infos générales ─────────────────────────────────────── -->
     <div class="adm-card" style="margin-bottom:14px">
       <div class="adm-card-hdr">📋 Informations générales</div>
@@ -348,6 +365,19 @@ window.resetLanManual = async function () {
     console.error(e);
     toast('Erreur', 'err');
   }
+};
+
+// ── Statut LAN : override manuel ──────────────────────────────────────
+window.setLanStatusAdm = async function (status) {
+  const labels = { preparation:'Préparation', swiss:'Suisse', between:'Entre-deux', bracket:'Bracket', finished:'Terminé' };
+  if (!labels[status]) return;
+  if (state.lanConfig?.status === status) return;
+  if (!confirm(`Passer le statut LAN à "${labels[status]}" ?\n\nCela change ce qui s'affiche sur la page publique et les écrans géants.`)) return;
+  try {
+    await updateLanConfig({ status });
+    toast(`🚦 Statut LAN → ${labels[status]}`, 'ok');
+    await admLan();
+  } catch (e) { console.error(e); toast('Erreur', 'err'); }
 };
 
 // ── Écrans géants : copie d'URL ───────────────────────────────────────

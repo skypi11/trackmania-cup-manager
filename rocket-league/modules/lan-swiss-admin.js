@@ -4,6 +4,7 @@ import { esc, toast, openModal, closeModal } from './utils.js';
 import {
   getQualifiedTeams, getLanMatches,
   createLanMatchesBatch, updateLanMatch, deleteLanMatch, fetchLanMatchesOnce,
+  updateLanConfig,
 } from './lan.js';
 import {
   SWISS_ROUNDS, SWISS_FORMAT, getSwissPhase, getSwissRound,
@@ -268,7 +269,13 @@ window.generateSwissR1 = async function () {
       format: SWISS_FORMAT,
       swissOrder: i,
     })));
-    toast(`${pairings.length} matchs créés pour le Round 1`, 'ok');
+    // Auto-bascule du statut LAN vers 'swiss' au coup d'envoi du R1
+    // (sauf si déjà en swiss/between/bracket/finished — ne pas régresser)
+    const curStatus = state.lanConfig?.status;
+    if (curStatus === 'preparation' || !curStatus) {
+      try { await updateLanConfig({ status: 'swiss' }); } catch (e) { console.warn('status update:', e); }
+    }
+    toast(`${pairings.length} matchs créés pour le Round 1 · statut LAN → Suisse`, 'ok');
     await admLanSwiss();
   } catch (e) {
     console.error(e);

@@ -4,6 +4,7 @@ import { esc, toast } from './utils.js';
 import {
   getQualifiedTeams, getLanMatches,
   createLanMatchesBatch, updateLanMatch, deleteLanMatch, fetchLanMatchesOnce,
+  updateLanConfig,
 } from './lan.js';
 import {
   SWISS_ROUNDS, calcSeriesScore, calculateSwissStandings,
@@ -373,7 +374,12 @@ window.generateBracketFromTop8 = async function () {
 
   try {
     await createLanMatchesBatch(bracketSpecs);
-    toast('Bracket généré (14 matchs)', 'ok');
+    // Auto-bascule du statut LAN vers 'bracket' au lancement du jour 2
+    const curStatus = state.lanConfig?.status;
+    if (curStatus === 'swiss' || curStatus === 'between' || curStatus === 'preparation' || !curStatus) {
+      try { await updateLanConfig({ status: 'bracket' }); } catch (e) { console.warn('status update:', e); }
+    }
+    toast('Bracket généré (14 matchs) · statut LAN → Bracket', 'ok');
     await admLanBracket();
   } catch (e) {
     console.error(e);
