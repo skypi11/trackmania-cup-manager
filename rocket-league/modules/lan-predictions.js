@@ -12,6 +12,9 @@
 // Scoring :
 //   Pré-LAN : podium 1er=2e=3e=150 / mauvaise place podium 50
 //             top 8 = 30/équipe / first out = 50
+//   Pré-LAN avec mise (single-équipe : champion/2e/3e/firstOut) :
+//     pts du barème + floor(mise × cote) si correct, 0 pts + mise perdue sinon
+//     Mise max 200 jetons par pari pré-LAN
 //   Match (Suisse/Bracket) sans mise : 10 pts si bon gagnant
 //   Match avec mise correct : 10 + floor(mise × cote) pts ; jetons consommés
 //   Match avec mise raté : 0 pt + jetons perdus
@@ -30,6 +33,7 @@ import { getMatchOdds } from './lan-odds.js';
 // ── Constantes ────────────────────────────────────────────────────────
 export const STARTING_JETONS = 500;
 export const MIN_BET = 10;
+export const MAX_PRELAN_BET = 200; // mise max par pari pré-LAN (champion/podium/firstOut)
 export const POINTS = {
   PODIUM_PLACE: 150,        // identique pour 1er, 2e, 3e (la difficulté est sensiblement la même)
   PODIUM_WRONG_PLACE: 50,   // bonne équipe sur le podium mais pas à la bonne place
@@ -123,6 +127,7 @@ export async function ensureLanPredDoc(user) {
       discordAvatar: user.photoURL || null,
       jetons: STARTING_JETONS,
       preLan: { podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null },
+      preLanBets: {}, // { podium1: { mise, cote, teamId }, podium2, podium3, firstOut }
       swiss: {},
       bracket: {},
       score: { preLan: 0, swiss: 0, bracket: 0, total: 0 },
@@ -145,16 +150,101 @@ export async function ensureLanPredDoc(user) {
   return state.lanPredictions[user.uid] || { id: user.uid, ...existing };
 }
 
-// ── Pré-LAN : sauvegarde des pronostics (pas de mise jeton sur pré-LAN) ─
+// ── Pré-LAN : sauvegarde des pronostics (pas de mise jeton sur cette fonction) ─
+// Les mises sont gérées séparément via placePreLanBet (voir ci-dessous).
+// Si on change l'équipe d'une catégorie qui avait une mise, la mise est
+// invalidée et les jetons remboursés.
 export async function savePreLanPrediction(uid, preLan) {
   if (isPreLanLocked()) throw new Error('Pré-LAN verrouillé');
+
+  const myPred = state.lanPredictions[uid];
+  const oldPreLan = myPred?.preLan || {};
+  const oldBets = myPred?.preLanBets || {};
+
+  // Détecter les changements d'équipe et invalider les mises associées
+  let refundedJetons = 0;
+  const newBets = { ...oldBets };
+  const checkPair = (oldId, newId, kind) => {
+    if (oldBets[kind] && oldId && oldId !== newId) {
+      refundedJetons += oldBets[kind].mise || 0;
+      delete newBets[kind];
+    }
+  };
+  checkPair(oldPreLan.podium?.[1], preLan.podium?.[1], 'podium1');
+  checkPair(oldPreLan.podium?.[2], preLan.podium?.[2], 'podium2');
+  checkPair(oldPreLan.podium?.[3], preLan.podium?.[3], 'podium3');
+  checkPair(oldPreLan.firstOut, preLan.firstOut, 'firstOut');
+
+  const updates = { preLan, updatedAt: serverTimestamp() };
+  if (refundedJetons > 0) {
+    updates.preLanBets = newBets;
+    updates.jetons = (myPred?.jetons || 0) + refundedJetons;
+  }
+
+  await updateDoc(doc(db, 'rl_lan_predictions', uid), updates);
+  if (myPred) {
+    myPred.preLan = preLan;
+    if (refundedJetons > 0) {
+      myPred.preLanBets = newBets;
+      myPred.jetons = updates.jetons;
+    }
+  }
+  return refundedJetons;
+}
+
+// ── Pré-LAN : placer / modifier / retirer une mise sur un pari single-équipe ─
+// kind = 'podium1' | 'podium2' | 'podium3' | 'firstOut'
+// mise = 0 (pas de mise) à MAX_PRELAN_BET (200)
+// L'équipe doit déjà être sélectionnée dans preLan (sinon erreur).
+export async function placePreLanBet(uid, kind, mise = 0) {
+  if (isPreLanLocked()) throw new Error('Pré-LAN verrouillé');
+  if (!['podium1', 'podium2', 'podium3', 'firstOut'].includes(kind)) {
+    throw new Error('Catégorie de pari invalide');
+  }
+
+  const myPred = state.lanPredictions[uid];
+  if (!myPred) throw new Error('Pronostiqueur non initialisé');
+
+  // Vérifie qu'une équipe est bien sélectionnée pour ce kind
+  let teamId = null;
+  if (kind === 'firstOut') teamId = myPred.preLan?.firstOut;
+  else teamId = myPred.preLan?.podium?.[parseInt(kind.slice(-1))];
+  if (!teamId) throw new Error('Choisis d\'abord une équipe');
+
+  const existingBet = myPred.preLanBets?.[kind];
+  const existingMise = existingBet?.mise || 0;
+  const availableJetons = (myPred.jetons || 0) + existingMise;
+
+  if (mise < 0) mise = 0;
+  if (mise > MAX_PRELAN_BET) mise = MAX_PRELAN_BET;
+  if (mise > 0 && mise < MIN_BET && availableJetons >= MIN_BET) {
+    throw new Error(`Mise minimum : ${MIN_BET} jetons`);
+  }
+  if (mise > availableJetons) throw new Error('Solde insuffisant');
+
+  // Cote au moment du pari (figée)
+  // On importe les fonctions de cote dynamiquement pour éviter le cycle
+  const { getPodiumPlaceOdds, getFirstOutOdds } = await import('./lan-odds.js');
+  let cote;
+  if (kind === 'firstOut') cote = getFirstOutOdds(teamId);
+  else cote = getPodiumPlaceOdds(teamId, parseInt(kind.slice(-1)));
+
+  const newBets = { ...(myPred.preLanBets || {}) };
+  if (mise === 0) {
+    delete newBets[kind];
+  } else {
+    newBets[kind] = { mise, cote, teamId, placedAt: new Date().toISOString() };
+  }
+
+  const newJetons = availableJetons - mise;
   await updateDoc(doc(db, 'rl_lan_predictions', uid), {
-    preLan,
+    preLanBets: newBets,
+    jetons: newJetons,
     updatedAt: serverTimestamp(),
   });
-  if (state.lanPredictions[uid]) {
-    state.lanPredictions[uid].preLan = preLan;
-  }
+  myPred.preLanBets = newBets;
+  myPred.jetons = newJetons;
+  return { mise, cote };
 }
 
 // ── Match (Suisse/Bracket) : placer un pronostic avec mise optionnelle ─
@@ -326,19 +416,27 @@ export async function resolvePreLanScores(opts = {}) {
 
   for (const pred of allPreds) {
     const pl = pred.preLan || {};
+    const bets = pred.preLanBets || {};
     let pts = 0;
 
-    // Podium ordonné (1er = champion) + bonne équipe mauvaise place
+    // Podium ordonné (1er = champion) + bonne équipe mauvaise place + bonus mise
     if (podium) {
       const podiumSet = new Set([podium[1], podium[2], podium[3]].filter(Boolean));
       const myPodium = pl.podium || {};
       [1, 2, 3].forEach(place => {
         const guess = myPodium[place];
         if (!guess) return;
-        if (podium[place] === guess) {
+        const exact = podium[place] === guess;
+        if (exact) {
           pts += POINTS.PODIUM_PLACE;
+          // Bonus mise : seulement si l'équipe est exactement à sa place pariée
+          const bet = bets[`podium${place}`];
+          if (bet?.mise > 0 && bet.teamId === guess) {
+            pts += Math.floor(bet.mise * (bet.cote || 1));
+          }
         } else if (podiumSet.has(guess)) {
           pts += POINTS.PODIUM_WRONG_PLACE;
+          // Pas de bonus mise si mauvaise place (la mise était sur "1er exact", pas "podium")
         }
       });
     }
@@ -350,8 +448,14 @@ export async function resolvePreLanScores(opts = {}) {
       pts += correct * POINTS.TOP8_PER_TEAM;
     }
 
-    // First out
-    if (firstOut && pl.firstOut === firstOut) pts += POINTS.FIRST_OUT;
+    // First out + bonus mise
+    if (firstOut && pl.firstOut === firstOut) {
+      pts += POINTS.FIRST_OUT;
+      const bet = bets.firstOut;
+      if (bet?.mise > 0 && bet.teamId === firstOut) {
+        pts += Math.floor(bet.mise * (bet.cote || 1));
+      }
+    }
 
     if (pts !== (pred.score?.preLan || 0)) {
       const total = pts + (pred.score?.swiss || 0) + (pred.score?.bracket || 0);
