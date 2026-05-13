@@ -40,7 +40,8 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 └── rocket-league/
     ├── index.html              (app RL — admin + ligue + prédictions)
     ├── lan.html                (page publique LAN, lecture seule + ?preview=swiss|bracket|finished)
-    ├── display-classement.html (écran géant salle — classement Suisse plein écran 1080p/4K)
+    ├── lan-predictions.html    (page pronostics LAN mobile-first, 4 onglets, modal de pari)
+    ├── display-classement.html (écran géant salle — classement Suisse OU bracket selon statut)
     ├── display-matchs.html     (écran géant salle — matchs en cours / scène / à venir)
     └── modules/
         ├── lan.js              (CRUD rl_lan + rl_lan_matches)
@@ -49,6 +50,8 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
         ├── lan-bracket.js      (algos bracket double élim — purs)
         ├── lan-bracket-admin.js(UI admin bracket + visuel WB/LB/GF)
         ├── lan-public.js       (rendu page publique lan.html)
+        ├── lan-predictions.js  (CRUD pronostics LAN + scoring + jetons + résolution)
+        ├── lan-odds.js         (calcul cotes match/podium/top8/firstOut)
         ├── display-common.js   (init firebase + listeners partagés écrans géants)
         └── ...                 (auth, admin, data, predictions, standings, state, etc.)
 ```
@@ -76,6 +79,9 @@ L'utilisateur n'est **pas développeur**. Il décrit ce qu'il veut, Claude fait 
 - **`rl_applications`** : candidatures joueurs (`seasonId`, `playerId`, `teamId`, `message`, `status`, `processedBy`) — acceptées par manager ou fondateur
 - **`rl_lan`** : config LAN (1 doc par édition, ID lisible ex: `sls2-2026`) — `name`, `startDate`, `endDate`, `location`, `poolQuotas:{1:9,2:7}`, `manualQualified:[teamIds]` (override auto), `status:'preparation'|'swiss'|'between'|'bracket'|'finished'`
 - **`rl_lan_matches`** : matchs de la LAN (Suisse + Bracket) — `lanId`, `phase` (`swiss_r1`-`swiss_r5`, `wb_qf`, `wb_sf`, `wb_f`, `lb_r1`-`lb_f`, `gf`), `homeTeamId`, `awayTeamId`, `format:'bo5'|'bo7'`, `games:[{home,away}]`, `seriesScore:{home,away}`, `winner`, `status`, `onStage:bool`, `scheduledAt`, `swissOrder` (ordre dans le round)
+- **`rl_lan_predictions`** : pronostics LAN (1 doc par utilisateur Discord, id = userId) — `lanId`, `userId`, `displayName`, `discordAvatar`, `jetons` (start 500), `preLan: {podium:{1,2,3}, top8:[], firstOut}`, `preLanBets: {podium1, podium2, podium3, firstOut}` chacun avec `{mise, cote, teamId}`, `swiss: {matchId: {side, mise, cote, score?, status, pts, exactBonus}}`, `bracket: {idem}`, `score: {preLan, swiss, bracket, total}`. Lecture publique (leaderboard), écriture sur son propre doc + admin pour recalcul/recote.
+  - Verrouillage : `rl_lan/sls2-2026.lockState = {preLan: bool, swissRounds: [round nums], bracketMatches: [matchIds]}`
+  - Override de poule : `rl_lan/sls2-2026.poolOverrides = {teamId: 1|2}` (déplace une équipe entre P1/P2 pour le seeding LAN sans changer la poule de saison)
 
 ## Règles métier — Rocket League
 
@@ -207,7 +213,8 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ LAN — Phase 2 : Bracket double élim 8 équipes — BO5/BO7, auto-progression + rétro-propage, visuel grille unique WB/LB/GF avec connecteurs SVG en L (Phase 2 livrée 2026-04-28)
 - ✅ LAN — Phase 5 : page publique `/rocket-league/lan.html` — hero adaptatif au status (champion XXL si finished / countdown si preparation / live indicator + match scène si en cours), Suisse compactée (top 8 + toggle, rounds en accordéon), bracket read-only, podium, sponsors. Mode aperçu via `?preview=swiss|between|bracket|finished` (Phase 5 livrée 2026-04-28)
 - ✅ LAN — Phase 3 : écrans géants — `display-classement.html` (16 équipes plein écran, top 8 surligné, watermark SLS, footer sponsors) + `display-matchs.html` (match scène XXL symétrique, max 4 simultanés respectant le format groupe 1/groupe 2). Adaptatif 1080p/4K via clamp() + vw/vh, mode preview, App Check (Phase 3 livrée 2026-04-29)
-- ❌ LAN — Phase 4 : prédictions LAN étendues (match / top 8 / podium / vainqueur)
+- ✅ LAN — Phase 4 : Pronostics LAN complets — page mobile-first `/rocket-league/lan-predictions.html` (4 onglets : Pré-LAN / Suisse / Bracket / Classement), modal de pari (cards uniformes), score exact en bonus, jetons + cotes auto, mode d'emploi modal, vue admin de tous les pronostiqueurs. Système jetons : 500 départ, mise min 10, max 200 sur pré-LAN. Cotes pré-LAN basées sur pts ligue absolus (mapping linéaire 2→8 selon rang). Verrouillage par phase (manuel admin + auto au 1er score). Auto-bascule statut LAN au générer R1/Bracket. Mega CTA pronostics sur lan.html + accueil RL. Display-classement bascule sur bracket en mode bracket / champion XXL en mode finished. (Phase 4 livrée 2026-05-13/14)
+- ✅ LAN — Override de poule : déplacer une équipe entre P1/P2 pour le seeding LAN sans toucher la poule de saison (`rl_lan.poolOverrides`). Algo R1 supporte 8+8 (croisement complet) ou n+m avec écart pair (matchs internes auto). (livré 2026-05-13)
 - ❌ Mercato (transferts inter-équipes)
 - ❌ Discord webhooks
 
@@ -242,7 +249,6 @@ URL pattern : `https://springs-esport.vercel.app/trackmania/overlay-quals.html?c
 - ✅ TM : Système de prédictions complet (collection `predictions` : finalists 1-10 + top 3 exact, scoring +1/finalist +3/top3, leaderboard global top 10, historique perso par joueur, stats communautaires en direct, bouton admin Calculer scores)
 
 ### Planifié (ordre priorité)
-- [ ] RL LAN Phase 4 : prédictions LAN étendues (match individuel + top 8 + podium + vainqueur)
 - [ ] RL : Mercato (transferts inter-équipes, validation admin)
 - [ ] RL : Discord webhook notifications
 - [ ] Domaine custom (Namecheap/Porkbun → Vercel)
