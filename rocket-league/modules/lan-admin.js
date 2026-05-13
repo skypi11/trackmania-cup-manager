@@ -123,13 +123,16 @@ async function admLanPreparation() {
       <div class="lan-qual-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
         <div>
           <div style="font-weight:700;font-size:.82rem;color:var(--text2);margin-bottom:8px">POULE 1 — ${qP1.length} qualifié(s)</div>
-          ${renderQualList(qP1)}
+          ${renderQualList(qP1, 1)}
         </div>
         <div>
           <div style="font-weight:700;font-size:.82rem;color:var(--text2);margin-bottom:8px">POULE 2 — ${qP2.length} qualifié(s)</div>
-          ${renderQualList(qP2)}
+          ${renderQualList(qP2, 2)}
         </div>
       </div>
+      <p style="font-size:.74rem;color:var(--text3);margin:0 0 6px">
+        💡 Astuce : utilise <strong>↔</strong> pour déplacer une équipe dans l'autre poule (uniquement pour le seeding LAN — la poule de saison reste intacte).
+      </p>
 
       <div class="f-actions">
         ${isManual
@@ -167,20 +170,26 @@ async function admLanPreparation() {
   `;
 }
 
-function renderQualList(teams) {
+function renderQualList(teams, currentPool) {
   if (!teams.length) {
     return `<div class="empty" style="padding:14px;text-align:center;font-size:.82rem">Aucune équipe qualifiée pour l'instant.</div>`;
   }
+  const otherPool = currentPool === 1 ? 2 : 1;
   return `<div style="display:flex;flex-direction:column;gap:6px">
     ${teams.map((t, i) => {
       const logo = t.logoUrl
         ? `<img src="${esc(t.logoUrl)}" alt="" style="width:24px;height:24px;border-radius:4px;object-fit:cover" onerror="this.style.opacity='.2'">`
         : `<div style="width:24px;height:24px;border-radius:4px;background:rgba(255,255,255,.05)"></div>`;
+      const isMoved = t.pool !== currentPool;
+      const movedBadge = isMoved
+        ? `<span title="Déplacée depuis la Poule ${t.pool}" style="background:rgba(123,47,190,.2);color:#c79bff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em">↔ DEPUIS P${t.pool}</span>`
+        : '';
       return `<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:6px;font-size:.82rem">
         <span style="font-weight:700;color:#FFB800;min-width:22px">${i + 1}.</span>
         ${logo}
-        <span style="font-weight:600;flex:1">${esc(t.name)}</span>
+        <span style="font-weight:600;flex:1;display:flex;align-items:center;gap:8px">${esc(t.name)} ${movedBadge}</span>
         <span style="color:var(--text3);font-size:.72rem">${t.pts.toFixed(1)} pts · ${t.wins}V/${t.losses}D</span>
+        <button class="btn-s" onclick="movePoolTeam('${t.id}', ${otherPool})" title="Déplacer vers Poule ${otherPool}" style="font-size:.7rem;padding:3px 8px">↔ P${otherPool}</button>
       </div>`;
     }).join('')}
   </div>`;
@@ -265,5 +274,29 @@ window.resetLanManual = async function () {
   } catch (e) {
     console.error(e);
     toast('Erreur', 'err');
+  }
+};
+
+// Déplace une équipe vers l'autre poule (override LAN — n'affecte pas la poule de saison)
+// Si la cible est la poule native de l'équipe, l'override est retiré.
+window.movePoolTeam = async function (teamId, targetPool) {
+  const team = state.teamsMap[teamId];
+  if (!team) { toast('Équipe introuvable', 'err'); return; }
+  const overrides = { ...((state.lanConfig?.poolOverrides) || {}) };
+
+  // Si la cible = la poule native, on retire l'override
+  if (team.pool === targetPool) {
+    delete overrides[teamId];
+  } else {
+    overrides[teamId] = targetPool;
+  }
+
+  try {
+    await updateLanConfig({ poolOverrides: overrides });
+    toast(`${team.name} → Poule ${targetPool}`, 'ok');
+    await admLan();
+  } catch (e) {
+    console.error(e);
+    toast('Erreur lors du déplacement', 'err');
   }
 };

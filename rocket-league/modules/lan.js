@@ -18,6 +18,7 @@ const DEFAULT_LAN = {
   location: 'Salle Culturelle, 2 Rue des Écoles, 58470 Magny-Cours',
   poolQuotas: { 1: 9, 2: 7 },
   manualQualified: [],   // array de teamIds — si non vide, override l'auto par poule
+  poolOverrides: {},     // { teamId: 1|2 } — force la poule d'une équipe pour la LAN (seeding Suisse)
   status: 'preparation', // preparation | swiss | between | bracket | finished
 };
 
@@ -83,18 +84,70 @@ export function getLanQuota(pool) {
   return q[pool] ?? q[String(pool)] ?? 8;
 }
 
+// Poule effective d'une équipe pour la LAN (override prioritaire sur la poule native)
+export function getEffectivePool(teamId) {
+  const overrides = (state.lanConfig?.poolOverrides) || {};
+  const forced = overrides[teamId];
+  if (forced === 1 || forced === 2 || forced === '1' || forced === '2') {
+    return Number(forced);
+  }
+  return null; // pas d'override → poule native
+}
+
 // Calcul auto des qualifiés pour une poule (top N selon quota)
 // Si une liste manuelle est définie pour cette poule, elle prime.
+// Les overrides de poule (poolOverrides) déplacent les équipes entre poules
+// sans toucher leur poule native (historique de saison intact).
 export function getQualifiedTeams(pool) {
   const manual = (state.lanConfig?.manualQualified) || [];
-  const standings = buildStandings(pool);
+  const overrides = (state.lanConfig?.poolOverrides) || {};
+
+  // Standings des deux poules natives — sert à la fois pour la liste auto et
+  // pour récupérer les stats des équipes overridées venant de l'autre poule.
+  const stPool = buildStandings(pool);
+  const otherPool = pool === 1 ? 2 : 1;
+  const stOther = buildStandings(otherPool);
+
+  // Helper : applique l'override de poule à un standings
+  // - retire les équipes overridées vers l'autre poule
+  // - ajoute les équipes de l'autre poule overridées vers ce pool (avec leurs stats)
+  const applyOverrides = (baseList) => {
+    const kept = baseList.filter(t => {
+      const eff = overrides[t.id];
+      if (eff == null) return true;
+      return Number(eff) === pool;
+    });
+    const incoming = stOther.filter(t => Number(overrides[t.id]) === pool);
+    return [...kept, ...incoming].sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      const diffA = a.gw - a.gl, diffB = b.gw - b.gl;
+      if (diffB !== diffA) return diffB - diffA;
+      return b.gw - a.gw;
+    });
+  };
+
   if (manual.length) {
-    // Filtrer pour ne garder que les équipes de la poule, en respectant l'ordre du classement
     const manualSet = new Set(manual);
-    const inPool = standings.filter(t => manualSet.has(t.id));
-    if (inPool.length) return inPool;
+    // On part de l'union des deux poules pour pouvoir capter les équipes
+    // qualifiées manuellement quelle que soit leur poule native.
+    const allStandings = [...stPool, ...stOther].filter(t => manualSet.has(t.id));
+    const withEffective = allStandings.map(t => ({
+      ...t,
+      effectivePool: overrides[t.id] != null ? Number(overrides[t.id]) : t.pool,
+    }));
+    const inPool = withEffective.filter(t => t.effectivePool === pool);
+    if (inPool.length || allStandings.length) {
+      return inPool.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        const diffA = a.gw - a.gl, diffB = b.gw - b.gl;
+        if (diffB !== diffA) return diffB - diffA;
+        return b.gw - a.gw;
+      });
+    }
   }
-  return standings.slice(0, getLanQuota(pool));
+
+  // Mode auto : on applique les overrides puis on prend le top N
+  return applyOverrides(stPool).slice(0, getLanQuota(pool));
 }
 
 // Helpers

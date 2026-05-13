@@ -90,13 +90,30 @@ function getLanQuota(pool) {
 }
 function getQualifiedTeams(pool) {
   const manual = state.lanConfig?.manualQualified || [];
-  const standings = buildStandings(pool);
+  const overrides = state.lanConfig?.poolOverrides || {};
+  const stPool = buildStandings(pool);
+  const otherPool = pool === 1 ? 2 : 1;
+  const stOther = buildStandings(otherPool);
+
+  const sortByStats = (a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    const diffA = a.gw - a.gl, diffB = b.gw - b.gl;
+    if (diffB !== diffA) return diffB - diffA;
+    return b.gw - a.gw;
+  };
+
   if (manual.length) {
     const set = new Set(manual);
-    const inPool = standings.filter(t => set.has(t.id));
-    if (inPool.length) return inPool;
+    const all = [...stPool, ...stOther].filter(t => set.has(t.id));
+    return all
+      .filter(t => (overrides[t.id] != null ? Number(overrides[t.id]) : t.pool) === pool)
+      .sort(sortByStats);
   }
-  return standings.slice(0, getLanQuota(pool));
+
+  // Mode auto : applique les overrides (équipes sortantes/entrantes) puis top N
+  const kept = stPool.filter(t => overrides[t.id] == null || Number(overrides[t.id]) === pool);
+  const incoming = stOther.filter(t => Number(overrides[t.id]) === pool);
+  return [...kept, ...incoming].sort(sortByStats).slice(0, getLanQuota(pool));
 }
 function getAllQualified() {
   return [...getQualifiedTeams(1), ...getQualifiedTeams(2)];
