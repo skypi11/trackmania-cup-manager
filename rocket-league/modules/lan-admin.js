@@ -168,6 +168,53 @@ async function admLanPreparation() {
       </div>
     </div>
 
+    <!-- ── Écrans géants ─────────────────────────────────────────────── -->
+    <div class="adm-card" style="margin-bottom:14px">
+      <div class="adm-card-hdr">📺 Écrans géants (salle Magny-Cours)</div>
+      <p style="font-size:.82rem;color:var(--text2);margin:0 0 14px">
+        Liens directs à ouvrir sur les TV / vidéoprojecteurs de la salle. Adaptés 1080p / 4K via clamp/vw/vh.
+        Ouvre en <strong>plein écran</strong> (F11) pour un rendu propre.
+      </p>
+      <div style="display:grid;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;font-size:.92rem">🏆 Classement Suisse</div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:2px">16 équipes plein écran, top 8 surligné, watermark SLS, footer sponsors</div>
+          </div>
+          <a href="./display-classement.html" target="_blank" rel="noopener" class="btn-p" style="text-decoration:none">🔗 Ouvrir</a>
+          <button class="btn-s" onclick="copyDisplayUrl('classement')">📋 Copier le lien</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;font-size:.92rem">🎭 Matchs en cours / Scène</div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:2px">Match scène XXL symétrique + max 4 matchs simultanés (groupe 1 / groupe 2)</div>
+          </div>
+          <a href="./display-matchs.html" target="_blank" rel="noopener" class="btn-p" style="text-decoration:none">🔗 Ouvrir</a>
+          <button class="btn-s" onclick="copyDisplayUrl('matchs')">📋 Copier le lien</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(123,47,190,.06);border:1px solid rgba(123,47,190,.18);border-radius:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;font-size:.92rem">📱 Page publique LAN (spectateurs)</div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:2px">Site public à partager au public — bracket, classement Suisse, podium</div>
+          </div>
+          <a href="./lan.html" target="_blank" rel="noopener" class="btn-p" style="text-decoration:none">🔗 Ouvrir</a>
+          <button class="btn-s" onclick="copyDisplayUrl('lan')">📋 Copier le lien</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,200,100,.05);border:1px solid rgba(0,200,100,.18);border-radius:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;font-size:.92rem">🔮 Pronostics LAN (joueurs / spectateurs)</div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:2px">Page mobile-first à partager pour que tout le monde puisse parier</div>
+          </div>
+          <a href="./lan-predictions.html" target="_blank" rel="noopener" class="btn-p" style="text-decoration:none">🔗 Ouvrir</a>
+          <button class="btn-s" onclick="copyDisplayUrl('predictions')">📋 Copier le lien</button>
+        </div>
+      </div>
+      <p style="font-size:.7rem;color:var(--text3);margin:12px 0 0">
+        💡 Mode aperçu : ajoute <code>?preview=swiss</code> ou <code>?preview=between</code> ou <code>?preview=bracket</code> ou <code>?preview=finished</code>
+        à n'importe quelle URL ci-dessus pour visualiser un état particulier (utile pour test avant la LAN).
+      </p>
+    </div>
+
     <!-- ── Pronostics LAN ────────────────────────────────────────────── -->
     <div class="adm-card" style="margin-bottom:14px">
       <div class="adm-card-hdr">🔮 Pronostics LAN</div>
@@ -300,6 +347,26 @@ window.resetLanManual = async function () {
   } catch (e) {
     console.error(e);
     toast('Erreur', 'err');
+  }
+};
+
+// ── Écrans géants : copie d'URL ───────────────────────────────────────
+window.copyDisplayUrl = async function (which) {
+  const map = {
+    classement: '/rocket-league/display-classement.html',
+    matchs: '/rocket-league/display-matchs.html',
+    lan: '/rocket-league/lan.html',
+    predictions: '/rocket-league/lan-predictions.html',
+  };
+  const path = map[which];
+  if (!path) return;
+  const url = `https://springs-esport.vercel.app${path}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast(`📋 Lien copié : ${url}`, 'ok');
+  } catch (e) {
+    console.error(e);
+    toast('Impossible de copier — copie manuelle : ' + url, 'err');
   }
 };
 

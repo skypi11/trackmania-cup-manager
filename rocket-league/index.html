@@ -45,16 +45,45 @@
 
   <!-- ACCUEIL -->
   <section class="tab active" id="tab-accueil">
-    <a href="./lan.html" class="lan-banner" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 22px;margin-bottom:18px;border-radius:12px;background:linear-gradient(90deg,rgba(255,184,0,.18),rgba(255,107,53,.12));border:1px solid rgba(255,184,0,.35);text-decoration:none;color:inherit;transition:all .2s">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0">
-        <span style="font-size:1.5rem">🏆</span>
-        <div style="min-width:0">
-          <div style="font-weight:800;font-size:.95rem;color:#FFB800;letter-spacing:.01em">SLS#2 — LAN finale</div>
-          <div style="font-size:.78rem;color:var(--text2);margin-top:2px">16-17 mai 2026 · Magny-Cours · 16 équipes · 1 600€ de cashprize</div>
+    <!-- ── MEGA BANNER LAN — rendu impactant car la LAN est imminente ── -->
+    <div class="lan-mega-banner" style="position:relative;margin-bottom:24px;padding:32px 36px;border-radius:16px;background:linear-gradient(135deg,rgba(255,184,0,.16) 0%,rgba(255,107,53,.10) 50%,rgba(123,47,190,.08) 100%);border:1px solid rgba(255,184,0,.4);overflow:hidden;box-shadow:0 8px 32px rgba(255,184,0,.08)">
+      <div style="position:absolute;top:-50%;right:-10%;width:50%;height:200%;background:radial-gradient(ellipse,rgba(255,184,0,.2),transparent 60%);pointer-events:none"></div>
+      <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+        <div style="min-width:240px;flex:1">
+          <div style="display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:800;color:#FFB800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;padding:5px 12px;background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.35);border-radius:4px">
+            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FFB800;animation:lan-pulse 1.6s ease-in-out infinite"></span>
+            <span id="lan-mega-cd-badge">LAN imminente</span>
+          </div>
+          <div style="font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-.02em;line-height:1.05;background:linear-gradient(135deg,#FFB800,#FF6B35);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px">
+            Springs League Series #2 <br>— LAN finale
+          </div>
+          <div style="font-size:.92rem;color:var(--text);font-weight:600;margin-bottom:4px">📅 16-17 mai 2026 · 📍 Magny-Cours</div>
+          <div style="font-size:.84rem;color:var(--text2);font-weight:500">16 équipes qualifiées · phase Suisse + bracket double élim · <b style="color:#FFB800">1 600€</b> de cashprize</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;min-width:200px">
+          <a href="./lan.html" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;padding:14px 22px;border-radius:10px;text-decoration:none;font-weight:800;font-size:.95rem;text-align:center;letter-spacing:.02em;box-shadow:0 6px 20px rgba(255,184,0,.3);transition:transform .15s">🏆 Voir la LAN</a>
+          <a href="./lan-predictions.html" style="background:rgba(255,255,255,.06);color:var(--text);padding:14px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.92rem;text-align:center;border:1px solid rgba(255,255,255,.12);transition:all .15s">🔮 Faire mes pronostics</a>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:800;color:#FFB800;flex-shrink:0">Voir la LAN →</div>
-    </a>
+      <style>@keyframes lan-pulse{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(255,184,0,.6)}50%{opacity:.6;transform:scale(.85);box-shadow:0 0 0 8px rgba(255,184,0,0)}}.lan-mega-banner a[href*="lan.html"]:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,184,0,.4)}.lan-mega-banner a[href*="lan-predictions"]:hover{background:rgba(255,255,255,.1);border-color:rgba(255,184,0,.5);color:#FFB800}</style>
+      <script>
+        (function updateCountdown(){
+          var lanStart = new Date('2026-05-16T10:00:00');
+          var now = new Date();
+          var diff = lanStart - now;
+          var el = document.getElementById('lan-mega-cd-badge');
+          if (!el) return;
+          if (diff <= 0) { el.textContent = 'LAN EN COURS'; return; }
+          var days = Math.floor(diff / 86400000);
+          var hours = Math.floor((diff % 86400000) / 3600000);
+          if (days > 1) el.textContent = 'J-' + days + ' avant la LAN';
+          else if (days === 1) el.textContent = 'J-1 · demain';
+          else if (hours > 1) el.textContent = 'Dans ' + hours + 'h';
+          else el.textContent = 'LAN imminente';
+          setTimeout(updateCountdown, 60000);
+        })();
+      </script>
+    </div>
     <div class="hero">
       <div class="hero-inner">
         <div>
