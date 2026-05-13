@@ -147,16 +147,19 @@ export function getTop8Odds(teamId) {
 
 // ── Cote pré-LAN : Première sortie (équipe finit 16e à la Suisse) ──────
 // Inverse logique de Top 8 : plus l'équipe est faible, plus la cote est basse.
+// k=2.5 (amplifie fort) → l'outsider évident (clear underdog) reçoit une
+// cote très basse, ce qui limite son payout malgré la mise jusqu'à 200.
+// Clamp 2.0 → 12.0 (au lieu de 50) pour que même un favori improbable
+// ne génère pas un payout démesuré.
 export function getFirstOutOdds(teamId) {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 50.0;
-  // P(dernière) ≈ inverse de la force, normalisée
-  const k = 1.5;
+  if (!ids.includes(teamId)) return 12.0;
+  const k = 2.5;
   const inverseStrengths = ids.map(id => Math.pow(1 - getTeamStrength(id) + 0.05, k));
   const total = inverseStrengths.reduce((a, b) => a + b, 0) || 1;
   const myInv = Math.pow(1 - getTeamStrength(teamId) + 0.05, k);
   const p = myInv / total;
-  return roundCote(clamp(1 / p, 2.0, 50.0));
+  return roundCote(clamp(1 / p, 2.0, 12.0));
 }
 
 // ── Récap : retourne toutes les cotes pré-LAN d'une équipe ─────────────
