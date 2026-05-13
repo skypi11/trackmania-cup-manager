@@ -10,8 +10,8 @@
 //   lockState dans le doc rl_lan/{lanId}, OU auto au 1er score saisi
 //
 // Scoring :
-//   Pré-LAN : champion 250 / podium 1er=150 2e=120 3e=100 / mauvaise place 50
-//             top 8 = 30/équipe / first out = 100
+//   Pré-LAN : podium 1er=2e=3e=150 / mauvaise place podium 50
+//             top 8 = 30/équipe / first out = 50
 //   Match (Suisse/Bracket) sans mise : 10 pts si correct
 //   Match avec mise correct : 10 + floor(mise × cote) pts ; jetons consommés
 //   Match avec mise raté : 0 pt + jetons perdus
@@ -30,13 +30,10 @@ import { getMatchOdds } from './lan-odds.js';
 export const STARTING_JETONS = 500;
 export const MIN_BET = 10;
 export const POINTS = {
-  CHAMPION: 250,
-  PODIUM_1ST: 150,
-  PODIUM_2ND: 120,
-  PODIUM_3RD: 100,
-  PODIUM_WRONG_PLACE: 50,
+  PODIUM_PLACE: 150,        // identique pour 1er, 2e, 3e (la difficulté est sensiblement la même)
+  PODIUM_WRONG_PLACE: 50,   // bonne équipe sur le podium mais pas à la bonne place
   TOP8_PER_TEAM: 30,
-  FIRST_OUT: 100,
+  FIRST_OUT: 50,
   MATCH: 10,
 };
 
@@ -123,7 +120,7 @@ export async function ensureLanPredDoc(user) {
       displayName: user.displayName || 'Anonyme',
       discordAvatar: user.photoURL || null,
       jetons: STARTING_JETONS,
-      preLan: { champion: null, podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null },
+      preLan: { podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null },
       swiss: {},
       bracket: {},
       score: { preLan: 0, swiss: 0, bracket: 0, total: 0 },
@@ -285,7 +282,7 @@ export async function resolvePreLanScores(opts = {}) {
   const allPreds = Object.values(state.lanPredictions);
   const top8 = opts.top8; // [teamId, ...] (issus de la Suisse)
   const firstOut = opts.firstOut; // teamId (16e de la Suisse)
-  const champion = opts.champion; // teamId du vainqueur du bracket
+  // Le champion correspond à podium[1] — pas de prédiction "Champion" séparée
   const podium = opts.podium; // { 1: teamId, 2: teamId, 3: teamId }
 
   const batch = writeBatch(db);
@@ -295,10 +292,7 @@ export async function resolvePreLanScores(opts = {}) {
     const pl = pred.preLan || {};
     let pts = 0;
 
-    // Champion
-    if (champion && pl.champion === champion) pts += POINTS.CHAMPION;
-
-    // Podium ordonné + bonne équipe mauvaise place
+    // Podium ordonné (1er = champion) + bonne équipe mauvaise place
     if (podium) {
       const podiumSet = new Set([podium[1], podium[2], podium[3]].filter(Boolean));
       const myPodium = pl.podium || {};
@@ -306,7 +300,7 @@ export async function resolvePreLanScores(opts = {}) {
         const guess = myPodium[place];
         if (!guess) return;
         if (podium[place] === guess) {
-          pts += place === 1 ? POINTS.PODIUM_1ST : place === 2 ? POINTS.PODIUM_2ND : POINTS.PODIUM_3RD;
+          pts += POINTS.PODIUM_PLACE;
         } else if (podiumSet.has(guess)) {
           pts += POINTS.PODIUM_WRONG_PLACE;
         }

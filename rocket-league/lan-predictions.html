@@ -246,7 +246,7 @@
   import { LAN_DOC_ID } from './modules/lan.js';
   import { getSwissMatches, getSwissRound, calcSeriesScore, calculateSwissStandings, SWISS_ROUNDS } from './modules/lan-swiss.js';
   import { SLOT_LABEL } from './modules/lan-bracket.js';
-  import { getMatchOdds, getChampionOdds, getPodiumPlaceOdds, getTop8Odds, getFirstOutOdds } from './modules/lan-odds.js';
+  import { getMatchOdds, getPodiumPlaceOdds, getTop8Odds, getFirstOutOdds } from './modules/lan-odds.js';
   import {
     setupLanPredictionsListener, ensureLanPredDoc, savePreLanPrediction,
     placeMatchBet, isPreLanLocked, isSwissRoundLocked, isBracketMatchLocked,
@@ -400,9 +400,9 @@
     return `
       <div class="lpr-login-card">
         <h2>🎯 Pronostics LAN SLS#2</h2>
-        <p>Connecte-toi avec Discord pour pronostiquer le champion, le podium, le top 8 et chaque match de la LAN.</p>
+        <p>Connecte-toi avec Discord pour pronostiquer le podium, le top 8 et chaque match de la LAN.</p>
         <div class="lpr-login-perks">
-          <div class="lpr-login-perk">🏆 Pronostique le champion <b>(250 pts)</b></div>
+          <div class="lpr-login-perk">🏆 Pronostique le podium <b>(450 pts max)</b></div>
           <div class="lpr-login-perk">🪙 Mise tes <b>${STARTING_JETONS} jetons</b> sur les matchs</div>
           <div class="lpr-login-perk">📊 Grimpe au classement de pronostics</div>
         </div>
@@ -471,7 +471,7 @@
   // ─── Onglet Pré-LAN ───
   function renderPreLanTab() {
     const locked = isPreLanLocked();
-    const pl = myPred?.preLan || { champion: null, podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null };
+    const pl = myPred?.preLan || { podium: { 1: null, 2: null, 3: null }, top8: [], firstOut: null };
     if (qualifiedTeams.length < 16) {
       return `
         <div class="lpr-stitle">🔮 Pronostics pré-LAN</div>
@@ -484,20 +484,16 @@
 
     return `
       <div class="lpr-stitle">🔮 Pronostics pré-LAN ${stateBadge}</div>
-      <p class="lpr-stitle-sub">${locked ? 'Tes pronostics sont définitifs.' : 'Tes pronostics sont enregistrés en direct, modifiable jusqu\'au verrouillage admin.'}</p>
+      <p class="lpr-stitle-sub">${locked ? 'Tes pronostics sont définitifs.' : 'Tes pronostics sont enregistrés en direct, modifiables jusqu\'au verrouillage admin.'}</p>
 
       <div class="lpr-card">
-        <div class="lpr-card-hdr">👑 Champion <span class="lpr-points-pill">${POINTS.CHAMPION} pts</span></div>
-        ${pl.champion ? renderPickedTeam(pl.champion, getChampionOdds(pl.champion), 'champion', locked) : renderPickButton('champion', '👑 Choisir le champion', locked)}
-      </div>
-
-      <div class="lpr-card">
-        <div class="lpr-card-hdr">🏅 Podium ordonné</div>
+        <div class="lpr-card-hdr">🏅 Podium ordonné <span class="lpr-points-pill">${POINTS.PODIUM_PLACE} pts/place · 450 max</span></div>
+        <p style="font-size:.72rem;color:var(--text2);margin:0 0 10px">Le 1er du podium est aussi le champion 👑. Bonne équipe sur le podium mais mauvaise place : ${POINTS.PODIUM_WRONG_PLACE} pts.</p>
         ${[1,2,3].map(place => renderPodiumRow(place, pl.podium?.[place], locked)).join('')}
       </div>
 
       <div class="lpr-card">
-        <div class="lpr-card-hdr">🏆 Top 8 Suisse <span class="lpr-points-pill">${POINTS.TOP8_PER_TEAM} pts/équipe</span></div>
+        <div class="lpr-card-hdr">🏆 Top 8 Suisse <span class="lpr-points-pill">${POINTS.TOP8_PER_TEAM} pts/équipe · 240 max</span></div>
         <button class="lpr-discord-btn" style="background:#252525;color:var(--text)" onclick="openTop8Picker()" ${locked?'disabled':''}>
           ${pl.top8?.length ? `✏️ Modifier (${pl.top8.length}/8 sélectionnés)` : '🏆 Choisir les 8 équipes'}
         </button>
@@ -535,16 +531,15 @@
 
   function renderPodiumRow(place, teamId, locked) {
     const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉';
-    const lbl = place === 1 ? '1er' : place === 2 ? '2e' : '3e';
-    const pts = place === 1 ? POINTS.PODIUM_1ST : place === 2 ? POINTS.PODIUM_2ND : POINTS.PODIUM_3RD;
+    const lbl = place === 1 ? '1er (champion 👑)' : place === 2 ? '2e' : '3e';
     const t = teamId ? state.teamsMap[teamId] : null;
     const cote = teamId ? getPodiumPlaceOdds(teamId, place) : null;
     return `
       <div class="lpr-podium-row" onclick="${locked?'':`openPodiumPicker(${place})`}" style="${locked?'cursor:not-allowed;opacity:.7':'cursor:pointer'}">
         <div class="lpr-podium-medal">${medal}</div>
         <div class="lpr-podium-info">
-          <div class="lpr-podium-lbl">${lbl} place</div>
-          <div class="lpr-podium-pts">${pts} pts si exact · ${POINTS.PODIUM_WRONG_PLACE} si bonne équipe mauvaise place</div>
+          <div class="lpr-podium-lbl">${lbl}</div>
+          <div class="lpr-podium-pts">${POINTS.PODIUM_PLACE} pts si exact</div>
           ${t ? `<div class="lpr-podium-pick">
             ${t.logoUrl?`<img src="${escHtml(t.logoUrl)}" alt="">`:`<span style="width:22px;height:22px;background:#0f0f0f;border-radius:4px;display:inline-block"></span>`}
             <span>${escHtml(t.name)}</span>
@@ -564,13 +559,13 @@
     </div>`;
   }
 
-  // ── Team picker modal (champion / firstOut) ──
+  // ── Team picker modal (firstOut uniquement — le champion est inclus dans le podium) ──
   let _pickerKind = null;
   window.openTeamPicker = function(kind) {
     if (isPreLanLocked()) { toast('Pronostics verrouillés', 'err'); return; }
     _pickerKind = kind;
-    const oddsFn = kind === 'champion' ? getChampionOdds : getFirstOutOdds;
-    const title = kind === 'champion' ? '👑 Choisir le champion' : '💀 Choisir la première sortie';
+    const oddsFn = getFirstOutOdds;
+    const title = '💀 Choisir la première sortie';
     const sorted = qualifiedTeams.slice().sort((a, b) => oddsFn(a.id) - oddsFn(b.id));
     const current = myPred?.preLan?.[kind];
     document.getElementById('lpr-modal-title').textContent = title;
@@ -597,7 +592,7 @@
 
   window.selectPickerTeam = async function(teamId) {
     if (!_pickerKind) return;
-    const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+    const pl = { ...(myPred?.preLan || { podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
     pl[_pickerKind] = teamId;
     try {
       await savePreLanPrediction(state.curUser.uid, pl);
@@ -637,7 +632,7 @@
   };
 
   window.selectPodiumTeam = async function(place, teamId) {
-    const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+    const pl = { ...(myPred?.preLan || { podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
     if (!pl.podium) pl.podium = { 1: null, 2: null, 3: null };
     pl.podium = { ...pl.podium, [place]: teamId };
     try {
@@ -687,7 +682,7 @@
       <button class="lpr-discord-btn" style="background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;padding:10px 14px;border-radius:6px;font-weight:800;flex:1.5" onclick="window._saveTop8()">💾 Enregistrer (${selected.size}/8)</button>
     `;
     window._saveTop8 = async () => {
-      const pl = { ...(myPred?.preLan || { champion:null, podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
+      const pl = { ...(myPred?.preLan || { podium:{1:null,2:null,3:null}, top8:[], firstOut:null }) };
       pl.top8 = [...selected];
       try {
         await savePreLanPrediction(state.curUser.uid, pl);
