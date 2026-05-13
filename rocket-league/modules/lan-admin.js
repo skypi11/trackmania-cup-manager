@@ -1,6 +1,6 @@
 // modules/lan-admin.js — UI admin LAN (router + sous-onglet "Préparation")
 import { state } from './state.js';
-import { esc, toast } from './utils.js';
+import { esc, toast, openModal } from './utils.js';
 import { buildStandings } from './standings.js';
 import {
   ensureLanDoc, updateLanConfig, getLanQuotas, getQualifiedTeams,
@@ -457,7 +457,7 @@ window.viewPredictorDetail = function (uid) {
     <h3 style="font-size:.92rem;font-weight:800;margin:18px 0 10px;color:#FFB800">🏆 Paris Bracket <span style="font-size:.7rem;color:var(--text3);font-weight:600">${Object.keys(pred.bracket || {}).length} pari${Object.keys(pred.bracket || {}).length>1?'s':''}</span></h3>
     ${renderMatchBets(pred.bracket, 'Bracket')}
   `;
-  window.openModal ? window.openModal('mo-team') : document.getElementById('mo-team').classList.add('show');
+  openModal('mo-team');
 };
 
 function renderQualList(teams, currentPool) {
