@@ -97,6 +97,54 @@
 
   /* Vue vide */
   .d-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--t-h1);color:rgba(255,255,255,.4);font-weight:700;text-align:center;padding:var(--pad)}
+
+  /* ── Mode Bracket — fullscreen 3 colonnes (WB / LB / GF) ── */
+  .d-bracket{flex:1 1 auto;display:grid;grid-template-columns:1.4fr 1.4fr 1fr;gap:clamp(14px,1.4vw,32px);min-height:0;padding:0;overflow:hidden}
+  .d-br-col{display:flex;flex-direction:column;gap:clamp(10px,1vw,22px);min-height:0;background:rgba(255,255,255,.02);border-radius:clamp(10px,1vw,20px);padding:clamp(12px,1.2vw,28px);border:1px solid rgba(255,255,255,.05)}
+  .d-br-col.lb{background:linear-gradient(180deg,rgba(255,107,53,.04),rgba(255,107,53,.01))}
+  .d-br-col.gf{background:linear-gradient(180deg,rgba(255,184,0,.10),rgba(255,184,0,.02));border-color:rgba(255,184,0,.35);justify-content:center}
+  .d-br-col-hdr{flex:0 0 auto;font-size:calc(var(--t-meta)*1.1);font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);text-align:center;padding-bottom:clamp(8px,.8vw,16px);border-bottom:1px solid rgba(255,255,255,.08)}
+  .d-br-col.lb .d-br-col-hdr{color:#FF8B5C}
+  .d-br-col.gf .d-br-col-hdr{color:#FFB800;font-size:calc(var(--t-meta)*1.4)}
+  .d-br-section{display:flex;flex-direction:column;gap:clamp(6px,.6vw,14px);flex:1 1 0;min-height:0}
+  .d-br-section-lbl{font-size:calc(var(--t-meta)*.85);font-weight:800;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;text-align:center}
+  .d-br-matches{display:flex;flex-direction:column;gap:clamp(5px,.5vw,12px);flex:1 1 0;min-height:0}
+
+  /* Carte match bracket */
+  .d-br-m{flex:1 1 0;min-height:0;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:clamp(6px,.6vw,14px);padding:clamp(6px,.6vw,14px) clamp(10px,.9vw,22px);display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,.3vw,10px);transition:all .25s;position:relative;overflow:hidden;max-height:clamp(90px,11vh,180px)}
+  .d-br-m.played{border-color:rgba(0,200,100,.3)}
+  .d-br-m.pending{border-color:rgba(255,184,0,.25)}
+  .d-br-m.empty{border-color:rgba(255,255,255,.04);background:rgba(0,0,0,.2);opacity:.5}
+  .d-br-m.stage{border-color:#FFB800;background:linear-gradient(135deg,rgba(255,184,0,.18),rgba(255,107,53,.06));box-shadow:0 0 24px rgba(255,184,0,.3)}
+  .d-br-m.stage::before{content:'🎭 SCÈNE';position:absolute;top:.3em;right:.6em;font-size:calc(var(--t-meta)*.75);font-weight:900;color:#000;background:#FFB800;padding:.1em .6em;border-radius:.3em;letter-spacing:.06em}
+  /* Grande Finale : carte XXL */
+  .d-br-col.gf .d-br-m{max-height:none;flex:0 0 auto;padding:clamp(20px,2vw,48px) clamp(16px,1.5vw,36px);gap:clamp(12px,1.2vw,28px);background:linear-gradient(135deg,rgba(255,184,0,.14),rgba(255,107,53,.08));border:2px solid rgba(255,184,0,.5);box-shadow:0 0 40px rgba(255,184,0,.2)}
+
+  .d-br-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:clamp(8px,.8vw,18px);min-width:0}
+  .d-br-row.winner{}
+  .d-br-row.loser{opacity:.5}
+  .d-br-logo{width:clamp(24px,2.6vw,56px);height:clamp(24px,2.6vw,56px);border-radius:clamp(4px,.4vw,8px);object-fit:contain;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+  .d-br-name{font-size:calc(var(--t-meta)*1.4);font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .d-br-row.winner .d-br-name{color:#0c8}
+  .d-br-row.loser .d-br-name{color:rgba(255,255,255,.4)}
+  .d-br-score{font-size:calc(var(--t-meta)*2);font-weight:900;font-variant-numeric:tabular-nums;line-height:1;min-width:1.4em;text-align:center}
+  .d-br-row.winner .d-br-score{color:#0c8}
+  .d-br-row.loser .d-br-score{color:rgba(255,255,255,.35)}
+  .d-br-score.empty{color:rgba(255,255,255,.2);font-size:calc(var(--t-meta)*1.4)}
+
+  /* GF version XXL */
+  .d-br-col.gf .d-br-logo{width:clamp(60px,5vw,120px);height:clamp(60px,5vw,120px)}
+  .d-br-col.gf .d-br-name{font-size:calc(var(--t-meta)*2)}
+  .d-br-col.gf .d-br-score{font-size:calc(var(--t-meta)*4.5)}
+
+  .d-br-feeder{font-size:calc(var(--t-meta)*1.1);color:rgba(255,255,255,.35);font-weight:700;font-style:italic}
+
+  /* Champion banner (mode finished) */
+  .d-champion{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(20px,2vw,48px);padding:var(--pad);text-align:center}
+  .d-champion-tag{font-size:calc(var(--t-meta)*1.2);font-weight:900;color:#FFB800;letter-spacing:.2em;text-transform:uppercase}
+  .d-champion-logo{width:clamp(140px,16vw,360px);height:clamp(140px,16vw,360px);border-radius:clamp(16px,1.6vw,40px);border:3px solid rgba(255,184,0,.6);box-shadow:0 16px 80px rgba(255,184,0,.35);background:#000;object-fit:contain}
+  .d-champion-name{font-size:calc(var(--t-meta)*5);font-weight:900;letter-spacing:-.02em;background:linear-gradient(135deg,#FFB800,#FF6B35);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+  .d-champion-prize{font-size:calc(var(--t-meta)*1.8);font-weight:800;color:#FFB800}
 </style>
 </head>
 <body>
@@ -140,6 +188,8 @@
       const { buildStandings } = await import('./modules/standings.js');
       const { SWISS_ROUNDS, calcSeriesScore, calculateSwissStandings, getSwissMatches, getSwissRound }
         = await import('./modules/lan-swiss.js');
+      const { SLOT_LABEL, getBracketMatches, getMatchBySlot }
+        = await import('./modules/lan-bracket.js');
 
       // Banner preview
       if (PREVIEW_STATUS) {
@@ -182,12 +232,28 @@
         return ms.every(m => m.status === 'played' || calcSeriesScore(m.games || [], m.format || 'bo5').played);
       }
 
+      function setHeaderTitle(main, sub) {
+        const title = document.querySelector('.d-hdr-title');
+        if (!title) return;
+        title.innerHTML = `${main}<small>${sub}</small>`;
+      }
+
       function render() {
         if (!Object.keys(state.teamsMap || {}).length) return;
-        const swissMatches = getSwissMatches(Object.values(state.lanMatches));
+        const status = getLanStatus();
         const body = document.getElementById('d-body');
         const roundInfo = document.getElementById('d-round-info');
 
+        // Mode bracket / finished : on bascule sur le rendu bracket
+        if (status === 'bracket' || status === 'finished') {
+          setHeaderTitle('Bracket Double Élim', 'SLS #2 — LAN · Magny-Cours');
+          renderBracket(status === 'finished');
+          return;
+        }
+
+        // Mode swiss / between / preparation : classement Suisse
+        setHeaderTitle('Classement Suisse', 'SLS #2 — LAN · Magny-Cours');
+        const swissMatches = getSwissMatches(Object.values(state.lanMatches));
         if (!swissMatches.length) {
           body.innerHTML = `<div class="d-empty">Phase Suisse pas encore démarrée</div>`;
           roundInfo.textContent = '';
@@ -252,6 +318,125 @@
             ${restRows}
           </div>
         `;
+      }
+
+      // ── Rendu BRACKET fullscreen (mode bracket / finished) ──
+      function renderBracket(isFinished) {
+        const body = document.getElementById('d-body');
+        const roundInfo = document.getElementById('d-round-info');
+        const bracketMatches = getBracketMatches(Object.values(state.lanMatches));
+
+        if (!bracketMatches.length) {
+          roundInfo.textContent = '';
+          body.innerHTML = `<div class="d-empty">Bracket pas encore généré</div>`;
+          return;
+        }
+
+        // Si terminé, on affiche le champion en grand
+        const gf = getMatchBySlot(bracketMatches, 'gf');
+        if (isFinished && gf) {
+          const ss = calcSeriesScore(gf.games || [], gf.format || 'bo5');
+          if (ss.played) {
+            const champTeam = state.teamsMap[ss.winner === 'home' ? gf.homeTeamId : gf.awayTeamId];
+            roundInfo.textContent = 'Tournoi terminé';
+            if (champTeam) {
+              const logo = champTeam.logoUrl
+                ? `<img class="d-champion-logo" src="${esc(champTeam.logoUrl)}" alt="">`
+                : `<div class="d-champion-logo"></div>`;
+              body.innerHTML = `
+                <div class="d-champion">
+                  <div class="d-champion-tag">🏆 Champion SLS #2</div>
+                  ${logo}
+                  <div class="d-champion-name">${esc(champTeam.name)}</div>
+                  <div class="d-champion-prize">800 € · Vainqueur de la LAN</div>
+                </div>`;
+              return;
+            }
+          }
+        }
+
+        roundInfo.textContent = isFinished ? 'Bracket terminé' : 'Bracket en cours';
+
+        const renderMatch = (slot) => {
+          const m = getMatchBySlot(bracketMatches, slot);
+          if (!m) return `<div class="d-br-m empty"><div class="d-br-feeder">—</div></div>`;
+          const home = m.homeTeamId ? state.teamsMap[m.homeTeamId] : null;
+          const away = m.awayTeamId ? state.teamsMap[m.awayTeamId] : null;
+          const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+          const hasScore = ss.played || (m.games || []).length > 0;
+
+          const homeName = home?.name || feederLabel(m.homeFeeder);
+          const awayName = away?.name || feederLabel(m.awayFeeder);
+          const homeLogo = home?.logoUrl
+            ? `<img class="d-br-logo" src="${esc(home.logoUrl)}" alt="">`
+            : `<div class="d-br-logo"></div>`;
+          const awayLogo = away?.logoUrl
+            ? `<img class="d-br-logo" src="${esc(away.logoUrl)}" alt="">`
+            : `<div class="d-br-logo"></div>`;
+
+          const homeWin = ss.played && ss.winner === 'home';
+          const awayWin = ss.played && ss.winner === 'away';
+          const cls = ['d-br-m'];
+          if (!home || !away) cls.push('empty');
+          else if (ss.played) cls.push('played');
+          else cls.push('pending');
+          if (m.onStage) cls.push('stage');
+
+          const homeScoreCell = hasScore
+            ? `<div class="d-br-score">${ss.home}</div>`
+            : `<div class="d-br-score empty">–</div>`;
+          const awayScoreCell = hasScore
+            ? `<div class="d-br-score">${ss.away}</div>`
+            : `<div class="d-br-score empty">–</div>`;
+
+          return `
+            <div class="${cls.join(' ')}">
+              <div class="d-br-row ${homeWin?'winner':ss.played?'loser':''}">
+                ${homeLogo}
+                <div class="d-br-name">${esc(homeName)}</div>
+                ${homeScoreCell}
+              </div>
+              <div class="d-br-row ${awayWin?'winner':ss.played?'loser':''}">
+                ${awayLogo}
+                <div class="d-br-name">${esc(awayName)}</div>
+                ${awayScoreCell}
+              </div>
+            </div>`;
+        };
+
+        const renderSection = (label, slots) => `
+          <div class="d-br-section">
+            <div class="d-br-section-lbl">${label}</div>
+            <div class="d-br-matches">${slots.map(renderMatch).join('')}</div>
+          </div>`;
+
+        body.innerHTML = `
+          <div class="d-bracket">
+            <div class="d-br-col wb">
+              <div class="d-br-col-hdr">🏆 Winners Bracket</div>
+              ${renderSection('Quarts (BO5)', ['wb_qf1','wb_qf2','wb_qf3','wb_qf4'])}
+              ${renderSection('Demis (BO5)', ['wb_sf1','wb_sf2'])}
+              ${renderSection('Finale WB (BO7)', ['wb_f'])}
+            </div>
+            <div class="d-br-col lb">
+              <div class="d-br-col-hdr">⚔ Losers Bracket</div>
+              ${renderSection('LB R1 (BO5)', ['lb_r1_1','lb_r1_2'])}
+              ${renderSection('LB R2 (BO5)', ['lb_r2_1','lb_r2_2'])}
+              ${renderSection('LB R3 (BO7)', ['lb_r3'])}
+              ${renderSection('Finale LB (BO7)', ['lb_f'])}
+            </div>
+            <div class="d-br-col gf">
+              <div class="d-br-col-hdr">⭐ Grande Finale</div>
+              ${renderMatch('gf')}
+            </div>
+          </div>`;
+      }
+
+      function feederLabel(feeder) {
+        if (!feeder) return '?';
+        const [type, slot] = feeder.split(':');
+        const lbl = SLOT_LABEL[slot] || slot;
+        return type === 'winner' ? `Vainqueur ${lbl}` : `Perdant ${lbl}`;
       }
 
       // Horloge dans le footer (refresh chaque minute)
