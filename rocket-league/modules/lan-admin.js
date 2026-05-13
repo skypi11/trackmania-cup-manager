@@ -11,8 +11,10 @@ import { admLanSwiss } from './lan-swiss-admin.js';
 import { admLanBracket } from './lan-bracket-admin.js';
 import {
   setupLanPredictionsListener, lockPreLan, unlockPreLan,
-  recalculateAll, isPreLanLocked,
+  recalculateAll, isPreLanLocked, getLeaderboard, STARTING_JETONS,
 } from './lan-predictions.js';
+import { calcSeriesScore, getSwissRound } from './lan-swiss.js';
+import { SLOT_LABEL } from './lan-bracket.js';
 
 state.lanAdmSec = state.lanAdmSec || 'preparation';
 
@@ -232,6 +234,9 @@ async function admLanPreparation() {
       </p>
     </div>
 
+    <!-- ── Vue admin des pronostiqueurs ──────────────────────────────── -->
+    ${renderPredictorsTable()}
+
     <!-- ── Pronostics LAN ────────────────────────────────────────────── -->
     <div class="adm-card" style="margin-bottom:14px">
       <div class="adm-card-hdr">🔮 Pronostics LAN</div>
@@ -259,6 +264,201 @@ async function admLanPreparation() {
     </div>
   `;
 }
+
+// ── Vue admin : table des pronostiqueurs ─────────────────────────────
+function renderPredictorsTable() {
+  const lb = getLeaderboard();
+  if (!lb.length) {
+    return `<div class="adm-card" style="margin-bottom:14px">
+      <div class="adm-card-hdr">📊 Pronostiqueurs</div>
+      <p style="font-size:.82rem;color:var(--text2);margin:0">Aucun pronostiqueur pour l'instant.</p>
+    </div>`;
+  }
+  const totalJetonsMises = Object.values(state.lanPredictions).reduce((sum, p) => {
+    const swissMises = Object.values(p.swiss || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    const bracketMises = Object.values(p.bracket || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    const preLanMises = Object.values(p.preLanBets || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    return sum + swissMises + bracketMises + preLanMises;
+  }, 0);
+
+  const rows = lb.map((p, i) => {
+    const pred = state.lanPredictions[p.id] || {};
+    const nbSwiss = Object.keys(pred.swiss || {}).length;
+    const nbBracket = Object.keys(pred.bracket || {}).length;
+    const nbPreLan = Object.keys(pred.preLanBets || {}).length;
+    const swissMises = Object.values(pred.swiss || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    const bracketMises = Object.values(pred.bracket || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    const preLanMises = Object.values(pred.preLanBets || {}).reduce((s, b) => s + (b.mise || 0), 0);
+    const totalMises = swissMises + bracketMises + preLanMises;
+    const av = p.avatar
+      ? `<img src="${esc(p.avatar)}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.1)" alt="">`
+      : `<div style="width:30px;height:30px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.78rem">${esc((p.displayName[0]||'?').toUpperCase())}</div>`;
+    const rkBdg = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="viewPredictorDetail('${p.id}')" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:8px 10px;font-weight:800;color:${i<3?'#FFB800':'var(--text2)'};text-align:center">${rkBdg}</td>
+      <td style="padding:8px 10px">${av}</td>
+      <td style="padding:8px 10px;font-weight:700">${esc(p.displayName)}</td>
+      <td style="padding:8px 10px;text-align:right;font-weight:800;color:#FFB800;font-variant-numeric:tabular-nums">${p.score}</td>
+      <td style="padding:8px 10px;text-align:right;color:#FFB800;font-variant-numeric:tabular-nums">${p.jetons}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--text2);font-size:.78rem">${totalMises > 0 ? totalMises : '—'}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--text2);font-size:.78rem">${nbPreLan}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--text2);font-size:.78rem">${nbSwiss}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--text2);font-size:.78rem">${nbBracket}</td>
+      <td style="padding:8px 10px;text-align:center;color:var(--text3);font-size:.7rem">›</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="adm-card" style="margin-bottom:14px">
+    <div class="adm-card-hdr">
+      📊 Pronostiqueurs
+      <span style="margin-left:10px;font-size:.7rem;color:var(--text2);font-weight:600">${lb.length} joueur${lb.length>1?'s':''} · ${totalJetonsMises} jetons en jeu</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead>
+          <tr style="background:rgba(255,255,255,.04);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-weight:800">
+            <th style="padding:8px 10px;text-align:center">Rang</th>
+            <th style="padding:8px 10px"></th>
+            <th style="padding:8px 10px;text-align:left">Pseudo</th>
+            <th style="padding:8px 10px;text-align:right">Score</th>
+            <th style="padding:8px 10px;text-align:right" title="Solde de jetons restants">🪙 Solde</th>
+            <th style="padding:8px 10px;text-align:right" title="Total des jetons actuellement engagés (paris en attente)">🪙 Engagés</th>
+            <th style="padding:8px 10px;text-align:right" title="Nombre de paris pré-LAN avec mise">Pré-LAN</th>
+            <th style="padding:8px 10px;text-align:right" title="Nombre de paris Suisse">Suisse</th>
+            <th style="padding:8px 10px;text-align:right" title="Nombre de paris Bracket">Bracket</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p style="font-size:.7rem;color:var(--text3);margin:10px 0 0">💡 Click sur une ligne pour voir le détail de tous les paris de ce pronostiqueur.</p>
+  </div>`;
+}
+
+// Détail des paris d'un pronostiqueur (modal)
+window.viewPredictorDetail = function (uid) {
+  const pred = state.lanPredictions[uid];
+  if (!pred) { toast('Pronostiqueur introuvable', 'err'); return; }
+  const teamName = (id) => state.teamsMap[id]?.name || '?';
+
+  // Pré-LAN
+  const pl = pred.preLan || {};
+  const bets = pred.preLanBets || {};
+
+  let preLanHtml = '';
+  // Champion / Podium
+  if (pl.podium) {
+    [1, 2, 3].forEach(place => {
+      const teamId = pl.podium[place];
+      if (!teamId) return;
+      const bet = bets[`podium${place}`];
+      const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉';
+      const lbl = place === 1 ? '1er (champion)' : place === 2 ? '2e' : '3e';
+      preLanHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:6px;margin-bottom:6px">
+        <span style="font-size:1.2rem">${medal}</span>
+        <div style="flex:1"><b>${lbl}</b> · ${esc(teamName(teamId))}</div>
+        ${bet?.mise > 0 ? `<span style="color:#FFB800;font-weight:800;font-size:.86rem">🪙 ${bet.mise} × ${bet.cote || 1}</span>` : '<span style="color:var(--text3);font-size:.78rem">sans mise</span>'}
+      </div>`;
+    });
+  }
+  if (pl.top8?.length) {
+    preLanHtml += `<div style="padding:10px 12px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:6px;margin-bottom:6px">
+      <b>🏆 Top 8</b> (${pl.top8.length}/8)
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">${pl.top8.map(id => `<span style="background:rgba(255,255,255,.05);padding:2px 8px;border-radius:10px;font-size:.74rem">${esc(teamName(id))}</span>`).join('')}</div>
+    </div>`;
+  }
+  if (pl.firstOut) {
+    const bet = bets.firstOut;
+    preLanHtml += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.18);border-radius:6px;margin-bottom:6px">
+      <span style="font-size:1.2rem">💀</span>
+      <div style="flex:1"><b>Première sortie</b> · ${esc(teamName(pl.firstOut))}</div>
+      ${bet?.mise > 0 ? `<span style="color:#FFB800;font-weight:800;font-size:.86rem">🪙 ${bet.mise} × ${bet.cote || 1}</span>` : '<span style="color:var(--text3);font-size:.78rem">sans mise</span>'}
+    </div>`;
+  }
+  if (!preLanHtml) preLanHtml = `<p style="color:var(--text3);font-style:italic;font-size:.82rem">Aucun pronostic pré-LAN</p>`;
+
+  // Matchs (Suisse + Bracket)
+  const renderMatchBets = (kindBets, kindLabel) => {
+    const entries = Object.entries(kindBets || {});
+    if (!entries.length) return `<p style="color:var(--text3);font-style:italic;font-size:.82rem">Aucun pari ${kindLabel}</p>`;
+    return entries.map(([matchId, bet]) => {
+      const m = state.lanMatches?.[matchId];
+      if (!m) return '';
+      const team = bet.side === 'home' ? teamName(m.homeTeamId) : teamName(m.awayTeamId);
+      const opp = bet.side === 'home' ? teamName(m.awayTeamId) : teamName(m.homeTeamId);
+      const phaseLabel = kindLabel === 'Suisse'
+        ? `R${getSwissRound(m.phase)}`
+        : (SLOT_LABEL[m.bracketSlot] || m.bracketSlot || m.phase);
+      const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+      const statusBdg = bet.status === 'won'
+        ? `<span style="color:#0c8;font-weight:800;font-size:.74rem">✓ +${bet.pts}pts</span>`
+        : bet.status === 'lost'
+          ? `<span style="color:#ef4444;font-weight:700;font-size:.74rem">✗ raté</span>`
+          : ss.played
+            ? `<span style="color:var(--text2);font-size:.74rem">en cours</span>`
+            : `<span style="color:#FFB800;font-size:.74rem">⏳ pending</span>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:rgba(255,255,255,.03);border-radius:6px;margin-bottom:4px;font-size:.82rem">
+        <span style="color:var(--text3);font-size:.7rem;font-weight:700;min-width:50px">${phaseLabel}</span>
+        <div style="flex:1"><b>${esc(team)}</b> vs ${esc(opp)}${bet.score?` <span style="color:#FFB800">${bet.score}</span>`:''}</div>
+        ${bet.mise > 0 ? `<span style="color:#FFB800;font-weight:800;font-size:.74rem">🪙 ${bet.mise}×${bet.cote}</span>` : ''}
+        ${statusBdg}
+      </div>`;
+    }).join('');
+  };
+
+  const swissMisesTotal = Object.values(pred.swiss || {}).reduce((s, b) => s + (b.mise || 0), 0);
+  const bracketMisesTotal = Object.values(pred.bracket || {}).reduce((s, b) => s + (b.mise || 0), 0);
+  const preLanMisesTotal = Object.values(bets).reduce((s, b) => s + (b.mise || 0), 0);
+
+  const av = pred.discordAvatar
+    ? `<img src="${esc(pred.discordAvatar)}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`
+    : `<div style="width:44px;height:44px;border-radius:50%;background:#5865F2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${esc((pred.displayName?.[0]||'?').toUpperCase())}</div>`;
+
+  document.getElementById('mo-team-title').textContent = pred.displayName || 'Pronostiqueur';
+  document.getElementById('mo-team-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:linear-gradient(135deg,rgba(255,184,0,.08),rgba(255,107,53,.04));border-radius:10px;margin-bottom:18px">
+      ${av}
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:1rem">${esc(pred.displayName)}</div>
+        <div style="font-size:.74rem;color:var(--text2);margin-top:2px">Discord ID: <code>${esc(pred.userId || uid)}</code></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.66rem;color:var(--text3);font-weight:700;letter-spacing:.04em;text-transform:uppercase">Score</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#FFB800;line-height:1">${pred.score?.total || 0}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px">
+      <div style="padding:10px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center">
+        <div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase">Solde</div>
+        <div style="font-size:1rem;font-weight:900;color:#FFB800">🪙 ${pred.jetons ?? STARTING_JETONS}</div>
+      </div>
+      <div style="padding:10px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center">
+        <div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase">Pré-LAN</div>
+        <div style="font-size:1rem;font-weight:900;color:#FFB800">🪙 ${preLanMisesTotal}</div>
+      </div>
+      <div style="padding:10px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center">
+        <div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase">Suisse</div>
+        <div style="font-size:1rem;font-weight:900;color:#FFB800">🪙 ${swissMisesTotal}</div>
+      </div>
+      <div style="padding:10px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center">
+        <div style="font-size:.62rem;color:var(--text3);font-weight:700;text-transform:uppercase">Bracket</div>
+        <div style="font-size:1rem;font-weight:900;color:#FFB800">🪙 ${bracketMisesTotal}</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:.92rem;font-weight:800;margin:0 0 10px;color:#FFB800">🔮 Pronostics pré-LAN</h3>
+    ${preLanHtml}
+
+    <h3 style="font-size:.92rem;font-weight:800;margin:18px 0 10px;color:#FFB800">♟ Paris Suisse <span style="font-size:.7rem;color:var(--text3);font-weight:600">${Object.keys(pred.swiss || {}).length} pari${Object.keys(pred.swiss || {}).length>1?'s':''}</span></h3>
+    ${renderMatchBets(pred.swiss, 'Suisse')}
+
+    <h3 style="font-size:.92rem;font-weight:800;margin:18px 0 10px;color:#FFB800">🏆 Paris Bracket <span style="font-size:.7rem;color:var(--text3);font-weight:600">${Object.keys(pred.bracket || {}).length} pari${Object.keys(pred.bracket || {}).length>1?'s':''}</span></h3>
+    ${renderMatchBets(pred.bracket, 'Bracket')}
+  `;
+  window.openModal ? window.openModal('mo-team') : document.getElementById('mo-team').classList.add('show');
+};
 
 function renderQualList(teams, currentPool) {
   if (!teams.length) {
