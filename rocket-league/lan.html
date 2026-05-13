@@ -196,6 +196,31 @@
   .lp-sw-row.lp-sw-top8 + .lp-sw-row:not(.lp-sw-top8){border-top:2px solid rgba(255,184,0,.2);position:relative}
   .lp-sw-row.lp-sw-top8 + .lp-sw-row:not(.lp-sw-top8)::before{content:'NON QUALIFIÉS BRACKET';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--bg2);color:var(--text3);font-size:.55rem;font-weight:800;letter-spacing:.1em;padding:0 10px}
 
+  /* ── Bouton Pronostics dans le header — visible et animé ── */
+  .btn-pred-hdr{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;font-weight:800;font-size:.92rem;letter-spacing:.02em;border:none;cursor:pointer;font-family:inherit;position:relative;transition:transform .15s,box-shadow .25s;box-shadow:0 4px 16px rgba(255,184,0,.35),0 0 0 0 rgba(255,184,0,.5);animation:pred-pulse 2.4s ease-in-out infinite}
+  .btn-pred-hdr:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,184,0,.55),0 0 0 4px rgba(255,184,0,.2)}
+  @keyframes pred-pulse{0%,100%{box-shadow:0 4px 16px rgba(255,184,0,.35),0 0 0 0 rgba(255,184,0,.4)}50%{box-shadow:0 4px 16px rgba(255,184,0,.35),0 0 0 8px rgba(255,184,0,0)}}
+
+  /* ── Mega CTA Pronostics — gros bandeau juste sous le hero ── */
+  .lp-pred-cta{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;margin-top:28px;padding:24px 32px;border-radius:16px;background:linear-gradient(135deg,rgba(255,184,0,.14),rgba(255,107,53,.08) 50%,rgba(123,47,190,.06));border:1px solid rgba(255,184,0,.4);position:relative;overflow:hidden;text-decoration:none;color:inherit;transition:all .2s;box-shadow:0 6px 28px rgba(255,184,0,.1)}
+  .lp-pred-cta:hover{transform:translateY(-2px);border-color:rgba(255,184,0,.7);box-shadow:0 12px 40px rgba(255,184,0,.22)}
+  .lp-pred-cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at right,rgba(255,184,0,.18),transparent 60%);pointer-events:none}
+  .lp-pred-icon{font-size:3.4rem;line-height:1;flex-shrink:0;filter:drop-shadow(0 4px 12px rgba(255,184,0,.4));position:relative;z-index:1;animation:pred-float 3s ease-in-out infinite}
+  @keyframes pred-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .lp-pred-content{position:relative;z-index:1;min-width:0}
+  .lp-pred-title{font-size:1.5rem;font-weight:900;letter-spacing:-.01em;background:linear-gradient(135deg,#FFB800,#FF6B35);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px;line-height:1.1}
+  .lp-pred-sub{font-size:.92rem;color:var(--text);font-weight:600;line-height:1.4}
+  .lp-pred-sub strong{color:#FFB800}
+  .lp-pred-btn{flex-shrink:0;padding:14px 28px;border-radius:10px;background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;font-weight:900;font-size:1rem;letter-spacing:.02em;box-shadow:0 6px 20px rgba(255,184,0,.4);transition:all .15s;position:relative;z-index:1;white-space:nowrap}
+  .lp-pred-cta:hover .lp-pred-btn{box-shadow:0 10px 30px rgba(255,184,0,.55);transform:scale(1.04)}
+  @media(max-width:780px){
+    .lp-pred-cta{grid-template-columns:auto 1fr;gap:16px;padding:18px 22px}
+    .lp-pred-icon{font-size:2.4rem}
+    .lp-pred-title{font-size:1.15rem}
+    .lp-pred-sub{font-size:.82rem}
+    .lp-pred-btn{grid-column:1/-1;text-align:center;padding:12px 20px;font-size:.92rem}
+  }
+
   /* Section Sponsors / Partenaires */
   .lp-sponsors-section{margin-top:96px}
   .lp-sponsors-grid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:64px;padding:40px 28px;background:linear-gradient(135deg,rgba(255,255,255,.02),rgba(255,255,255,.04));border:1px solid var(--border);border-radius:14px}
@@ -220,7 +245,7 @@
     <span class="hdr-season">SLS #2 — LAN</span>
   </div>
   <div class="hdr-r" style="display:flex;gap:8px;align-items:center">
-    <a href="lan-predictions.html" class="btn-discord" style="text-decoration:none;background:linear-gradient(135deg,#FFB800,#FF6B35);color:#000;font-weight:800">
+    <a href="lan-predictions.html" class="btn-pred-hdr" style="text-decoration:none">
       🔮 <span>Pronostics</span>
     </a>
     <a href="https://discord.gg/ZXHRRd95C3" target="_blank" rel="noopener" class="btn-discord" style="text-decoration:none">
@@ -244,6 +269,18 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Mega CTA Pronostics : visible immédiatement sous le hero ── -->
+  <a href="lan-predictions.html" class="lp-pred-cta">
+    <div class="lp-pred-icon">🔮</div>
+    <div class="lp-pred-content">
+      <div class="lp-pred-title">Pronostique la LAN, gagne des points !</div>
+      <div class="lp-pred-sub">
+        Champion, podium, top 8, score exact des matchs · Mise tes <strong>500 jetons</strong> sur tes favoris · Connexion Discord
+      </div>
+    </div>
+    <div class="lp-pred-btn">Faire mes pronostics →</div>
+  </a>
 
   <section id="lan-qualified"><div class="lp-stitle">🏅 Équipes qualifiées</div><div class="lp-card lp-empty">Chargement…</div></section>
   <section id="lan-swiss"></section>
