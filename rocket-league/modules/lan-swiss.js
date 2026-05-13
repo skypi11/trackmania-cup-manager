@@ -85,25 +85,64 @@ export function calculateSwissStandings(swissMatches, teamIds) {
 }
 
 // ── Appariements Round 1 ──────────────────────────────────────────────
-// Format : 4P1 vs 5P1 (interne) + 1P1↔7P2, 2P1↔6P2, 3P1↔5P2, 6P1↔4P2,
-// 7P1↔3P2, 8P1↔2P2, 9P1↔1P2 (top P1 vs bottom P2 pour les non-internes)
-// qP1, qP2 : tableaux d'équipes triés du meilleur au moins bon (depuis classement ligue)
+// Principe : croisement "top P1 vs bottom P2" (1P1↔dernierP2, 2P1↔avant-dernierP2…).
+//
+// - Poules équilibrées (n1 === n2) : croisement complet, aucun match interne.
+//   Ex: 8+8 → 1P1↔8P2, 2P1↔7P2, …, 8P1↔1P2 (8 matchs).
+//
+// - Poule plus grosse (n1 > n2 ou inverse, écart pair) : on absorbe le surplus
+//   par des matchs internes au milieu de la poule la plus grosse, puis on
+//   croise le reste.
+//   Ex: 9+7 → 4P1 vs 5P1 (interne) + 1P1↔7P2, 2P1↔6P2, 3P1↔5P2, 6P1↔4P2,
+//       7P1↔3P2, 8P1↔2P2, 9P1↔1P2 (8 matchs).
+//   Ex: 10+6 → 4P1↔5P1 + 6P1↔7P1 (2 internes) + 1↔6, 2↔5, 3↔4, 8↔3, 9↔2, 10↔1.
+//
+// qP1, qP2 : tableaux d'équipes triés du meilleur au moins bon.
 export function generateR1Pairings(qP1, qP2) {
+  const n1 = qP1.length;
+  const n2 = qP2.length;
   const pairings = [];
 
-  // Match interne P1 (4e vs 5e) — uniquement si on a au moins 5 équipes en P1
-  const internal = (qP1.length >= 5) ? [qP1[3], qP1[4]] : null;
-
-  // P1 hors internes (ordre conservé : 1, 2, 3, 6, 7, 8, 9...)
-  const p1Rest = qP1.filter((_, i) => i !== 3 && i !== 4);
-  // P2 inversé pour le seeding "top vs bottom"
-  const p2Reverse = qP2.slice().reverse();
-
-  const n = Math.min(p1Rest.length, p2Reverse.length);
-  for (let i = 0; i < n; i++) {
-    pairings.push({ home: p1Rest[i].id, away: p2Reverse[i].id });
+  // Cas équilibré : pur croisement, aucun interne
+  if (n1 === n2) {
+    const p2Reverse = qP2.slice().reverse();
+    for (let i = 0; i < n1; i++) {
+      pairings.push({ home: qP1[i].id, away: p2Reverse[i].id });
+    }
+    return pairings;
   }
-  if (internal) pairings.push({ home: internal[0].id, away: internal[1].id });
+
+  // Cas déséquilibré : matchs internes dans la poule la plus grosse pour
+  // absorber le surplus, puis croisement du reste.
+  // Si l'écart est impair, ce n'est pas appariable (nb total impair) : on
+  // produit le meilleur effort en arrondissant vers le bas (laisse 1 équipe
+  // sans match — l'admin doit gérer le bye/forfait).
+  const [bigger, smaller, biggerIsP1] = n1 > n2 ? [qP1, qP2, true] : [qP2, qP1, false];
+  const surplus = bigger.length - smaller.length;
+  const internalCount = Math.floor(surplus / 2);
+
+  // Indices "milieu" de la poule la plus grosse pour les internes
+  // Ex: n=9, internalCount=1 → start=3 → indices 3,4 (= 4e, 5e)
+  // Ex: n=10, internalCount=2 → start=3 → indices 3,4,5,6 (= 4e,5e,6e,7e)
+  const start = Math.floor((bigger.length - internalCount * 2) / 2);
+  const internalIdx = new Set();
+  for (let k = 0; k < internalCount; k++) {
+    const a = start + k * 2;
+    const b = start + k * 2 + 1;
+    internalIdx.add(a);
+    internalIdx.add(b);
+    pairings.push({ home: bigger[a].id, away: bigger[b].id });
+  }
+
+  const biggerRest = bigger.filter((_, i) => !internalIdx.has(i));
+  const smallerReverse = smaller.slice().reverse();
+  const n = Math.min(biggerRest.length, smallerReverse.length);
+  for (let i = 0; i < n; i++) {
+    // Conserver "P1 = home" pour les croisements quand c'est possible
+    const p1Team = biggerIsP1 ? biggerRest[i] : smallerReverse[i];
+    const p2Team = biggerIsP1 ? smallerReverse[i] : biggerRest[i];
+    pairings.push({ home: p1Team.id, away: p2Team.id });
+  }
 
   return pairings;
 }

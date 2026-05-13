@@ -235,9 +235,18 @@ window.generateSwissR1 = async function () {
     awayMeta: teamMeta(p.away),
   }));
 
+  // Compte les matchs internes (même poule) pour adapter le sous-titre
+  const internalCount = pairings.filter(p => {
+    const ha = rankP1.has(p.home), aa = rankP1.has(p.away);
+    return (ha && aa) || (!ha && !aa);
+  }).length;
+  const subtitle = internalCount > 0
+    ? `${pairings.length} matchs en BO5 — appariement Poule 1 ↔ Poule 2 (top P1 vs bottom P2) + ${internalCount} match${internalCount>1?'s':''} interne${internalCount>1?'s':''} (équipe${internalCount>1?'s':''} du milieu).`
+    : `${pairings.length} matchs en BO5 — croisement complet Poule 1 ↔ Poule 2 (top P1 vs bottom P2).`;
+
   const ok = await showPairingsConfirmation({
     title: 'Round 1 — Génération des appariements',
-    subtitle: `${pairings.length} matchs en BO5 — appariement Poule 1 ↔ Poule 2 (top P1 vs bottom P2) + 4e P1 vs 5e P1 (interne).`,
+    subtitle,
     pairings: pairingsWithMeta,
     format: 'bo5',
   });
