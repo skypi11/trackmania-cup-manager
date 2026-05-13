@@ -108,21 +108,29 @@ function _qualifiedTeamIds() {
   return [...qP1, ...qP2];
 }
 
-// Mapping linéaire des cotes podium selon le RANG global (trié par force).
-// Plus simple et plus juste que le calcul de proba qui finissait clampé pour
-// la plupart des équipes (probas naturelles trop faibles à 1/16).
-//
-// Ex pour 16 équipes :
-//   - rang 0 (le meilleur) : cote min selon la place
-//   - rang N-1 (le pire)   : cote 8
+// Mapping linéaire des cotes podium selon le RANG global (trié par pts ligue).
+// On utilise les POINTS ABSOLUS de saison, pas la force globale qui se met
+// à mixer la Suisse en cours dès qu'elle commence — ça désordonnait Toon
+// (51 pts) et ITOW (47.6 pts) qui avaient pourtant des stats très différentes.
 //
 // Bornes par place :
 //   - 1er (champion) : 2.0 → 8.0
 //   - 2e             : 2.5 → 8.0
 //   - 3e             : 3.0 → 8.0
-function _rankByStrength() {
+function _rankByLeaguePts() {
   const ids = _qualifiedTeamIds();
-  const sorted = ids.slice().sort((a, b) => getTeamStrength(b) - getTeamStrength(a));
+  const stP1 = buildStandings(1);
+  const stP2 = buildStandings(2);
+  const ptsMap = new Map();
+  [...stP1, ...stP2].forEach(t => ptsMap.set(t.id, t.pts || 0));
+  // Tri : pts desc, puis diff buts (gw-gl) desc en cas d'égalité
+  const diffMap = new Map();
+  [...stP1, ...stP2].forEach(t => diffMap.set(t.id, (t.gw || 0) - (t.gl || 0)));
+  const sorted = ids.slice().sort((a, b) => {
+    const pa = ptsMap.get(a) || 0, pb = ptsMap.get(b) || 0;
+    if (pb !== pa) return pb - pa;
+    return (diffMap.get(b) || 0) - (diffMap.get(a) || 0);
+  });
   return new Map(sorted.map((id, i) => [id, i]));
 }
 
@@ -133,7 +141,7 @@ export function getChampionOdds(teamId) {
 export function getPodiumPlaceOdds(teamId, place) {
   const ids = _qualifiedTeamIds();
   if (!ids.includes(teamId)) return 8.0;
-  const ranks = _rankByStrength();
+  const ranks = _rankByLeaguePts();
   const rank = ranks.get(teamId) ?? (ids.length - 1);
   const n = Math.max(2, ids.length);
   const minCote = place === 1 ? 2.0 : place === 2 ? 2.5 : 3.0;
@@ -142,35 +150,36 @@ export function getPodiumPlaceOdds(teamId, place) {
   return roundCote(clamp(cote, minCote, maxCote));
 }
 
-// ── Cote pré-LAN : Top 8 (équipe finit dans le top 8 de la Suisse) ─────
-// Approximation : P(top 8) ≈ force normalisée parmi les 16 qualifiés × 8/16
+// ── Cote pré-LAN : Top 8 — mapping linéaire 1.5 → 6 selon le rang ligue ─
+// Top du classement (probable top 8) : cote basse. Bottom (probable hors
+// top 8) : cote haute. Borne max 6 car miser sur un outsider top 8 reste
+// raisonnable (ce n'est pas un long shot comme champion).
 export function getTop8Odds(teamId) {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 15.0;
-  const k = 1.5;
-  const strengths = ids.map(id => Math.pow(getTeamStrength(id), k));
-  const total = strengths.reduce((a, b) => a + b, 0) || 1;
-  const myStr = Math.pow(getTeamStrength(teamId), k);
-  // Probabilité brute × ratio (8 places / 16 équipes)
-  const p = clamp((myStr / total) * 8, 0.05, 0.95);
-  return roundCote(clamp(1 / p, 1.10, 15.0));
+  if (!ids.includes(teamId)) return 6.0;
+  const ranks = _rankByLeaguePts();
+  const rank = ranks.get(teamId) ?? (ids.length - 1);
+  const n = Math.max(2, ids.length);
+  // Top du rang (les bons) ont cote basse, fond du rang ont cote plus haute
+  const cote = 1.5 + (rank / (n - 1)) * 4.5;
+  return roundCote(clamp(cote, 1.5, 6.0));
 }
 
 // ── Cote pré-LAN : Première sortie (équipe finit 16e à la Suisse) ──────
-// Inverse logique de Top 8 : plus l'équipe est faible, plus la cote est basse.
-// k=2.5 (amplifie fort) → l'outsider évident (clear underdog) reçoit une
-// cote très basse, ce qui limite son payout malgré la mise jusqu'à 200.
-// Clamp 2.0 → 12.0 (au lieu de 50) pour que même un favori improbable
-// ne génère pas un payout démesuré.
+// Mapping inverse du rang : le pire (rang n-1) a cote min 2, le meilleur
+// (rang 0) a cote max 8 (très improbable qu'il finisse dernier).
 export function getFirstOutOdds(teamId) {
   const ids = _qualifiedTeamIds();
-  if (!ids.includes(teamId)) return 12.0;
-  const k = 2.5;
-  const inverseStrengths = ids.map(id => Math.pow(1 - getTeamStrength(id) + 0.05, k));
-  const total = inverseStrengths.reduce((a, b) => a + b, 0) || 1;
-  const myInv = Math.pow(1 - getTeamStrength(teamId) + 0.05, k);
-  const p = myInv / total;
-  return roundCote(clamp(1 / p, 2.0, 12.0));
+  if (!ids.includes(teamId)) return 8.0;
+  const ranks = _rankByLeaguePts();
+  const rank = ranks.get(teamId) ?? 0;
+  const n = Math.max(2, ids.length);
+  const minCote = 2.0;
+  const maxCote = 8.0;
+  // Inverse du rang : (n-1-rank)/(n-1) → 1 pour le meilleur (cote max), 0 pour le pire (cote min)
+  const ratio = (n - 1 - rank) / (n - 1);
+  const cote = minCote + ratio * (maxCote - minCote);
+  return roundCote(clamp(cote, minCote, maxCote));
 }
 
 // ── Récap : retourne toutes les cotes pré-LAN d'une équipe ─────────────
