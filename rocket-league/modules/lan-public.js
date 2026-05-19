@@ -423,7 +423,7 @@ function renderSwiss() {
         <div class="lp-sw-stat lp-sw-pts">${row.pts.toFixed(1)}</div>
         <div class="lp-sw-stat">${row.wins}V</div>
         <div class="lp-sw-stat lp-sw-loss">${row.losses}D</div>
-        <div class="lp-sw-stat lp-sw-diff">${row.gw - row.gl >= 0 ? '+' : ''}${row.gw - row.gl}</div>
+        <div class="lp-sw-stat lp-sw-diff">${row.goalsFor - row.goalsAgainst >= 0 ? '+' : ''}${row.goalsFor - row.goalsAgainst}</div>
       </div>
     `;
   }).join('');
