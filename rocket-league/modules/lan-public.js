@@ -516,7 +516,7 @@ function renderSwissMatch(m) {
   const homeWin = played && ss.winner === 'home';
   const awayWin = played && ss.winner === 'away';
   return `
-    <div class="lp-sw-match ${played ? 'lp-played' : 'lp-pending'}">
+    <div class="lp-sw-match lp-clickable ${played ? 'lp-played' : 'lp-pending'}" onclick="window._lanOpenMatchDetail('${esc(m.id)}')">
       <div class="lp-sw-team ${homeWin ? 'win' : (played ? 'lose' : '')}">${teamLogo(home, 'lp-sw-mlogo')}<span>${esc(home.name)}</span></div>
       ${score}
       <div class="lp-sw-team away ${awayWin ? 'win' : (played ? 'lose' : '')}"><span>${esc(away.name)}</span>${teamLogo(away, 'lp-sw-mlogo')}</div>
@@ -606,10 +606,12 @@ function renderBracketCard(match) {
     ? `<img class="bm-logo" src="${esc(away.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
     : `<div class="bm-logo-ph"></div>`;
 
+  const clickable = !isPending;
   const cardClass = [
     'bm',
     isPending ? 'bm-empty' : (ss.played ? 'bm-played' : 'bm-pending'),
     match.onStage ? 'bm-stage' : '',
+    clickable ? 'lp-clickable' : '',
   ].filter(Boolean).join(' ');
 
   const homeRowClass = ss.played ? (ss.winner === 'home' ? 'bm-winner' : 'bm-loser') : '';
@@ -628,8 +630,11 @@ function renderBracketCard(match) {
   const slotLabel = SLOT_LABEL[match.bracketSlot] || '';
   const stageBadge = match.onStage ? `<span class="bm-stage-bdg">🎭 SCÈNE</span>` : '';
 
+  const clickAttr = clickable
+    ? ` onclick="window._lanOpenMatchDetail('${esc(match.id)}')" style="cursor:pointer"`
+    : ' style="cursor:default"';
   return `
-    <div class="${cardClass}" data-bm-slot="${esc(match.bracketSlot || '')}" style="cursor:default">
+    <div class="${cardClass}" data-bm-slot="${esc(match.bracketSlot || '')}"${clickAttr}>
       <div class="bm-row ${homeRowClass}">
         <div class="bm-team">${homeLogoHtml}<div class="${homeNameClass}">${esc(homeName)}</div></div>
         ${homeScoreCell}
@@ -742,6 +747,33 @@ function renderChampion() {
     `;
   };
 
+  // Classement final LAN 1→16
+  const swissMatches = getSwissMatches(Object.values(state.lanMatches));
+  const qIds = getAllQualified().map(t => t.id);
+  const swissStandings = calculateSwissStandings(swissMatches, qIds);
+  const ranking = calcLanFinalRanking(bracketMatches, swissStandings);
+
+  const rankingRows = ranking.map(r => {
+    const t = state.teamsMap[r.teamId];
+    if (!t) return '';
+    const cls = r.rank === 1 ? 'lp-fr-1st'
+      : r.rank === 2 ? 'lp-fr-2nd'
+      : r.rank === 3 ? 'lp-fr-3rd'
+      : r.rank <= 8 ? 'lp-fr-bracket' : '';
+    const prize = r.rank === 1 ? '800€' : r.rank === 2 ? '500€' : r.rank === 3 ? '300€' : '';
+    return `
+      <div class="lp-fr-row ${cls}">
+        <div class="lp-fr-rank">${r.rank}</div>
+        ${teamLogo(t, 'lp-fr-logo')}
+        <div class="lp-fr-info">
+          <div class="lp-fr-name">${esc(t.name)}</div>
+          <div class="lp-fr-elim">${esc(r.eliminatedAt)}</div>
+        </div>
+        ${prize ? `<div class="lp-fr-prize">${prize}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
   wrap.innerHTML = `
     <div class="lp-stitle">🥇 Podium final</div>
     <div class="lp-podium">
@@ -749,5 +781,168 @@ function renderChampion() {
       ${podiumCard(champion.id, '🏆 1ᵉʳ', '800€', '1st')}
       ${third ? podiumCard(third, '3ᵉ', '300€', '3rd') : ''}
     </div>
+
+    <div class="lp-stitle" style="margin-top:48px">📊 Classement final <span class="lp-stitle-sub">${ranking.length} équipes</span></div>
+    <div class="lp-fr-list">${rankingRows}</div>
   `;
 }
+
+// ── Classement final LAN ──────────────────────────────────────────────
+// Construit le rang 1→16 final :
+//  1 = winner GF, 2 = loser GF, 3 = loser LB_F, 4 = loser LB_R3,
+//  5-6 = losers LB_R2 (départage seed Suisse), 7-8 = losers LB_R1,
+//  9-16 = équipes Suisse non qualifiées bracket dans l'ordre Suisse.
+function calcLanFinalRanking(bracketMatches, swissStandings) {
+  const ranking = [];
+  const loserOf = m => {
+    if (!m?.winner) return null;
+    return m.homeTeamId === m.winner ? m.awayTeamId : m.homeTeamId;
+  };
+  const seedMap = new Map(swissStandings.map((s, i) => [s.teamId, i + 1]));
+  const seedSort = (a, b) => (seedMap.get(a) ?? 99) - (seedMap.get(b) ?? 99);
+
+  const gf = getMatchBySlot(bracketMatches, 'gf');
+  const lbF = getMatchBySlot(bracketMatches, 'lb_f');
+  const lbR3 = getMatchBySlot(bracketMatches, 'lb_r3');
+  const lbR2_1 = getMatchBySlot(bracketMatches, 'lb_r2_1');
+  const lbR2_2 = getMatchBySlot(bracketMatches, 'lb_r2_2');
+  const lbR1_1 = getMatchBySlot(bracketMatches, 'lb_r1_1');
+  const lbR1_2 = getMatchBySlot(bracketMatches, 'lb_r1_2');
+
+  if (gf?.winner) ranking.push({ teamId: gf.winner, rank: 1, eliminatedAt: '🏆 Champion LAN' });
+  const second = loserOf(gf);
+  if (second) ranking.push({ teamId: second, rank: 2, eliminatedAt: 'Finaliste — défaite en Grande Finale' });
+  const third = loserOf(lbF);
+  if (third) ranking.push({ teamId: third, rank: 3, eliminatedAt: 'Éliminé en Finale LB' });
+  const fourth = loserOf(lbR3);
+  if (fourth) ranking.push({ teamId: fourth, rank: 4, eliminatedAt: 'Éliminé en LB R3' });
+
+  const r2Losers = [loserOf(lbR2_1), loserOf(lbR2_2)].filter(Boolean).sort(seedSort);
+  r2Losers.forEach((t, i) => ranking.push({ teamId: t, rank: 5 + i, eliminatedAt: 'Éliminé en LB R2' }));
+
+  const r1Losers = [loserOf(lbR1_1), loserOf(lbR1_2)].filter(Boolean).sort(seedSort);
+  r1Losers.forEach((t, i) => ranking.push({ teamId: t, rank: 7 + i, eliminatedAt: 'Éliminé en LB R1' }));
+
+  const inBracketSet = new Set(ranking.map(r => r.teamId));
+  const remaining = swissStandings.filter(s => !inBracketSet.has(s.teamId));
+  remaining.forEach((s, i) => ranking.push({
+    teamId: s.teamId,
+    rank: 9 + i,
+    eliminatedAt: 'Éliminé en Phase Suisse',
+  }));
+
+  return ranking;
+}
+
+// ── Modal détail d'un match (Suisse + Bracket) ────────────────────────
+function ensureMatchModal() {
+  let overlay = document.getElementById('lan-match-modal');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'lan-match-modal';
+  overlay.className = 'lp-mm-overlay';
+  overlay.innerHTML = `
+    <div class="lp-mm-card">
+      <button class="lp-mm-close" aria-label="Fermer">×</button>
+      <div class="lp-mm-body"></div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeMatchModal();
+  });
+  overlay.querySelector('.lp-mm-close').addEventListener('click', closeMatchModal);
+  if (!window._lanModalKeyBound) {
+    window._lanModalKeyBound = true;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeMatchModal();
+    });
+  }
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function closeMatchModal() {
+  const overlay = document.getElementById('lan-match-modal');
+  if (overlay) overlay.classList.remove('lp-mm-open');
+  document.body.style.overflow = '';
+}
+
+function openMatchDetail(matchId) {
+  const m = state.lanMatches?.[matchId];
+  if (!m) return;
+  const home = state.teamsMap[m.homeTeamId];
+  const away = state.teamsMap[m.awayTeamId];
+  if (!home || !away) return;
+
+  const fmt = (m.format || 'bo5').toUpperCase();
+  const ss = calcSeriesScore(m.games || [], m.format || 'bo5');
+  const isSwiss = (m.phase || '').startsWith('swiss_');
+  const phaseLabel = isSwiss
+    ? `Phase Suisse — Round ${getSwissRound(m.phase)}`
+    : (SLOT_LABEL[m.bracketSlot] || m.phase || 'Bracket');
+
+  const games = m.games || [];
+  const gamesHtml = games.length
+    ? games.map((g, i) => {
+        const h = +g.home || 0, a = +g.away || 0;
+        const hWin = h > a;
+        const aWin = a > h;
+        return `
+          <div class="lp-mm-game">
+            <div class="lp-mm-game-n">Manche ${i + 1}</div>
+            <div class="lp-mm-game-score ${hWin ? 'win' : (aWin ? 'lose' : '')}">${h}</div>
+            <div class="lp-mm-game-sep">–</div>
+            <div class="lp-mm-game-score ${aWin ? 'win' : (hWin ? 'lose' : '')}">${a}</div>
+          </div>
+        `;
+      }).join('')
+    : `<div class="lp-mm-empty">Aucune manche jouée pour l'instant.</div>`;
+
+  let totalsHtml = '';
+  if (games.length) {
+    totalsHtml = `
+      <div class="lp-mm-totals">
+        <div class="lp-mm-totals-lbl">Total buts</div>
+        <div class="lp-mm-totals-val">${ss.totalGoalsHome} – ${ss.totalGoalsAway}</div>
+      </div>
+    `;
+  }
+
+  const stageBdg = m.onStage ? `<span class="lp-mm-stage-bdg">🎭 Match sur scène</span>` : '';
+  const statusLbl = ss.played
+    ? `<span class="lp-mm-status done">✓ Terminé</span>`
+    : (games.length
+        ? `<span class="lp-mm-status live"><span class="lp-live-dot"></span>En cours</span>`
+        : `<span class="lp-mm-status pending">À venir</span>`);
+
+  const overlay = ensureMatchModal();
+  const body = overlay.querySelector('.lp-mm-body');
+  body.innerHTML = `
+    <div class="lp-mm-hdr">
+      <div class="lp-mm-phase">${esc(phaseLabel)} · ${esc(fmt)}</div>
+      <div class="lp-mm-meta">${statusLbl}${stageBdg}</div>
+    </div>
+    <div class="lp-mm-teams">
+      <div class="lp-mm-team ${ss.winner === 'home' ? 'win' : (ss.played ? 'lose' : '')}">
+        ${teamLogo(home, 'lp-mm-logo')}
+        <div class="lp-mm-tname">${esc(home.name)}</div>
+      </div>
+      <div class="lp-mm-score">
+        <div class="lp-mm-score-big">${ss.home}<span>–</span>${ss.away}</div>
+        <div class="lp-mm-score-lbl">${ss.played ? 'Score final' : 'Série en cours'}</div>
+      </div>
+      <div class="lp-mm-team away ${ss.winner === 'away' ? 'win' : (ss.played ? 'lose' : '')}">
+        ${teamLogo(away, 'lp-mm-logo')}
+        <div class="lp-mm-tname">${esc(away.name)}</div>
+      </div>
+    </div>
+    <div class="lp-mm-games-title">Détail des manches</div>
+    <div class="lp-mm-games">${gamesHtml}</div>
+    ${totalsHtml}
+  `;
+  overlay.classList.add('lp-mm-open');
+  document.body.style.overflow = 'hidden';
+}
+
+window._lanOpenMatchDetail = openMatchDetail;
+window._lanCloseMatchModal = closeMatchModal;
