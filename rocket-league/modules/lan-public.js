@@ -202,19 +202,40 @@ function renderHeroFinished(wrap) {
   // Joueurs sur scène : capitaine + titulaires + subs (pas coach / staff)
   const lineupRoles = new Set(['capitaine', 'titulaire', 'sub']);
   const lineup = getTeamPlayers(champion.id).filter(p => lineupRoles.has(p.role));
+  const avatarHtml = (p) => p.discordAvatar
+    ? `<img class="lp-champ-pava" src="${esc(p.discordAvatar)}" alt="" onerror="this.style.display='none'">`
+    : `<div class="lp-champ-pava lp-champ-pava-ph">${esc((playerName(p) || '?')[0].toUpperCase())}</div>`;
   const lineupHtml = lineup.length
-    ? `<div class="lp-champ-players">${lineup.map(p => {
+    ? `
+      <div class="lp-champ-roster-lbl">Champions LAN</div>
+      <div class="lp-champ-players">${lineup.map(p => {
         const isCap = p.role === 'capitaine';
-        return `<span class="lp-champ-player${isCap ? ' lp-champ-cap' : ''}" title="${esc(ROLE_FULL[p.role] || p.role || '')}">${isCap ? '👑 ' : ''}${esc(playerName(p))}</span>`;
-      }).join('')}</div>`
+        const isSub = p.role === 'sub';
+        const cls = isCap ? 'lp-champ-cap' : (isSub ? 'lp-champ-sub' : '');
+        return `
+          <div class="lp-champ-player ${cls}" title="${esc(ROLE_FULL[p.role] || p.role || '')}">
+            ${avatarHtml(p)}
+            <span class="lp-champ-pname">${esc(playerName(p))}</span>
+            ${isCap ? `<span class="lp-champ-pbdg">👑 Cap.</span>` : ''}
+            ${isSub ? `<span class="lp-champ-pbdg lp-champ-pbdg-sub">Sub</span>` : ''}
+          </div>
+        `;
+      }).join('')}</div>
+    `
     : '';
 
   wrap.innerHTML = `
     <div class="lp-champ-tag">🏆 Vainqueur · ${esc(name)}</div>
-    ${logo}
+    <div class="lp-champ-logo-wrap">${logo}</div>
     <h1 class="lp-champ-name">${esc(champion.name)}</h1>
     ${lineupHtml}
-    <div class="lp-champ-prize">800€ remportés</div>
+    <div class="lp-champ-prize-box">
+      <div class="lp-champ-prize-icon">🏆</div>
+      <div class="lp-champ-prize-txt">
+        <div class="lp-champ-prize-amt">800€</div>
+        <div class="lp-champ-prize-lbl">Cashprize remporté</div>
+      </div>
+    </div>
     <div class="lp-champ-meta">
       <span>📅 ${esc(start)} → ${esc(end)}</span>
       <span>📍 ${esc(cfg.location || 'Magny-Cours')}</span>

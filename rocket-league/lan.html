@@ -138,14 +138,47 @@
   .lp-hero.lp-st-done{padding:64px 40px 68px;text-align:center}
   .lp-hero.lp-st-done::before{width:100%;height:100%;background:radial-gradient(ellipse at center,rgba(255,184,0,.15),transparent 60%)}
   .lp-champ-tag{font-size:.78rem;font-weight:800;letter-spacing:.18em;color:#FFB800;text-transform:uppercase;margin-bottom:32px;position:relative;z-index:2}
-  .lp-champ-logo{width:160px;height:160px;border-radius:20px;border:3px solid rgba(255,184,0,.6);box-shadow:0 16px 56px rgba(255,184,0,.28);background:#000;object-fit:contain;display:block;margin:0 auto 28px;position:relative;z-index:2}
+
+  /* Logo champion : glow doré pulsant + animation flottante */
+  .lp-champ-logo-wrap{position:relative;display:inline-block;margin:0 auto 28px;z-index:2}
+  .lp-champ-logo-wrap::before{content:'';position:absolute;inset:-20px;border-radius:32px;background:radial-gradient(ellipse at center,rgba(255,184,0,.45),transparent 70%);filter:blur(20px);animation:lp-champ-glow 3.2s ease-in-out infinite;z-index:-1}
+  @keyframes lp-champ-glow{0%,100%{opacity:.6;transform:scale(.95)}50%{opacity:1;transform:scale(1.08)}}
+  .lp-champ-logo{width:160px;height:160px;border-radius:20px;border:3px solid rgba(255,184,0,.7);box-shadow:0 16px 56px rgba(255,184,0,.35),inset 0 0 0 1px rgba(255,255,255,.08);background:#000;object-fit:contain;display:block;position:relative;z-index:2;animation:lp-champ-float 4s ease-in-out infinite}
+  @keyframes lp-champ-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   .lp-champ-logo.lp-logo-ph{background:rgba(255,255,255,.04);border:3px dashed rgba(255,184,0,.3)}
-  .lp-champ-name{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;letter-spacing:-.03em;margin:0 0 14px;background:linear-gradient(135deg,#FFB800 0%,#FF6B35 100%);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;position:relative;z-index:2}
-  .lp-champ-players{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 10px;margin:0 auto 24px;max-width:780px;position:relative;z-index:2}
-  .lp-champ-player{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:999px;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.28);font-size:.92rem;font-weight:700;color:#f5f5f5;letter-spacing:.01em}
-  .lp-champ-cap{background:linear-gradient(90deg,rgba(255,184,0,.22),rgba(255,107,53,.15));border-color:rgba(255,184,0,.55);color:#FFB800;font-weight:800;box-shadow:0 2px 10px rgba(255,184,0,.18)}
-  @media(max-width:600px){.lp-champ-player{font-size:.82rem;padding:5px 11px}}
-  .lp-champ-prize{font-size:1.4rem;font-weight:800;color:#FFB800;margin-bottom:28px;position:relative;z-index:2}
+
+  .lp-champ-name{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;letter-spacing:-.03em;margin:0 0 22px;background:linear-gradient(135deg,#FFE066 0%,#FFB800 40%,#FF6B35 100%);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;position:relative;z-index:2;filter:drop-shadow(0 4px 16px rgba(255,184,0,.25))}
+
+  /* Label "Champions LAN" : petit titre stylé avec fines lignes décoratives */
+  .lp-champ-roster-lbl{font-size:.7rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,184,0,.75);margin:0 0 14px;display:flex;align-items:center;justify-content:center;gap:14px;position:relative;z-index:2}
+  .lp-champ-roster-lbl::before,.lp-champ-roster-lbl::after{content:'';height:1px;width:38px;background:linear-gradient(90deg,transparent,rgba(255,184,0,.5))}
+  .lp-champ-roster-lbl::after{background:linear-gradient(-90deg,transparent,rgba(255,184,0,.5))}
+
+  /* Pills joueurs : avatar Discord + nom + badge rôle */
+  .lp-champ-players{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0 auto 30px;max-width:880px;position:relative;z-index:2}
+  .lp-champ-player{display:inline-flex;align-items:center;gap:9px;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);font-size:.94rem;font-weight:700;color:#f0f0f0;letter-spacing:.005em;transition:all .2s;backdrop-filter:blur(4px)}
+  .lp-champ-player:hover{transform:translateY(-2px);background:rgba(255,255,255,.07);border-color:rgba(255,184,0,.4)}
+  .lp-champ-pava{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.15);background:#222;flex-shrink:0}
+  .lp-champ-pava-ph{display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;color:var(--text3);background:linear-gradient(135deg,#333,#1a1a1a);text-transform:uppercase}
+  .lp-champ-pname{white-space:nowrap}
+  .lp-champ-pbdg{font-size:.62rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:rgba(255,184,0,.18);color:#FFB800;border:1px solid rgba(255,184,0,.35);margin-left:2px}
+  .lp-champ-pbdg-sub{background:rgba(255,255,255,.06);color:var(--text3);border-color:rgba(255,255,255,.1)}
+  .lp-champ-cap{background:linear-gradient(90deg,rgba(255,184,0,.18),rgba(255,107,53,.1));border-color:rgba(255,184,0,.5);color:#FFB800;font-weight:800;box-shadow:0 4px 14px rgba(255,184,0,.18);padding-right:8px}
+  .lp-champ-cap .lp-champ-pava{border-color:rgba(255,184,0,.6);box-shadow:0 0 0 2px rgba(255,184,0,.2)}
+  .lp-champ-sub{opacity:.78}
+  @media(max-width:600px){
+    .lp-champ-player{font-size:.82rem;padding:4px 11px 4px 4px;gap:7px}
+    .lp-champ-pava{width:26px;height:26px}
+    .lp-champ-pbdg{font-size:.56rem;padding:1px 5px}
+  }
+
+  /* Box cashprize : gradient + icon trophée */
+  .lp-champ-prize-box{display:inline-flex;align-items:center;gap:14px;padding:12px 22px 12px 18px;border-radius:14px;background:linear-gradient(135deg,rgba(255,184,0,.16),rgba(255,107,53,.1));border:1px solid rgba(255,184,0,.4);box-shadow:0 8px 28px rgba(255,184,0,.2),inset 0 1px 0 rgba(255,255,255,.08);margin-bottom:28px;position:relative;z-index:2}
+  .lp-champ-prize-icon{font-size:2rem;line-height:1;filter:drop-shadow(0 2px 6px rgba(255,184,0,.4))}
+  .lp-champ-prize-txt{text-align:left}
+  .lp-champ-prize-amt{font-size:1.65rem;font-weight:900;color:#FFB800;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .lp-champ-prize-lbl{font-size:.66rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+
   .lp-champ-meta{display:flex;justify-content:center;gap:24px;font-size:.92rem;color:var(--text2);font-weight:600;flex-wrap:wrap;position:relative;z-index:2}
 
   /* Mode LIVE : indicator pulsant + match scène mis en avant */
