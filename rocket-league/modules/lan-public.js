@@ -64,17 +64,12 @@ export function initLanPublic() {
     tick();
   });
 
-  // Rosters + participants : nécessaires pour la section "Merci aux équipes"
-  // qui affiche les joueurs de chaque équipe qualifiée.
-  onSnapshot(collection(db, 'rl_roster'), snap => {
-    state.rosterMap = {};
-    snap.forEach(d => { state.rosterMap[d.id] = { id: d.id, ...d.data() }; });
-    tick();
-  });
-
-  onSnapshot(collection(db, 'participants'), snap => {
-    state.participantsMap = {};
-    snap.forEach(d => { state.participantsMap[d.id] = { id: d.id, ...d.data() }; });
+  // Joueurs RL : nécessaire pour la section "Merci aux équipes"
+  // qui affiche le staff de chaque équipe qualifiée.
+  // rl_players contient déjà pseudo + rôle + teamId, pas besoin de jointure.
+  onSnapshot(collection(db, 'rl_players'), snap => {
+    state.playersMap = {};
+    snap.forEach(d => { state.playersMap[d.id] = { id: d.id, ...d.data() }; });
     tick();
   });
 
@@ -851,37 +846,24 @@ function calcLanFinalRanking(bracketMatches, swissStandings) {
 
 // ── RENDER : Merci aux équipes ────────────────────────────────────────
 // Section "remerciement" : carte par équipe qualifiée LAN avec logo + nom
-// d'équipe + liste des joueurs (roster). Au nom de Springs E-Sport.
-const ROLE_ORDER = { capitaine: 0, titulaire: 1, sub: 2, coach: 3 };
-const ROLE_LABEL = { capitaine: 'C', titulaire: 'T', sub: 'S', coach: 'Coach' };
-const ROLE_FULL = { capitaine: 'Capitaine', titulaire: 'Titulaire', sub: 'Substitut', coach: 'Coach' };
+// d'équipe + liste des joueurs. Au nom de Springs E-Sport.
+const ROLE_ORDER = { capitaine: 0, titulaire: 1, sub: 2, coach: 3, fondateur: 4, manager: 5 };
+const ROLE_LABEL = { capitaine: 'C', titulaire: 'T', sub: 'S', coach: 'Coach', fondateur: 'F', manager: 'M' };
+const ROLE_FULL = { capitaine: 'Capitaine', titulaire: 'Titulaire', sub: 'Substitut', coach: 'Coach', fondateur: 'Fondateur', manager: 'Manager' };
 
-function rosterPlayerName(playerId) {
-  const p = state.participantsMap?.[playerId];
-  if (!p) return null;
-  return p.pseudoRL || p.pseudo || p.discordUsername || null;
+function playerName(p) {
+  return p?.pseudoRL || p?.pseudoDiscord || p?.pseudo || '—';
 }
 
-function getActiveRoster(teamId) {
-  const all = Object.values(state.rosterMap || {})
-    .filter(r => r.teamId === teamId)
-    .filter(r => !['left', 'removed', 'kicked'].includes(r.status || ''));
-  // Dédup par playerId (au cas où plusieurs entrées par joueur)
-  const seen = new Set();
-  const dedup = [];
-  for (const r of all) {
-    if (!r.playerId || seen.has(r.playerId)) continue;
-    seen.add(r.playerId);
-    dedup.push(r);
-  }
-  return dedup.sort((a, b) => {
-    const ra = ROLE_ORDER[a.role] ?? 99;
-    const rb = ROLE_ORDER[b.role] ?? 99;
-    if (ra !== rb) return ra - rb;
-    const na = rosterPlayerName(a.playerId) || '';
-    const nb = rosterPlayerName(b.playerId) || '';
-    return na.localeCompare(nb);
-  });
+function getTeamPlayers(teamId) {
+  return Object.values(state.playersMap || {})
+    .filter(p => p.teamId === teamId)
+    .sort((a, b) => {
+      const ra = ROLE_ORDER[a.role] ?? 99;
+      const rb = ROLE_ORDER[b.role] ?? 99;
+      if (ra !== rb) return ra - rb;
+      return playerName(a).localeCompare(playerName(b));
+    });
 }
 
 function renderThanks() {
@@ -890,25 +872,22 @@ function renderThanks() {
 
   const qualified = getAllQualified();
   if (!qualified.length) { wrap.innerHTML = ''; return; }
-
-  // Attendre que rosters + participants soient chargés au moins une fois
-  if (!state.rosterMap || !state.participantsMap) { wrap.innerHTML = ''; return; }
+  if (!state.playersMap) { wrap.innerHTML = ''; return; }
 
   const cards = qualified.map(t => {
     const team = state.teamsMap[t.id] || t;
-    const roster = getActiveRoster(t.id);
+    const players = getTeamPlayers(t.id);
     const logoHtml = team.logoUrl
       ? `<img class="lp-th-logo" src="${esc(team.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
       : `<div class="lp-th-logo lp-logo-ph"></div>`;
-    const playersHtml = roster.length
-      ? roster.map(r => {
-          const name = rosterPlayerName(r.playerId) || '—';
-          const badge = ROLE_LABEL[r.role] || '';
-          const full = ROLE_FULL[r.role] || r.role || '';
+    const playersHtml = players.length
+      ? players.map(p => {
+          const badge = ROLE_LABEL[p.role] || '';
+          const full = ROLE_FULL[p.role] || p.role || '';
           return `
             <li class="lp-th-player">
-              <span class="lp-th-pname">${esc(name)}</span>
-              ${badge ? `<span class="lp-th-role lp-th-role-${esc(r.role)}" title="${esc(full)}">${esc(badge)}</span>` : ''}
+              <span class="lp-th-pname">${esc(playerName(p))}</span>
+              ${badge ? `<span class="lp-th-role lp-th-role-${esc(p.role)}" title="${esc(full)}">${esc(badge)}</span>` : ''}
             </li>
           `;
         }).join('')
