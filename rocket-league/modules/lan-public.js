@@ -64,6 +64,20 @@ export function initLanPublic() {
     tick();
   });
 
+  // Rosters + participants : nécessaires pour la section "Merci aux équipes"
+  // qui affiche les joueurs de chaque équipe qualifiée.
+  onSnapshot(collection(db, 'rl_roster'), snap => {
+    state.rosterMap = {};
+    snap.forEach(d => { state.rosterMap[d.id] = { id: d.id, ...d.data() }; });
+    tick();
+  });
+
+  onSnapshot(collection(db, 'participants'), snap => {
+    state.participantsMap = {};
+    snap.forEach(d => { state.participantsMap[d.id] = { id: d.id, ...d.data() }; });
+    tick();
+  });
+
   window.addEventListener('resize', () => {
     if (window._lanResizeRaf) cancelAnimationFrame(window._lanResizeRaf);
     window._lanResizeRaf = requestAnimationFrame(() => drawBracketConnectors());
@@ -138,6 +152,7 @@ function rerender() {
   renderSwiss();
   renderBracket();
   renderChampion();
+  renderThanks();
 }
 
 function renderPreviewBanner() {
@@ -832,6 +847,93 @@ function calcLanFinalRanking(bracketMatches, swissStandings) {
   }));
 
   return ranking;
+}
+
+// ── RENDER : Merci aux équipes ────────────────────────────────────────
+// Section "remerciement" : carte par équipe qualifiée LAN avec logo + nom
+// d'équipe + liste des joueurs (roster). Au nom de Springs E-Sport.
+const ROLE_ORDER = { capitaine: 0, titulaire: 1, sub: 2, coach: 3 };
+const ROLE_LABEL = { capitaine: 'C', titulaire: 'T', sub: 'S', coach: 'Coach' };
+const ROLE_FULL = { capitaine: 'Capitaine', titulaire: 'Titulaire', sub: 'Substitut', coach: 'Coach' };
+
+function rosterPlayerName(playerId) {
+  const p = state.participantsMap?.[playerId];
+  if (!p) return null;
+  return p.pseudoRL || p.pseudo || p.discordUsername || null;
+}
+
+function getActiveRoster(teamId) {
+  const all = Object.values(state.rosterMap || {})
+    .filter(r => r.teamId === teamId)
+    .filter(r => !['left', 'removed', 'kicked'].includes(r.status || ''));
+  // Dédup par playerId (au cas où plusieurs entrées par joueur)
+  const seen = new Set();
+  const dedup = [];
+  for (const r of all) {
+    if (!r.playerId || seen.has(r.playerId)) continue;
+    seen.add(r.playerId);
+    dedup.push(r);
+  }
+  return dedup.sort((a, b) => {
+    const ra = ROLE_ORDER[a.role] ?? 99;
+    const rb = ROLE_ORDER[b.role] ?? 99;
+    if (ra !== rb) return ra - rb;
+    const na = rosterPlayerName(a.playerId) || '';
+    const nb = rosterPlayerName(b.playerId) || '';
+    return na.localeCompare(nb);
+  });
+}
+
+function renderThanks() {
+  const wrap = document.getElementById('lan-thanks');
+  if (!wrap) return;
+
+  const qualified = getAllQualified();
+  if (!qualified.length) { wrap.innerHTML = ''; return; }
+
+  // Attendre que rosters + participants soient chargés au moins une fois
+  if (!state.rosterMap || !state.participantsMap) { wrap.innerHTML = ''; return; }
+
+  const cards = qualified.map(t => {
+    const team = state.teamsMap[t.id] || t;
+    const roster = getActiveRoster(t.id);
+    const logoHtml = team.logoUrl
+      ? `<img class="lp-th-logo" src="${esc(team.logoUrl)}" alt="" onerror="this.style.opacity='.2'">`
+      : `<div class="lp-th-logo lp-logo-ph"></div>`;
+    const playersHtml = roster.length
+      ? roster.map(r => {
+          const name = rosterPlayerName(r.playerId) || '—';
+          const badge = ROLE_LABEL[r.role] || '';
+          const full = ROLE_FULL[r.role] || r.role || '';
+          return `
+            <li class="lp-th-player">
+              <span class="lp-th-pname">${esc(name)}</span>
+              ${badge ? `<span class="lp-th-role lp-th-role-${esc(r.role)}" title="${esc(full)}">${esc(badge)}</span>` : ''}
+            </li>
+          `;
+        }).join('')
+      : `<li class="lp-th-empty">Roster non renseigné</li>`;
+    return `
+      <div class="lp-th-card">
+        ${logoHtml}
+        <div class="lp-th-name">${esc(team.name || '?')}</div>
+        ${team.tag ? `<div class="lp-th-tag">${esc(team.tag)}</div>` : ''}
+        <ul class="lp-th-players">${playersHtml}</ul>
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="lp-stitle">🙏 Merci aux équipes <span class="lp-stitle-sub">${qualified.length} équipes qualifiées</span></div>
+    <div class="lp-th-intro">
+      <p>
+        Springs E-Sport remercie chaleureusement les <strong>${qualified.length} équipes</strong>
+        et leurs joueurs présents à la LAN finale.<br>
+        Sans vous, pas de compétition — bravo pour votre engagement tout au long de la saison.
+      </p>
+    </div>
+    <div class="lp-th-grid">${cards}</div>
+  `;
 }
 
 // ── Modal détail d'un match (Suisse + Bracket) ────────────────────────

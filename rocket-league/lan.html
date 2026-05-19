@@ -293,6 +293,35 @@
     .lp-mm-logo{width:48px;height:48px}
   }
 
+  /* ── Section "Merci aux équipes" ── */
+  .lp-th-intro{max-width:780px;margin:0 auto 28px;text-align:center;color:var(--text2);font-size:.96rem;line-height:1.6;font-weight:500}
+  .lp-th-intro p{margin:0}
+  .lp-th-intro strong{color:#FFB800;font-weight:800}
+  .lp-th-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .lp-th-card{background:linear-gradient(180deg,var(--bg2) 0%,rgba(0,0,0,.2) 100%);border:1px solid var(--border);border-radius:12px;padding:20px 16px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;transition:all .2s;position:relative;overflow:hidden}
+  .lp-th-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,184,0,.3),transparent);opacity:0;transition:opacity .2s}
+  .lp-th-card:hover{border-color:rgba(255,184,0,.4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .lp-th-card:hover::before{opacity:1}
+  .lp-th-logo{width:64px;height:64px;border-radius:10px;object-fit:contain;background:var(--bg3);border:1px solid var(--border);margin-bottom:6px}
+  .lp-th-logo.lp-logo-ph{background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1)}
+  .lp-th-name{font-weight:800;font-size:.98rem;line-height:1.2;letter-spacing:-.005em}
+  .lp-th-tag{font-size:.7rem;color:var(--text3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:-2px}
+  .lp-th-players{list-style:none;padding:0;margin:14px 0 0;width:100%;border-top:1px solid rgba(255,255,255,.06);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+  .lp-th-player{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.84rem;font-weight:600;color:var(--text);padding:0 4px}
+  .lp-th-pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left}
+  .lp-th-role{flex-shrink:0;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.04em;background:rgba(255,255,255,.06);color:var(--text3);border:1px solid rgba(255,255,255,.08)}
+  .lp-th-role-capitaine{background:rgba(255,184,0,.16);color:#FFB800;border-color:rgba(255,184,0,.35)}
+  .lp-th-role-coach{background:rgba(0,129,255,.14);color:var(--rl-blue);border-color:rgba(0,129,255,.3)}
+  .lp-th-role-sub{background:rgba(255,255,255,.04);color:var(--text3);border-color:rgba(255,255,255,.08);font-style:italic}
+  .lp-th-empty{font-size:.78rem;color:var(--text3);font-style:italic;text-align:center;padding:6px}
+  @media(max-width:520px){
+    .lp-th-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .lp-th-card{padding:14px 10px 12px}
+    .lp-th-logo{width:48px;height:48px}
+    .lp-th-name{font-size:.86rem}
+    .lp-th-player{font-size:.78rem}
+  }
+
   /* Section Sponsors / Partenaires */
   .lp-sponsors-section{margin-top:96px}
   .lp-sponsors-grid{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:64px;padding:40px 28px;background:linear-gradient(135deg,rgba(255,255,255,.02),rgba(255,255,255,.04));border:1px solid var(--border);border-radius:14px}
@@ -354,6 +383,7 @@
   <section id="lan-swiss"></section>
   <section id="lan-bracket"></section>
   <section id="lan-champion"></section>
+  <section id="lan-thanks"></section>
 
   <section class="lp-sponsors-section">
     <div class="lp-stitle">🤝 Avec le soutien de</div>
