@@ -199,10 +199,21 @@ function renderHeroFinished(wrap) {
     ? `<img src="${esc(champion.logoUrl)}" alt="${esc(champion.name)}" class="lp-champ-logo" onerror="this.style.opacity='.2'">`
     : `<div class="lp-champ-logo lp-logo-ph"></div>`;
 
+  // Joueurs sur scène : capitaine + titulaires + subs (pas coach / staff)
+  const lineupRoles = new Set(['capitaine', 'titulaire', 'sub']);
+  const lineup = getTeamPlayers(champion.id).filter(p => lineupRoles.has(p.role));
+  const lineupHtml = lineup.length
+    ? `<div class="lp-champ-players">${lineup.map(p => {
+        const isCap = p.role === 'capitaine';
+        return `<span class="lp-champ-player${isCap ? ' lp-champ-cap' : ''}" title="${esc(ROLE_FULL[p.role] || p.role || '')}">${isCap ? '👑 ' : ''}${esc(playerName(p))}</span>`;
+      }).join('')}</div>`
+    : '';
+
   wrap.innerHTML = `
     <div class="lp-champ-tag">🏆 Vainqueur · ${esc(name)}</div>
     ${logo}
     <h1 class="lp-champ-name">${esc(champion.name)}</h1>
+    ${lineupHtml}
     <div class="lp-champ-prize">800€ remportés</div>
     <div class="lp-champ-meta">
       <span>📅 ${esc(start)} → ${esc(end)}</span>
