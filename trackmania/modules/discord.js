@@ -7,7 +7,8 @@ import { pName, showToast } from './utils.js';
 import { updateDoc, setDoc, doc, getDoc, collection } from 'firebase/firestore';
 
 const DISCORD_CLIENT_ID = '1483592495215673407';
-const DISCORD_REDIRECT_URI = window.location.origin + '/trackmania/cup.html';
+// Domaine figé : window.location.origin cassait le flow depuis une URL de preview Vercel
+const DISCORD_REDIRECT_URI = 'https://springs-esport.vercel.app/trackmania/cup.html';
 
 // Capture Discord OAuth token from URL hash (before any redirect)
 const _hashParams = new URLSearchParams(window.location.hash.slice(1));

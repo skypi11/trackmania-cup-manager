@@ -3,7 +3,7 @@ export const TWITCH = 'springsesport';
 
 export const DISCORD_CLIENT_ID = '1483592495215673407';
 export const DISCORD_REDIRECT = 'https://springs-esport.vercel.app/api/discord-callback';
-export const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify`;
+export const DISCORD_AUTH_URL = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify`;
 
 export const SCHEDULE = {
   1: {

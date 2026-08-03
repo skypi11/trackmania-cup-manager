@@ -261,7 +261,8 @@ window.closeAuthModal = () => document.getElementById('authOverlay').classList.r
 
 window.authDiscordSignIn = () => {
     const state = `tm_${cupId}`;
-    const url   = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify&state=${state}`;
+    // Endpoint moderne (sans /api) : l'ancien renvoie une 302 que l'app Discord iOS gère mal
+    const url   = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify&state=${state}`;
     window.location.href = url;
 };
 

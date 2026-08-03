@@ -807,7 +807,7 @@
 
     // Discord sign-in (joueurs)
     window.handleDiscordSignIn = () => {
-        const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify&state=tm_monthly`;
+        const url = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT)}&response_type=code&scope=identify&state=tm_monthly`;
         window.location.href = url;
     };
 
