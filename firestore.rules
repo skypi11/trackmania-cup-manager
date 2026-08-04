@@ -567,5 +567,48 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Springs Mania Cup — Inscriptions à la LAN Trackmania ───────────────────
+    // Doc id = uid Aedral. Contient de la donnée personnelle (date de naissance,
+    // code d'inscription lié au paiement HelloAsso) : AUCUN accès client, même
+    // en lecture pour son propre dossier. Tout passe par /api/mania-cup/* avec
+    // l'Admin SDK, qui filtre ce qui sort — la liste publique des inscrits ne
+    // sert que le pseudo Trackmania, le pays et le statut.
+    match /mania_cup_registrations/{uid} {
+      allow read, write: if false;
+    }
+
+    // ── Springs Mania Cup — contenus éditoriaux (FAQ) ──────────────────────────
+    // Servis publiquement par /api/mania-cup/faq et édités par les admins de
+    // compétition via la console. Aucun accès client direct : l'API contrôle qui
+    // écrit, et la lecture passe par elle pour rester alignée sur le reste.
+    match /mania_cup_content/{doc} {
+      allow read, write: if false;
+    }
+
+    // ── Springs Mania Cup — références des titres d'identité ───────────────────
+    // Nature, numéro et autorité de délivrance des pièces présentées par un
+    // joueur mineur et par son représentant légal. C'est la donnée la plus
+    // sensible du module : elle n'est jamais servie avec « le dossier », et
+    // seul l'Admin SDK y touche.
+    match /mania_cup_identity/{uid} {
+      allow read, write: if false;
+    }
+
+    // ── Springs Mania Cup — journal des encaissements ──────────────────────────
+    // Ce que HelloAsso a encaissé, relu par nos soins : montants, payeurs,
+    // rattachements. Contient des noms et des adresses e-mail de tiers (un
+    // parent qui règle pour son fils n'a pas de compte chez nous).
+    match /mania_cup_payments/{itemId} {
+      allow read, write: if false;
+    }
+
+    // ── Springs Mania Cup — réservation des codes d'inscription ────────────────
+    // Un document par code, dont l'identifiant EST le code. Ouvrir la lecture
+    // reviendrait à publier la table de correspondance code → joueur, donc à
+    // permettre de faire créditer son inscription du paiement d'un autre.
+    match /mania_cup_codes/{code} {
+      allow read, write: if false;
+    }
+
   }
 }
