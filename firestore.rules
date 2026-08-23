@@ -23,16 +23,18 @@ service cloud.firestore {
              request.auth.uid == team.founderId;
     }
 
-    // Admin de compétition — rôle SCOPÉ au moteur de compétitions Aedral
-    // (collection `competition_admins`, nommés par un admin Aedral complet).
-    // Un admin Aedral complet est AUTOMATIQUEMENT admin de compétition (sans
-    // le OR, Matt serait bloqué). Voir docs/legends-cup-architecture.md §8.
-    function isCompetitionAdmin() {
-      return request.auth != null && (
-        exists(/databases/$(database)/documents/competition_admins/$(request.auth.uid)) ||
-        exists(/databases/$(database)/documents/aedral_admins/$(request.auth.uid))
-      );
-    }
+    // NOTE — il n'existe volontairement PAS de fonction isCompetitionAdmin()
+    // ici. Le plan d'archi (§8) en prévoyait une pour laisser les admins de
+    // compétition lire le fil de discussion des matchs depuis le navigateur,
+    // mais le Lot 4C a tranché l'inverse : le fil est deny-all et passe
+    // uniquement par l'API, parce que (1) l'ACL statique aurait exclu le staff
+    // non-aligné que la spec §10 inclut, et (2) une lecture client aurait
+    // exposé des identifiants Discord aux équipes adverses.
+    // La fonction est donc restée orpheline jusqu'au 23/08, où elle a été
+    // retirée : du code mort dans un fichier de sécurité finit par être lu
+    // comme une règle active (piège déjà payé avec canDeleteTeam).
+    // Le rôle admin de compétition se vérifie côté serveur uniquement
+    // (isCompetitionAdmin dans lib/firebase-admin.ts).
 
     // ── Admins vieux site Springs (TM cup / RL) ──────────────────────────────
     match /admins/{uid} {
