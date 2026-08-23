@@ -303,6 +303,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Rôle « Validation des structures » — même modèle : chaque user peut lire
+    // SA propre entrée, jamais celle des autres (la liste complète passe par
+    // /api/admin/structure-reviewers, réservée aux admins Aedral). Nomination
+    // et révocation via API uniquement : pas d'auto-promotion.
+    match /structure_reviewers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
     // Registre des bans de compétition (joueurs + structures) — DENY-ALL :
     // consulté à l'inscription côté serveur, géré via API admin compét.
     // @deprecated remplacé par competition_sanctions (vide en prod, 0 doc).
