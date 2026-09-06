@@ -123,7 +123,16 @@ service cloud.firestore {
     // Toutes les écritures passent par les API routes (Admin SDK).
     // Le client ne fait que lire pour les profils publics.
     match /users/{uid} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09. Ouverte à tout compte connecté, cette règle laissait
+      // aspirer les 341 profils avec leurs identifiants de jeu (Discord, Epic,
+      // Steam, Riot) et leurs rattachements. L'annuaire public, lui, passe par
+      // /api/players, qui choisit ce qu'il expose.
+      //
+      // VÉRIFIÉ AVANT DE FERMER : `getDb` n'a qu'UN consommateur dans le Hub
+      // (components/ui/NotificationsBell.tsx, qui ne lit que `notifications`),
+      // le profil est chargé par /api/auth/me, et le vieux site ne lit que
+      // participants / editions / results / admins / rl_*.
+      allow read: if false;
       allow write: if false;
     }
 
