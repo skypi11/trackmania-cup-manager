@@ -137,9 +137,16 @@ service cloud.firestore {
     }
 
     // ── Springs Hub — Structures ──────────────────────────────────────────────
-    // Lecture publique (annuaire). Toutes les écritures via API routes (Admin SDK).
+    // FERMÉ le 07/09. La lecture était PUBLIQUE, sans même un compte — or le
+    // document porte `reviewComment` (le motif d'un refus) et `reviewedBy`
+    // (qui a refusé). Après les insultes reçues en août, la mesure prise sur
+    // les mentions légales était contournée par cette règle.
+    //
+    // L'annuaire public, lui, passe par /api/structures et /api/players, qui
+    // choisissent ce qu'ils exposent. Vérifié : aucune lecture Firestore
+    // directe côté client (voir la règle `users` plus haut).
     match /structures/{id} {
-      allow read: if true;
+      allow read: if false;
       allow write: if false;
 
       // Shortlist de recrutement (subcollection) — dirigeants only, via API route
