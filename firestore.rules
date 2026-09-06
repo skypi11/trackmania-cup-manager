@@ -151,27 +151,35 @@ service cloud.firestore {
 
     // ── Springs Hub — Sous-équipes ───────────────────────────────────────────
     match /sub_teams/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Composition des équipes : servie par /api/structures/[id], qui filtre selon le rôle.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
     // ── Springs Hub — Historique d'appartenance (Phase 3 item N) ─────────────
     // Lecture pour tout user connecté ; toutes les écritures via API routes (Admin SDK).
     match /structure_member_history/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Historique d'appartenance : donnée de modération, jamais lue par le client.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
     // ── Springs Hub — Invitations / demandes de rejoindre ────────────────────
     match /structure_invitations/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : PORTE LES JETONS D'INVITATION. Ouverte à tout compte connecté jusqu'au 07/09, elle permettait de lire un jeton encore valide et de rejoindre la structure de son choix sans y être invité.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
     // ── Springs Hub — Événements de structure ────────────────────────────────
     // Lecture pour tout user connecté ; toutes les écritures via API routes (Admin SDK).
     match /structure_events/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Calendrier : scrims, adversaires, débriefs. Servi par les API du calendrier.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
@@ -200,21 +208,27 @@ service cloud.firestore {
     // ── Springs Hub — Présences aux événements ──────────────────────────────
     // Une ligne par couple (eventId, userId). Écritures via API routes.
     match /event_presences/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Qui vient à quoi : servi avec l'événement, jamais lu seul par le client.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
     // ── Springs Hub — Dispos perso MVP2a ────────────────────────────────────
     // Une ligne par (userId, semaine ISO). Écritures via API route.
     match /user_availability/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Disponibilités horaires NOMINATIVES de chaque joueur.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
     // ── Springs Hub — Devoirs MVP2b ─────────────────────────────────────────
     // 1 doc par (devoir × assignee). Écritures via API routes (Admin SDK).
     match /structure_todos/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Exercices assignés joueur par joueur.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
@@ -224,7 +238,9 @@ service cloud.firestore {
     // Toutes les listes/écritures passent par les API routes (Admin SDK) qui
     // vérifient le UserContext + l'ownership.
     match /structure_todo_templates/{id} {
-      allow read: if request.auth != null;
+      // FERMÉ le 07/09 : Recettes d'exercices, dont celles partagées d'une structure.
+      // Lecture client désactivée — tout passe par les API routes.
+      allow read: if false;
       allow write: if false;
     }
 
@@ -303,6 +319,14 @@ service cloud.firestore {
     match /competition_admins/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
+    }
+
+    // Traces des relances « ton compte n'est pas vérifié » envoyées depuis le
+    // wizard d'inscription. DENY-ALL : elles ne servent qu'au cooldown côté
+    // serveur (6 h par joueur et par compétition). Rien à lire côté client, et
+    // savoir qui a relancé qui ne regarde personne.
+    match /competition_verify_reminders/{id} {
+      allow read, write: if false;
     }
 
     // Rôle « Validation des structures » — même modèle : chaque user peut lire
