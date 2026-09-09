@@ -693,5 +693,37 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Springs Mania Cup — plan de salle ──────────────────────────────────────
+    //
+    // LA SEULE exception de lecture du module, et elle est motivée : ce
+    // document est fait pour être OBSERVÉ en direct par les navigateurs. Le
+    // plan change une quarantaine de fois en trois semaines pour une
+    // quarantaine de spectateurs — un abonnement y coûte une lecture par
+    // changement, là où un sondage coûterait des milliers de lectures à l'heure
+    // pour afficher la même chose.
+    //
+    // Ce qu'il contient : pour chaque poste, un pseudo Trackmania et une
+    // structure — deux informations que la liste publique des inscrits montre
+    // déjà. AUCUN identifiant de compte : ils vivent dans la sous-collection
+    // `prive`, fermée, écrite dans la même transaction.
+    //
+    // La lecture est réservée aux INSCRITS (décision de Matt : « ça n'a pas
+    // d'intérêt que le public le voie »). Le `exists` coûte une lecture par
+    // évaluation ; à ce volume c'est négligeable, et c'est le prix du gating.
+    //
+    // L'écriture reste fermée : un plan qu'on pourrait réécrire depuis un
+    // navigateur ne vaudrait rien. Tout passe par /api/mania-cup/seatmap, qui
+    // applique les règles d'attribution dans une transaction.
+    match /mania_cup_seatmap/{doc} {
+      allow read: if request.auth != null
+        && exists(/databases/$(database)/documents/mania_cup_registrations/$(request.auth.uid));
+      allow write: if false;
+
+      // Qui occupe quoi, par identifiant de compte. Jamais exposé.
+      match /prive/{sousDoc} {
+        allow read, write: if false;
+      }
+    }
+
   }
 }
