@@ -304,6 +304,20 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Questionnaire d'avis de fin de compétition (27/09). Tout passe par
+    // l'API (Admin SDK) : la campagne porte la liste des invités, les
+    // réponses sont anonymes, et les marqueurs « a répondu » ont pour
+    // identifiant un HMAC à clé hors base. Aucune lecture directe.
+    match /competition_feedback/{id} {
+      allow read, write: if false;
+    }
+    match /competition_feedback_responses/{id} {
+      allow read, write: if false;
+    }
+    match /competition_feedback_markers/{id} {
+      allow read, write: if false;
+    }
+
     // Matchs — bracket live public (onSnapshot pendant l'événement). Aucun
     // uid dans le doc public : ACL, room et litiges en sous-collections.
     // `hidden` est dénormalisé depuis la compétition à la matérialisation
@@ -326,6 +340,14 @@ service cloud.firestore {
       // (2) les docs portent authorUid (modération) — une lecture client
       // exposerait des snowflakes aux équipes adverses (archi §8).
       match /messages/{messageId} {
+        allow read, write: if false;
+      }
+
+      // Signalements d'incident (retour n°8 du tournoi test) : servis
+      // UNIQUEMENT par l'API. Deny-all pour les mêmes raisons que le fil —
+      // les docs portent `reportedByUid`, et le droit d'écrire se résout LIVE
+      // (capitaine ou staff du camp), ce qu'aucune règle statique ne sait dire.
+      match /incidents/{incidentId} {
         allow read, write: if false;
       }
     }
