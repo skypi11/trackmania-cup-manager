@@ -112,6 +112,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Anciens comptes de jeu officiels (règle de revérification, 12/10) ──
+    // Serveur seul : décide si un compte se repose sans admin, survit à la
+    // suppression du compte Aedral. Jamais d'accès client.
+    match /rl_identity_history/{uid} {
+      allow read, write: if false;
+    }
+
     // ── Demandes de changement de compte Riot / Valorant ─────────────────────
     // Compte Valorant verrouillé sur le PUUID (anti-smurf). Création par joueur
     // + validation admin via les API routes (Admin SDK). Jamais d'accès client.
@@ -293,6 +300,14 @@ service cloud.firestore {
       allow read: if resource.data.status != 'draft'
                   && (!('isDev' in resource.data) || resource.data.isDev != true);
       allow write: if false;
+
+      // Registre des comptes joués (lot 5b, 12/10) — DENY-ALL : il porte des
+      // comptes de jeu, des uid et les notes de l'organisation. Servi par la
+      // console (Admin SDK). Déjà refusé par défaut ; écrit ici pour qu'aucune
+      // règle future sur `competitions/{id}/{document=**}` ne l'ouvre en silence.
+      match /comptes_joues/{cle} {
+        allow read, write: if false;
+      }
     }
 
     // Inscriptions — DENY-ALL : le snapshot contient MMR déclarés, âges,
