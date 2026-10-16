@@ -126,6 +126,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Compte Battle.net (Overwatch) ────────────────────────────────────────
+    // Donnée de Blizzard (identifiant, BattleTag) : 30 jours au plus, serveur
+    // seul. Hors de `users`, que tout joueur connecté peut lire.
+    match /battlenet_links/{uid} {
+      allow read, write: if false;
+    }
+
+    // ── Demandes de changement de compte des autres jeux (Battle.net) ───────
+    // Tranchées par un admin Aedral via les API routes. Jamais d'accès client.
+    match /game_link_change_requests/{id} {
+      allow read, write: if false;
+    }
+
     // ── Springs Hub — Profils joueurs globaux ────────────────────────────────
     // Toutes les écritures passent par les API routes (Admin SDK).
     // Le client ne fait que lire pour les profils publics.
