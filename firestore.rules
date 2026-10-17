@@ -119,6 +119,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Historique des rangs RL déclarés (un document par changement, avant →
+    // après). Serveur seul : lu par la fiche admin via l'Admin SDK, jamais par
+    // un client. Voir lib/rang-rl-historique.ts.
+    match /rl_rank_history/{entryId} {
+      allow read, write: if false;
+    }
+
     // ── Demandes de changement de compte Riot / Valorant ─────────────────────
     // Compte Valorant verrouillé sur le PUUID (anti-smurf). Création par joueur
     // + validation admin via les API routes (Admin SDK). Jamais d'accès client.
