@@ -133,6 +133,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Le compte revenu de Blizzard qui attend la confirmation du joueur
+    // (10 minutes, rien n'est lié avant son « oui »). Même règle : serveur seul.
+    match /battlenet_confirmations/{uid} {
+      allow read, write: if false;
+    }
+
     // ── Demandes de changement de compte des autres jeux (Battle.net) ───────
     // Tranchées par un admin Aedral via les API routes. Jamais d'accès client.
     match /game_link_change_requests/{id} {
