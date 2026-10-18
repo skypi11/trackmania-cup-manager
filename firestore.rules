@@ -159,6 +159,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // La note du staff sur les héros d'un joueur, par équipe Overwatch
+    // (lib/ow-notes-staff.ts). Servie par une API route : au staff toutes,
+    // au joueur la sienne seule. Jamais d'accès client.
+    match /ow_notes_staff/{id} {
+      allow read, write: if false;
+    }
+
     // ── Springs Hub — Profils joueurs globaux ────────────────────────────────
     // Toutes les écritures passent par les API routes (Admin SDK).
     // Le client ne fait que lire pour les profils publics.
