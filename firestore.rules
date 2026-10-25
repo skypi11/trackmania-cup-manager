@@ -802,5 +802,90 @@ service cloud.firestore {
       }
     }
 
+
+    // ── Scrims entre équipes Aedral (lib/scrims, docs/scrims-conception.md) ──
+    //
+    // TOUT est fermé côté navigateur (§ 9.1) : chaque collection est servie
+    // par une API qui filtre selon le rôle, relit les droits à chaque geste et
+    // ne sert jamais un identifiant de compte. Aucune lecture directe, aucun
+    // abonnement au document d'un scrim (§ 9.6). Les sous-collections (partie,
+    // manches, discussion) sont fermées avec lui.
+    match /scrims/{id} {
+      allow read, write: if false;
+      match /{sousDoc=**} {
+        allow read, write: if false;
+      }
+    }
+    match /scrim_equipes/{teamId} {
+      allow read, write: if false;
+    }
+    match /scrim_annuaire/{jeu} {
+      allow read, write: if false;
+    }
+    match /scrim_annonces/{doc} {
+      allow read, write: if false;
+    }
+    match /scrim_replay_guids/{guid} {
+      allow read, write: if false;
+    }
+    // Le bot (lot I) : salons écartés une heure, personnes injoignables en
+    // privé, journal d'un banc local. Les messages envoyés sont rangés sous le
+    // scrim (`scrims/{id}/discord`), fermés avec lui.
+    match /scrim_salons_ecartes/{channelId} {
+      allow read, write: if false;
+    }
+    match /scrim_prives_injoignables/{uid} {
+      allow read, write: if false;
+    }
+    match /scrim_discord_journal/{id} {
+      allow read, write: if false;
+    }
+    // Les notes privées du staff sur une équipe adverse : servies par leur API seule.
+    match /scrim_notes_staff/{id} {
+      allow read, write: if false;
+    }
+    match /scrim_envois_differes/{id} {
+      allow read, write: if false;
+    }
+    // Le verrou « une demande ouverte par paire » (lib/scrims/scrims-server.ts) : Admin SDK seulement.
+    match /scrim_paires/{id} {
+      allow read, write: if false;
+    }
+    match /scrim_signalements/{id} {
+      allow read, write: if false;
+    }
+    match /scrim_sanctions/{id} {
+      allow read, write: if false;
+    }
+    // Les curseurs de la passe de conservation (lib/scrims/conservation-server.ts).
+    match /scrim_conservation/{doc} {
+      allow read, write: if false;
+    }
+    // Les annonces chaque semaine (lot G) : republiées par la tâche du matin, Admin SDK seul.
+    match /scrim_annonces_recurrentes/{id} {
+      allow read, write: if false;
+    }
+    // La modération des scrims (lot J) : les décisions, servies par leur API
+    // seule (jamais qui a signalé ni quel admin), et le journal des lectures
+    // « bris de glace » d'un fil, que personne ne lit hors du serveur.
+    match /scrim_decisions/{id} {
+      allow read, write: if false;
+    }
+    match /scrim_lectures_moderation/{id} {
+      allow read, write: if false;
+    }
+    // Un fichier signalé mis en quarantaine (procédure d'alerte, art. 227-23) :
+    // aucun lien, ni public ni pour la modération ; lu par personne.
+    match /quarantaine_fichiers/{id} {
+      allow read, write: if false;
+    }
+    // Lot K : les créneaux fixes (un par paire d'équipes) et les demandes de
+    // révision d'un fait de fiabilité, servis par leurs API seules.
+    match /scrim_creneaux_fixes/{id} {
+      allow read, write: if false;
+    }
+    match /scrim_revisions/{id} {
+      allow read, write: if false;
+    }
   }
 }
