@@ -464,6 +464,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Springs Hub — Tableau tactique : « Donner la main » (30/10) ──────────
+    // Le direct pendant un vocal : une séance par schéma. Seuls les participants
+    // que le serveur a inscrits (après la règle d'accès du schéma,
+    // lib/tactique-droits.ts) la lisent, par abonnement ; tout s'écrit par
+    // /api/structures/[id]/tactiques/[tid]/direct (Admin SDK).
+    match /tactique_seances/{tid} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.lecteurs;
+      allow write: if false;
+    }
+    // Les calques et les variantes : servis par leur API seule.
+    match /tactique_calques/{id} {
+      allow read, write: if false;
+    }
+
     // ── TM — Participants ─────────────────────────────────────────────────────
     match /participants/{docId} {
       allow read: if true;
