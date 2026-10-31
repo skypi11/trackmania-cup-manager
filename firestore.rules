@@ -112,6 +112,35 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── Module Trackmania (Monthly, NMC : docs/nmc-saison2-conception.md § 10) ─
+    // Écrites par les routes /api/trackmania et /api/admin/trackmania et par le
+    // script d'import, lues par elles seules (la page publique passe par l'API,
+    // qui cache les maps secrètes et les logins des inscrits).
+    match /tm_competitions/{id} {
+      allow read, write: if false;
+    }
+    match /tm_editions/{id} {
+      allow read, write: if false;
+    }
+    match /tm_inscriptions/{id} {
+      allow read, write: if false;
+    }
+    match /tm_matchs/{id} {
+      allow read, write: if false;
+    }
+    match /tm_manches/{id} {
+      allow read, write: if false;
+    }
+    match /tm_journal/{id} {
+      allow read, write: if false;
+    }
+    match /tm_identites/{id} {
+      allow read, write: if false;
+    }
+    match /tm_cache/{id} {
+      allow read, write: if false;
+    }
+
     // ── Anciens comptes de jeu officiels (règle de revérification, 12/10) ──
     // Serveur seul : décide si un compte se repose sans admin, survit à la
     // suppression du compte Aedral. Jamais d'accès client.
