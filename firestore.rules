@@ -143,6 +143,17 @@ service cloud.firestore {
     match /tm_cache/{id} {
       allow read, write: if false;
     }
+    // Le serveur de jeu d'une édition et ses ordres (régie, agent de la machine) :
+    // écrits et lus par les routes /api/tm/agent et /api/admin/trackmania seules.
+    match /tm_serveurs/{id}/{document=**} {
+      allow read, write: if false;
+    }
+    // Les comptes de serveur dédié (mots de passe chiffrés) : jamais lus par un
+    // navigateur, même admin ; l'écran passe par la route admin, qui ne rend
+    // jamais le chiffré.
+    match /tm_comptes_serveur/{id} {
+      allow read, write: if false;
+    }
 
     // ── Anciens comptes de jeu officiels (règle de revérification, 12/10) ──
     // Serveur seul : décide si un compte se repose sans admin, survit à la
