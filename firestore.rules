@@ -134,6 +134,9 @@ service cloud.firestore {
     match /tm_journal/{id} {
       allow read, write: if false;
     }
+    match /tm_pronostics/{id} {
+      allow read, write: if false;
+    }
     match /tm_identites/{id} {
       allow read, write: if false;
     }
