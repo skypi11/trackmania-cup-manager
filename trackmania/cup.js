@@ -29,6 +29,9 @@ const CUP = cupId === 'mania'
     ? { name: 'Springs Mania Cup', color: '#FFB800', colorHover: '#ffc733', label: 'LAN' }
     : { name: 'Springs Monthly Cup', color: '#00D936', colorHover: '#00ff3f', label: t('msg.online') };
 
+// La Monthly a déménagé sur Aedral : bandeau de renvoi (pas sur la Mania Cup)
+if (cupId !== 'mania') document.getElementById('aedralBanner')?.removeAttribute('hidden');
+
 // Apply cup colors and title
 document.documentElement.style.setProperty('--color-accent', CUP.color);
 document.documentElement.style.setProperty('--color-accent-hover', CUP.colorHover);

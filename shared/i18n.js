@@ -506,6 +506,11 @@ const translations = {
     'common.close':           'Fermer',
     'common.send':            'Envoyer',
     'common.later':           'Plus tard',
+
+    // ── Bandeau Aedral (la Monthly a déménagé) ────────────────────────────
+    'aedral.banner.title':    'La Springs Monthly Cup continue sur Aedral.',
+    'aedral.banner.text':     "Inscriptions, résultats, classement et pronostics : tout se passe maintenant là-bas. L'historique de toutes les éditions y est repris.",
+    'aedral.banner.btn':      'Aller sur Aedral',
     'common.sort':            'Tri :',
     'common.sort.newest':     'Plus récentes',
     'common.sort.oldest':     'Plus anciennes',
@@ -1316,6 +1321,11 @@ const translations = {
     'common.close':           'Close',
     'common.send':            'Send',
     'common.later':           'Later',
+
+    // ── Aedral banner (the Monthly moved) ─────────────────────────────────
+    'aedral.banner.title':    'The Springs Monthly Cup now lives on Aedral.',
+    'aedral.banner.text':     'Sign-ups, results, standings and predictions are all there now, with the history of every edition.',
+    'aedral.banner.btn':      'Go to Aedral',
     'common.sort':            'Sort:',
     'common.sort.newest':     'Newest',
     'common.sort.oldest':     'Oldest',

@@ -112,6 +112,40 @@
             padding: 110px 32px 48px;
         }
 
+        /* Bandeau Aedral : la Monthly a déménagé */
+        .aedral-banner {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, rgba(0,217,54,0.10) 0%, rgba(123,47,190,0.08) 100%);
+            border: 1px solid rgba(0,217,54,0.35);
+            border-radius: 14px;
+        }
+        .aedral-banner-text { flex: 1; min-width: 0; }
+        .aedral-banner-title { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .aedral-banner-desc { font-size: 0.875rem; color: rgba(255,255,255,0.7); line-height: 1.5; }
+        .aedral-banner-btn {
+            flex-shrink: 0;
+            padding: 11px 20px;
+            background: var(--tm-green);
+            color: #0f0f0f;
+            font-size: 0.875rem;
+            font-weight: 800;
+            border-radius: 10px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .aedral-banner-btn:hover { background: #00ff3f; }
+        @media (max-width: 600px) {
+            .aedral-banner { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; margin-top: 14px; margin-bottom: 28px; }
+            .aedral-banner-btn { text-align: center; }
+        }
+
         .hero-title { text-align: center; margin-bottom: 52px; }
         .hero-title h1 {
             font-size: clamp(1.8rem, 4.5vw, 3.2rem);
@@ -412,6 +446,14 @@
 <div class="admin-hint" data-i18n="nav.admin.hint">✏️ Cliquez sur les textes pour les modifier</div>
 
 <main class="hero">
+    <div class="aedral-banner">
+        <div class="aedral-banner-text">
+            <p class="aedral-banner-title" data-i18n="aedral.banner.title">La Springs Monthly Cup continue sur Aedral.</p>
+            <p class="aedral-banner-desc" data-i18n="aedral.banner.text">Inscriptions, résultats, classement et pronostics : tout se passe maintenant là-bas. L'historique de toutes les éditions y est repris.</p>
+        </div>
+        <a class="aedral-banner-btn" href="https://aedral.com/competitions/monthly" data-i18n="aedral.banner.btn">Aller sur Aedral</a>
+    </div>
+
     <div class="hero-title">
         <h1><span class="editable" id="hero-title-pre" contenteditable="false" data-i18n="tm.hub.pre">Choisissez votre</span> <span class="tm-accent editable" id="hero-title-hl" contenteditable="false" data-i18n="tm.hub.hl">compétition</span></h1>
         <p class="hero-subtitle editable" id="hero-subtitle" contenteditable="false">Springs E-Sport — Trackmania</p>
